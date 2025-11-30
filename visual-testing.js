@@ -12,7 +12,7 @@ async function testChefMapVisuals() {
   
   try {
     // Navigate to the app
-    await page.goto('http://localhost:3000', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:3003', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000); // Allow for any animations to settle
     
     console.log('📸 Capturing landing page overview...');

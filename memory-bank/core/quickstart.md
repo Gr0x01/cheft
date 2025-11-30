@@ -15,7 +15,7 @@ Status: Active Development
 ## Key Commands
 ```bash
 # Development
-npm run dev          # Start development server (localhost:3000)
+npm run dev          # Start development server (localhost:3003)
 npm run build        # Build for production
 npm run lint         # Run ESLint
 npm run type-check   # Run TypeScript checks

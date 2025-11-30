@@ -60,8 +60,8 @@ Always adjust the metadata header (`Last-Updated`, `Maintainer`) when you edit a
 - **frontend-developer**: Elite frontend specialist for modern web development
   - Use for: UI implementation, state management, performance optimization
   - Expertise: Component architecture, responsive design, accessibility (WCAG)
-  - Tools: Write, Read, MultiEdit, Bash, Grep, Glob
-  - Focus: Modern frameworks, bundle optimization, browser testing
+  - Tools: Write, Read, MultiEdit, Bash, Grep, Glob, Playwright
+  - Focus: Modern frameworks, bundle optimization, Playwright E2E testing
 
 - **ui-designer**: Visionary UI designer for rapid, implementable interfaces  
   - Use for: Interface design, design systems, visual aesthetics
@@ -88,6 +88,13 @@ Always adjust the metadata header (`Last-Updated`, `Maintainer`) when you edit a
 - **ALL CHANGES**: Complete implementation → Run quality checks → Delegate to code-reviewer → Address feedback
 - Document significant subagent recommendations in memory bank
 
+### Testing Workflow
+- **BEFORE COMPLETION**: Run `npm run test:e2e` to verify functionality across browsers
+- **VISUAL CHANGES**: Use `npm run test:e2e:ui` for interactive testing during development
+- **DEBUGGING FAILURES**: Use `npm run test:e2e:debug` for step-by-step debugging
+- **REGRESSION TESTING**: Always run full test suite after significant changes
+- **REFERENCE**: Check `TESTING.md` for detailed testing guidelines and best practices
+
 ## ARCHITECTURE GROUND TRUTH
 
 ### Project Structure
@@ -111,7 +118,9 @@ Always adjust the metadata header (`Last-Updated`, `Maintainer`) when you edit a
 
 ### Quality Gates
 - Run linting and type checking before handoff
-- Test changes thoroughly and report results
+- **Test changes thoroughly**: Run `npm run test:e2e` before marking features complete
+- **Visual/UI changes**: Use `npm run test:e2e:ui` for interactive testing during development
+- **Debugging failures**: Use `npm run test:e2e:debug` for step-by-step test debugging
 - Use `code-reviewer` subagent after significant code changes; address Critical issues before handoff
 - Keep diffs surgical—strip logs, commented code, and unused exports
 - Update docs as part of the definition of done; long narratives move to `archive/`
@@ -127,6 +136,8 @@ Always adjust the metadata header (`Last-Updated`, `Maintainer`) when you edit a
 
 - Respect existing component patterns; search the repo before inventing new abstractions
 - Follow established code style and conventions
+- **Use Playwright tests** to verify UI changes work correctly across browsers and devices
+- **Reference TESTING.md** for test writing guidelines and best practices
 - Coordinate via `development/daily-log/` for deep-dive debugging or incident notes
 - Use subagents proactively for their specialized domains
 - Backend changes should leverage `backend-architect` for architecture decisions before implementation
