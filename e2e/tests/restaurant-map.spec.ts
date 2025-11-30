@@ -82,9 +82,10 @@ test.describe('Restaurant Map', () => {
       if (await filter.count() > 0) {
         // Try to interact with the filter
         if (selector.includes('select')) {
-          const options = filter.locator('option');
+          const firstFilter = filter.first();
+          const options = firstFilter.locator('option');
           if (await options.count() > 1) {
-            await filter.selectOption({ index: 1 });
+            await firstFilter.selectOption({ index: 1 });
             filterFound = true;
             break;
           }
