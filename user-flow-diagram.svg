@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .flow-box { fill: #f8f9fa; stroke: #2563eb; stroke-width: 2; rx: 8; }
+      .decision-diamond { fill: #fef3c7; stroke: #d97706; stroke-width: 2; }
+      .action-box { fill: #dcfce7; stroke: #16a34a; stroke-width: 2; rx: 8; }
+      .endpoint { fill: #e0f2fe; stroke: #0284c7; stroke-width: 2; rx: 8; }
+      .flow-text { font-family: Arial, sans-serif; font-size: 12px; text-anchor: middle; dominant-baseline: middle; }
+      .flow-label { font-family: Arial, sans-serif; font-size: 10px; text-anchor: middle; dominant-baseline: middle; fill: #64748b; }
+      .arrow { stroke: #374151; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .percentage { font-family: Arial, sans-serif; font-size: 9px; fill: #7c3aed; font-weight: bold; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#374151"/>
+    </marker>
+  </defs>
+  
+  <!-- Title -->
+  <text x="600" y="30" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold" fill="#1f2937">TV Chef Map: Complete User Journey Flow</text>
+  
+  <!-- Entry Points -->
+  <rect class="endpoint" x="50" y="60" width="120" height="40"/>
+  <text class="flow-text" x="110" y="80">Search Engine</text>
+  <text class="percentage" x="110" y="95">45%</text>
+  
+  <rect class="endpoint" x="190" y="60" width="120" height="40"/>
+  <text class="flow-text" x="250" y="80">Direct URL</text>
+  <text class="percentage" x="250" y="95">25%</text>
+  
+  <rect class="endpoint" x="330" y="60" width="120" height="40"/>
+  <text class="flow-text" x="390" y="80">Social Referral</text>
+  <text class="percentage" x="390" y="95">30%</text>
+  
+  <!-- Landing Page -->
+  <rect class="flow-box" x="175" y="140" width="150" height="50"/>
+  <text class="flow-text" x="250" y="160">Landing Page</text>
+  <text class="flow-label" x="250" y="175">"Find restaurants by your</text>
+  <text class="flow-label" x="250" y="185">favorite TV chefs"</text>
+  
+  <!-- Search Input -->
+  <rect class="flow-box" x="175" y="230" width="150" height="50"/>
+  <text class="flow-text" x="250" y="250">Natural Language</text>
+  <text class="flow-text" x="250" y="265">Search Input</text>
+  
+  <!-- Browse Alternative -->
+  <rect class="flow-box" x="375" y="230" width="120" height="50"/>
+  <text class="flow-text" x="435" y="250">Browse Mode</text>
+  <text class="flow-label" x="435" y="265">City/Chef/Show</text>
+  
+  <!-- LLM Processing -->
+  <rect class="action-box" x="175" y="320" width="150" height="50"/>
+  <text class="flow-text" x="250" y="335">Query Processing</text>
+  <text class="flow-label" x="250" y="350">Location + Intent + Filters</text>
+  
+  <!-- Results Page -->
+  <rect class="flow-box" x="125" y="410" width="250" height="60"/>
+  <text class="flow-text" x="250" y="430">Search Results</text>
+  <text class="flow-label" x="190" y="450">Map View (Default)</text>
+  <text class="flow-label" x="310" y="450">List View Toggle</text>
+  <text class="flow-label" x="250" y="465">Filter Refinement</text>
+  
+  <!-- Restaurant Selection -->
+  <polygon class="decision-diamond" points="250,500 300,525 250,550 200,525"/>
+  <text class="flow-text" x="250" y="525">Restaurant</text>
+  <text class="flow-text" x="250" y="535">Selection?</text>
+  
+  <!-- Restaurant Detail -->
+  <rect class="flow-box" x="450" y="495" width="200" height="60"/>
+  <text class="flow-text" x="550" y="515">Restaurant Detail Page</text>
+  <text class="flow-label" x="500" y="535">Chef Background</text>
+  <text class="flow-label" x="600" y="535">TV Show History</text>
+  <text class="flow-label" x="500" y="550">Menu & Pricing</text>
+  <text class="flow-label" x="600" y="550">Reservation Info</text>
+  
+  <!-- Action Decision -->
+  <polygon class="decision-diamond" points="550,590 600,615 550,640 500,615"/>
+  <text class="flow-text" x="550" y="615">Take Action?</text>
+  
+  <!-- Action Outcomes -->
+  <rect class="action-box" x="700" y="560" width="120" height="40"/>
+  <text class="flow-text" x="760" y="580">Make Reservation</text>
+  <text class="percentage" x="760" y="595">70%</text>
+  
+  <rect class="action-box" x="700" y="610" width="120" height="40"/>
+  <text class="flow-text" x="760" y="630">Call Restaurant</text>
+  <text class="percentage" x="760" y="645">20%</text>
+  
+  <rect class="action-box" x="700" y="660" width="120" height="40"/>
+  <text class="flow-text" x="760" y="680">Save for Later</text>
+  <text class="percentage" x="760" y="695">10%</text>
+  
+  <!-- Success State -->
+  <rect class="endpoint" x="880" y="600" width="150" height="50"/>
+  <text class="flow-text" x="955" y="620">Success State</text>
+  <text class="flow-label" x="955" y="635">"Great choice! Enjoy"</text>
+  <text class="flow-label" x="955" y="645">your meal!"</text>
+  
+  <!-- Refine Search -->
+  <rect class="flow-box" x="50" y="495" width="120" height="40"/>
+  <text class="flow-text" x="110" y="515">Refine Search</text>
+  <text class="flow-label" x="110" y="530">Add filters/terms</text>
+  
+  <!-- Continue Browsing -->
+  <rect class="flow-box" x="380" y="590" width="120" height="40"/>
+  <text class="flow-text" x="440" y="610">Continue</text>
+  <text class="flow-text" x="440" y="625">Browsing</text>
+  
+  <!-- Flow Arrows -->
+  <!-- Entry to landing -->
+  <line class="arrow" x1="110" y1="100" x2="220" y2="140"/>
+  <line class="arrow" x1="250" y1="100" x2="250" y2="140"/>
+  <line class="arrow" x1="390" y1="100" x2="280" y2="140"/>
+  
+  <!-- Landing to search options -->
+  <line class="arrow" x1="250" y1="190" x2="250" y2="230"/>
+  <line class="arrow" x1="325" y1="165" x2="375" y2="255"/>
+  
+  <!-- Search processing -->
+  <line class="arrow" x1="250" y1="280" x2="250" y2="320"/>
+  <line class="arrow" x1="435" y1="280" x2="250" y2="410"/>
+  
+  <!-- Processing to results -->
+  <line class="arrow" x1="250" y1="370" x2="250" y2="410"/>
+  
+  <!-- Results to selection -->
+  <line class="arrow" x1="250" y1="470" x2="250" y2="500"/>
+  
+  <!-- Selection paths -->
+  <line class="arrow" x1="300" y1="525" x2="450" y2="525"/>
+  <text class="flow-label" x="375" y="520">Select</text>
+  
+  <line class="arrow" x1="200" y1="525" x2="170" y2="515"/>
+  <text class="flow-label" x="135" y="520">Refine</text>
+  
+  <!-- Detail to action -->
+  <line class="arrow" x1="550" y1="555" x2="550" y2="590"/>
+  
+  <!-- Action outcomes -->
+  <line class="arrow" x1="600" y1="605" x2="700" y2="580"/>
+  <line class="arrow" x1="600" y1="615" x2="700" y2="630"/>
+  <line class="arrow" x1="600" y1="625" x2="700" y2="680"/>
+  
+  <!-- Actions to success -->
+  <line class="arrow" x1="820" y1="580" x2="880" y2="615"/>
+  <line class="arrow" x1="820" y1="630" x2="880" y2="625"/>
+  <line class="arrow" x1="820" y1="680" x2="880" y2="635"/>
+  
+  <!-- Continue browsing loop -->
+  <line class="arrow" x1="500" y1="615" x2="440" y2="615"/>
+  <line class="arrow" x1="440" y1="590" x2="520" y2="555"/>
+  
+  <!-- Refine search loop -->
+  <line class="arrow" x1="110" y1="495" x2="180" y2="470"/>
+  
+  <!-- Mobile Context Indicators -->
+  <rect fill="#fef3c7" stroke="#f59e0b" stroke-width="1" x="50" y="720" width="300" height="60" rx="4"/>
+  <text class="flow-text" x="200" y="740" font-weight="bold">Mobile Context Adaptations</text>
+  <text class="flow-label" x="90" y="755">• Location awareness</text>
+  <text class="flow-label" x="200" y="755">• One-handed navigation</text>
+  <text class="flow-label" x="310" y="755">• Quick decisions</text>
+  <text class="flow-label" x="90" y="770">• Offline capability</text>
+  <text class="flow-label" x="200" y="770">• Social sharing</text>
+  <text class="flow-label" x="310" y="770">• Saved favorites</text>
+  
+  <!-- Key Decision Points -->
+  <rect fill="#e0f2fe" stroke="#0284c7" stroke-width="1" x="400" y="720" width="350" height="60" rx="4"/>
+  <text class="flow-text" x="575" y="740" font-weight="bold">Critical Success Factors</text>
+  <text class="flow-label" x="450" y="755">• Search results feel curated & trustworthy</text>
+  <text class="flow-label" x="650" y="755">• Chef stories create connection</text>
+  <text class="flow-label" x="450" y="770">• Price/location info reduces friction</text>
+  <text class="flow-label" x="650" y="770">• Easy path to reservation</text>
+  
+  <!-- Success Metrics -->
+  <rect fill="#dcfce7" stroke="#16a34a" stroke-width="1" x="800" y="720" width="350" height="60" rx="4"/>
+  <text class="flow-text" x="975" y="740" font-weight="bold">Success Metrics</text>
+  <text class="flow-label" x="850" y="755">• 80%+ search-to-detail conversion</text>
+  <text class="flow-label" x="1050" y="755">• 60%+ detail-to-action rate</text>
+  <text class="flow-label" x="850" y="770">• 5min avg discovery time</text>
+  <text class="flow-label" x="1050" y="770">• 40%+ monthly returns</text>
+</svg>

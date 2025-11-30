@@ -1,0 +1,494 @@
+/* TV Chef Map - Dark Luxury Editorial */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@200;300;400;500;600&display=swap');
+@import "tailwindcss";
+
+:root {
+  --background: #0a0a0b;
+  --foreground: #ffffff;
+}
+
+@theme inline {
+  /* Dark Luxury Color Palette */
+  --color-background: #0a0a0b;
+  --color-surface: #151519;
+  --color-surface-elevated: #1c1c23;
+  --color-surface-glass: rgba(255, 255, 255, 0.05);
+  --color-surface-glass-elevated: rgba(255, 255, 255, 0.08);
+  
+  /* Glass Effects */
+  --color-glass-border: rgba(255, 255, 255, 0.1);
+  --color-glass-border-strong: rgba(255, 255, 255, 0.15);
+  --color-glass-shadow: rgba(0, 0, 0, 0.3);
+  
+  /* Accent Colors */
+  --color-accent-gold: #d4af37;
+  --color-accent-amber: #fbbf24;
+  --color-accent-gold-muted: rgba(212, 175, 55, 0.3);
+  
+  /* Text Colors */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.7);
+  --color-text-muted: rgba(255, 255, 255, 0.5);
+  --color-text-subtle: rgba(255, 255, 255, 0.3);
+  
+  /* TV Show Brand Colors - Enhanced */
+  --color-food-network: #ff6b35;
+  --color-bravo: #0066cc;
+  --color-netflix: #e50914;
+  --color-fox: #004080;
+  --color-discovery: #00d4aa;
+  
+  /* Typography System */
+  --font-heading: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Monaco', monospace;
+  
+  /* Typography Scale */
+  --text-hero: 3.5rem; /* 56px */
+  --text-hero-line: 4rem; /* 64px */
+  --text-section: 2rem; /* 32px */
+  --text-section-line: 2.5rem; /* 40px */
+  --text-title: 1.5rem; /* 24px */
+  --text-title-line: 2rem; /* 32px */
+  --text-body: 1rem; /* 16px */
+  --text-body-line: 1.75rem; /* 28px */
+  --text-small: 0.875rem; /* 14px */
+  --text-small-line: 1.25rem; /* 20px */
+  --text-micro: 0.75rem; /* 12px */
+  --text-micro-line: 1rem; /* 16px */
+  
+  /* Spacing System */
+  --spacing-0: 0;
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-10: 2.5rem;
+  --spacing-12: 3rem;
+  --spacing-16: 4rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
+  --spacing-32: 8rem;
+  
+  /* Glass Effects Properties */
+  --glass-blur: 20px;
+  --glass-blur-strong: 40px;
+  --glass-border-radius: 16px;
+  --glass-border-radius-small: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--text-body-line);
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Atmospheric Background */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(212, 175, 55, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(102, 102, 255, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(255, 107, 53, 0.02) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ============================================================================
+   GLASSMORPHIC NAVIGATION
+============================================================================ */
+.nav-bar {
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(var(--glass-blur));
+  border-bottom: 1px solid var(--color-glass-border);
+  padding: var(--spacing-4) 0;
+  position: sticky;
+  top: 0;
+  z-index: 2000;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.nav-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, var(--color-surface-glass) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.nav-logo {
+  font-family: var(--font-heading);
+  font-size: var(--text-title);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+/* ============================================================================
+   PREMIUM SEARCH & FILTERS
+============================================================================ */
+.search-input {
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--color-glass-border);
+  border-radius: var(--glass-border-radius-small);
+  padding: var(--spacing-3) var(--spacing-4);
+  font-size: var(--text-body);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-weight: 300;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  box-shadow: 
+    0 4px 6px -1px var(--color-glass-shadow),
+    0 2px 4px -1px rgba(0, 0, 0, 0.1);
+}
+
+.search-input::placeholder {
+  color: var(--color-text-muted);
+  font-weight: 300;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-accent-gold);
+  background: var(--color-surface-glass-elevated);
+  box-shadow: 
+    0 0 0 2px var(--color-accent-gold-muted),
+    0 8px 25px -5px var(--color-glass-shadow);
+  transform: translateY(-1px);
+}
+
+.filter-pill {
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--color-glass-border);
+  border-radius: 2rem;
+  padding: var(--spacing-2) var(--spacing-4);
+  font-size: var(--text-small);
+  font-family: var(--font-body);
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  box-shadow: 0 2px 4px -1px var(--color-glass-shadow);
+}
+
+.filter-pill:hover,
+.filter-pill.active {
+  background: var(--color-accent-gold);
+  color: var(--color-background);
+  border-color: var(--color-accent-gold);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 4px 12px -2px var(--color-accent-gold-muted),
+    0 8px 25px -5px var(--color-glass-shadow);
+}
+
+/* ============================================================================
+   MAP CONTAINER & SIDEBAR
+============================================================================ */
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 80vh;
+  min-height: 600px;
+  background: var(--color-surface);
+  border-radius: var(--glass-border-radius);
+  overflow: hidden;
+  margin: var(--spacing-6) 0;
+  box-shadow: 
+    0 20px 25px -5px var(--color-glass-shadow),
+    0 10px 10px -5px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 380px;
+  height: 100%;
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(var(--glass-blur-strong));
+  border-right: 1px solid var(--color-glass-border);
+  z-index: 1000;
+  overflow-y: auto;
+  box-shadow: 
+    4px 0 15px -3px var(--color-glass-shadow),
+    0 4px 6px -2px rgba(0, 0, 0, 0.1);
+}
+
+/* Custom scrollbar for sidebar */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--color-glass-border);
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-glass-border-strong);
+}
+
+/* ============================================================================
+   PREMIUM RESTAURANT CARDS
+============================================================================ */
+.restaurant-card {
+  padding: var(--spacing-5);
+  border-bottom: 1px solid var(--color-glass-border);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.restaurant-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-surface-glass-elevated);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.restaurant-card:hover::before {
+  opacity: 1;
+}
+
+.restaurant-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 25px -5px var(--color-glass-shadow),
+    0 0 0 1px var(--color-glass-border-strong);
+}
+
+.restaurant-card-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-title);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-2);
+  line-height: var(--text-title-line);
+}
+
+.restaurant-card-chef {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-2);
+}
+
+.restaurant-card-location {
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  font-weight: 300;
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-3);
+}
+
+/* ============================================================================
+   SHOW BADGES & PRICE INDICATORS
+============================================================================ */
+.show-badge {
+  display: inline-block;
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: 1rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.show-badge.top-chef {
+  background: linear-gradient(135deg, var(--color-bravo) 0%, rgba(0, 102, 204, 0.8) 100%);
+  color: var(--color-text-primary);
+  border-color: rgba(0, 102, 204, 0.3);
+}
+
+.show-badge.iron-chef {
+  background: linear-gradient(135deg, var(--color-netflix) 0%, rgba(229, 9, 20, 0.8) 100%);
+  color: var(--color-text-primary);
+  border-color: rgba(229, 9, 20, 0.3);
+}
+
+.show-badge.hells-kitchen {
+  background: linear-gradient(135deg, var(--color-fox) 0%, rgba(0, 64, 128, 0.8) 100%);
+  color: var(--color-text-primary);
+  border-color: rgba(0, 64, 128, 0.3);
+}
+
+.show-badge.default {
+  background: var(--color-surface-glass);
+  color: var(--color-text-secondary);
+  border-color: var(--color-glass-border);
+}
+
+.price-indicator {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--color-accent-gold);
+  font-size: var(--text-body);
+}
+
+/* ============================================================================
+   CITY SECTIONS
+============================================================================ */
+.city-section {
+  padding: var(--spacing-16) 0;
+  position: relative;
+}
+
+.city-section h2 {
+  font-family: var(--font-heading);
+  font-size: var(--text-section);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-8);
+  line-height: var(--text-section-line);
+}
+
+.city-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--spacing-6);
+}
+
+.city-card {
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--color-glass-border);
+  border-radius: var(--glass-border-radius);
+  padding: var(--spacing-6);
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  box-shadow: 
+    0 4px 6px -1px var(--color-glass-shadow),
+    0 2px 4px -1px rgba(0, 0, 0, 0.1);
+}
+
+.city-card:hover {
+  transform: translateY(-4px);
+  background: var(--color-surface-glass-elevated);
+  box-shadow: 
+    0 20px 25px -5px var(--color-glass-shadow),
+    0 0 0 1px var(--color-glass-border-strong);
+}
+
+/* ============================================================================
+   ANIMATIONS
+============================================================================ */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.fade-in {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-glass-border) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ============================================================================
+   MOBILE RESPONSIVENESS
+============================================================================ */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: 45vh;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid var(--color-glass-border);
+    border-radius: var(--glass-border-radius) var(--glass-border-radius) 0 0;
+  }
+  
+  .map-container {
+    height: 60vh;
+    margin: var(--spacing-4) 0;
+  }
+  
+  .city-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-4);
+  }
+  
+  .nav-bar .max-w-7xl {
+    padding: 0 var(--spacing-4);
+  }
+  
+  .search-input {
+    width: 100%;
+    margin-bottom: var(--spacing-2);
+  }
+  
+  .filter-pill {
+    font-size: var(--text-micro);
+    padding: var(--spacing-2) var(--spacing-3);
+  }
+}

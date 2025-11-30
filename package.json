@@ -1,0 +1,45 @@
+{
+  "name": "tv-chef-map",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "db:setup": "tsx scripts/setup-database.ts",
+    "db:create": "tsx scripts/create-tables.ts",
+    "db:test": "tsx scripts/test-connection.ts",
+    "data:extract": "tsx scripts/extract-topchef-data.ts",
+    "data:import": "tsx scripts/import-topchef-data.ts",
+    "data:pipeline": "npm run data:extract && npm run data:import",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@headlessui/react": "^2.2.9",
+    "@supabase/supabase-js": "^2.86.0",
+    "clsx": "^2.1.1",
+    "dotenv": "^17.2.3",
+    "leaflet": "^1.9.4",
+    "next": "16.0.5",
+    "openai": "^6.9.1",
+    "playwright": "^1.57.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-leaflet": "^5.0.0",
+    "tailwind-merge": "^3.4.0",
+    "tsx": "^4.20.6",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/leaflet": "^1.9.21",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.5",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
