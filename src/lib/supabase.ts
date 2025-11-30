@@ -110,7 +110,10 @@ export const db = {
       .from('restaurants')
       .select(`
         *,
-        chef:chefs(*)
+        chef:chefs(
+          *,
+          primary_show:shows!primary_show_id(*)
+        )
       `)
       .eq('is_public', true)
       .order('name');
