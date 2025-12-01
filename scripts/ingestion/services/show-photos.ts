@@ -16,36 +16,18 @@ export function createShowPhotoService(config: ShowPhotoConfig = {}) {
 
   async function getTopChefPhoto(chefName: string, season?: string): Promise<ShowPhotoResult | null> {
     try {
-      const seasonNum = season ? extractSeasonNumber(season) : null;
+      const slug = chefNameToSlug(chefName);
+      const peopleUrl = `https://www.bravotv.com/people/${slug}`;
+      const html = await fetchPage(peopleUrl);
       
-      if (seasonNum) {
-        const url = `https://www.bravotv.com/top-chef/season-${seasonNum}/photos`;
-        const html = await fetchPage(url);
-        
-        if (html) {
-          const photoUrl = findChefPhotoInHTML(html, chefName);
-          if (photoUrl) {
-            return {
-              url: photoUrl,
-              source: 'show_website',
-              show: 'Top Chef',
-              confidence: 0.95,
-            };
-          }
-        }
-      }
-      
-      const castUrl = 'https://www.bravotv.com/top-chef/cast';
-      const castHtml = await fetchPage(castUrl);
-      
-      if (castHtml) {
-        const photoUrl = findChefPhotoInHTML(castHtml, chefName);
+      if (html) {
+        const photoUrl = extractBravoPersonPhoto(html);
         if (photoUrl) {
           return {
             url: photoUrl,
             source: 'show_website',
             show: 'Top Chef',
-            confidence: 0.9,
+            confidence: 0.95,
           };
         }
       }
@@ -114,59 +96,23 @@ export function createShowPhotoService(config: ShowPhotoConfig = {}) {
     }
   }
 
-  function findChefPhotoInHTML(html: string, chefName: string): string | null {
-    const nameLower = chefName.toLowerCase();
-    const nameWords = nameLower.split(/\s+/);
-    
-    const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
-    const matches = html.matchAll(imgRegex);
-    
-    for (const match of matches) {
-      const fullTag = match[0];
-      const src = match[1];
-      
-      const altMatch = fullTag.match(/alt=["']([^"']+)["']/i);
-      const titleMatch = fullTag.match(/title=["']([^"']+)["']/i);
-      
-      const altText = altMatch ? altMatch[1].toLowerCase() : '';
-      const titleText = titleMatch ? titleMatch[1].toLowerCase() : '';
-      const combinedText = `${altText} ${titleText} ${src.toLowerCase()}`;
-      
-      const matchesAllWords = nameWords.every(word => 
-        word.length > 2 && combinedText.includes(word)
-      );
-      
-      if (matchesAllWords && isLikelyPhotoUrl(src)) {
-        return makeAbsoluteUrl(src, match.input || '');
-      }
+  function extractBravoPersonPhoto(html: string): string | null {
+    const ogImageMatch = html.match(/<meta property="og:image" content="([^"]+)"/);
+    if (ogImageMatch) {
+      return ogImageMatch[1];
     }
-    
     return null;
   }
 
-  function isLikelyPhotoUrl(url: string): boolean {
-    const lower = url.toLowerCase();
-    
-    if (lower.includes('logo') || lower.includes('icon') || lower.includes('banner')) {
-      return false;
-    }
-    
-    const photoExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
-    return photoExtensions.some(ext => lower.includes(ext));
+  function chefNameToSlug(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
   }
 
-  function makeAbsoluteUrl(url: string, baseUrl: string): string {
-    try {
-      return new URL(url, baseUrl).toString();
-    } catch {
-      return url;
-    }
-  }
-
-  function extractSeasonNumber(season: string): number | null {
-    const match = season.match(/\d+/);
-    return match ? parseInt(match[0], 10) : null;
-  }
 
   return {
     getShowPhoto,
