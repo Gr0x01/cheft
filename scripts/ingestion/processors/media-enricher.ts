@@ -64,7 +64,8 @@ export function createMediaEnricher(
 
   async function enrichChefImage(
     chefId: string,
-    chefName: string
+    chefName: string,
+    validationKeywords?: string[]
   ): Promise<ChefImageEnrichmentResult> {
     stats.chefsProcessed++;
 
@@ -72,7 +73,7 @@ export function createMediaEnricher(
       let photoUrl: string | null = null;
       let photoSource: 'wikipedia' | null = null;
 
-      const wikipediaResult = await wikipediaService.getChefWikipediaImage(chefName);
+      const wikipediaResult = await wikipediaService.getChefWikipediaImage(chefName, validationKeywords);
       if (wikipediaResult) {
         photoUrl = wikipediaResult.url;
         photoSource = 'wikipedia';
@@ -273,13 +274,24 @@ export function createMediaEnricher(
     const limit = options.limit ?? 50;
     const delayMs = options.delayMs ?? 500;
 
+    type ChefWithContext = {
+      id: string;
+      name: string;
+      chef_shows: Array<{ shows: { name: string } | null }>;
+      restaurants: Array<{ name: string }>;
+    };
+
     const result = await supabase
       .from('chefs')
-      .select('id, name')
+      .select(`
+        id, name,
+        chef_shows(shows(name)),
+        restaurants(name)
+      `)
       .is('photo_url', null)
       .limit(limit);
     
-    const chefs = result.data as { id: string; name: string }[] | null;
+    const chefs = result.data as ChefWithContext[] | null;
     const error = result.error;
 
     if (error) {
@@ -293,7 +305,16 @@ export function createMediaEnricher(
     const results: ChefImageEnrichmentResult[] = [];
 
     for (const chef of chefs) {
-      const result = await enrichChefImage(chef.id, chef.name);
+      const keywords: string[] = [];
+      
+      for (const cs of chef.chef_shows || []) {
+        if (cs.shows?.name) keywords.push(cs.shows.name);
+      }
+      for (const r of chef.restaurants || []) {
+        if (r.name) keywords.push(r.name);
+      }
+
+      const result = await enrichChefImage(chef.id, chef.name, keywords);
       results.push(result);
 
       if (delayMs > 0) {

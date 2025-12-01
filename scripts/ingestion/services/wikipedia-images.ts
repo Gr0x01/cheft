@@ -41,8 +41,11 @@ export function createWikipediaImageService(config: WikipediaImageConfig = {}) {
     });
   }
 
-  async function getChefWikipediaImage(chefName: string): Promise<WikipediaImageResult | null> {
-    const pageResult = await getWikipediaPageWithValidation(chefName);
+  async function getChefWikipediaImage(
+    chefName: string,
+    validationKeywords?: string[]
+  ): Promise<WikipediaImageResult | null> {
+    const pageResult = await getWikipediaPageWithValidation(chefName, validationKeywords);
     if (pageResult) {
       return pageResult;
     }
@@ -50,7 +53,10 @@ export function createWikipediaImageService(config: WikipediaImageConfig = {}) {
     return null;
   }
 
-  async function getWikipediaPageWithValidation(chefName: string): Promise<WikipediaImageResult | null> {
+  async function getWikipediaPageWithValidation(
+    chefName: string,
+    validationKeywords?: string[]
+  ): Promise<WikipediaImageResult | null> {
     try {
       const searchResult = await fetchApi(WIKIMEDIA_API_BASE, {
         action: 'query',
@@ -86,7 +92,7 @@ export function createWikipediaImageService(config: WikipediaImageConfig = {}) {
       const page = Object.values(pages)[0];
       if (!page || !page.pageid || page.missing || !page.original) return null;
 
-      if (!isChefRelatedPage(page.categories, page.extract, chefName)) {
+      if (!isChefRelatedPage(page.categories, page.extract, chefName, validationKeywords)) {
         console.log(`[wikipedia-images] Skipping "${chefName}": page exists but not chef-related`);
         return null;
       }
@@ -280,35 +286,23 @@ function isLikelyPersonPhoto(title: string, width: number, height: number): bool
 function isChefRelatedPage(
   categories: Array<{ title: string }> | undefined,
   extract: string | undefined,
-  chefName: string
+  chefName: string,
+  validationKeywords?: string[]
 ): boolean {
-  const chefKeywords = [
-    'chef', 'cook', 'restaurateur', 'culinary', 'cuisine',
-    'top chef', 'iron chef', 'food network', 'bravo',
-    'james beard', 'michelin', 'restaurant'
-  ];
+  const lowerExtract = extract?.toLowerCase() || '';
+  const categoryText = categories?.map(c => c.title.toLowerCase()).join(' ') || '';
+  const combinedText = `${lowerExtract} ${categoryText}`;
 
-  if (categories && categories.length > 0) {
-    const categoryText = categories.map(c => c.title.toLowerCase()).join(' ');
-    if (chefKeywords.some(kw => categoryText.includes(kw))) {
-      return true;
-    }
-    if (categoryText.includes('american chef') || 
-        categoryText.includes('reality cooking') ||
-        categoryText.includes('contestants')) {
-      return true;
+  if (validationKeywords && validationKeywords.length > 0) {
+    for (const keyword of validationKeywords) {
+      if (keyword.length > 2 && combinedText.includes(keyword.toLowerCase())) {
+        return true;
+      }
     }
   }
 
-  if (extract) {
-    const lowerExtract = extract.toLowerCase();
-    const keywordMatches = chefKeywords.filter(kw => lowerExtract.includes(kw));
-    if (keywordMatches.length >= 2) {
-      return true;
-    }
-    if (lowerExtract.includes('chef') && lowerExtract.includes('restaurant')) {
-      return true;
-    }
+  if (combinedText.includes('chef') || combinedText.includes('restaurateur') || combinedText.includes('culinary')) {
+    return true;
   }
 
   return false;
