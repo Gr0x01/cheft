@@ -27,6 +27,7 @@ interface OrchestratorOptions {
   enrich: boolean;
   filter: boolean;
   dryRun: boolean;
+  limit: number;
 }
 
 interface PipelineReport {
@@ -62,12 +63,18 @@ interface PipelineReport {
 
 function parseArgs(): OrchestratorOptions {
   const args = process.argv.slice(2);
+  const limitIndex = args.indexOf('--limit');
+  const limit = limitIndex !== -1 && args[limitIndex + 1]
+    ? parseInt(args[limitIndex + 1], 10)
+    : 10;
+  
   return {
     discovery: args.includes('--discovery'),
     statusCheck: args.includes('--status-check'),
     enrich: args.includes('--enrich'),
     filter: args.includes('--filter'),
-    dryRun: args.includes('--dry-run')
+    dryRun: args.includes('--dry-run'),
+    limit: isNaN(limit) ? 10 : limit,
   };
 }
 
@@ -398,10 +405,12 @@ async function runStatusCheckPipeline(
 async function runEnrichmentPipeline(
   supabase: SupabaseClient<Database>,
   dryRun: boolean,
-  llmStats: LLMStats
+  llmStats: LLMStats,
+  limit: number
 ): Promise<PipelineReport['enrichmentResults']> {
   console.log(`\n🎨 Enrichment Pipeline`);
   console.log(`   Mode: ${dryRun ? 'DRY RUN' : 'LIVE'}`);
+  console.log(`   Limit: ${limit} items per type`);
   
   const mediaEnricher = createMediaEnricher(supabase, {
     googlePlacesApiKey: process.env.GOOGLE_PLACES_API_KEY,
@@ -419,7 +428,7 @@ async function runEnrichmentPipeline(
   try {
     console.log(`\n   📸 Enriching chef photos...`);
     if (!dryRun) {
-      const chefResults = await mediaEnricher.enrichAllChefsWithoutPhotos({ limit: 20, delayMs: 500 });
+      const chefResults = await mediaEnricher.enrichAllChefsWithoutPhotos({ limit, delayMs: 500 });
       chefsProcessed = chefResults.length;
       chefsWithPhotos = chefResults.filter(r => r.photoUrl).length;
       console.log(`     Processed ${chefsProcessed} chefs, found photos for ${chefsWithPhotos}`);
@@ -428,14 +437,14 @@ async function runEnrichmentPipeline(
         .from('chefs')
         .select('*', { count: 'exact', head: true })
         .is('photo_url', null);
-      console.log(`     [DRY RUN] Would process up to 20 of ${count || 0} chefs without photos`);
+      console.log(`     [DRY RUN] Would process up to ${limit} of ${count || 0} chefs without photos`);
     }
 
     if (process.env.GOOGLE_PLACES_API_KEY) {
       console.log(`\n   🗺️  Enriching restaurant Google Places data...`);
       if (!dryRun) {
         const restaurantResults = await mediaEnricher.enrichAllRestaurantsWithoutPlaceId({ 
-          limit: 30, 
+          limit, 
           delayMs: 200,
           minConfidence: 0.7 
         });
@@ -448,7 +457,7 @@ async function runEnrichmentPipeline(
           .select('*', { count: 'exact', head: true })
           .is('google_place_id', null)
           .eq('status', 'open');
-        console.log(`     [DRY RUN] Would process up to 30 of ${count || 0} restaurants without Place ID`);
+        console.log(`     [DRY RUN] Would process up to ${limit} of ${count || 0} restaurants without Place ID`);
       }
     } else {
       console.log(`\n   ⚠️  GOOGLE_PLACES_API_KEY not set, skipping restaurant enrichment`);
@@ -520,6 +529,7 @@ async function main() {
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --discovery --filter');
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --status-check');
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --enrich');
+    console.log('  npx tsx scripts/ingestion/orchestrator.ts --enrich --limit 10');
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --discovery --dry-run');
     process.exit(1);
   }
@@ -567,7 +577,7 @@ async function main() {
     }
 
     if (options.enrich) {
-      report.enrichmentResults = await runEnrichmentPipeline(supabase, options.dryRun, llmStats);
+      report.enrichmentResults = await runEnrichmentPipeline(supabase, options.dryRun, llmStats, options.limit);
       if (llmStats.totalCalls > 0 || llmStats.totalTokens > 0) {
         report.llmStats = llmStats;
       }
