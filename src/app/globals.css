@@ -48,6 +48,9 @@
 
 html, body {
   height: 100%;
+}
+
+.map-layout {
   overflow: hidden;
 }
 

@@ -75,7 +75,7 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="app-container">
+      <div className="app-container map-layout">
         <div className="loading-screen">
           <div className="loading-spinner"></div>
           <p>Loading restaurants...</p>
@@ -86,7 +86,7 @@ export default function Home() {
 
   if (error) {
     return (
-      <div className="app-container">
+      <div className="app-container map-layout">
         <div className="error-screen">
           <p className="error-message">{error}</p>
           <button onClick={() => window.location.reload()} className="retry-button">
@@ -98,7 +98,7 @@ export default function Home() {
   }
 
   return (
-    <div className="app-container">
+    <div className="app-container map-layout">
       <header className="app-header">
         <div className="header-inner">
           <div className="logo">
