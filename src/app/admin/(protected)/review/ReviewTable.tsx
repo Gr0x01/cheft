@@ -96,20 +96,20 @@ export function ReviewTable({ items }: ReviewTableProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="admin-table-header">
+          <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
-              <th className="px-6 py-4 text-left font-ui text-xs font-semibold uppercase tracking-wider">Type</th>
-              <th className="px-6 py-4 text-left font-ui text-xs font-semibold uppercase tracking-wider">Data Summary</th>
-              <th className="px-6 py-4 text-left font-ui text-xs font-semibold uppercase tracking-wider">Source</th>
-              <th className="px-6 py-4 text-left font-ui text-xs font-semibold uppercase tracking-wider">Confidence</th>
-              <th className="px-6 py-4 text-left font-ui text-xs font-semibold uppercase tracking-wider">Created</th>
-              <th className="px-6 py-4 text-right font-ui text-xs font-semibold uppercase tracking-wider">Editorial Actions</th>
+              <th className="px-6 py-4 text-left font-ui text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
+              <th className="px-6 py-4 text-left font-ui text-xs font-medium text-slate-500 uppercase tracking-wider">Data Summary</th>
+              <th className="px-6 py-4 text-left font-ui text-xs font-medium text-slate-500 uppercase tracking-wider">Source</th>
+              <th className="px-6 py-4 text-left font-ui text-xs font-medium text-slate-500 uppercase tracking-wider">Confidence</th>
+              <th className="px-6 py-4 text-left font-ui text-xs font-medium text-slate-500 uppercase tracking-wider">Created</th>
+              <th className="px-6 py-4 text-right font-ui text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200">
+          <tbody className="divide-y divide-slate-100">
             {items.map((item) => {
               const typeStyles = getTypeStyles(item.type);
               const Icon = typeIcons[item.type] || RefreshCw;
@@ -127,12 +127,11 @@ export function ReviewTable({ items }: ReviewTableProps) {
                 >
                   <td className="px-6 py-4">
                     <span className={clsx(
-                      'inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border',
+                      'inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-full',
                       typeStyles.bg,
-                      typeStyles.text,
-                      typeStyles.border
+                      typeStyles.text
                     )}>
-                      <Icon className="w-4 h-4" />
+                      <Icon className="w-3.5 h-3.5" />
                       {item.type.replace('_', ' ')}
                     </span>
                   </td>
@@ -177,16 +176,16 @@ export function ReviewTable({ items }: ReviewTableProps) {
                         onClick={() => handleAction(item.id, 'approve')}
                         disabled={isProcessing}
                         className={clsx(
-                          'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all font-ui',
-                          'bg-emerald-100 text-emerald-700 border border-emerald-200',
-                          'hover:bg-emerald-200 hover:border-emerald-300',
+                          'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all font-ui',
+                          'bg-emerald-500 text-white',
+                          'hover:bg-emerald-600',
                           'disabled:opacity-50 disabled:cursor-not-allowed'
                         )}
                       >
                         {isProcessing ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         ) : (
-                          <Check className="w-4 h-4" />
+                          <Check className="w-3.5 h-3.5" />
                         )}
                         Approve
                       </button>
@@ -194,16 +193,16 @@ export function ReviewTable({ items }: ReviewTableProps) {
                         onClick={() => handleAction(item.id, 'reject')}
                         disabled={isProcessing}
                         className={clsx(
-                          'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all font-ui',
-                          'bg-red-100 text-red-700 border border-red-200',
-                          'hover:bg-red-200 hover:border-red-300',
+                          'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all font-ui',
+                          'bg-slate-100 text-slate-600 border border-slate-200',
+                          'hover:bg-slate-200',
                           'disabled:opacity-50 disabled:cursor-not-allowed'
                         )}
                       >
                         {isProcessing ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         ) : (
-                          <X className="w-4 h-4" />
+                          <X className="w-3.5 h-3.5" />
                         )}
                         Reject
                       </button>

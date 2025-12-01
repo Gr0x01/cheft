@@ -11,7 +11,7 @@ import {
   Hand,
   Clock,
   FileQuestion,
-  Timeline
+  History
 } from 'lucide-react';
 
 type DataChangeRow = Tables<'data_changes'>;
@@ -105,144 +105,117 @@ export default async function ActivityLogPage() {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Editorial Header */}
-      <div className="border-l-4 border-copper-500 pl-6 bg-white p-6 rounded-r-lg shadow-sm">
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80 p-8">
         <h1 className="font-display text-3xl font-bold text-slate-900 mb-2">Activity Timeline</h1>
-        <p className="font-ui text-slate-600 text-lg">Complete audit trail of all data pipeline operations</p>
+        <p className="font-ui text-slate-500">Complete audit trail of all data pipeline operations</p>
       </div>
 
       {changes && changes.length > 0 ? (
-        <div className="space-y-12">
+        <div className="space-y-8">
           {Object.entries(groupedChanges).map(([dateStr, dayChanges]) => (
             <div key={dateStr}>
-              {/* Date Header */}
-              <div className="flex items-center gap-6 mb-8">
-                <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-lg shadow-sm border border-slate-200">
-                  <Timeline className="w-5 h-5 text-copper-600" />
-                  <span className="font-display text-lg font-semibold text-slate-900">{formatGroupDate(dateStr)}</span>
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-full">
+                  <History className="w-4 h-4" />
+                  <span className="font-ui text-sm font-medium">{formatGroupDate(dateStr)}</span>
                 </div>
                 <div className="flex-1 h-px bg-slate-200" />
-                <span className="font-ui text-sm text-slate-500">{dayChanges.length} changes</span>
+                <span className="font-mono text-xs text-slate-400">{dayChanges.length} changes</span>
               </div>
 
-              {/* Timeline Items */}
-              <div className="relative">
-                {/* Timeline Line */}
-                <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-slate-200" />
-                
-                <div className="space-y-8">
-                  {dayChanges.map((change, index) => {
-                    const typeConfig = changeTypeConfig[change.change_type] || { 
-                      icon: FileQuestion, 
-                      label: change.change_type,
-                      styles: { bg: 'bg-slate-100', text: 'text-slate-800', border: 'border-slate-200' }
-                    };
-                    const srcConfig = sourceConfig[change.source] || { 
-                      icon: Database, 
-                      label: change.source.replace('_', ' '), 
-                      color: 'text-slate-600' 
-                    };
-                    const TypeIcon = typeConfig.icon;
-                    const SourceIcon = srcConfig.icon;
-                    const dataSummary = getDataSummary(change.new_data || change.old_data);
+              <div className="space-y-3">
+                {dayChanges.map((change) => {
+                  const typeConfig = changeTypeConfig[change.change_type] || { 
+                    icon: FileQuestion, 
+                    label: change.change_type,
+                    styles: { bg: 'bg-slate-100', text: 'text-slate-800', border: 'border-slate-200' }
+                  };
+                  const srcConfig = sourceConfig[change.source] || { 
+                    icon: Database, 
+                    label: change.source.replace('_', ' '), 
+                    color: 'text-slate-600' 
+                  };
+                  const TypeIcon = typeConfig.icon;
+                  const SourceIcon = srcConfig.icon;
+                  const dataSummary = getDataSummary(change.new_data || change.old_data);
 
-                    return (
-                      <div key={change.id} className="relative flex gap-6">
-                        {/* Timeline Dot */}
-                        <div className="relative flex-shrink-0">
-                          <div className={clsx(
-                            'w-16 h-16 rounded-full border-4 border-white shadow-md flex items-center justify-center',
-                            typeConfig.styles.bg
-                          )}>
-                            <TypeIcon className={clsx('w-6 h-6', typeConfig.styles.text)} />
-                          </div>
-                          {/* Connection Line to Next Item */}
-                          {index < dayChanges.length - 1 && (
-                            <div className="absolute top-16 left-1/2 transform -translate-x-px w-0.5 h-8 bg-slate-200" />
-                          )}
+                  return (
+                    <div key={change.id} className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80 p-5 hover:shadow-xl transition-shadow">
+                      <div className="flex items-start gap-4">
+                        <div className={clsx(
+                          'p-3 rounded-xl flex-shrink-0',
+                          typeConfig.styles.bg
+                        )}>
+                          <TypeIcon className={clsx('w-5 h-5', typeConfig.styles.text)} />
                         </div>
 
-                        {/* Content */}
-                        <div className="flex-1 bg-white p-6 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex-1">
-                              <h3 className="font-display text-xl font-semibold text-slate-900 mb-1">
-                                {typeConfig.label} in <span className="text-copper-600 font-mono">{change.table_name}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-4 mb-2">
+                            <div>
+                              <h3 className="font-ui text-base font-semibold text-slate-900">
+                                {typeConfig.label} in <span className="font-mono text-slate-600">{change.table_name}</span>
                               </h3>
-                              <p className={clsx(
-                                'font-medium text-lg mb-3',
-                                dataSummary.toLowerCase().includes('chef') ? 'admin-chef-name' : 'font-ui text-slate-700'
-                              )}>
+                              <p className="font-display text-lg text-slate-700">
                                 {dataSummary}
                               </p>
                             </div>
-                            <span className="font-ui text-sm text-slate-500 whitespace-nowrap">
+                            <span className="font-mono text-xs text-slate-400 whitespace-nowrap">
                               {formatRelativeTime(change.created_at)}
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-6">
-                            {/* Source */}
-                            <div className="flex items-center gap-2">
-                              <SourceIcon className={clsx('w-4 h-4', srcConfig.color)} />
-                              <span className={clsx('font-ui text-sm font-medium', srcConfig.color)}>
+                          <div className="flex items-center gap-4 flex-wrap">
+                            <div className="flex items-center gap-1.5">
+                              <SourceIcon className={clsx('w-3.5 h-3.5', srcConfig.color)} />
+                              <span className={clsx('font-ui text-xs font-medium', srcConfig.color)}>
                                 {srcConfig.label}
                               </span>
                             </div>
                             
-                            {/* Confidence */}
                             {change.confidence !== null && (
-                              <div className="flex items-center gap-3">
-                                <span className="font-ui text-sm text-slate-500">Confidence:</span>
-                                <div className="flex items-center gap-2">
-                                  <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
-                                    <div 
-                                      className={clsx('h-full rounded-full',
-                                        change.confidence >= 0.8 ? 'bg-emerald-500' :
-                                        change.confidence >= 0.5 ? 'bg-amber-500' : 'bg-red-500'
-                                      )}
-                                      style={{ width: `${change.confidence * 100}%` }}
-                                    />
-                                  </div>
-                                  <span className={clsx(
-                                    'admin-data-metric text-sm',
-                                    change.confidence >= 0.8 ? 'text-emerald-700' :
-                                    change.confidence >= 0.5 ? 'text-amber-700' : 'text-red-700'
-                                  )}>
-                                    {(change.confidence * 100).toFixed(0)}%
-                                  </span>
+                              <div className="flex items-center gap-2">
+                                <div className="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                  <div 
+                                    className={clsx('h-full rounded-full',
+                                      change.confidence >= 0.8 ? 'bg-emerald-500' :
+                                      change.confidence >= 0.5 ? 'bg-amber-500' : 'bg-red-500'
+                                    )}
+                                    style={{ width: `${change.confidence * 100}%` }}
+                                  />
                                 </div>
+                                <span className="font-mono text-xs text-slate-500">
+                                  {(change.confidence * 100).toFixed(0)}%
+                                </span>
                               </div>
                             )}
 
-                            {/* Timestamp */}
-                            <div className="flex items-center gap-2">
-                              <Clock className="w-4 h-4 text-slate-400" />
-                              <span className="font-ui text-sm text-slate-500">
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-slate-400" />
+                              <span className="font-mono text-xs text-slate-400">
                                 {formatDate(change.created_at)}
                               </span>
                             </div>
                           </div>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="bg-white p-16 rounded-lg shadow-sm border border-slate-200 text-center">
+        <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80 p-12 text-center">
           <div className="flex justify-center mb-6">
-            <div className="p-8 bg-slate-100 rounded-full">
-              <Clock className="w-12 h-12 text-slate-400" />
+            <div className="p-5 bg-slate-50 rounded-full">
+              <Clock className="w-8 h-8 text-slate-400" />
             </div>
           </div>
-          <h3 className="font-display text-2xl font-semibold text-slate-900 mb-3">No Activity Yet</h3>
-          <p className="font-ui text-slate-600 max-w-md mx-auto">
-            Data changes and pipeline operations will appear here as they occur. The editorial team can track all system activity through this timeline.
+          <h3 className="font-display text-2xl font-semibold text-slate-900 mb-2">No Activity Yet</h3>
+          <p className="font-ui text-slate-500 max-w-md mx-auto">
+            Data changes and pipeline operations will appear here as they occur.
           </p>
         </div>
       )}

@@ -69,15 +69,13 @@ export default async function ReviewQueuePage() {
   const total = stats.pending + stats.approved + stats.rejected;
 
   return (
-    <div className="space-y-8">
-      {/* Editorial Header */}
-      <div className="border-l-4 border-copper-500 pl-6 bg-white p-6 rounded-r-lg shadow-sm">
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80 p-8">
         <h1 className="font-display text-3xl font-bold text-slate-900 mb-2">Review Queue</h1>
-        <p className="font-ui text-slate-600 text-lg">Editorial oversight for the culinary data pipeline</p>
+        <p className="font-ui text-slate-500">Editorial oversight for the culinary data pipeline</p>
       </div>
 
-      {/* Stat Cards - Industrial Editorial Style */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
           label="Pending Review" 
           value={stats.pending} 
@@ -105,23 +103,22 @@ export default async function ReviewQueuePage() {
         />
       </div>
 
-      {/* Type Breakdown */}
       {stats.pending > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-          <h3 className="font-display text-lg font-semibold text-slate-900 mb-4">Pending by Type</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80 p-6">
+          <h3 className="font-ui text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Pending by Type</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {Object.entries(stats.byType).map(([type, count]) => {
               if (count === 0) return null;
               const Icon = typeIcons[type] || Clock;
               return (
                 <div 
                   key={type} 
-                  className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200"
+                  className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100"
                 >
-                  <Icon className="w-5 h-5 text-copper-600" />
+                  <Icon className="w-5 h-5 text-slate-600" />
                   <div>
-                    <div className="font-ui text-sm font-medium text-slate-700">{typeLabels[type] || type}</div>
-                    <div className="font-mono text-lg font-bold text-slate-900">{count}</div>
+                    <div className="font-ui text-sm text-slate-600">{typeLabels[type] || type}</div>
+                    <div className="font-mono text-xl font-bold text-slate-900">{count}</div>
                   </div>
                 </div>
               );
@@ -130,18 +127,17 @@ export default async function ReviewQueuePage() {
         </div>
       )}
 
-      {/* Review Table or Empty State */}
       {pendingItems && pendingItems.length > 0 ? (
         <ReviewTable items={pendingItems} />
       ) : (
-        <div className="bg-white p-12 rounded-lg shadow-sm border border-slate-200 text-center">
+        <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80 p-12 text-center">
           <div className="flex justify-center mb-6">
-            <div className="p-6 bg-emerald-100 rounded-full">
-              <Inbox className="w-8 h-8 text-emerald-600" />
+            <div className="p-5 bg-emerald-50 rounded-full">
+              <Inbox className="w-8 h-8 text-emerald-500" />
             </div>
           </div>
           <h3 className="font-display text-2xl font-semibold text-slate-900 mb-2">Editorial Desk Clear</h3>
-          <p className="font-ui text-slate-600 max-w-md mx-auto">
+          <p className="font-ui text-slate-500 max-w-md mx-auto">
             No pending items requiring editorial review. The data pipeline is running smoothly.
           </p>
         </div>
@@ -166,29 +162,27 @@ function StatCard({
   const getStyles = (type: string) => {
     switch (type) {
       case 'pending':
-        return accent 
-          ? { card: 'admin-stat-card bg-gradient-to-br from-amber-50 to-orange-50', icon: 'text-amber-600', number: 'text-amber-800' }
-          : { card: 'admin-stat-card', icon: 'text-amber-600', number: 'text-slate-900' };
+        return { bg: 'bg-amber-50', icon: 'text-amber-600', border: accent ? 'border-amber-200' : 'border-slate-200/80' };
       case 'approved':
-        return { card: 'admin-stat-card bg-gradient-to-br from-emerald-50 to-green-50', icon: 'text-emerald-600', number: 'text-emerald-800' };
+        return { bg: 'bg-emerald-50', icon: 'text-emerald-600', border: 'border-slate-200/80' };
       case 'rejected':
-        return { card: 'admin-stat-card bg-gradient-to-br from-red-50 to-rose-50', icon: 'text-red-600', number: 'text-red-800' };
+        return { bg: 'bg-red-50', icon: 'text-red-600', border: 'border-slate-200/80' };
       default:
-        return { card: 'admin-stat-card', icon: 'text-slate-600', number: 'text-slate-900' };
+        return { bg: 'bg-slate-50', icon: 'text-slate-600', border: 'border-slate-200/80' };
     }
   };
 
   const styles = getStyles(type);
 
   return (
-    <div className={`${styles.card} p-6 rounded-lg transition-all ${accent ? 'ring-2 ring-copper-200' : ''}`}>
+    <div className={`bg-white rounded-2xl shadow-lg shadow-slate-200/50 border ${styles.border} p-6 transition-all`}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="font-ui text-sm font-medium text-slate-600 uppercase tracking-wide mb-2">{label}</p>
-          <p className={`admin-data-metric text-3xl font-bold ${styles.number} mb-1`}>{value.toLocaleString()}</p>
+          <p className="font-ui text-sm text-slate-500 mb-1">{label}</p>
+          <p className="font-mono text-3xl font-bold text-slate-900">{value.toLocaleString()}</p>
         </div>
-        <div className={`p-3 bg-white rounded-lg shadow-sm border border-slate-200`}>
-          <Icon className={`w-6 h-6 ${styles.icon}`} />
+        <div className={`p-3 ${styles.bg} rounded-xl`}>
+          <Icon className={`w-5 h-5 ${styles.icon}`} />
         </div>
       </div>
     </div>
