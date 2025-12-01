@@ -28,6 +28,7 @@ interface RestaurantWithChef {
   status: 'open' | 'closed' | 'unknown';
   google_rating: number | null;
   google_review_count: number | null;
+  google_photos: string[] | null;
   chef: {
     id: string;
     name: string;
@@ -61,6 +62,7 @@ export default async function RestaurantsPage({
       status,
       google_rating,
       google_review_count,
+      google_photos,
       chef:chefs (
         id,
         name,

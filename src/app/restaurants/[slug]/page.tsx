@@ -158,6 +158,8 @@ export async function generateMetadata({ params }: RestaurantPageProps): Promise
   };
 }
 
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
   const supabase = createStaticClient();
   

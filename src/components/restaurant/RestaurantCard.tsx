@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { getRestaurantStatus, getChefAchievements, sanitizeText } from '@/lib/utils/restaurant';
+import Image from 'next/image';
+import { getRestaurantStatus, getChefAchievements, sanitizeText, validateImageUrl } from '@/lib/utils/restaurant';
 
 interface RestaurantCardProps {
   restaurant: {
@@ -13,6 +14,7 @@ interface RestaurantCardProps {
     status: 'open' | 'closed' | 'unknown';
     google_rating?: number | null;
     google_review_count?: number | null;
+    google_photos?: string[] | null;
     chef?: {
       name: string;
       slug: string;
@@ -34,6 +36,7 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
   const sanitizedCity = sanitizeText(restaurant.city);
   const sanitizedState = sanitizeText(restaurant.state);
   const sanitizedChefName = restaurant.chef ? sanitizeText(restaurant.chef.name) : '';
+  const photoUrl = restaurant.google_photos?.[0] ? validateImageUrl(restaurant.google_photos[0]) : null;
 
   return (
     <Link
@@ -45,6 +48,18 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
         className="absolute top-0 left-0 w-1 h-full transition-all duration-300 group-hover:w-2"
         style={{ background: status.isClosed ? 'var(--text-muted)' : 'var(--accent-primary)' }}
       />
+
+      {photoUrl && (
+        <div className="relative w-full h-48 overflow-hidden bg-gray-100">
+          <Image
+            src={photoUrl}
+            alt={restaurant.name}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+          />
+        </div>
+      )}
 
       <div className={`p-5 pl-6 ${status.isClosed ? 'opacity-60' : ''}`}>
         <div className="flex justify-between items-start gap-3">

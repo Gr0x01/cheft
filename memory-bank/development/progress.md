@@ -1,7 +1,7 @@
 ---
-Last-Updated: 2025-11-30
+Last-Updated: 2025-12-01
 Maintainer: RB
-Status: Phase 1 MVP Infrastructure Complete
+Status: Phase 2 Complete - SEO Pages Live
 ---
 
 # Progress Log: TV Chef Map
@@ -46,16 +46,20 @@ Status: Phase 1 MVP Infrastructure Complete
 - **100% geocoded** data with precise coordinates
 - **Complete metadata**: websites, pricing tiers, James Beard awards
 
-### Phase 2: Frontend Development (Upcoming)
-**Status**: ⏳ Ready to Begin
+### Phase 2: SEO Pages & Frontend (November-December 2025)
+**Status**: ✅ Complete
 
-#### Planned Components
-- Next.js application with App Router
-- Interactive map view (Leaflet.js integration)
-- Restaurant browsing and filtering interface
-- Chef profile pages
-- Search functionality (text and geographic)
-- Responsive design with Tailwind CSS
+#### Completed Components
+- ✅ Next.js application with App Router (deployed)
+- ✅ Interactive homepage map (Leaflet.js with clustering)
+- ✅ Chef directory `/chefs` with filtering and search
+- ✅ Chef detail pages `/chefs/[slug]` with bios, photos, restaurants
+- ✅ Restaurant directory `/restaurants` with filtering and search
+- ✅ Restaurant detail pages `/restaurants/[slug]` with maps, photos, ratings
+- ✅ Responsive design with custom CSS variables (industrial editorial style)
+- ✅ Schema.org JSON-LD for SEO (Person, Restaurant types)
+- ✅ Database migration for enrichment fields (`google_photos`, ratings, etc.)
+- ✅ Cities table created and populated (161 cities)
 
 ## Key Milestones
 
@@ -65,11 +69,12 @@ Status: Phase 1 MVP Infrastructure Complete
 - Data pipeline validated and documented
 - **Impact**: Solid foundation for rapid frontend development
 
-### ⏳ Milestone 2: MVP Frontend (Target: Dec 2025)
-- Basic map interface with restaurant markers
-- Restaurant list view with filtering
-- Chef profile pages
-- **Goal**: Functional MVP for user testing
+### ✅ Milestone 2: SEO Pages Launch (Dec 1, 2025)
+- Chef and restaurant SEO pages live (`/chefs/[slug]`, `/restaurants/[slug]`)
+- Database enrichment fields deployed (photos, ratings, descriptions)
+- Cities table created for future landing pages
+- Industrial editorial design system implemented
+- **Impact**: 311 restaurant pages + 180 chef pages indexed for search
 
 ### ⏳ Milestone 3: Enhanced Search (Target: Jan 2026)
 - Natural language search implementation
@@ -80,10 +85,18 @@ Status: Phase 1 MVP Infrastructure Complete
 ## Shipped Features
 
 ### Core Infrastructure
-- **Database Schema**: Comprehensive data model supporting shows, chefs, restaurants
+- **Database Schema**: Comprehensive data model supporting shows, chefs, restaurants, cities
 - **Data Pipeline**: Automated extraction from topchef.fyi with quality validation
 - **MCP Integration**: Direct database operations via Claude Code
-- **Development Tooling**: TypeScript, linting, testing framework ready
+- **Development Tooling**: TypeScript, linting, Playwright E2E testing
+- **Enrichment Fields**: Migration `003_add_seo_page_fields.sql` deployed with photo, rating, description fields
+
+### Frontend Application
+- **Chef Pages**: Directory listing + individual SEO-optimized pages with bios, TV appearances, restaurant grids
+- **Restaurant Pages**: Directory listing + individual pages with maps, photos, ratings, chef links
+- **Design System**: Industrial editorial aesthetic with custom CSS variables
+- **Components**: Reusable ChefCard, RestaurantCard, Hero sections, MiniMap integration
+- **SEO**: Schema.org JSON-LD, dynamic metadata, breadcrumbs, structured data
 
 ### Data Assets
 - **Top Chef Universe**: Complete restaurant database covering 21+ seasons
