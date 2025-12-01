@@ -1,64 +1,60 @@
 ---
-Last-Updated: 2025-11-30
+Last-Updated: 2025-12-01
 Maintainer: RB
-Status: Database Setup & Data Pipeline Development
+Status: Data Enrichment & SEO Page Development
 ---
 
 # Active Context: Chefs
 
 ## Current Sprint Goals
-- **Sprint**: MVP Infrastructure & Data Pipeline
-- **Duration**: Phase 1 (4-6 weeks) 
-- **Focus**: Database setup, data extraction, and initial data import
+- **Sprint**: Data Enrichment + SEO Pages
+- **Duration**: 1-2 weeks
+- **Focus**: Complete data enrichment, build SEO-optimized pages
 
 ### Primary Objectives
-1. ✅ Set up Supabase database schema with tables for shows, chefs, restaurants
-2. ✅ Extract Top Chef data from topchef.fyi using Playwright scraper
-3. ⏳ Import extracted data into Supabase (pending manual DB setup)
-4. ⏳ Verify data quality and implement basic search functionality
+1. ✅ Deploy SEO page fields migration (chefs, restaurants, cities table)
+2. 🔄 Run full enrichment pipeline (photos, bios, Google Places)
+3. ⏳ Build chef pages (`/chefs`, `/chefs/[slug]`)
+4. ⏳ Build restaurant pages (`/restaurants`, `/restaurants/[slug]`)
+5. ⏳ Build city landing pages (`/cities/[slug]`)
 
 ### Secondary Objectives
-- Build admin tools for data enrichment
-- Create basic Next.js frontend for browsing data
-- Implement natural language search capabilities
+- Add Schema.org JSON-LD for rich snippets
+- Implement ad slots for monetization
+- Set up Cloudflare for AI bot protection
+- Add sitemap.xml generation
 
 ## Current Blockers
-- None! Database and initial data loading complete
+- None
 
 ## In Progress
-- Ready to begin frontend development (Next.js components, map, search)
+- **Bio enrichment running**: ~100s per chef with web search
+- First batch of 50 photos + 50 Google Places done
 
 ## Recently Completed
-- ✅ Next.js project setup with TypeScript, Tailwind CSS, and required dependencies
-- ✅ Environment configuration (.env.local with Supabase credentials)
-- ✅ Supabase MCP server setup and authentication
-- ✅ Database migration executed successfully via MCP
-- ✅ Top Chef data extraction pipeline built using Playwright
-- ✅ Successfully extracted 311 restaurants from 180 unique chefs
-- ✅ Data import completed: 311 restaurants, 180 chefs, 5 shows
-- ✅ Data integrity verified: 100% geocoded, 162 cities, 45 states
+- ✅ SEO page fields migration deployed (2025-12-01)
+  - Chef: `social_links`, `notable_awards`, `instagram_handle`, `cookbook_titles`, `youtube_channel`, `current_position`, `mentor`
+  - Restaurant: `description`, `phone`, `reservation_url`, `signature_dishes`, `michelin_stars`, `year_opened`, `hours`, `vibe_tags`, `dietary_options`, `awards`, `gift_card_url`
+  - `cities` table created and populated (162 cities)
+- ✅ Enrichment batch #1: 50 chef photos (38 found), 50 restaurants (Google Places)
+- ✅ Google Places cost tracking: $3.71 for 50 restaurants
 
 ## Next Steps
-1. Begin building Next.js frontend components:
-   - Home page with map view (Leaflet.js integration)
-   - Restaurant list view with filtering
-   - Individual restaurant detail pages
-   - Chef profile pages
-2. Implement search and filtering functionality:
-   - Filter by city, state, chef, price tier
-   - Text search across restaurant names and chef names
-   - Map clustering for better performance
-3. Add basic styling and responsive design
-4. Implement natural language search (Phase 2)
-
-## Context Notes
-- Data extraction working perfectly (311 restaurants, 180 chefs, 45 states)
-- All coordinates properly geocoded from topchef.fyi source
-- James Beard award data included (119 awards tracked)
-- Ready to proceed with frontend development once database is populated
+1. Complete enrichment batches:
+   - Chef bios: ~170 remaining (~5 hours)
+   - Chef photos: 134 remaining (~12 min)
+   - Restaurant Places: 251 remaining (~25 min)
+2. Build SEO pages per `seo-pages-spec.md`:
+   - Phase 2: Chef pages (directory + detail)
+   - Phase 3: Restaurant pages (directory + detail)
+   - Phase 4: City landing pages
+3. Technical SEO: sitemap, robots.txt, Schema.org markup
 
 ## Data Summary
-- **Restaurants**: 311 locations with full address and coordinates
-- **Chefs**: 180 unique Top Chef contestants/winners 
-- **Coverage**: 163 cities across 45 states
-- **Quality**: All entries include websites, many with James Beard status
+- **Restaurants**: 311 locations
+- **Chefs**: 180 unique Top Chef contestants/winners
+- **Cities**: 162 with restaurant counts
+- **Enrichment Progress**:
+  - Chef photos: 46/180 (26%)
+  - Chef bios: ~10/180 (6%)
+  - Restaurant Google Places: 60/311 (19%)

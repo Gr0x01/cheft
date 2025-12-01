@@ -1,9 +1,9 @@
 ---
 Last-Updated: 2025-12-01
-Next-Action: Run initial full enrichment, then add daily enrichment to GitHub Actions
+Next-Action: Continue enrichment batches, then build SEO pages
 LLM-Models: gpt-5-mini (enrichment + web search via Responses API), gpt-5-nano (filtering)
 Maintainer: RB
-Status: Phase 5 Complete - Bio Enrichment with Web Search Working
+Status: Phase 5 In Progress - Running Full Enrichment
 ---
 
 # TV Chef Map: Autonomous Data Ingestion System
@@ -12,12 +12,16 @@ Status: Phase 5 Complete - Bio Enrichment with Web Search Working
 
 ### ✅ Completed
 - **Schema v2 deployed** with all tables (shows, chefs, chef_shows, restaurants, embeddings, review_queue, data_changes, excluded_names)
+- **SEO page fields migration** deployed (2025-12-01):
+  - Chef fields: `social_links`, `notable_awards`, `instagram_handle`, `cookbook_titles`, `youtube_channel`, `current_position`, `mentor`
+  - Restaurant fields: `description`, `phone`, `reservation_url`, `signature_dishes`, `michelin_stars`, `year_opened`, `hours`, `vibe_tags`, `dietary_options`, `awards`, `gift_card_url`
+  - New `cities` table for landing pages (auto-populated from restaurant data)
 - **Initial data imported**: 180 chefs, 311 restaurants, 311 embeddings
 - **James Beard status** tracking: 10 winners, 18 nominated, 36 semifinalists
 - **RLS policies** configured for public read / admin write
 - **chef_shows junction table** supports multiple shows per chef
 - **Pipeline infrastructure** complete:
-  - Orchestrator with CLI args (`--discovery`, `--status-check`, `--dry-run`)
+  - Orchestrator with CLI args (`--discovery`, `--status-check`, `--enrich`, `--enrich-bios`, `--dry-run`, `--limit`)
   - Review queue CRUD with batch operations and validation
   - Audit log with change tracking and source attribution
   - Retry logic with exponential backoff + jitter
@@ -27,50 +31,38 @@ Status: Phase 5 Complete - Bio Enrichment with Web Search Working
 - **Code review**: Critical issues addressed (type safety, error handling, input validation, batch limits)
 - **GitHub Actions workflow** for scheduled discovery (weekly) and status checks (daily)
 - **Wikipedia scraper** (Phase 2): Generic Playwright scraper for contestant discovery
-  - Scrapes wikitables from any configured show's Wikipedia page
-  - Extracts name, season, result, hometown
-  - Deduplicates with priority scoring (winner > finalist > contestant)
-  - Browser instance reuse for performance
 - **Change detection** (Phase 2): Diff logic against existing chefs
-  - Detects new chefs, season updates, result promotions
-  - Auto-applies high-confidence updates (≥0.8) with audit logging
-  - Queues low-confidence changes for admin review
-- **First live run**: 12 new chefs queued, 3 season updates auto-applied
+- **Admin Review UI** (Phase 3): Supabase Auth, pending queue, activity log
 
-### ✅ First Enrichment Test Run (2025-12-01)
-- **CLI enhancement**: Added `--limit N` flag for batch size control (default: 10)
-- **Chef photos**: 10 processed, 8 found (80% hit rate from Wikipedia)
-- **Restaurant Places**: 10 processed, 10 matched (100% match rate)
-- **Google Places cost**: $0.75 for 10 restaurants (~$0.075/restaurant)
-- **Duration**: 36 seconds for 20 total items
-- **Data quality**: Ratings 4.3-4.9, review counts 139-7,737
-- **Low-confidence warnings**: 2 matches flagged but data still valid
-
-### ✅ Bio Enrichment with Web Search (2025-12-01)
-- **Fixed LLM enricher** to use `openai.responses('gpt-5-mini')` with `web_search_preview` tool
-- **Added `--enrich-bios` CLI flag** for chef bio generation
-- **Increased maxTokens to 8000** (reasoning models need more for web search)
-- **Schema made flexible** with `.passthrough()` to handle varying LLM output formats
-- **Test results**: 2 chefs processed, both got web-sourced bios with citations
-- **Cost**: ~$0.02/chef with web search (~$0.04 for 2 chefs)
-- **Duration**: ~100 seconds per chef (web search is slower)
-- **Quality**: Bios include current info, citations like `([source.com](url))`
+### ✅ Enrichment Run #1 (2025-12-01)
+- **Chef photos**: 50 processed, 38 found (76% hit rate from Wikipedia)
+- **Restaurant Google Places**: 50 processed, 50 matched (100% match rate)
+- **Google Places cost**: $3.71 for 50 restaurants
+- **Duration**: 173 seconds
+- **Bio enrichment**: In progress (~100s per chef with web search)
 
 ### Current Enrichment Status
-| Data Type | Completed | Remaining |
-|-----------|-----------|----------|
-| Chef bios | 5 | 175 |
-| Chef photos | 8 | 172 |
-| Restaurant Google Places | 10 | 301 |
+| Data Type | Completed | Remaining | Est. Cost |
+|-----------|-----------|----------|-----------|
+| Chef bios | ~10 (in progress) | ~170 | ~$3.40 |
+| Chef photos | 46 | 134 | Free |
+| Restaurant Google Places | 60 | 251 | ~$18.83 |
+| Cities table | 162 | 0 | - |
 
 ### ⏳ Remaining Work
-1. **Initial full enrichment** (one-time):
-   - Chef bios: 175 remaining × $0.02 = ~$3.50, ~5 hours
-   - Chef photos: 172 remaining × Free = $0, ~15 min
-   - Restaurant Places: 301 remaining × $0.075 = ~$22.50, ~30 min
-   - **Total: ~$26, run in batches of 50**
+1. **Continue enrichment batches**:
+   - Chef bios: ~170 remaining × $0.02 = ~$3.40, ~5 hours
+   - Chef photos: 134 remaining × Free = $0, ~12 min
+   - Restaurant Places: 251 remaining × $0.075 = ~$18.83, ~25 min
+   - **Remaining total: ~$22**
 
-2. **Add daily enrichment to GitHub Actions**:
+2. **SEO Pages Implementation** (see `seo-pages-spec.md`):
+   - Chef pages: `/chefs/[slug]`
+   - Restaurant pages: `/restaurants/[slug]`
+   - City pages: `/cities/[slug]`
+   - Directory pages: `/chefs`, `/restaurants`
+
+3. **Add daily enrichment to GitHub Actions**:
    - Catches newly approved chefs automatically
    - Limit 20 bios/day (~$0.40) + 50 restaurants/day (~$3.75)
    - Max daily cost: ~$4 (only if new items exist)
