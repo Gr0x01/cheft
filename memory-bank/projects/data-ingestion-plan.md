@@ -2,7 +2,7 @@
 Last-Updated: 2025-12-01
 LLM-Models: gpt-5-mini (enrichment), gpt-5-nano (filtering/status)
 Maintainer: RB
-Status: Phase 1 Complete, TypeScript Clean
+Status: Phase 2 Complete
 ---
 
 # TV Chef Map: Autonomous Data Ingestion System
@@ -24,12 +24,21 @@ Status: Phase 1 Complete, TypeScript Clean
   - Slug generation and validation utilities
 - **TypeScript compilation**: 0 errors (all type issues resolved)
 - **Code review**: Critical issues addressed (type safety, error handling, input validation, batch limits)
+- **GitHub Actions workflow** for scheduled discovery (weekly) and status checks (daily)
+- **Wikipedia scraper** (Phase 2): Generic Playwright scraper for contestant discovery
+  - Scrapes wikitables from any configured show's Wikipedia page
+  - Extracts name, season, result, hometown
+  - Deduplicates with priority scoring (winner > finalist > contestant)
+  - Browser instance reuse for performance
+- **Change detection** (Phase 2): Diff logic against existing chefs
+  - Detects new chefs, season updates, result promotions
+  - Auto-applies high-confidence updates (≥0.8) with audit logging
+  - Queues low-confidence changes for admin review
+- **First live run**: 12 new chefs queued, 3 season updates auto-applied
 
 ### ⏳ Pending Implementation
-- GitHub Actions workflow for scheduled runs
-- Wikipedia scraper for contestant discovery (Phase 2)
-- LLM filter/enrichment integration (Phase 4-5)
 - Admin review UI (`/admin/review`) (Phase 3)
+- LLM filter/enrichment integration (Phase 4-5)
 
 ---
 
@@ -440,13 +449,13 @@ app/
 - [x] Slug generation and validation utilities
 - [x] TypeScript compilation clean (0 errors)
 - [x] Environment/secrets setup
-- [ ] GitHub Action workflow skeleton (deferred to Phase 2)
+- [x] GitHub Action workflow skeleton
 
-### Phase 2: Change Detection & Auto-Updates (Week 2)
-- [ ] Wikipedia scraper for contestant lists
-- [ ] Diff logic against existing chefs table
-- [ ] Auto-apply high-confidence changes
-- [ ] Audit logging to data_changes
+### Phase 2: Change Detection & Auto-Updates (Week 2) ✅ COMPLETE
+- [x] Wikipedia scraper for contestant lists
+- [x] Diff logic against existing chefs table
+- [x] Auto-apply high-confidence changes
+- [x] Audit logging to data_changes
 
 ### Phase 3: Admin Review UI (Week 3)
 - [ ] Supabase Auth setup with email allowlist

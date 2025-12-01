@@ -1,9 +1,18 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 import { Database } from '../../src/lib/database.types';
-import { getEnabledShows, getWikipediaUrl } from './sources/registry';
-import { getQueueStats } from './queue/review-queue';
-import { getRecentChanges } from './queue/audit-log';
+import { getEnabledShows } from './sources/registry';
+import { scrapeWikipediaContestants, ScrapeResult } from './sources/wikipedia';
+import { 
+  loadExistingChefs, 
+  detectChanges, 
+  summarizeChanges,
+  shouldAutoApply,
+  ChangeDetectionResult,
+  DetectedChange
+} from './processors/change-detector';
+import { getQueueStats, addToReviewQueue } from './queue/review-queue';
+import { getRecentChanges, logDataChange } from './queue/audit-log';
 import { withRetry } from './utils/retry';
 
 config({ path: '.env.local' });
@@ -22,7 +31,7 @@ interface PipelineReport {
   discoveryResults?: {
     newChefsFound: number;
     queuedForReview: number;
-    excluded: number;
+    autoApplied: number;
   };
   statusCheckResults?: {
     restaurantsChecked: number;
@@ -40,6 +49,110 @@ function parseArgs(): OrchestratorOptions {
   };
 }
 
+async function applyHighConfidenceUpdate(
+  supabase: SupabaseClient<Database>,
+  change: DetectedChange,
+  dryRun: boolean
+): Promise<boolean> {
+  if (!change.existing || !change.scraped) return false;
+  
+  if (dryRun) {
+    console.log(`     [DRY RUN] Would update: ${change.details}`);
+    return true;
+  }
+
+  try {
+    if (change.type === 'update_season' || change.type === 'update_result') {
+      const showResult = await supabase
+        .from('shows')
+        .select('id')
+        .eq('slug', change.showSlug)
+        .single();
+      
+      if (showResult.error || !showResult.data) {
+        console.error(`     ❌ Show not found: ${change.showSlug}`);
+        return false;
+      }
+
+      const existingEntry = change.existing.shows.find(s => s.show?.slug === change.showSlug);
+      
+      if (existingEntry) {
+        const updateData: Partial<{
+          season: string | null;
+          season_name: string | null;
+          result: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
+        }> = {};
+        if (change.scraped.season) updateData.season = change.scraped.season;
+        if (change.scraped.seasonName) updateData.season_name = change.scraped.seasonName;
+        if (change.scraped.result) updateData.result = change.scraped.result;
+
+        const { error: updateError } = await (supabase
+          .from('chef_shows') as ReturnType<typeof supabase.from>)
+          .update(updateData)
+          .eq('id', existingEntry.id);
+        if (updateError) throw new Error(updateError.message);
+
+        await logDataChange(supabase, {
+          table_name: 'chef_shows',
+          record_id: existingEntry.id,
+          change_type: 'update',
+          old_data: {
+            season: existingEntry.season,
+            season_name: existingEntry.season_name,
+            result: existingEntry.result
+          },
+          new_data: updateData,
+          source: 'auto_update',
+          confidence: change.confidence
+        });
+
+        console.log(`     ✅ Auto-applied: ${change.details}`);
+        return true;
+      }
+    }
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error(`     ❌ Failed to apply update: ${msg}`);
+  }
+
+  return false;
+}
+
+async function queueNewChef(
+  supabase: SupabaseClient<Database>,
+  change: DetectedChange,
+  dryRun: boolean
+): Promise<boolean> {
+  if (dryRun) {
+    console.log(`     [DRY RUN] Would queue for review: ${change.scraped.name}`);
+    return true;
+  }
+
+  const result = await addToReviewQueue(supabase, {
+    type: 'new_chef',
+    data: {
+      name: change.scraped.name,
+      slug: change.scraped.slug,
+      season: change.scraped.season,
+      seasonName: change.scraped.seasonName,
+      result: change.scraped.result,
+      hometown: change.scraped.hometown,
+      sourceUrl: change.scraped.sourceUrl
+    },
+    source: 'wikipedia_discovery',
+    confidence: change.confidence,
+    notes: change.details
+  });
+
+  if (result.success) {
+    console.log(`     📋 Queued for review: ${change.scraped.name}`);
+  } else {
+    console.error(`     ❌ Failed to queue: ${result.error}`);
+  }
+
+  return result.success;
+}
+
 async function runDiscoveryPipeline(
   supabase: SupabaseClient<Database>,
   dryRun: boolean
@@ -50,16 +163,70 @@ async function runDiscoveryPipeline(
   console.log(`   Mode: ${dryRun ? 'DRY RUN' : 'LIVE'}`);
   console.log(`   Enabled shows: ${enabledShows.map(s => s.name).join(', ')}`);
   
-  for (const show of enabledShows) {
-    console.log(`\n   Processing: ${show.name}`);
-    console.log(`   Wikipedia: ${getWikipediaUrl(show)}`);
-    console.log(`   ⏳ Wikipedia scraper not yet implemented (Phase 2)`);
+  if (enabledShows.length === 0) {
+    console.log('   ⚠️  No shows enabled in config');
+    return { newChefsFound: 0, queuedForReview: 0, autoApplied: 0 };
   }
+
+  console.log(`\n📥 Loading existing chef data...`);
+  const existingChefs = await loadExistingChefs(supabase);
+
+  const scrapeResults: ScrapeResult[] = [];
+  const changeResults: ChangeDetectionResult[] = [];
+
+  for (const show of enabledShows) {
+    console.log(`\n📺 Processing: ${show.name}`);
+    
+    const scrapeResult = await scrapeWikipediaContestants(show);
+    scrapeResults.push(scrapeResult);
+    
+    if (scrapeResult.contestants.length > 0) {
+      const changes = await detectChanges(supabase, scrapeResult, existingChefs);
+      changeResults.push(changes);
+    }
+  }
+
+  summarizeChanges(changeResults);
+
+  let totalNewChefs = 0;
+  let totalQueued = 0;
+  let totalAutoApplied = 0;
+
+  console.log(`\n⚡ Processing Changes...`);
   
+  for (const result of changeResults) {
+    totalNewChefs += result.newChefs.length;
+
+    for (const change of result.newChefs) {
+      const queued = await queueNewChef(supabase, change, dryRun);
+      if (queued) totalQueued++;
+    }
+
+    for (const change of result.updates) {
+      if (shouldAutoApply(change)) {
+        const applied = await applyHighConfidenceUpdate(supabase, change, dryRun);
+        if (applied) totalAutoApplied++;
+      } else {
+        await addToReviewQueue(supabase, {
+          type: 'update',
+          data: {
+            chefSlug: change.scraped.slug,
+            chefName: change.scraped.name,
+            ...change.scraped
+          },
+          source: 'wikipedia_discovery',
+          confidence: change.confidence,
+          notes: change.details
+        });
+        totalQueued++;
+      }
+    }
+  }
+
   return {
-    newChefsFound: 0,
-    queuedForReview: 0,
-    excluded: 0
+    newChefsFound: totalNewChefs,
+    queuedForReview: totalQueued,
+    autoApplied: totalAutoApplied
   };
 }
 
@@ -182,7 +349,10 @@ async function main() {
   console.log(`Mode: ${options.dryRun ? 'DRY RUN' : 'LIVE'}`);
   
   if (report.discoveryResults) {
-    console.log(`Discovery: ${report.discoveryResults.newChefsFound} new chefs found`);
+    console.log(`Discovery:`);
+    console.log(`  - New chefs found: ${report.discoveryResults.newChefsFound}`);
+    console.log(`  - Queued for review: ${report.discoveryResults.queuedForReview}`);
+    console.log(`  - Auto-applied updates: ${report.discoveryResults.autoApplied}`);
   }
   if (report.statusCheckResults) {
     console.log(`Status Check: ${report.statusCheckResults.restaurantsChecked} restaurants checked`);
