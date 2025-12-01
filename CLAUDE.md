@@ -88,6 +88,19 @@ Always adjust the metadata header (`Last-Updated`, `Maintainer`) when you edit a
 - **ALL CHANGES**: Complete implementation → Run quality checks → Delegate to code-reviewer → Address feedback
 - Document significant subagent recommendations in memory bank
 
+## SKILLS
+
+### Available Skills
+- **frontend-design**: Guidelines for creating distinctive, high-quality frontend UI
+  - Use when: Building or modifying React components, pages, or visual elements
+  - Location: `.claude/skills/frontend-design/SKILL.md`
+  - Read this skill before starting any frontend design work
+
+### Skill Usage
+- Read the relevant skill file before beginning design/UI implementation
+- Skills provide aesthetic guidelines and constraints that ensure consistency
+- Combine with subagents: Read skill → Use ui-designer/frontend-developer → code-reviewer
+
 ### Testing Workflow
 - **BEFORE COMPLETION**: Run `npm run test:e2e` to verify functionality across browsers
 - **VISUAL CHANGES**: Use `npm run test:e2e:ui` for interactive testing during development
