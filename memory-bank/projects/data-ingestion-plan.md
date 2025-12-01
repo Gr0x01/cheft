@@ -2,7 +2,7 @@
 Last-Updated: 2025-12-01
 LLM-Models: gpt-5-mini (enrichment), gpt-5-nano (filtering/status)
 Maintainer: RB
-Status: Schema Complete, Pipeline Pending
+Status: Phase 1 Complete, TypeScript Clean
 ---
 
 # TV Chef Map: Autonomous Data Ingestion System
@@ -15,12 +15,21 @@ Status: Schema Complete, Pipeline Pending
 - **James Beard status** tracking: 10 winners, 18 nominated, 36 semifinalists
 - **RLS policies** configured for public read / admin write
 - **chef_shows junction table** supports multiple shows per chef
+- **Pipeline infrastructure** complete:
+  - Orchestrator with CLI args (`--discovery`, `--status-check`, `--dry-run`)
+  - Review queue CRUD with batch operations and validation
+  - Audit log with change tracking and source attribution
+  - Retry logic with exponential backoff + jitter
+  - Show registry with JSON config
+  - Slug generation and validation utilities
+- **TypeScript compilation**: 0 errors (all type issues resolved)
+- **Code review**: Critical issues addressed (type safety, error handling, input validation, batch limits)
 
 ### ⏳ Pending Implementation
 - GitHub Actions workflow for scheduled runs
-- Wikipedia scraper for contestant discovery
-- LLM filter/enrichment integration
-- Admin review UI (`/admin/review`)
+- Wikipedia scraper for contestant discovery (Phase 2)
+- LLM filter/enrichment integration (Phase 4-5)
+- Admin review UI (`/admin/review`) (Phase 3)
 
 ---
 
@@ -423,11 +432,15 @@ app/
 
 ## Implementation Phases
 
-### Phase 1: Core Infrastructure (Week 1)
+### Phase 1: Core Infrastructure (Week 1) ✅ COMPLETE
 - [x] Database migrations (review_queue, data_changes, excluded_names)
-- [ ] Basic orchestrator script structure
-- [ ] GitHub Action workflow skeleton
+- [x] Basic orchestrator script structure
+- [x] Review queue and audit log modules with retry logic
+- [x] Show registry with JSON configuration
+- [x] Slug generation and validation utilities
+- [x] TypeScript compilation clean (0 errors)
 - [x] Environment/secrets setup
+- [ ] GitHub Action workflow skeleton (deferred to Phase 2)
 
 ### Phase 2: Change Detection & Auto-Updates (Week 2)
 - [ ] Wikipedia scraper for contestant lists
