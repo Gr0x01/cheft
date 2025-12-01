@@ -1,0 +1,94 @@
+name: Data Ingestion Pipeline
+
+on:
+  schedule:
+    # Discovery pipeline: Weekly on Sunday at 2am UTC
+    - cron: '0 2 * * 0'
+    # Status verification: Daily at 3am UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      pipeline:
+        description: 'Pipeline to run'
+        required: true
+        default: 'discovery'
+        type: choice
+        options:
+          - discovery
+          - status-check
+          - both
+      dry_run:
+        description: 'Dry run (no database changes)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  discovery:
+    name: Discovery Pipeline
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' && 
+      (github.event.inputs.pipeline == 'discovery' || github.event.inputs.pipeline == 'both') ||
+      github.event.schedule == '0 2 * * 0'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Discovery Pipeline
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          FLAGS="--discovery"
+          if [[ "${{ github.event.inputs.dry_run }}" == "true" ]]; then
+            FLAGS="$FLAGS --dry-run"
+          fi
+          npx tsx scripts/ingestion/orchestrator.ts $FLAGS
+
+  status-check:
+    name: Status Check Pipeline
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' && 
+      (github.event.inputs.pipeline == 'status-check' || github.event.inputs.pipeline == 'both') ||
+      github.event.schedule == '0 3 * * *'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Status Check Pipeline
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          FLAGS="--status-check"
+          if [[ "${{ github.event.inputs.dry_run }}" == "true" ]]; then
+            FLAGS="$FLAGS --dry-run"
+          fi
+          npx tsx scripts/ingestion/orchestrator.ts $FLAGS

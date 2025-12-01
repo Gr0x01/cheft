@@ -1,0 +1,44 @@
+{
+  "shows": [
+    {
+      "name": "Top Chef",
+      "slug": "top-chef",
+      "network": "Bravo",
+      "wikipedia_source": "List_of_Top_Chef_contestants",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "name": "Iron Chef America",
+      "slug": "iron-chef-america",
+      "network": "Food Network",
+      "wikipedia_source": "List_of_Iron_Chef_America_episodes",
+      "enabled": false,
+      "priority": 2
+    },
+    {
+      "name": "Tournament of Champions",
+      "slug": "tournament-of-champions",
+      "network": "Food Network",
+      "wikipedia_source": "Tournament_of_Champions_(TV_series)",
+      "enabled": false,
+      "priority": 3
+    },
+    {
+      "name": "Hell's Kitchen",
+      "slug": "hells-kitchen",
+      "network": "Fox",
+      "wikipedia_source": "List_of_Hell%27s_Kitchen_(American_TV_series)_episodes",
+      "enabled": false,
+      "priority": 4
+    },
+    {
+      "name": "MasterChef",
+      "slug": "masterchef",
+      "network": "Fox",
+      "wikipedia_source": "MasterChef_(American_TV_series)",
+      "enabled": false,
+      "priority": 5
+    }
+  ]
+}
