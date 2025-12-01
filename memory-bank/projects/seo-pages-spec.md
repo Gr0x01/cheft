@@ -1,8 +1,8 @@
 ---
 Last-Updated: 2025-12-01
 Maintainer: RB
-Status: Draft - Planning
-Next-Action: Review and approve spec, then run enrichment pipeline
+Status: In Progress - Phase 2 Complete
+Next-Action: Build restaurant pages (Phase 3)
 ---
 
 # SEO Pages Architecture Spec
@@ -652,9 +652,9 @@ Focus: Chefs, Restaurants, and Cities. Shows/seasons can come later.
 **Goal**: Get database ready and run P0 enrichment.
 
 #### 1.1 Database Migration
-- [ ] Run migration for new chef fields (`instagram_handle`, `current_role`, `cookbook_titles`)
-- [ ] Run migration for new restaurant fields (`signature_dishes`, `michelin_stars`, `year_opened`)
-- [ ] Create `cities` table and populate from existing restaurant data
+- [x] Run migration for new chef fields (`instagram_handle`, `current_role`, `cookbook_titles`)
+- [x] Run migration for new restaurant fields (`signature_dishes`, `michelin_stars`, `year_opened`)
+- [x] Create `cities` table and populate from existing restaurant data
 
 #### 1.2 Enrichment Pipeline Updates
 - [ ] Add `signature_dishes` extraction to restaurant enricher (LLM from reviews/website)
@@ -676,31 +676,31 @@ Focus: Chefs, Restaurants, and Cities. Shows/seasons can come later.
 **Goal**: `/chefs` directory + `/chefs/[slug]` individual pages live.
 
 #### 2.1 Chef Directory (`/chefs/page.tsx`)
-- [ ] Server component with all chefs from DB
-- [ ] Grid layout with `ChefCard` component
-- [ ] Filters: Show, James Beard status, Has restaurants
-- [ ] Search: Name
+- [x] Server component with all chefs from DB
+- [x] Grid layout with `ChefCard` component
+- [x] Filters: Show, James Beard status, Has restaurants
+- [x] Search: Name
 - [ ] Pagination (or load more)
-- [ ] SEO: Title, meta description, canonical
+- [x] SEO: Title, meta description, canonical
 
 #### 2.2 Chef Detail Page (`/chefs/[slug]/page.tsx`)
-- [ ] `generateStaticParams` for all chef slugs
-- [ ] `generateMetadata` with dynamic title/description
-- [ ] Hero section: Photo, name, badges (James Beard, show result)
-- [ ] Bio section: `mini_bio` content
-- [ ] TV Appearances: List from `chef_shows`
-- [ ] Restaurants grid: All restaurants by this chef
-- [ ] Schema.org JSON-LD (`Person` type)
+- [x] `generateStaticParams` for all chef slugs
+- [x] `generateMetadata` with dynamic title/description
+- [x] Hero section: Photo, name, badges (James Beard, show result)
+- [x] Bio section: `mini_bio` content
+- [x] TV Appearances: List from `chef_shows`
+- [x] Restaurants grid: All restaurants by this chef
+- [x] Schema.org JSON-LD (`Person` type)
 
 #### 2.3 Shared Components
-- [ ] `ChefCard` - reusable card for grids
-- [ ] `ChefHero` - hero section for detail page
-- [ ] `TVAppearanceBadge` - show/season/result display
-- [ ] `SchemaOrg` - JSON-LD wrapper component
+- [x] `ChefCard` - reusable card for grids
+- [x] `ChefHero` - hero section for detail page
+- [x] `TVAppearanceBadge` - show/season/result display
+- [x] `SchemaOrg` - JSON-LD wrapper component
 
 #### 2.4 Internal Linking
-- [ ] Each restaurant card links to `/restaurants/[slug]`
-- [ ] Breadcrumbs: Home > Chefs > Chef Name
+- [x] Each restaurant card links to `/restaurants/[slug]`
+- [x] Breadcrumbs: Home > Chefs > Chef Name
 
 ---
 

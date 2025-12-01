@@ -34,6 +34,7 @@
     "ai": "^4.0.0",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
+    "isomorphic-dompurify": "^2.33.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.555.0",
     "next": "16.0.5",
