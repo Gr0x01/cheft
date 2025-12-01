@@ -4,7 +4,6 @@ import { z } from 'zod';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../src/lib/database.types';
 import { logDataChange } from '../queue/audit-log';
-import { createShowPhotoService } from '../services/show-photos';
 import { createImageStorageService } from '../services/image-storage';
 
 function stripCitations(value: string | null | undefined): string | null {
@@ -192,7 +191,6 @@ export function createLLMEnricher(
 ) {
   const modelName = config.model ?? 'gpt-5-mini';
   const maxRestaurants = config.maxRestaurantsPerChef ?? 10;
-  const showPhotoService = createShowPhotoService();
   const imageStorageService = createImageStorageService(supabase);
 
   let totalTokensUsed: TokenUsage = { prompt: 0, completion: 0, total: 0 };
@@ -238,22 +236,12 @@ export function createLLMEnricher(
       const restaurants = validated.restaurants.slice(0, maxRestaurants);
 
       let photoUrl: string | null = null;
-      let photoSource: 'show_website' | 'llm_search' | null = null;
+      let photoSource: 'llm_search' | null = null;
       let photoConfidence = 0;
-
-      const showPhotoResult = await showPhotoService.getShowPhoto(
-        chefName,
-        showName,
-        options.season
-      );
 
       let sourcePhotoUrl: string | null = null;
 
-      if (showPhotoResult && showPhotoResult.confidence >= 0.85) {
-        sourcePhotoUrl = showPhotoResult.url;
-        photoSource = 'show_website';
-        photoConfidence = showPhotoResult.confidence;
-      } else if (validated.photoUrl && (validated.photoConfidence ?? 0) >= 0.7) {
+      if (validated.photoUrl && (validated.photoConfidence ?? 0) >= 0.7) {
         sourcePhotoUrl = validated.photoUrl;
         photoSource = 'llm_search';
         photoConfidence = validated.photoConfidence ?? 0.7;
