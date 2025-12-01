@@ -25,6 +25,7 @@ interface OrchestratorOptions {
   discovery: boolean;
   statusCheck: boolean;
   enrich: boolean;
+  enrichBios: boolean;
   filter: boolean;
   dryRun: boolean;
   limit: number;
@@ -53,6 +54,11 @@ interface PipelineReport {
     restaurantsWithPlaceId: number;
     googlePlacesCost: number;
   };
+  bioEnrichmentResults?: {
+    chefsProcessed: number;
+    chefsWithBios: number;
+    restaurantsDiscovered: number;
+  };
   llmStats?: {
     totalCalls: number;
     totalTokens: number;
@@ -72,6 +78,7 @@ function parseArgs(): OrchestratorOptions {
     discovery: args.includes('--discovery'),
     statusCheck: args.includes('--status-check'),
     enrich: args.includes('--enrich'),
+    enrichBios: args.includes('--enrich-bios'),
     filter: args.includes('--filter'),
     dryRun: args.includes('--dry-run'),
     limit: isNaN(limit) ? 10 : limit,
@@ -456,7 +463,7 @@ async function runEnrichmentPipeline(
           .from('restaurants')
           .select('*', { count: 'exact', head: true })
           .is('google_place_id', null)
-          .eq('status', 'open');
+          .in('status', ['open', 'unknown']);
         console.log(`     [DRY RUN] Would process up to ${limit} of ${count || 0} restaurants without Place ID`);
       }
     } else {
@@ -486,6 +493,108 @@ async function runEnrichmentPipeline(
       googlePlacesCost: 0,
     };
   }
+}
+
+async function runBioEnrichmentPipeline(
+  supabase: SupabaseClient<Database>,
+  dryRun: boolean,
+  llmStats: LLMStats,
+  limit: number
+): Promise<PipelineReport['bioEnrichmentResults']> {
+  console.log(`\n📝 Bio Enrichment Pipeline`);
+  console.log(`   Mode: ${dryRun ? 'DRY RUN' : 'LIVE'}`);
+  console.log(`   Limit: ${limit} chefs`);
+
+  const llmEnricher = createLLMEnricher(supabase);
+
+  let chefsProcessed = 0;
+  let chefsWithBios = 0;
+  let restaurantsDiscovered = 0;
+
+  try {
+    type ChefWithShow = {
+      id: string;
+      name: string;
+      chef_shows: Array<{
+        season: string | null;
+        result: string | null;
+        shows: { name: string } | null;
+      }>;
+    };
+
+    const result = await supabase
+      .from('chefs')
+      .select(`
+        id, name,
+        chef_shows(season, result, shows(name))
+      `)
+      .is('mini_bio', null)
+      .limit(limit);
+
+    const chefs = result.data as ChefWithShow[] | null;
+    const error = result.error;
+
+    if (error) throw new Error(error.message);
+
+    console.log(`   Found ${chefs?.length || 0} chefs without bios`);
+
+    if (dryRun) {
+      const { count } = await supabase
+        .from('chefs')
+        .select('*', { count: 'exact', head: true })
+        .is('mini_bio', null);
+      console.log(`     [DRY RUN] Would process up to ${limit} of ${count || 0} chefs without bios`);
+      return { chefsProcessed: 0, chefsWithBios: 0, restaurantsDiscovered: 0 };
+    }
+
+    if (chefs && chefs.length > 0) {
+      for (const chef of chefs) {
+        const showInfo = chef.chef_shows?.[0];
+        const showName = showInfo?.shows?.name || 'Top Chef';
+        const season = showInfo?.season || undefined;
+        const chefResult = showInfo?.result || undefined;
+
+        console.log(`     Processing: ${chef.name}...`);
+
+        const enrichResult = await llmEnricher.enrichAndSaveChef(
+          chef.id,
+          chef.name,
+          showName,
+          { season, result: chefResult, dryRun: false }
+        );
+
+        chefsProcessed++;
+
+        if (enrichResult.success && enrichResult.miniBio) {
+          chefsWithBios++;
+          console.log(`       ✅ Bio generated (${enrichResult.miniBio.length} chars)`);
+          
+          if (enrichResult.restaurants.length > 0) {
+            console.log(`       🍽️  Found ${enrichResult.restaurants.length} restaurants`);
+            restaurantsDiscovered += enrichResult.restaurants.length;
+          }
+        } else if (enrichResult.error) {
+          console.log(`       ❌ Error: ${enrichResult.error}`);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      const tokens = llmEnricher.getTotalTokensUsed();
+      llmStats.totalCalls += chefsProcessed;
+      llmStats.totalTokens += tokens.total;
+      llmStats.estimatedCost += llmEnricher.estimateCost();
+    }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error(`   ❌ Bio enrichment error: ${msg}`);
+  }
+
+  return {
+    chefsProcessed,
+    chefsWithBios,
+    restaurantsDiscovered,
+  };
 }
 
 async function printSystemStatus(supabase: SupabaseClient<Database>) {
@@ -522,14 +631,15 @@ async function main() {
   console.log('═'.repeat(60));
   console.log(`Started: ${new Date().toISOString()}`);
   
-  if (!options.discovery && !options.statusCheck && !options.enrich) {
-    console.log('\n⚠️  No pipeline selected. Use --discovery, --status-check, or --enrich');
+  if (!options.discovery && !options.statusCheck && !options.enrich && !options.enrichBios) {
+    console.log('\n⚠️  No pipeline selected. Use --discovery, --status-check, --enrich, or --enrich-bios');
     console.log('\nUsage:');
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --discovery');
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --discovery --filter');
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --status-check');
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --enrich');
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --enrich --limit 10');
+    console.log('  npx tsx scripts/ingestion/orchestrator.ts --enrich-bios --limit 5');
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --discovery --dry-run');
     process.exit(1);
   }
@@ -582,6 +692,13 @@ async function main() {
         report.llmStats = llmStats;
       }
     }
+
+    if (options.enrichBios) {
+      report.bioEnrichmentResults = await runBioEnrichmentPipeline(supabase, options.dryRun, llmStats, options.limit);
+      if (llmStats.totalCalls > 0 || llmStats.totalTokens > 0) {
+        report.llmStats = llmStats;
+      }
+    }
     
     await printSystemStatus(supabase);
     
@@ -630,6 +747,12 @@ async function main() {
     if (report.enrichmentResults.googlePlacesCost > 0) {
       console.log(`  - Google Places cost: $${report.enrichmentResults.googlePlacesCost.toFixed(4)}`);
     }
+  }
+  if (report.bioEnrichmentResults) {
+    console.log(`Bio Enrichment:`);
+    console.log(`  - Chefs processed: ${report.bioEnrichmentResults.chefsProcessed}`);
+    console.log(`  - Chefs with bios: ${report.bioEnrichmentResults.chefsWithBios}`);
+    console.log(`  - Restaurants discovered: ${report.bioEnrichmentResults.restaurantsDiscovered}`);
   }
   if (report.errors.length > 0) {
     console.log(`Errors: ${report.errors.length}`);

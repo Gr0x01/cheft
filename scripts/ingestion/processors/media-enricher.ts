@@ -315,7 +315,7 @@ export function createMediaEnricher(
       .from('restaurants')
       .select('id, name, address, city, state')
       .is('google_place_id', null)
-      .eq('status', 'open')
+      .in('status', ['open', 'unknown'])
       .limit(limit);
     
     const restaurants = result.data as { id: string; name: string; address: string | null; city: string; state: string | null }[] | null;

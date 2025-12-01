@@ -2,9 +2,6 @@ import { generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error('OPENAI_API_KEY environment variable is required for LLM filtering');
-}
 
 export interface ChefFilterResult {
   isChef: boolean;

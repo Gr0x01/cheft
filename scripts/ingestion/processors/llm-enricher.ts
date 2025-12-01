@@ -5,34 +5,32 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../src/lib/database.types';
 import { logDataChange } from '../queue/audit-log';
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error('OPENAI_API_KEY environment variable is required for LLM enrichment');
-}
-
 const RestaurantSchema = z.object({
   name: z.string(),
-  address: z.string().optional(),
-  city: z.string(),
-  state: z.string().optional(),
-  country: z.string().default('US'),
-  cuisine: z.array(z.string()).optional(),
-  priceRange: z.enum(['$', '$$', '$$$', '$$$$']).optional(),
-  status: z.enum(['open', 'closed', 'unknown']).default('unknown'),
-  website: z.string().url().optional(),
-  role: z.enum(['owner', 'executive_chef', 'partner', 'consultant']).optional(),
-});
+  address: z.string().nullable().optional(),
+  neighborhood: z.string().nullable().optional(),
+  city: z.string().nullable().optional(),
+  state: z.string().nullable().optional(),
+  country: z.string().nullable().optional(),
+  cuisine: z.array(z.string()).nullable().optional(),
+  priceRange: z.enum(['$', '$$', '$$$', '$$$$']).nullable().optional(),
+  status: z.enum(['open', 'closed', 'unknown']).nullable().optional(),
+  website: z.string().nullable().optional(),
+  role: z.string().nullable().optional(),
+  opened: z.number().nullable().optional(),
+  source: z.string().nullable().optional(),
+}).passthrough();
 
 const ChefEnrichmentSchema = z.object({
-  miniBio: z.string().max(500),
-  restaurants: z.array(RestaurantSchema),
+  miniBio: z.string(),
+  restaurants: z.array(RestaurantSchema).optional().default([]),
   jamesBeardStatus: z.enum(['winner', 'nominated', 'semifinalist']).nullable().optional(),
-});
+}).passthrough();
 
 const RestaurantStatusSchema = z.object({
   status: z.enum(['open', 'closed', 'unknown']),
-  confidence: z.number().min(0).max(1),
+  confidence: z.number(),
   reason: z.string(),
-  lastVerified: z.string().optional(),
 });
 
 export interface ChefEnrichmentResult {
@@ -89,15 +87,15 @@ IMPORTANT: Return your response as valid JSON matching this exact structure:
   "restaurants": [
     {
       "name": "Restaurant Name",
-      "address": "123 Main St",
+      "address": "123 Main St" or null,
       "city": "City",
-      "state": "ST",
+      "state": "ST" or null,
       "country": "US",
-      "cuisine": ["Cuisine Type"],
-      "priceRange": "$$",
-      "status": "open",
-      "website": "https://...",
-      "role": "owner"
+      "cuisine": ["Cuisine Type"] or null,
+      "priceRange": "$$" or null,
+      "status": "open" or "closed" or "unknown",
+      "website": "https://..." or null,
+      "role": "owner" or "executive_chef" or "partner" or "consultant" or null
     }
   ],
   "jamesBeardStatus": null or "winner" or "nominated" or "semifinalist"
@@ -172,11 +170,15 @@ export function createLLMEnricher(
     try {
       const result = await withRetry(
         () => generateText({
-          model: openai(modelName),
+          model: openai.responses(modelName),
+          tools: {
+            web_search_preview: openai.tools.webSearchPreview({
+              searchContextSize: 'medium',
+            }),
+          },
           system: CHEF_ENRICHMENT_SYSTEM_PROMPT,
           prompt,
-          temperature: 0.2,
-          maxTokens: 2000,
+          maxTokens: 8000,
         }),
         `enrich chef ${chefName}`
       );
@@ -235,11 +237,15 @@ export function createLLMEnricher(
     try {
       const result = await withRetry(
         () => generateText({
-          model: openai(modelName),
+          model: openai.responses(modelName),
+          tools: {
+            web_search_preview: openai.tools.webSearchPreview({
+              searchContextSize: 'low',
+            }),
+          },
           system: RESTAURANT_STATUS_SYSTEM_PROMPT,
           prompt,
-          temperature: 0.1,
-          maxTokens: 500,
+          maxTokens: 4000,
         }),
         `verify status ${restaurantName}`
       );
@@ -376,8 +382,8 @@ export function createLLMEnricher(
   }
 
   function estimateCost(): number {
-    const inputCostPer1M = 0.15;
-    const outputCostPer1M = 0.60;
+    const inputCostPer1M = 0.25;
+    const outputCostPer1M = 2.00;
     
     return (totalTokensUsed.prompt / 1_000_000) * inputCostPer1M +
            (totalTokensUsed.completion / 1_000_000) * outputCostPer1M;

@@ -1,9 +1,9 @@
 ---
 Last-Updated: 2025-12-01
-Next-Action: Run enrichment pipeline with Google Places API
-LLM-Models: gpt-5-mini (enrichment + web search), gpt-5-nano (filtering)
+Next-Action: Run initial full enrichment, then add daily enrichment to GitHub Actions
+LLM-Models: gpt-5-mini (enrichment + web search via Responses API), gpt-5-nano (filtering)
 Maintainer: RB
-Status: Phase 5 In Progress
+Status: Phase 5 Complete - Bio Enrichment with Web Search Working
 ---
 
 # TV Chef Map: Autonomous Data Ingestion System
@@ -37,10 +37,49 @@ Status: Phase 5 In Progress
   - Queues low-confidence changes for admin review
 - **First live run**: 12 new chefs queued, 3 season updates auto-applied
 
-### ⏳ Pending Implementation
-- ✅ Database migration applied: `scripts/migrations/add-enrichment-fields.sql`
-- Run enrichment pipeline with Google Places API
-- Test media enricher on production data
+### ✅ First Enrichment Test Run (2025-12-01)
+- **CLI enhancement**: Added `--limit N` flag for batch size control (default: 10)
+- **Chef photos**: 10 processed, 8 found (80% hit rate from Wikipedia)
+- **Restaurant Places**: 10 processed, 10 matched (100% match rate)
+- **Google Places cost**: $0.75 for 10 restaurants (~$0.075/restaurant)
+- **Duration**: 36 seconds for 20 total items
+- **Data quality**: Ratings 4.3-4.9, review counts 139-7,737
+- **Low-confidence warnings**: 2 matches flagged but data still valid
+
+### ✅ Bio Enrichment with Web Search (2025-12-01)
+- **Fixed LLM enricher** to use `openai.responses('gpt-5-mini')` with `web_search_preview` tool
+- **Added `--enrich-bios` CLI flag** for chef bio generation
+- **Increased maxTokens to 8000** (reasoning models need more for web search)
+- **Schema made flexible** with `.passthrough()` to handle varying LLM output formats
+- **Test results**: 2 chefs processed, both got web-sourced bios with citations
+- **Cost**: ~$0.02/chef with web search (~$0.04 for 2 chefs)
+- **Duration**: ~100 seconds per chef (web search is slower)
+- **Quality**: Bios include current info, citations like `([source.com](url))`
+
+### Current Enrichment Status
+| Data Type | Completed | Remaining |
+|-----------|-----------|----------|
+| Chef bios | 5 | 175 |
+| Chef photos | 8 | 172 |
+| Restaurant Google Places | 10 | 301 |
+
+### ⏳ Remaining Work
+1. **Initial full enrichment** (one-time):
+   - Chef bios: 175 remaining × $0.02 = ~$3.50, ~5 hours
+   - Chef photos: 172 remaining × Free = $0, ~15 min
+   - Restaurant Places: 301 remaining × $0.075 = ~$22.50, ~30 min
+   - **Total: ~$26, run in batches of 50**
+
+2. **Add daily enrichment to GitHub Actions**:
+   - Catches newly approved chefs automatically
+   - Limit 20 bios/day (~$0.40) + 50 restaurants/day (~$3.75)
+   - Max daily cost: ~$4 (only if new items exist)
+
+### Crash Safety
+- Each chef/restaurant saved immediately after enrichment (not batched)
+- Queries skip already-enriched items (`WHERE mini_bio IS NULL`)
+- If crashes at item #47, restart picks up at #48
+- All changes logged to `data_changes` audit table
 
 ### ✅ Phase 3 Complete: Admin Review UI
 - Supabase Auth with magic link login
