@@ -7,7 +7,10 @@ import { logDataChange } from '../queue/audit-log';
 
 function stripCitations(value: string | null | undefined): string | null {
   if (!value) return null;
-  return value.replace(/\s*\(\[.*?\]\(.*?\)\)/g, '').trim();
+  return value
+    .replace(/\s*\(\[.*?\]\(.*?\)\)/g, '')
+    .replace(/\s*\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .trim();
 }
 
 function enumWithCitationStrip<T extends string>(enumValues: readonly [T, ...T[]]) {
@@ -39,7 +42,7 @@ const RestaurantSchema = z.object({
 }).passthrough();
 
 const ChefEnrichmentSchema = z.object({
-  miniBio: z.string(),
+  miniBio: z.string().transform(val => stripCitations(val) || val),
   restaurants: z.array(RestaurantSchema).optional().default([]),
   jamesBeardStatus: enumWithCitationStrip(['winner', 'nominated', 'semifinalist'] as const),
 }).passthrough();
