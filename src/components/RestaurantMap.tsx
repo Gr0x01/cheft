@@ -4,6 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { LatLngTuple, DivIcon } from 'leaflet';
 import type { RestaurantWithDetails } from '@/lib/types';
+import RestaurantPopup from './RestaurantPopup';
 import 'leaflet/dist/leaflet.css';
 
 interface RestaurantMapProps {
@@ -64,28 +65,8 @@ function RestaurantMarker({
         click: () => onSelect(restaurant)
       }}
     >
-      <Popup className="restaurant-popup">
-        <div className="popup-card">
-          <h3 className="popup-title">{restaurant.name}</h3>
-          <p className="popup-chef">{restaurant.chef?.name}</p>
-          <p className="popup-location">{restaurant.city}, {restaurant.state}</p>
-          <div className="popup-meta">
-            <span className="popup-price">{restaurant.price_tier}</span>
-            {restaurant.chef?.top_chef_result === 'winner' && (
-              <span className="popup-badge">Winner</span>
-            )}
-          </div>
-          {restaurant.website_url && (
-            <a 
-              href={restaurant.website_url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="popup-link"
-            >
-              Visit Website
-            </a>
-          )}
-        </div>
+      <Popup className="restaurant-popup-enhanced">
+        <RestaurantPopup restaurant={restaurant} />
       </Popup>
     </Marker>
   );
