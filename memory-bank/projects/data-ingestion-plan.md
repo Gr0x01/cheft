@@ -1,8 +1,8 @@
 ---
 Last-Updated: 2025-12-01
-LLM-Models: gpt-5-mini (enrichment), gpt-5-nano (filtering/status)
+LLM-Models: gpt-5-mini (enrichment + web search), gpt-5-nano (filtering)
 Maintainer: RB
-Status: Phase 3 Complete
+Status: Phase 4 Complete
 ---
 
 # TV Chef Map: Autonomous Data Ingestion System
@@ -101,10 +101,12 @@ A hands-off data pipeline that automatically discovers, validates, and maintains
                           ▼
 ┌────────────────────────────────────────────────────────┐
 │                  LLM ENRICHMENT                         │
+│           (gpt-5-mini + web_search tool)                │
 │                                                         │
 │  For new chefs:                                        │
+│  - Web search for current restaurants                  │
 │  - Generate mini bio (2-3 sentences)                   │
-│  - Find current restaurants                            │
+│  - Extract address, city, state                        │
 │  - Geocode locations                                   │
 │  - Determine cuisine tags, price tier                  │
 │  - Verify restaurant status (open/closed)              │
@@ -426,19 +428,41 @@ app/
 ## LLM Usage & Cost Estimates
 
 ### Model Selection
-| Task | Model | Input/1M | Output/1M | Est. Cost/Call |
-|------|-------|----------|-----------|----------------|
-| Chef filter (is this a chef?) | gpt-5-nano | $0.05 | $0.40 | ~$0.0001 |
-| Chef enrichment (bio, restaurants) | gpt-5-mini | $0.25 | $2.00 | ~$0.002 |
-| Status verification | gpt-5-nano | $0.05 | $0.40 | ~$0.00004 |
+| Task | Model | Tools | Input/1M | Output/1M | Est. Cost/Call |
+|------|-------|-------|----------|-----------|----------------|
+| Chef filter (is this a chef?) | gpt-5-nano | - | $0.05 | $0.40 | ~$0.0001 |
+| Chef enrichment (bio, restaurants) | gpt-5-mini | web_search | $0.25 | $2.00 | ~$0.01-0.02 |
+| Status verification | gpt-5-mini | web_search | $0.25 | $2.00 | ~$0.005 |
+
+### Web Search via Responses API
+OpenAI's Responses API provides a built-in `web_search` tool that GPT-5-mini can use natively.
+No separate search API (SerpAPI, Perplexity) needed.
+
+**Vercel AI SDK Integration:**
+```typescript
+import { openai } from '@ai-sdk/openai';
+import { generateText } from 'ai';
+
+const result = await generateText({
+  model: openai.responses("gpt-5-mini"),
+  tools: {
+    web_search_preview: openai.tools.webSearchPreview({
+      searchContextSize: "medium",
+    }),
+  },
+  prompt: `Find current restaurants owned by chef ${chefName}`,
+});
+```
 
 ### Monthly Cost Projection
 | Component | Frequency | Est. Cost |
 |-----------|-----------|-----------|
 | Discovery filtering | ~50 new names/week | ~$0.02 |
-| Chef enrichment | ~10 approved/week | ~$0.10 |
-| Status checks | 311+ restaurants/month | ~$0.05 |
-| **Total** | | **~$1-5/month** |
+| Chef enrichment (w/ web search) | ~10 approved/week | ~$0.50 |
+| Status checks (w/ web search) | 311+ restaurants/month | ~$1.50 |
+| **Total** | | **~$5-10/month** |
+
+**Note:** Web search costs more than pure LLM calls but provides accurate, current data.
 
 **Budget:** $20-50/month acceptable. Current estimates well under budget (~90% margin).
 
@@ -472,17 +496,22 @@ app/
 - [x] Approve/reject/edit workflow
 - [x] Activity log view
 
-### Phase 4: Discovery Pipeline (Week 4)
-- [ ] LLM filter integration (gpt-5-nano)
-- [ ] excluded_names table population
-- [ ] Queue new chefs for review
-- [ ] Notification system (email or in-app)
+### Phase 4: Discovery Pipeline (Week 4) ✅ COMPLETE
+- [x] LLM filter integration (gpt-4o-mini)
+- [x] excluded_names table population
+- [x] Queue new chefs for review (with filter bypass for already-excluded)
+- [x] Dynamic confidence scoring (Wikipedia structured: 85% base + boosts)
+- [x] Cost tracking (tokens, estimated cost per run)
+- [ ] Notification system (email or in-app) - deferred to Phase 5+
 
 ### Phase 5: LLM Enrichment (Week 5)
+- [ ] Vercel AI SDK setup with `@ai-sdk/openai`
+- [ ] GPT-5-mini + web_search tool for restaurant discovery
 - [ ] Bio generation for approved chefs
-- [ ] Restaurant discovery for existing chefs
-- [ ] Geocoding integration
-- [ ] Status verification pipeline
+- [ ] Structured output parsing (name, address, cuisine, price)
+- [ ] Geocoding integration (Nominatim)
+- [ ] Status verification pipeline with web search
+- [ ] Cost tracking and rate limiting
 
 ## Show Configuration
 

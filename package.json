@@ -14,8 +14,10 @@
     "data:import": "tsx scripts/import-topchef-data.ts",
     "data:pipeline": "npm run data:extract && npm run data:import",
     "ingestion:discover": "tsx scripts/ingestion/orchestrator.ts --discovery",
+    "ingestion:discover:filter": "tsx scripts/ingestion/orchestrator.ts --discovery --filter",
     "ingestion:status": "tsx scripts/ingestion/orchestrator.ts --status-check",
     "ingestion:dry-run": "tsx scripts/ingestion/orchestrator.ts --discovery --dry-run",
+    "ingestion:dry-run:filter": "tsx scripts/ingestion/orchestrator.ts --discovery --filter --dry-run",
     "type-check": "tsc --noEmit",
     "test": "npx jest",
     "test:e2e": "npx playwright test",
@@ -25,12 +27,15 @@
     "test:e2e:report": "npx playwright show-report"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^1.0.0",
     "@headlessui/react": "^2.2.9",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.86.0",
+    "ai": "^4.0.0",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
     "leaflet": "^1.9.4",
+    "lucide-react": "^0.555.0",
     "next": "16.0.5",
     "openai": "^6.9.1",
     "playwright": "^1.57.0",
@@ -39,7 +44,7 @@
     "react-leaflet": "^5.0.0",
     "tailwind-merge": "^3.4.0",
     "tsx": "^4.20.6",
-    "zod": "^4.1.13"
+    "zod": "^3.23.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
