@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { ReviewTable } from './ReviewTable';
+import { Clock, CheckCircle2, XCircle, BarChart3, UserPlus, Store, RefreshCw, ToggleRight, Inbox } from 'lucide-react';
 
 interface QueueStats {
   pending: number;
@@ -38,6 +39,20 @@ async function getQueueStats(supabase: Awaited<ReturnType<typeof createClient>>)
   return stats;
 }
 
+const typeIcons: Record<string, typeof UserPlus> = {
+  new_chef: UserPlus,
+  new_restaurant: Store,
+  update: RefreshCw,
+  status_change: ToggleRight,
+};
+
+const typeLabels: Record<string, string> = {
+  new_chef: 'New Chefs',
+  new_restaurant: 'New Restaurants',
+  update: 'Updates',
+  status_change: 'Status Changes',
+};
+
 export default async function ReviewQueuePage() {
   const supabase = await createClient();
   
@@ -51,55 +66,131 @@ export default async function ReviewQueuePage() {
       .limit(50),
   ]);
 
+  const total = stats.pending + stats.approved + stats.rejected;
+
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white mb-2">Review Queue</h1>
-        <p className="text-gray-400">Approve or reject pending data changes</p>
+    <div className="space-y-8">
+      {/* Editorial Header */}
+      <div className="border-l-4 border-copper-500 pl-6 bg-white p-6 rounded-r-lg shadow-sm">
+        <h1 className="font-display text-3xl font-bold text-slate-900 mb-2">Review Queue</h1>
+        <p className="font-ui text-slate-600 text-lg">Editorial oversight for the culinary data pipeline</p>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 mb-8">
-        <StatCard label="Pending" value={stats.pending} color="yellow" />
-        <StatCard label="Approved" value={stats.approved} color="green" />
-        <StatCard label="Rejected" value={stats.rejected} color="red" />
-        <StatCard label="Total" value={stats.pending + stats.approved + stats.rejected} color="blue" />
+      {/* Stat Cards - Industrial Editorial Style */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard 
+          label="Pending Review" 
+          value={stats.pending} 
+          icon={Clock}
+          type="pending"
+          accent={stats.pending > 0}
+        />
+        <StatCard 
+          label="Approved" 
+          value={stats.approved} 
+          icon={CheckCircle2}
+          type="approved"
+        />
+        <StatCard 
+          label="Rejected" 
+          value={stats.rejected} 
+          icon={XCircle}
+          type="rejected"
+        />
+        <StatCard 
+          label="Total Processed" 
+          value={total} 
+          icon={BarChart3}
+          type="total"
+        />
       </div>
 
+      {/* Type Breakdown */}
       {stats.pending > 0 && (
-        <div className="mb-6 flex gap-2 flex-wrap">
-          {Object.entries(stats.byType).map(([type, count]) => (
-            count > 0 && (
-              <span key={type} className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">
-                {type.replace('_', ' ')}: {count}
-              </span>
-            )
-          ))}
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+          <h3 className="font-display text-lg font-semibold text-slate-900 mb-4">Pending by Type</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {Object.entries(stats.byType).map(([type, count]) => {
+              if (count === 0) return null;
+              const Icon = typeIcons[type] || Clock;
+              return (
+                <div 
+                  key={type} 
+                  className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200"
+                >
+                  <Icon className="w-5 h-5 text-copper-600" />
+                  <div>
+                    <div className="font-ui text-sm font-medium text-slate-700">{typeLabels[type] || type}</div>
+                    <div className="font-mono text-lg font-bold text-slate-900">{count}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
+      {/* Review Table or Empty State */}
       {pendingItems && pendingItems.length > 0 ? (
         <ReviewTable items={pendingItems} />
       ) : (
-        <div className="bg-gray-800 rounded-lg p-8 text-center">
-          <p className="text-gray-400">No pending items to review</p>
+        <div className="bg-white p-12 rounded-lg shadow-sm border border-slate-200 text-center">
+          <div className="flex justify-center mb-6">
+            <div className="p-6 bg-emerald-100 rounded-full">
+              <Inbox className="w-8 h-8 text-emerald-600" />
+            </div>
+          </div>
+          <h3 className="font-display text-2xl font-semibold text-slate-900 mb-2">Editorial Desk Clear</h3>
+          <p className="font-ui text-slate-600 max-w-md mx-auto">
+            No pending items requiring editorial review. The data pipeline is running smoothly.
+          </p>
         </div>
       )}
     </div>
   );
 }
 
-function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
-  const colorClasses: Record<string, string> = {
-    yellow: 'text-yellow-400',
-    green: 'text-green-400',
-    red: 'text-red-400',
-    blue: 'text-blue-400',
+function StatCard({ 
+  label, 
+  value, 
+  icon: Icon,
+  type,
+  accent = false,
+}: { 
+  label: string; 
+  value: number; 
+  icon: typeof Clock;
+  type: string;
+  accent?: boolean;
+}) {
+  const getStyles = (type: string) => {
+    switch (type) {
+      case 'pending':
+        return accent 
+          ? { card: 'admin-stat-card bg-gradient-to-br from-amber-50 to-orange-50', icon: 'text-amber-600', number: 'text-amber-800' }
+          : { card: 'admin-stat-card', icon: 'text-amber-600', number: 'text-slate-900' };
+      case 'approved':
+        return { card: 'admin-stat-card bg-gradient-to-br from-emerald-50 to-green-50', icon: 'text-emerald-600', number: 'text-emerald-800' };
+      case 'rejected':
+        return { card: 'admin-stat-card bg-gradient-to-br from-red-50 to-rose-50', icon: 'text-red-600', number: 'text-red-800' };
+      default:
+        return { card: 'admin-stat-card', icon: 'text-slate-600', number: 'text-slate-900' };
+    }
   };
 
+  const styles = getStyles(type);
+
   return (
-    <div className="bg-gray-800 rounded-lg p-4">
-      <p className="text-gray-400 text-sm">{label}</p>
-      <p className={`text-3xl font-bold ${colorClasses[color]}`}>{value}</p>
+    <div className={`${styles.card} p-6 rounded-lg transition-all ${accent ? 'ring-2 ring-copper-200' : ''}`}>
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <p className="font-ui text-sm font-medium text-slate-600 uppercase tracking-wide mb-2">{label}</p>
+          <p className={`admin-data-metric text-3xl font-bold ${styles.number} mb-1`}>{value.toLocaleString()}</p>
+        </div>
+        <div className={`p-3 bg-white rounded-lg shadow-sm border border-slate-200`}>
+          <Icon className={`w-6 h-6 ${styles.icon}`} />
+        </div>
+      </div>
     </div>
   );
 }

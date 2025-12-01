@@ -4,12 +4,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { UpdateTables } from '@/lib/database.types';
+import { clsx } from 'clsx';
+import { Check, X, Loader2, AlertTriangle } from 'lucide-react';
 
 interface ReviewItemActionsProps {
   id: string;
+  variant?: 'horizontal' | 'vertical';
 }
 
-export function ReviewItemActions({ id }: ReviewItemActionsProps) {
+export function ReviewItemActions({ id, variant = 'horizontal' }: ReviewItemActionsProps) {
   const [processing, setProcessing] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectNotes, setRejectNotes] = useState('');
@@ -44,49 +47,101 @@ export function ReviewItemActions({ id }: ReviewItemActionsProps) {
     router.refresh();
   };
 
+  const isVertical = variant === 'vertical';
+
   return (
     <>
-      <div className="flex gap-3">
+      <div className={clsx('flex', isVertical ? 'flex-col gap-3' : 'gap-3')}>
         <button
           onClick={() => handleAction('approve')}
           disabled={processing}
-          className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:cursor-not-allowed text-white font-medium rounded transition-colors"
+          className={clsx(
+            'inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-all font-ui',
+            isVertical ? 'px-6 py-3 text-sm w-full' : 'px-6 py-3 text-sm',
+            'bg-emerald-100 text-emerald-800 border border-emerald-200',
+            'hover:bg-emerald-200 hover:border-emerald-300 hover:shadow-md',
+            'disabled:opacity-50 disabled:cursor-not-allowed'
+          )}
         >
+          {processing ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Check className="w-4 h-4" />
+          )}
           {processing ? 'Processing...' : 'Approve'}
         </button>
         <button
           onClick={() => setShowRejectModal(true)}
           disabled={processing}
-          className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:cursor-not-allowed text-white font-medium rounded transition-colors"
+          className={clsx(
+            'inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-all font-ui',
+            isVertical ? 'px-6 py-3 text-sm w-full' : 'px-6 py-3 text-sm',
+            'bg-red-100 text-red-800 border border-red-200',
+            'hover:bg-red-200 hover:border-red-300 hover:shadow-md',
+            'disabled:opacity-50 disabled:cursor-not-allowed'
+          )}
         >
+          <X className="w-4 h-4" />
           Reject
         </button>
       </div>
 
+      {/* Reject Modal */}
       {showRejectModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-white mb-4">Reject Item</h3>
-            <textarea
-              value={rejectNotes}
-              onChange={(e) => setRejectNotes(e.target.value)}
-              placeholder="Optional: Add a reason for rejection..."
-              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
-              rows={3}
-            />
-            <div className="flex gap-3 mt-4 justify-end">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-2xl p-8 max-w-lg w-full mx-4">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="p-3 bg-red-100 rounded-lg border border-red-200">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-display text-xl font-semibold text-slate-900">Reject Item</h3>
+                <p className="font-ui text-slate-600 mt-1">
+                  This action will mark the item as rejected. Please provide editorial notes explaining the reason.
+                </p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <label htmlFor="reject-notes" className="block font-ui text-sm font-medium text-slate-700 mb-2">
+                Editorial Notes
+              </label>
+              <textarea
+                id="reject-notes"
+                value={rejectNotes}
+                onChange={(e) => setRejectNotes(e.target.value)}
+                placeholder="Explain why this item is being rejected..."
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-copper-500 focus:border-copper-500 resize-none transition-all font-ui"
+                rows={4}
+              />
+            </div>
+            
+            <div className="flex gap-3 justify-end">
               <button
-                onClick={() => setShowRejectModal(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setRejectNotes('');
+                }}
+                className="px-6 py-3 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all text-sm font-medium font-ui"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleAction('reject', rejectNotes || undefined)}
                 disabled={processing}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:cursor-not-allowed text-white rounded transition-colors"
+                className={clsx(
+                  'inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium transition-all font-ui',
+                  'bg-red-600 text-white',
+                  'hover:bg-red-700 hover:shadow-md',
+                  'disabled:opacity-50 disabled:cursor-not-allowed'
+                )}
               >
-                {processing ? 'Processing...' : 'Confirm Reject'}
+                {processing ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <X className="w-4 h-4" />
+                )}
+                {processing ? 'Processing...' : 'Confirm Rejection'}
               </button>
             </div>
           </div>
