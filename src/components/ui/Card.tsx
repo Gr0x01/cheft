@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
-  variant?: 'default' | 'chef' | 'stats' | 'brutal' | 'industrial';
+  variant?: 'default' | 'chef' | 'stats' | 'brutal' | 'industrial' | 'elevated' | 'outline';
   skew?: number; // 1, 2, 3, 4 for different angular variations
   padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
   as?: 'div' | 'article' | 'section';
@@ -27,6 +27,10 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
           return 'border-4 border-steel-light shadow-concrete';
         case 'brutal':
           return 'bg-steel-dark border-l-4 border-safety-orange';
+        case 'elevated':
+          return 'shadow-lg hover:shadow-xl hover:border-safety-orange hover:scale-105';
+        case 'outline':
+          return 'bg-transparent border-2 border-concrete-medium hover:border-safety-orange';
         default:
           return 'hover:border-safety-orange hover:shadow-orange';
       }

@@ -45,25 +45,24 @@ export async function addToReviewQueue(
   }
 
   try {
-    const { data, error } = await withRetry(() =>
-      supabase
+    const insertData: ReviewQueueInsert = {
+      type: entry.type,
+      data: entry.data as Json,
+      source: entry.source,
+      confidence: entry.confidence,
+      notes: entry.notes ?? null,
+      status: 'pending'
+    };
+    const result = await withRetry(async () => {
+      const res = await supabase
         .from('review_queue')
-        .insert({
-          type: entry.type,
-          data: entry.data as Json,
-          source: entry.source,
-          confidence: entry.confidence,
-          notes: entry.notes ?? null,
-          status: 'pending'
-        })
+        .insert(insertData as any)
         .select('id')
-        .single()
-        .then(res => {
-          if (res.error) throw new Error(res.error.message);
-          return res;
-        })
-    );
-    return { success: true, id: data?.id };
+        .single();
+      if (res.error) throw new Error(res.error.message);
+      return res;
+    });
+    return { success: true, id: (result.data as any)?.id };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error('[review-queue] Failed to add item:', msg);
@@ -96,27 +95,25 @@ export async function addBatchToReviewQueue(
     }
   }
 
-  const inserts = entries.map(e => ({
+  const inserts: ReviewQueueInsert[] = entries.map(e => ({
     type: e.type,
     data: e.data as Json,
     source: e.source,
     confidence: e.confidence,
     notes: e.notes ?? null,
-    status: 'pending' as const
+    status: 'pending'
   }));
 
   try {
-    const { data, error } = await withRetry(() =>
-      supabase
+    const result = await withRetry(async () => {
+      const res = await supabase
         .from('review_queue')
-        .insert(inserts)
-        .select('id')
-        .then(res => {
-          if (res.error) throw new Error(res.error.message);
-          return res;
-        })
-    );
-    return { success: true, inserted: data?.length || 0 };
+        .insert(inserts as any)
+        .select('id');
+      if (res.error) throw new Error(res.error.message);
+      return res;
+    });
+    return { success: true, inserted: (result.data as any[])?.length || 0 };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error('[review-queue] Failed to insert batch:', msg);
@@ -145,13 +142,12 @@ export async function getPendingItems(
   }
 
   try {
-    const { data, error } = await withRetry(() =>
-      query.then(res => {
-        if (res.error) throw new Error(res.error.message);
-        return res;
-      })
-    );
-    return data || [];
+    const result = await withRetry(async () => {
+      const res = await query;
+      if (res.error) throw new Error(res.error.message);
+      return res;
+    });
+    return (result.data || []) as ReviewQueueRow[];
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error('[review-queue] Failed to fetch pending items:', msg);
@@ -169,20 +165,19 @@ export async function approveItem(
   }
 
   try {
-    await withRetry(() =>
-      supabase
-        .from('review_queue')
-        .update({
-          status: 'approved',
-          reviewed_at: new Date().toISOString(),
-          reviewed_by: reviewedBy
-        })
-        .eq('id', id)
-        .then(res => {
-          if (res.error) throw new Error(res.error.message);
-          return res;
-        })
-    );
+    const updateData = {
+      status: 'approved' as const,
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: reviewedBy
+    };
+    await withRetry(async () => {
+      const res = await (supabase
+        .from('review_queue') as any)
+        .update(updateData)
+        .eq('id', id);
+      if (res.error) throw new Error(res.error.message);
+      return res;
+    });
     return { success: true };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
@@ -202,21 +197,20 @@ export async function rejectItem(
   }
 
   try {
-    await withRetry(() =>
-      supabase
-        .from('review_queue')
-        .update({
-          status: 'rejected',
-          reviewed_at: new Date().toISOString(),
-          reviewed_by: reviewedBy,
-          notes: notes ?? null
-        })
-        .eq('id', id)
-        .then(res => {
-          if (res.error) throw new Error(res.error.message);
-          return res;
-        })
-    );
+    const updateData = {
+      status: 'rejected' as const,
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: reviewedBy,
+      notes: notes ?? null
+    };
+    await withRetry(async () => {
+      const res = await (supabase
+        .from('review_queue') as any)
+        .update(updateData)
+        .eq('id', id);
+      if (res.error) throw new Error(res.error.message);
+      return res;
+    });
     return { success: true };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

@@ -2,6 +2,31 @@ import { chromium } from 'playwright';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 
+declare global {
+  interface Window {
+    tcm_map_data: {
+      locations: Array<{
+        restaurant?: string;
+        name?: string;
+        title?: string;
+        chef: string;
+        seasons?: string[];
+        season?: string;
+        country?: string;
+        state?: string;
+        city: string;
+        address: string;
+        latitude?: string;
+        lat?: string;
+        longitude?: string;
+        lng?: string;
+        website?: string;
+        james_beard?: boolean;
+      }>;
+    };
+  }
+}
+
 interface RawTopChefEntry {
   restaurant: string;
   chef: string;
@@ -46,20 +71,18 @@ async function extractTopChefData(): Promise<RawTopChefEntry[]> {
         throw new Error('No tcm_map_data found');
       }
       
-      return data.locations.map((location: any) => ({
-        restaurant: location.restaurant || location.name || location.title,
+      return data.locations.map((location) => ({
+        restaurant: location.restaurant || location.name || location.title || '',
         chef: location.chef,
-        seasons: location.seasons || [location.season],
+        seasons: (location.seasons || [location.season]).filter((s): s is string => !!s),
         country: location.country || 'US',
         state: location.state,
         city: location.city,
         address: location.address,
-        lat: parseFloat(location.latitude || location.lat),
-        lng: parseFloat(location.longitude || location.lng),
+        lat: parseFloat(location.latitude || location.lat || '0'),
+        lng: parseFloat(location.longitude || location.lng || '0'),
         website: location.website,
-        jamesBeard: location.james_beard || false,
-        // Capture any additional fields
-        raw: location
+        jamesBeard: location.james_beard || false
       }));
     });
     
@@ -67,7 +90,7 @@ async function extractTopChefData(): Promise<RawTopChefEntry[]> {
     
     // Log some sample data for verification
     console.log('📋 Sample entries:');
-    restaurants.slice(0, 3).forEach((r, i) => {
+    restaurants.slice(0, 3).forEach((r: RawTopChefEntry, i: number) => {
       console.log(`   ${i + 1}. ${r.chef} - ${r.restaurant} (${r.city}, ${r.state})`);
     });
     

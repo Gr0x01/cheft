@@ -40,7 +40,7 @@ const Section = React.forwardRef<HTMLElement, SectionProps>(
           backgroundClasses[background],
           className
         )}
-        ref={ref as React.Ref<HTMLElement>}
+        ref={ref as React.Ref<HTMLDivElement>}
         {...props}
       >
         {container ? (
@@ -89,7 +89,7 @@ interface SectionTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
 
 const SectionTitle = React.forwardRef<HTMLHeadingElement, SectionTitleProps>(
   ({ className, level = 2, children, ...props }, ref) => {
-    const Component = `h${level}` as keyof JSX.IntrinsicElements;
+    const Component = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
     
     const levelClasses = {
       1: 'text-display',

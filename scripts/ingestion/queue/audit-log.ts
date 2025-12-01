@@ -44,26 +44,25 @@ export async function logDataChange(
   }
 
   try {
-    const { data, error } = await withRetry(() =>
-      supabase
+    const insertData: DataChangeInsert = {
+      table_name: entry.table_name,
+      record_id: entry.record_id ?? null,
+      change_type: entry.change_type,
+      old_data: (entry.old_data ?? null) as Json,
+      new_data: (entry.new_data ?? null) as Json,
+      source: entry.source,
+      confidence: entry.confidence ?? null
+    };
+    const result = await withRetry(async () => {
+      const res = await supabase
         .from('data_changes')
-        .insert({
-          table_name: entry.table_name,
-          record_id: entry.record_id ?? null,
-          change_type: entry.change_type,
-          old_data: (entry.old_data ?? null) as Json,
-          new_data: (entry.new_data ?? null) as Json,
-          source: entry.source,
-          confidence: entry.confidence ?? null
-        })
+        .insert(insertData as any)
         .select('id')
-        .single()
-        .then(res => {
-          if (res.error) throw new Error(res.error.message);
-          return res;
-        })
-    );
-    return { success: true, id: data?.id };
+        .single();
+      if (res.error) throw new Error(res.error.message);
+      return res;
+    });
+    return { success: true, id: (result.data as any)?.id };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error('[audit-log] Failed to log change:', msg, { entry });
@@ -96,7 +95,7 @@ export async function logBatchChanges(
     }
   }
 
-  const inserts = entries.map(e => ({
+  const inserts: DataChangeInsert[] = entries.map(e => ({
     table_name: e.table_name,
     record_id: e.record_id ?? null,
     change_type: e.change_type,
@@ -107,17 +106,15 @@ export async function logBatchChanges(
   }));
 
   try {
-    const { data, error } = await withRetry(() =>
-      supabase
+    const result = await withRetry(async () => {
+      const res = await supabase
         .from('data_changes')
-        .insert(inserts)
-        .select('id')
-        .then(res => {
-          if (res.error) throw new Error(res.error.message);
-          return res;
-        })
-    );
-    return { success: true, inserted: data?.length || 0 };
+        .insert(inserts as any)
+        .select('id');
+      if (res.error) throw new Error(res.error.message);
+      return res;
+    });
+    return { success: true, inserted: (result.data as any[])?.length || 0 };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error('[audit-log] Failed to insert batch:', msg);
@@ -153,13 +150,12 @@ export async function getRecentChanges(
   }
 
   try {
-    const { data, error } = await withRetry(() =>
-      query.then(res => {
-        if (res.error) throw new Error(res.error.message);
-        return res;
-      })
-    );
-    return data || [];
+    const result = await withRetry(async () => {
+      const res = await query;
+      if (res.error) throw new Error(res.error.message);
+      return res;
+    });
+    return (result.data || []) as DataChangeRow[];
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error('[audit-log] Failed to fetch recent changes:', msg);

@@ -71,16 +71,14 @@ async function runStatusCheckPipeline(
   console.log(`   Mode: ${dryRun ? 'DRY RUN' : 'LIVE'}`);
   
   try {
-    const { count } = await withRetry(() =>
-      supabase
+    const result = await withRetry(async () => {
+      const res = await supabase
         .from('restaurants')
-        .select('*', { count: 'exact', head: true })
-        .then(res => {
-          if (res.error) throw new Error(res.error.message);
-          return res;
-        })
-    );
-    console.log(`   Total restaurants in DB: ${count}`);
+        .select('*', { count: 'exact', head: true });
+      if (res.error) throw new Error(res.error.message);
+      return res;
+    });
+    console.log(`   Total restaurants in DB: ${result.count}`);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error(`   ❌ Failed to count restaurants: ${msg}`);

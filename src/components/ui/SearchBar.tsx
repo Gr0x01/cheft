@@ -4,11 +4,11 @@ import React, { useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from './Button';
 
-interface SearchBarProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+interface SearchBarProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'size'> {
   onSearch?: (query: string) => void;
   onChange?: (value: string) => void;
   suggestions?: string[];
-  size?: 'md' | 'lg';
+  inputSize?: 'md' | 'lg';
   showSearchButton?: boolean;
 }
 
@@ -18,7 +18,7 @@ const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
     onSearch, 
     onChange, 
     suggestions = [], 
-    size = 'lg', 
+    inputSize = 'lg', 
     showSearchButton = true,
     placeholder = "Tell us what you're looking for...",
     ...props 
@@ -72,7 +72,7 @@ const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
             placeholder={placeholder}
             className={cn(
               baseClasses,
-              sizeClasses[size],
+              sizeClasses[inputSize],
               showSearchButton && 'pr-20',
               className
             )}
@@ -90,7 +90,7 @@ const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
           {showSearchButton && (
             <Button
               type="submit"
-              size={size === 'lg' ? 'md' : 'sm'}
+              size={inputSize === 'lg' ? 'md' : 'sm'}
               className="absolute right-2 top-1/2 transform -translate-y-1/2"
             >
               Search
@@ -117,12 +117,14 @@ const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
                   backgroundColor: 'transparent'
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = 'rgba(212, 175, 55, 0.1)';
-                  e.target.style.color = '#d4af37';
+                  const target = e.currentTarget as HTMLButtonElement;
+                  target.style.backgroundColor = 'rgba(212, 175, 55, 0.1)';
+                  target.style.color = '#d4af37';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = 'transparent';
-                  e.target.style.color = 'rgba(248, 248, 242, 0.8)';
+                  const target = e.currentTarget as HTMLButtonElement;
+                  target.style.backgroundColor = 'transparent';
+                  target.style.color = 'rgba(248, 248, 242, 0.8)';
                 }}
               >
                 {suggestion}

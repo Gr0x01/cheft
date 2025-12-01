@@ -64,12 +64,12 @@ function parseSeason(rawSeason: string): ParsedSeason {
 type JamesBeardStatus = 'semifinalist' | 'nominated' | 'winner' | null;
 
 function parseJamesBeardStatus(value: boolean | string | undefined): JamesBeardStatus {
-  if (!value || value === false) return null;
+  if (!value) return null;
   if (typeof value === 'string') {
     const lower = value.toLowerCase();
-    if (lower === 'winner') return 'winner';
-    if (lower === 'nominated') return 'nominated';
-    if (lower === 'semifinalist') return 'semifinalist';
+    if (lower.includes('winner')) return 'winner';
+    if (lower.includes('nominated')) return 'nominated';
+    if (lower.includes('semifinalist')) return 'semifinalist';
   }
   return null;
 }
@@ -148,7 +148,7 @@ async function importTopChefDataV2() {
     const chefMap = new Map<string, {
       name: string;
       slug: string;
-      jamesBeard: boolean;
+      jamesBeardStatus: JamesBeardStatus;
       country: string;
       seasons: ParsedSeason[];
     }>();
