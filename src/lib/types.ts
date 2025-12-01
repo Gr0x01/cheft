@@ -7,19 +7,28 @@ export interface Show {
   created_at: string;
 }
 
+export interface ChefShow {
+  id: string;
+  chef_id: string;
+  show_id: string;
+  season: string | null;
+  season_name: string | null;
+  result: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
+  is_primary: boolean;
+  created_at: string;
+  show?: Show;
+}
+
 export interface Chef {
   id: string;
   name: string;
   slug: string;
-  primary_show_id: string | null;
-  other_shows: string[] | null;
-  top_chef_season: string | null;
-  top_chef_result: 'winner' | 'finalist' | 'contestant' | null;
   mini_bio: string | null;
   country: string | null;
+  james_beard_status: 'semifinalist' | 'nominated' | 'winner' | null;
   created_at: string;
   updated_at: string;
-  primary_show?: Show; // Joined data
+  chef_shows?: ChefShow[];
 }
 
 export interface Restaurant {
@@ -51,9 +60,14 @@ export interface RestaurantEmbedding {
   created_at: string;
 }
 
-// Extended types for API responses
+export interface ChefWithPrimaryShow extends Chef {
+  primary_show?: Show | null;
+  top_chef_season?: string | null;
+  top_chef_result?: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
+}
+
 export interface RestaurantWithDetails extends Restaurant {
-  chef: Chef & { primary_show?: Show };
+  chef: ChefWithPrimaryShow;
 }
 
 // Search and filter types

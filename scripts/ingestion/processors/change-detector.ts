@@ -31,11 +31,54 @@ export interface ChangeDetectionResult {
   errors: string[];
 }
 
-const CONFIDENCE_THRESHOLDS = {
-  NEW_CHEF: 0.5,
-  UPDATE_SEASON: 0.85,
-  UPDATE_RESULT: 0.8,
+const CONFIDENCE_BASE = {
+  WIKIPEDIA_STRUCTURED: 0.85,
+  WIKIPEDIA_GENERIC: 0.70,
+  OTHER: 0.50,
 };
+
+const CONFIDENCE_BOOSTS = {
+  HAS_SEASON: 0.05,
+  HAS_RESULT: 0.05,
+  HAS_HOMETOWN: 0.03,
+  HAS_SEASON_NAME: 0.02,
+};
+
+const CONFIDENCE_THRESHOLDS = {
+  UPDATE_SEASON: 0.85,
+  UPDATE_RESULT: 0.80,
+};
+
+function calculateNewChefConfidence(
+  scraped: ScrapedContestant,
+  showSlug: string
+): number {
+  const isTopChef = showSlug === 'top-chef';
+  const isWikipediaSource = scraped.sourceUrl.includes('wikipedia.org');
+  
+  let confidence = CONFIDENCE_BASE.OTHER;
+  
+  if (isWikipediaSource) {
+    confidence = isTopChef 
+      ? CONFIDENCE_BASE.WIKIPEDIA_STRUCTURED 
+      : CONFIDENCE_BASE.WIKIPEDIA_GENERIC;
+  }
+  
+  if (scraped.season) {
+    confidence += CONFIDENCE_BOOSTS.HAS_SEASON;
+  }
+  if (scraped.result) {
+    confidence += CONFIDENCE_BOOSTS.HAS_RESULT;
+  }
+  if (scraped.hometown) {
+    confidence += CONFIDENCE_BOOSTS.HAS_HOMETOWN;
+  }
+  if (scraped.seasonName) {
+    confidence += CONFIDENCE_BOOSTS.HAS_SEASON_NAME;
+  }
+  
+  return Math.min(confidence, 0.99);
+}
 
 export async function loadExistingChefs(
   supabase: SupabaseClient<Database>
@@ -106,7 +149,7 @@ function detectChangesForContestant(
       scraped,
       existing: null,
       showSlug,
-      confidence: CONFIDENCE_THRESHOLDS.NEW_CHEF,
+      confidence: calculateNewChefConfidence(scraped, showSlug),
       details: `New chef discovered: ${scraped.name} from ${showSlug}`
     };
   }

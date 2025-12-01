@@ -1,8 +1,9 @@
 ---
 Last-Updated: 2025-12-01
+Next-Action: Run enrichment pipeline with Google Places API
 LLM-Models: gpt-5-mini (enrichment + web search), gpt-5-nano (filtering)
 Maintainer: RB
-Status: Phase 4 Complete
+Status: Phase 5 In Progress
 ---
 
 # TV Chef Map: Autonomous Data Ingestion System
@@ -37,7 +38,9 @@ Status: Phase 4 Complete
 - **First live run**: 12 new chefs queued, 3 season updates auto-applied
 
 ### ⏳ Pending Implementation
-- LLM filter/enrichment integration (Phase 4-5)
+- ✅ Database migration applied: `scripts/migrations/add-enrichment-fields.sql`
+- Run enrichment pipeline with Google Places API
+- Test media enricher on production data
 
 ### ✅ Phase 3 Complete: Admin Review UI
 - Supabase Auth with magic link login
@@ -502,16 +505,44 @@ const result = await generateText({
 - [x] Queue new chefs for review (with filter bypass for already-excluded)
 - [x] Dynamic confidence scoring (Wikipedia structured: 85% base + boosts)
 - [x] Cost tracking (tokens, estimated cost per run)
-- [ ] Notification system (email or in-app) - deferred to Phase 5+
 
-### Phase 5: LLM Enrichment (Week 5)
-- [ ] Vercel AI SDK setup with `@ai-sdk/openai`
-- [ ] GPT-5-mini + web_search tool for restaurant discovery
-- [ ] Bio generation for approved chefs
-- [ ] Structured output parsing (name, address, cuisine, price)
-- [ ] Geocoding integration (Nominatim)
-- [ ] Status verification pipeline with web search
-- [ ] Cost tracking and rate limiting
+### Phase 5: LLM Enrichment & Media Pipeline (Week 5) 🔄 IN PROGRESS
+- [x] Vercel AI SDK setup with `@ai-sdk/openai`
+- [x] GPT-5-mini + web_search tool for restaurant discovery
+- [x] Bio generation for approved chefs (llm-enricher.ts)
+- [x] Structured output parsing (name, address, cuisine, price)
+- [x] Status verification pipeline with web search
+- [x] Cost tracking and rate limiting
+- [x] Chef photo pipeline (Wikipedia → TMDB fallback)
+- [x] Google Places API integration (rating, reviews, photos)
+- [x] Media enricher pipeline orchestration
+- [x] Database migration for enrichment fields
+- [ ] Run enrichment on production data
+- [ ] Geocoding integration (Nominatim) - deferred
+
+#### New Files Created
+```
+scripts/ingestion/
+  services/
+    google-places.ts      # Google Places API (New) wrapper
+    wikipedia-images.ts   # Wikimedia Commons API for chef photos
+    tmdb.ts               # TMDB API for celebrity chef photos
+  processors/
+    llm-enricher.ts       # GPT-5-mini + web_search for bios/restaurants
+    media-enricher.ts     # Orchestrates photo/places enrichment
+
+scripts/migrations/
+  add-enrichment-fields.sql  # Schema for photos, Google Places data
+```
+
+#### Enrichment Data Sources
+| Data Type | Primary Source | Fallback | Cost |
+|-----------|---------------|----------|------|
+| Chef Photos | Wikipedia/Commons | TMDB | Free |
+| Restaurant Photos | Google Places | - | ~$0.007/photo |
+| Ratings/Reviews | Google Places | - | ~$0.022/place |
+| Chef Bios | GPT-5-mini + web_search | - | ~$0.01-0.02/chef |
+| Status Verification | GPT-5-mini + web_search | - | ~$0.005/restaurant |
 
 ## Show Configuration
 
@@ -576,3 +607,6 @@ To add a new show:
 - **Scheduled enrichment refresh** for stale bios
 - **API rate limiting** for external services
 - **Rollback capability** using data_changes audit log
+- **Outscraper integration** for unlimited Google reviews (if needed)
+- **Yelp Fusion API** for additional review data (paid)
+- **Image CDN** for optimized photo delivery

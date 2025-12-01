@@ -1,0 +1,443 @@
+import { generateText } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { z } from 'zod';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { Database } from '../../../src/lib/database.types';
+import { logDataChange } from '../queue/audit-log';
+
+if (!process.env.OPENAI_API_KEY) {
+  throw new Error('OPENAI_API_KEY environment variable is required for LLM enrichment');
+}
+
+const RestaurantSchema = z.object({
+  name: z.string(),
+  address: z.string().optional(),
+  city: z.string(),
+  state: z.string().optional(),
+  country: z.string().default('US'),
+  cuisine: z.array(z.string()).optional(),
+  priceRange: z.enum(['$', '$$', '$$$', '$$$$']).optional(),
+  status: z.enum(['open', 'closed', 'unknown']).default('unknown'),
+  website: z.string().url().optional(),
+  role: z.enum(['owner', 'executive_chef', 'partner', 'consultant']).optional(),
+});
+
+const ChefEnrichmentSchema = z.object({
+  miniBio: z.string().max(500),
+  restaurants: z.array(RestaurantSchema),
+  jamesBeardStatus: z.enum(['winner', 'nominated', 'semifinalist']).nullable().optional(),
+});
+
+const RestaurantStatusSchema = z.object({
+  status: z.enum(['open', 'closed', 'unknown']),
+  confidence: z.number().min(0).max(1),
+  reason: z.string(),
+  lastVerified: z.string().optional(),
+});
+
+export interface ChefEnrichmentResult {
+  chefId: string;
+  chefName: string;
+  miniBio: string | null;
+  restaurants: z.infer<typeof RestaurantSchema>[];
+  jamesBeardStatus: string | null;
+  tokensUsed: TokenUsage;
+  success: boolean;
+  error?: string;
+}
+
+export interface RestaurantStatusResult {
+  restaurantId: string;
+  restaurantName: string;
+  status: 'open' | 'closed' | 'unknown';
+  confidence: number;
+  reason: string;
+  tokensUsed: TokenUsage;
+  success: boolean;
+  error?: string;
+}
+
+export interface TokenUsage {
+  prompt: number;
+  completion: number;
+  total: number;
+}
+
+export interface LLMEnricherConfig {
+  model?: string;
+  maxRestaurantsPerChef?: number;
+}
+
+const CHEF_ENRICHMENT_SYSTEM_PROMPT = `You are a culinary industry expert helping to gather information about TV chef contestants and their restaurants.
+
+Your task: Use web search to find accurate, up-to-date information about the chef, including:
+1. A brief bio (2-3 sentences about their career and culinary style)
+2. Their current restaurants (owned, partner, or executive chef roles)
+3. James Beard Award status if any
+
+Guidelines:
+- Only include restaurants where the chef has a significant role (owner, partner, executive chef)
+- Include closed restaurants but mark them as "closed"
+- Verify restaurant status is current (within last year)
+- Be conservative - if unsure about a detail, omit it
+- Cuisine tags should be specific (e.g., "Japanese", "New American", "Southern")
+- Price range: $ (<$15/entree), $$ ($15-30), $$$ ($30-60), $$$$ ($60+)
+
+IMPORTANT: Return your response as valid JSON matching this exact structure:
+{
+  "miniBio": "2-3 sentence bio",
+  "restaurants": [
+    {
+      "name": "Restaurant Name",
+      "address": "123 Main St",
+      "city": "City",
+      "state": "ST",
+      "country": "US",
+      "cuisine": ["Cuisine Type"],
+      "priceRange": "$$",
+      "status": "open",
+      "website": "https://...",
+      "role": "owner"
+    }
+  ],
+  "jamesBeardStatus": null or "winner" or "nominated" or "semifinalist"
+}`;
+
+const RESTAURANT_STATUS_SYSTEM_PROMPT = `You are a restaurant industry analyst verifying whether restaurants are currently open.
+
+Your task: Search for current information about the restaurant to determine if it's still operating.
+
+Guidelines:
+- Look for recent reviews, social media activity, or news articles
+- A restaurant is "closed" if there's clear evidence it shut down
+- A restaurant is "open" if there's recent activity (within 6 months)
+- Mark as "unknown" if you can't find conclusive information
+- Confidence: 0.9+ for clear evidence, 0.7-0.9 for likely, <0.7 for uncertain
+
+IMPORTANT: Return your response as valid JSON matching this exact structure:
+{
+  "status": "open" or "closed" or "unknown",
+  "confidence": 0.0 to 1.0,
+  "reason": "Brief explanation of findings"
+}`;
+
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 1000;
+
+async function withRetry<T>(fn: () => Promise<T>, context: string): Promise<T> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      if (attempt < MAX_RETRIES) {
+        const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1) + Math.random() * 500;
+        console.warn(`   ⚠️ Retry ${attempt}/${MAX_RETRIES} for "${context}" after ${Math.round(delay)}ms: ${lastError.message}`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  throw lastError;
+}
+
+function extractJsonFromText(text: string): string {
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    return jsonMatch[0];
+  }
+  return text;
+}
+
+export function createLLMEnricher(
+  supabase: SupabaseClient<Database>,
+  config: LLMEnricherConfig = {}
+) {
+  const modelName = config.model ?? 'gpt-5-mini';
+  const maxRestaurants = config.maxRestaurantsPerChef ?? 10;
+
+  let totalTokensUsed: TokenUsage = { prompt: 0, completion: 0, total: 0 };
+
+  async function enrichChef(
+    chefId: string,
+    chefName: string,
+    showName: string,
+    options: { season?: string; result?: string } = {}
+  ): Promise<ChefEnrichmentResult> {
+    const prompt = buildChefEnrichmentPrompt(chefName, showName, options);
+
+    try {
+      const result = await withRetry(
+        () => generateText({
+          model: openai(modelName),
+          system: CHEF_ENRICHMENT_SYSTEM_PROMPT,
+          prompt,
+          temperature: 0.2,
+          maxTokens: 2000,
+        }),
+        `enrich chef ${chefName}`
+      );
+
+      const tokensUsed: TokenUsage = {
+        prompt: result.usage?.promptTokens || 0,
+        completion: result.usage?.completionTokens || 0,
+        total: result.usage?.totalTokens || 0,
+      };
+
+      totalTokensUsed.prompt += tokensUsed.prompt;
+      totalTokensUsed.completion += tokensUsed.completion;
+      totalTokensUsed.total += tokensUsed.total;
+
+      const jsonText = extractJsonFromText(result.text);
+      const parsed = JSON.parse(jsonText);
+      const validated = ChefEnrichmentSchema.parse(parsed);
+
+      const restaurants = validated.restaurants.slice(0, maxRestaurants);
+
+      return {
+        chefId,
+        chefName,
+        miniBio: validated.miniBio,
+        restaurants,
+        jamesBeardStatus: validated.jamesBeardStatus ?? null,
+        tokensUsed,
+        success: true,
+      };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`   ❌ LLM enrichment error for "${chefName}": ${msg}`);
+      
+      return {
+        chefId,
+        chefName,
+        miniBio: null,
+        restaurants: [],
+        jamesBeardStatus: null,
+        tokensUsed: { prompt: 0, completion: 0, total: 0 },
+        success: false,
+        error: msg,
+      };
+    }
+  }
+
+  async function verifyRestaurantStatus(
+    restaurantId: string,
+    restaurantName: string,
+    chefName: string,
+    city: string,
+    state?: string
+  ): Promise<RestaurantStatusResult> {
+    const prompt = buildStatusVerificationPrompt(restaurantName, chefName, city, state);
+
+    try {
+      const result = await withRetry(
+        () => generateText({
+          model: openai(modelName),
+          system: RESTAURANT_STATUS_SYSTEM_PROMPT,
+          prompt,
+          temperature: 0.1,
+          maxTokens: 500,
+        }),
+        `verify status ${restaurantName}`
+      );
+
+      const tokensUsed: TokenUsage = {
+        prompt: result.usage?.promptTokens || 0,
+        completion: result.usage?.completionTokens || 0,
+        total: result.usage?.totalTokens || 0,
+      };
+
+      totalTokensUsed.prompt += tokensUsed.prompt;
+      totalTokensUsed.completion += tokensUsed.completion;
+      totalTokensUsed.total += tokensUsed.total;
+
+      const jsonText = extractJsonFromText(result.text);
+      const parsed = JSON.parse(jsonText);
+      const validated = RestaurantStatusSchema.parse(parsed);
+
+      return {
+        restaurantId,
+        restaurantName,
+        status: validated.status,
+        confidence: validated.confidence,
+        reason: validated.reason,
+        tokensUsed,
+        success: true,
+      };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`   ❌ Status verification error for "${restaurantName}": ${msg}`);
+      
+      return {
+        restaurantId,
+        restaurantName,
+        status: 'unknown',
+        confidence: 0,
+        reason: `Error: ${msg}`,
+        tokensUsed: { prompt: 0, completion: 0, total: 0 },
+        success: false,
+        error: msg,
+      };
+    }
+  }
+
+  async function enrichAndSaveChef(
+    chefId: string,
+    chefName: string,
+    showName: string,
+    options: { season?: string; result?: string; dryRun?: boolean } = {}
+  ): Promise<ChefEnrichmentResult> {
+    const result = await enrichChef(chefId, chefName, showName, options);
+
+    if (!result.success || options.dryRun) {
+      return result;
+    }
+
+    if (result.miniBio) {
+      const updateData: Record<string, unknown> = {
+        mini_bio: result.miniBio,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (result.jamesBeardStatus) {
+        updateData.james_beard_status = result.jamesBeardStatus;
+      }
+
+      const { error } = await (supabase
+        .from('chefs') as ReturnType<typeof supabase.from>)
+        .update(updateData)
+        .eq('id', chefId);
+
+      if (error) {
+        console.error(`   ❌ Failed to save chef bio: ${error.message}`);
+      } else {
+        await logDataChange(supabase, {
+          table_name: 'chefs',
+          record_id: chefId,
+          change_type: 'update',
+          new_data: { mini_bio: result.miniBio, james_beard_status: result.jamesBeardStatus },
+          source: 'llm_enricher',
+          confidence: 0.85,
+        });
+      }
+    }
+
+    return result;
+  }
+
+  async function verifyAndUpdateStatus(
+    restaurantId: string,
+    restaurantName: string,
+    chefName: string,
+    city: string,
+    state?: string,
+    options: { dryRun?: boolean; minConfidence?: number } = {}
+  ): Promise<RestaurantStatusResult> {
+    const minConfidence = options.minConfidence ?? 0.7;
+    const result = await verifyRestaurantStatus(restaurantId, restaurantName, chefName, city, state);
+
+    if (!result.success || options.dryRun) {
+      return result;
+    }
+
+    if (result.confidence >= minConfidence && result.status !== 'unknown') {
+      const { error } = await (supabase
+        .from('restaurants') as ReturnType<typeof supabase.from>)
+        .update({
+          status: result.status,
+          last_verified_at: new Date().toISOString(),
+          verification_source: 'llm_web_search',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', restaurantId);
+
+      if (error) {
+        console.error(`   ❌ Failed to update restaurant status: ${error.message}`);
+      } else {
+        await logDataChange(supabase, {
+          table_name: 'restaurants',
+          record_id: restaurantId,
+          change_type: 'update',
+          new_data: { status: result.status, reason: result.reason },
+          source: 'llm_enricher',
+          confidence: result.confidence,
+        });
+      }
+    }
+
+    return result;
+  }
+
+  function getTotalTokensUsed(): TokenUsage {
+    return { ...totalTokensUsed };
+  }
+
+  function estimateCost(): number {
+    const inputCostPer1M = 0.15;
+    const outputCostPer1M = 0.60;
+    
+    return (totalTokensUsed.prompt / 1_000_000) * inputCostPer1M +
+           (totalTokensUsed.completion / 1_000_000) * outputCostPer1M;
+  }
+
+  function resetTokenCounter(): void {
+    totalTokensUsed = { prompt: 0, completion: 0, total: 0 };
+  }
+
+  return {
+    enrichChef,
+    enrichAndSaveChef,
+    verifyRestaurantStatus,
+    verifyAndUpdateStatus,
+    getTotalTokensUsed,
+    estimateCost,
+    resetTokenCounter,
+  };
+}
+
+function buildChefEnrichmentPrompt(
+  chefName: string,
+  showName: string,
+  options: { season?: string; result?: string }
+): string {
+  let prompt = `Research chef ${chefName} who appeared on ${showName}`;
+  
+  if (options.season) {
+    prompt += ` (${options.season})`;
+  }
+  if (options.result) {
+    prompt += ` as ${options.result}`;
+  }
+  
+  prompt += `.\n\nFind:
+1. A brief professional bio (2-3 sentences)
+2. All restaurants they currently own, co-own, or serve as executive chef
+3. Any James Beard Award recognition
+
+For each restaurant, include the full address if available.`;
+
+  return prompt;
+}
+
+function buildStatusVerificationPrompt(
+  restaurantName: string,
+  chefName: string,
+  city: string,
+  state?: string
+): string {
+  const location = state ? `${city}, ${state}` : city;
+  
+  return `Verify if "${restaurantName}" by chef ${chefName} in ${location} is currently open.
+
+Search for:
+- Recent reviews or social media posts
+- News about closure or relocation
+- Current operating hours or website status
+
+Determine if the restaurant is open, closed, or unknown.`;
+}
+
+export type LLMEnricher = ReturnType<typeof createLLMEnricher>;

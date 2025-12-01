@@ -13,6 +13,10 @@ import {
 } from './processors/change-detector';
 import { getQueueStats, addToReviewQueue } from './queue/review-queue';
 import { getRecentChanges, logDataChange } from './queue/audit-log';
+import { getExcludedNamesSet, addExcludedName, getExcludedNamesStats } from './queue/excluded-names';
+import { filterChefCandidate, ChefCandidate } from './processors/llm-filter';
+import { createLLMEnricher } from './processors/llm-enricher';
+import { createMediaEnricher } from './processors/media-enricher';
 import { withRetry } from './utils/retry';
 
 config({ path: '.env.local' });
@@ -20,6 +24,8 @@ config({ path: '.env.local' });
 interface OrchestratorOptions {
   discovery: boolean;
   statusCheck: boolean;
+  enrich: boolean;
+  filter: boolean;
   dryRun: boolean;
 }
 
@@ -32,10 +38,24 @@ interface PipelineReport {
     newChefsFound: number;
     queuedForReview: number;
     autoApplied: number;
+    filteredOut: number;
+    skippedExcluded: number;
   };
   statusCheckResults?: {
     restaurantsChecked: number;
     statusChanges: number;
+  };
+  enrichmentResults?: {
+    chefsProcessed: number;
+    chefsWithPhotos: number;
+    restaurantsProcessed: number;
+    restaurantsWithPlaceId: number;
+    googlePlacesCost: number;
+  };
+  llmStats?: {
+    totalCalls: number;
+    totalTokens: number;
+    estimatedCost: number;
   };
   errors: string[];
 }
@@ -45,6 +65,8 @@ function parseArgs(): OrchestratorOptions {
   return {
     discovery: args.includes('--discovery'),
     statusCheck: args.includes('--status-check'),
+    enrich: args.includes('--enrich'),
+    filter: args.includes('--filter'),
     dryRun: args.includes('--dry-run')
   };
 }
@@ -124,7 +146,7 @@ async function queueNewChef(
   dryRun: boolean
 ): Promise<boolean> {
   if (dryRun) {
-    console.log(`     [DRY RUN] Would queue for review: ${change.scraped.name}`);
+    console.log(`     [DRY RUN] Would queue for review: ${change.scraped.name} (confidence: ${(change.confidence * 100).toFixed(0)}%)`);
     return true;
   }
 
@@ -153,10 +175,18 @@ async function queueNewChef(
   return result.success;
 }
 
+interface LLMStats {
+  totalCalls: number;
+  totalTokens: number;
+  estimatedCost: number;
+}
+
 async function runDiscoveryPipeline(
   supabase: SupabaseClient<Database>,
-  dryRun: boolean
+  options: { dryRun: boolean; filter: boolean },
+  llmStats: LLMStats
 ): Promise<PipelineReport['discoveryResults']> {
+  const { dryRun, filter } = options;
   const enabledShows = getEnabledShows();
   
   console.log(`\n📡 Discovery Pipeline`);
@@ -165,7 +195,7 @@ async function runDiscoveryPipeline(
   
   if (enabledShows.length === 0) {
     console.log('   ⚠️  No shows enabled in config');
-    return { newChefsFound: 0, queuedForReview: 0, autoApplied: 0 };
+    return { newChefsFound: 0, queuedForReview: 0, autoApplied: 0, filteredOut: 0, skippedExcluded: 0 };
   }
 
   console.log(`\n📥 Loading existing chef data...`);
@@ -191,6 +221,13 @@ async function runDiscoveryPipeline(
   let totalNewChefs = 0;
   let totalQueued = 0;
   let totalAutoApplied = 0;
+  let totalFilteredOut = 0;
+  let totalSkippedExcluded = 0;
+
+  const excludedNames = filter ? await getExcludedNamesSet(supabase) : new Set<string>();
+  if (filter && excludedNames.size > 0) {
+    console.log(`   Loaded ${excludedNames.size} excluded names`);
+  }
 
   console.log(`\n⚡ Processing Changes...`);
   
@@ -198,6 +235,47 @@ async function runDiscoveryPipeline(
     totalNewChefs += result.newChefs.length;
 
     for (const change of result.newChefs) {
+      if (excludedNames.has(change.scraped.name)) {
+        console.log(`     ⏭️  Skipped (excluded): ${change.scraped.name}`);
+        totalSkippedExcluded++;
+        continue;
+      }
+
+      if (filter) {
+        const show = enabledShows.find(s => s.slug === change.showSlug);
+        const candidate: ChefCandidate = {
+          name: change.scraped.name,
+          showName: show?.name || change.showSlug,
+          season: change.scraped.season,
+          result: change.scraped.result,
+          hometown: change.scraped.hometown,
+        };
+
+        if (dryRun) {
+          console.log(`     [DRY RUN] Would filter: ${change.scraped.name}`);
+        } else {
+          const filterResult = await filterChefCandidate(candidate);
+          llmStats.totalCalls++;
+          llmStats.totalTokens += filterResult.tokensUsed.total;
+          llmStats.estimatedCost += (filterResult.tokensUsed.prompt * 0.15 / 1_000_000) + 
+                                    (filterResult.tokensUsed.completion * 0.60 / 1_000_000);
+
+          if (!filterResult.isChef) {
+            console.log(`     🚫 Filtered out: ${change.scraped.name} (${filterResult.reason})`);
+            await addExcludedName(supabase, {
+              name: change.scraped.name,
+              showId: show?.slug,
+              reason: filterResult.reason,
+              source: 'llm_filter',
+            });
+            totalFilteredOut++;
+            continue;
+          } else {
+            console.log(`     ✅ Passed filter: ${change.scraped.name} (${(filterResult.confidence * 100).toFixed(0)}% confident)`);
+          }
+        }
+      }
+
       const queued = await queueNewChef(supabase, change, dryRun);
       if (queued) totalQueued++;
     }
@@ -226,37 +304,179 @@ async function runDiscoveryPipeline(
   return {
     newChefsFound: totalNewChefs,
     queuedForReview: totalQueued,
-    autoApplied: totalAutoApplied
+    autoApplied: totalAutoApplied,
+    filteredOut: totalFilteredOut,
+    skippedExcluded: totalSkippedExcluded,
   };
 }
 
 async function runStatusCheckPipeline(
   supabase: SupabaseClient<Database>,
-  dryRun: boolean
+  dryRun: boolean,
+  llmStats: LLMStats
 ): Promise<PipelineReport['statusCheckResults']> {
   console.log(`\n🔍 Status Check Pipeline`);
   console.log(`   Mode: ${dryRun ? 'DRY RUN' : 'LIVE'}`);
   
+  const llmEnricher = createLLMEnricher(supabase);
+  let restaurantsChecked = 0;
+  let statusChanges = 0;
+
   try {
-    const result = await withRetry(async () => {
-      const res = await supabase
-        .from('restaurants')
-        .select('*', { count: 'exact', head: true });
-      if (res.error) throw new Error(res.error.message);
-      return res;
-    });
-    console.log(`   Total restaurants in DB: ${result.count}`);
+    type RestaurantWithChef = {
+      id: string;
+      name: string;
+      city: string;
+      state: string | null;
+      status: string;
+      last_verified_at: string | null;
+      chefs: { name: string };
+    };
+
+    const result = await supabase
+      .from('restaurants')
+      .select(`
+        id, name, city, state, status, last_verified_at,
+        chefs!inner(name)
+      `)
+      .eq('status', 'open')
+      .or('last_verified_at.is.null,last_verified_at.lt.' + new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+      .limit(20);
+
+    const restaurants = result.data as RestaurantWithChef[] | null;
+    const error = result.error;
+
+    if (error) throw new Error(error.message);
+    
+    console.log(`   Found ${restaurants?.length || 0} restaurants needing verification`);
+
+    if (restaurants && restaurants.length > 0) {
+      for (const restaurant of restaurants) {
+        const chefName = restaurant.chefs?.name || 'Unknown';
+        
+        if (dryRun) {
+          console.log(`     [DRY RUN] Would verify: ${restaurant.name}`);
+          restaurantsChecked++;
+          continue;
+        }
+
+        const verifyResult = await llmEnricher.verifyAndUpdateStatus(
+          restaurant.id,
+          restaurant.name,
+          chefName,
+          restaurant.city,
+          restaurant.state ?? undefined,
+          { dryRun: false, minConfidence: 0.7 }
+        );
+
+        restaurantsChecked++;
+        
+        if (verifyResult.success && verifyResult.status !== restaurant.status) {
+          statusChanges++;
+          console.log(`     📝 ${restaurant.name}: ${restaurant.status} → ${verifyResult.status}`);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      const tokens = llmEnricher.getTotalTokensUsed();
+      llmStats.totalCalls += restaurantsChecked;
+      llmStats.totalTokens += tokens.total;
+      llmStats.estimatedCost += llmEnricher.estimateCost();
+    }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    console.error(`   ❌ Failed to count restaurants: ${msg}`);
-    return { restaurantsChecked: 0, statusChanges: 0 };
+    console.error(`   ❌ Status check error: ${msg}`);
   }
-  console.log(`   ⏳ LLM status verification not yet implemented (Phase 5)`);
   
   return {
-    restaurantsChecked: 0,
-    statusChanges: 0
+    restaurantsChecked,
+    statusChanges
   };
+}
+
+async function runEnrichmentPipeline(
+  supabase: SupabaseClient<Database>,
+  dryRun: boolean,
+  llmStats: LLMStats
+): Promise<PipelineReport['enrichmentResults']> {
+  console.log(`\n🎨 Enrichment Pipeline`);
+  console.log(`   Mode: ${dryRun ? 'DRY RUN' : 'LIVE'}`);
+  
+  const mediaEnricher = createMediaEnricher(supabase, {
+    googlePlacesApiKey: process.env.GOOGLE_PLACES_API_KEY,
+    maxPhotosPerRestaurant: 3,
+    photoMaxWidth: 800,
+  });
+
+  const llmEnricher = createLLMEnricher(supabase);
+
+  let chefsProcessed = 0;
+  let chefsWithPhotos = 0;
+  let restaurantsProcessed = 0;
+  let restaurantsWithPlaceId = 0;
+
+  try {
+    console.log(`\n   📸 Enriching chef photos...`);
+    if (!dryRun) {
+      const chefResults = await mediaEnricher.enrichAllChefsWithoutPhotos({ limit: 20, delayMs: 500 });
+      chefsProcessed = chefResults.length;
+      chefsWithPhotos = chefResults.filter(r => r.photoUrl).length;
+      console.log(`     Processed ${chefsProcessed} chefs, found photos for ${chefsWithPhotos}`);
+    } else {
+      const { count } = await supabase
+        .from('chefs')
+        .select('*', { count: 'exact', head: true })
+        .is('photo_url', null);
+      console.log(`     [DRY RUN] Would process up to 20 of ${count || 0} chefs without photos`);
+    }
+
+    if (process.env.GOOGLE_PLACES_API_KEY) {
+      console.log(`\n   🗺️  Enriching restaurant Google Places data...`);
+      if (!dryRun) {
+        const restaurantResults = await mediaEnricher.enrichAllRestaurantsWithoutPlaceId({ 
+          limit: 30, 
+          delayMs: 200,
+          minConfidence: 0.7 
+        });
+        restaurantsProcessed = restaurantResults.length;
+        restaurantsWithPlaceId = restaurantResults.filter(r => r.googlePlaceId).length;
+        console.log(`     Processed ${restaurantsProcessed} restaurants, matched ${restaurantsWithPlaceId}`);
+      } else {
+        const { count } = await supabase
+          .from('restaurants')
+          .select('*', { count: 'exact', head: true })
+          .is('google_place_id', null)
+          .eq('status', 'open');
+        console.log(`     [DRY RUN] Would process up to 30 of ${count || 0} restaurants without Place ID`);
+      }
+    } else {
+      console.log(`\n   ⚠️  GOOGLE_PLACES_API_KEY not set, skipping restaurant enrichment`);
+    }
+
+    const stats = mediaEnricher.getStats();
+    const tokens = llmEnricher.getTotalTokensUsed();
+    llmStats.totalTokens += tokens.total;
+    llmStats.estimatedCost += llmEnricher.estimateCost();
+
+    return {
+      chefsProcessed,
+      chefsWithPhotos,
+      restaurantsProcessed,
+      restaurantsWithPlaceId,
+      googlePlacesCost: stats.googlePlacesCost.estimatedCostUsd,
+    };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error(`   ❌ Enrichment error: ${msg}`);
+    return {
+      chefsProcessed,
+      chefsWithPhotos,
+      restaurantsProcessed,
+      restaurantsWithPlaceId,
+      googlePlacesCost: 0,
+    };
+  }
 }
 
 async function printSystemStatus(supabase: SupabaseClient<Database>) {
@@ -293,11 +513,13 @@ async function main() {
   console.log('═'.repeat(60));
   console.log(`Started: ${new Date().toISOString()}`);
   
-  if (!options.discovery && !options.statusCheck) {
-    console.log('\n⚠️  No pipeline selected. Use --discovery or --status-check');
+  if (!options.discovery && !options.statusCheck && !options.enrich) {
+    console.log('\n⚠️  No pipeline selected. Use --discovery, --status-check, or --enrich');
     console.log('\nUsage:');
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --discovery');
+    console.log('  npx tsx scripts/ingestion/orchestrator.ts --discovery --filter');
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --status-check');
+    console.log('  npx tsx scripts/ingestion/orchestrator.ts --enrich');
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --discovery --dry-run');
     process.exit(1);
   }
@@ -314,6 +536,12 @@ async function main() {
   
   const supabase = createClient<Database>(supabaseUrl, supabaseKey);
   
+  const llmStats: LLMStats = {
+    totalCalls: 0,
+    totalTokens: 0,
+    estimatedCost: 0,
+  };
+
   const report: PipelineReport = {
     startTime: new Date(),
     options,
@@ -323,12 +551,26 @@ async function main() {
   
   try {
     if (options.discovery) {
-      report.discoveryResults = await runDiscoveryPipeline(supabase, options.dryRun);
+      report.discoveryResults = await runDiscoveryPipeline(
+        supabase, 
+        { dryRun: options.dryRun, filter: options.filter },
+        llmStats
+      );
       report.showsProcessed = getEnabledShows().map(s => s.slug);
+      if (llmStats.totalCalls > 0) {
+        report.llmStats = llmStats;
+      }
     }
     
     if (options.statusCheck) {
-      report.statusCheckResults = await runStatusCheckPipeline(supabase, options.dryRun);
+      report.statusCheckResults = await runStatusCheckPipeline(supabase, options.dryRun, llmStats);
+    }
+
+    if (options.enrich) {
+      report.enrichmentResults = await runEnrichmentPipeline(supabase, options.dryRun, llmStats);
+      if (llmStats.totalCalls > 0 || llmStats.totalTokens > 0) {
+        report.llmStats = llmStats;
+      }
     }
     
     await printSystemStatus(supabase);
@@ -353,9 +595,31 @@ async function main() {
     console.log(`  - New chefs found: ${report.discoveryResults.newChefsFound}`);
     console.log(`  - Queued for review: ${report.discoveryResults.queuedForReview}`);
     console.log(`  - Auto-applied updates: ${report.discoveryResults.autoApplied}`);
+    if (report.discoveryResults.filteredOut > 0 || report.discoveryResults.skippedExcluded > 0) {
+      console.log(`  - Filtered out (non-chef): ${report.discoveryResults.filteredOut}`);
+      console.log(`  - Skipped (already excluded): ${report.discoveryResults.skippedExcluded}`);
+    }
+  }
+  if (report.llmStats) {
+    console.log(`LLM Usage:`);
+    console.log(`  - API calls: ${report.llmStats.totalCalls}`);
+    console.log(`  - Total tokens: ${report.llmStats.totalTokens}`);
+    console.log(`  - Estimated cost: $${report.llmStats.estimatedCost.toFixed(4)}`);
   }
   if (report.statusCheckResults) {
-    console.log(`Status Check: ${report.statusCheckResults.restaurantsChecked} restaurants checked`);
+    console.log(`Status Check:`);
+    console.log(`  - Restaurants checked: ${report.statusCheckResults.restaurantsChecked}`);
+    console.log(`  - Status changes: ${report.statusCheckResults.statusChanges}`);
+  }
+  if (report.enrichmentResults) {
+    console.log(`Enrichment:`);
+    console.log(`  - Chefs processed: ${report.enrichmentResults.chefsProcessed}`);
+    console.log(`  - Chefs with photos: ${report.enrichmentResults.chefsWithPhotos}`);
+    console.log(`  - Restaurants processed: ${report.enrichmentResults.restaurantsProcessed}`);
+    console.log(`  - Restaurants with Place ID: ${report.enrichmentResults.restaurantsWithPlaceId}`);
+    if (report.enrichmentResults.googlePlacesCost > 0) {
+      console.log(`  - Google Places cost: $${report.enrichmentResults.googlePlacesCost.toFixed(4)}`);
+    }
   }
   if (report.errors.length > 0) {
     console.log(`Errors: ${report.errors.length}`);

@@ -49,18 +49,28 @@ export interface Show {
   created_at: string;
 }
 
+export interface ChefShow {
+  id: string;
+  chef_id: string;
+  show_id: string;
+  season: string | null;
+  season_name: string | null;
+  result: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
+  is_primary: boolean;
+  created_at: string;
+  show?: Show | null;
+}
+
 export interface Chef {
   id: string;
   name: string;
   slug: string;
-  primary_show_id: string | null;
-  other_shows: string[] | null;
-  top_chef_season: string | null;
-  top_chef_result: 'winner' | 'finalist' | 'contestant' | null;
   mini_bio: string | null;
   country: string | null;
+  james_beard_status: 'semifinalist' | 'nominated' | 'winner' | null;
   created_at: string;
   updated_at: string;
+  chef_shows?: ChefShow[];
 }
 
 export interface Restaurant {
@@ -84,9 +94,13 @@ export interface Restaurant {
   updated_at: string;
 }
 
-// Combined type for restaurant with chef info
+// Combined type for restaurant with chef info (including derived fields)
 export interface RestaurantWithChef extends Restaurant {
-  chef: Chef;
+  chef: Chef & {
+    primary_show?: Show | null;
+    top_chef_season?: string | null;
+    top_chef_result?: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
+  };
 }
 
 // Database helper functions
@@ -112,14 +126,17 @@ export const db = {
         *,
         chef:chefs(
           *,
-          primary_show:shows!primary_show_id(*)
+          chef_shows(
+            *,
+            show:shows(*)
+          )
         )
       `)
       .eq('is_public', true)
       .order('name');
     
     if (error) throw error;
-    return data as RestaurantWithChef[];
+    return transformRestaurants(data);
   },
 
   // Get restaurants by city
@@ -129,14 +146,20 @@ export const db = {
       .from('restaurants')
       .select(`
         *,
-        chef:chefs(*)
+        chef:chefs(
+          *,
+          chef_shows(
+            *,
+            show:shows(*)
+          )
+        )
       `)
       .eq('is_public', true)
       .eq('city', city)
       .order('name');
     
     if (error) throw error;
-    return data as RestaurantWithChef[];
+    return transformRestaurants(data);
   },
 
   // Search restaurants by name or chef name
@@ -146,14 +169,20 @@ export const db = {
       .from('restaurants')
       .select(`
         *,
-        chef:chefs(*)
+        chef:chefs(
+          *,
+          chef_shows(
+            *,
+            show:shows(*)
+          )
+        )
       `)
       .eq('is_public', true)
       .ilike('name', `%${query}%`)
       .order('name');
     
     if (error) throw error;
-    return data as RestaurantWithChef[];
+    return transformRestaurants(data);
   },
 
   // Get restaurant by slug
@@ -163,14 +192,21 @@ export const db = {
       .from('restaurants')
       .select(`
         *,
-        chef:chefs(*)
+        chef:chefs(
+          *,
+          chef_shows(
+            *,
+            show:shows(*)
+          )
+        )
       `)
       .eq('slug', slug)
       .eq('is_public', true)
       .single();
     
     if (error) throw error;
-    return data as RestaurantWithChef;
+    const transformed = transformRestaurants([data]);
+    return transformed[0];
   },
 
   // Get chef by slug
@@ -180,6 +216,10 @@ export const db = {
       .from('chefs')
       .select(`
         *,
+        chef_shows(
+          *,
+          show:shows(*)
+        ),
         restaurants:restaurants!chef_id(*)
       `)
       .eq('slug', slug)
@@ -189,5 +229,50 @@ export const db = {
     return data as Chef & { restaurants: Restaurant[] };
   }
 };
+
+interface RawChefShow {
+  id: string;
+  chef_id: string;
+  show_id: string;
+  season: string | null;
+  season_name: string | null;
+  result: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
+  is_primary: boolean;
+  created_at: string;
+  show: Show | null;
+}
+
+interface RawChef {
+  id: string;
+  name: string;
+  slug: string;
+  mini_bio: string | null;
+  country: string | null;
+  james_beard_status: 'semifinalist' | 'nominated' | 'winner' | null;
+  created_at: string;
+  updated_at: string;
+  chef_shows: RawChefShow[];
+}
+
+interface RawRestaurant extends Omit<Restaurant, 'chef'> {
+  chef: RawChef;
+}
+
+function transformRestaurants(data: RawRestaurant[]): RestaurantWithChef[] {
+  return data.map(r => {
+    const primaryChefShow = r.chef?.chef_shows?.find(cs => cs.is_primary) || r.chef?.chef_shows?.[0];
+    const { chef_shows, ...chefRest } = r.chef || {};
+    return {
+      ...r,
+      chef: {
+        ...chefRest,
+        chef_shows: chef_shows?.map(cs => ({ ...cs, show: cs.show ?? undefined })),
+        primary_show: primaryChefShow?.show ?? undefined,
+        top_chef_season: primaryChefShow?.season || primaryChefShow?.season_name || null,
+        top_chef_result: primaryChefShow?.result || null,
+      }
+    } as RestaurantWithChef;
+  });
+}
 
 export default getSupabaseClient;
