@@ -2,7 +2,7 @@
 Last-Updated: 2025-12-01
 LLM-Models: gpt-5-mini (enrichment), gpt-5-nano (filtering/status)
 Maintainer: RB
-Status: Phase 2 Complete
+Status: Phase 3 Complete
 ---
 
 # TV Chef Map: Autonomous Data Ingestion System
@@ -37,8 +37,17 @@ Status: Phase 2 Complete
 - **First live run**: 12 new chefs queued, 3 season updates auto-applied
 
 ### ⏳ Pending Implementation
-- Admin review UI (`/admin/review`) (Phase 3)
 - LLM filter/enrichment integration (Phase 4-5)
+
+### ✅ Phase 3 Complete: Admin Review UI
+- Supabase Auth with magic link login
+- Email allowlist protection: `rbaten@gmail.com`, `gr0x01@pm.me`
+- Middleware-based route protection for `/admin/*`
+- `/admin/login` - Magic link authentication
+- `/admin/review` - Pending queue with approve/reject
+- `/admin/review/[id]` - Individual item detail view
+- `/admin/activity` - Audit log of all changes
+- RLS policy migration ready: `scripts/migrations/add-admin-rls-policies.sql`
 
 ---
 
@@ -457,11 +466,11 @@ app/
 - [x] Auto-apply high-confidence changes
 - [x] Audit logging to data_changes
 
-### Phase 3: Admin Review UI (Week 3)
-- [ ] Supabase Auth setup with email allowlist
-- [ ] `/admin/review` pending queue page
-- [ ] Approve/reject/edit workflow
-- [ ] Activity log view
+### Phase 3: Admin Review UI (Week 3) ✅ COMPLETE
+- [x] Supabase Auth setup with email allowlist
+- [x] `/admin/review` pending queue page
+- [x] Approve/reject/edit workflow
+- [x] Activity log view
 
 ### Phase 4: Discovery Pipeline (Week 4)
 - [ ] LLM filter integration (gpt-5-nano)
