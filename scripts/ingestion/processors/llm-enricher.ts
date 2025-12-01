@@ -5,6 +5,23 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../src/lib/database.types';
 import { logDataChange } from '../queue/audit-log';
 
+function stripCitations(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return value.replace(/\s*\(\[.*?\]\(.*?\)\)/g, '').trim();
+}
+
+function enumWithCitationStrip<T extends string>(enumValues: readonly [T, ...T[]]) {
+  return z.string().nullable().optional().transform((val): T | null => {
+    if (!val) return null;
+    const cleaned = stripCitations(val);
+    if (!cleaned) return null;
+    if (enumValues.includes(cleaned as T)) {
+      return cleaned as T;
+    }
+    return null;
+  });
+}
+
 const RestaurantSchema = z.object({
   name: z.string(),
   address: z.string().nullable().optional(),
@@ -13,8 +30,8 @@ const RestaurantSchema = z.object({
   state: z.string().nullable().optional(),
   country: z.string().nullable().optional(),
   cuisine: z.array(z.string()).nullable().optional(),
-  priceRange: z.enum(['$', '$$', '$$$', '$$$$']).nullable().optional(),
-  status: z.enum(['open', 'closed', 'unknown']).nullable().optional(),
+  priceRange: enumWithCitationStrip(['$', '$$', '$$$', '$$$$'] as const),
+  status: enumWithCitationStrip(['open', 'closed', 'unknown'] as const),
   website: z.string().nullable().optional(),
   role: z.string().nullable().optional(),
   opened: z.number().nullable().optional(),
@@ -24,7 +41,7 @@ const RestaurantSchema = z.object({
 const ChefEnrichmentSchema = z.object({
   miniBio: z.string(),
   restaurants: z.array(RestaurantSchema).optional().default([]),
-  jamesBeardStatus: z.enum(['winner', 'nominated', 'semifinalist']).nullable().optional(),
+  jamesBeardStatus: enumWithCitationStrip(['winner', 'nominated', 'semifinalist'] as const),
 }).passthrough();
 
 const RestaurantStatusSchema = z.object({
