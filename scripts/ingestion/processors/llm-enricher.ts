@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../src/lib/database.types';
 import { logDataChange } from '../queue/audit-log';
+import { createShowPhotoService } from '../services/show-photos';
 
 function stripCitations(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -45,6 +46,8 @@ const ChefEnrichmentSchema = z.object({
   miniBio: z.string().transform(val => stripCitations(val) || val),
   restaurants: z.array(RestaurantSchema).optional().default([]),
   jamesBeardStatus: enumWithCitationStrip(['winner', 'nominated', 'semifinalist'] as const),
+  photoUrl: z.string().url().nullable().optional(),
+  photoConfidence: z.number().min(0).max(1).nullable().optional(),
 }).passthrough();
 
 const RestaurantStatusSchema = z.object({
@@ -59,6 +62,9 @@ export interface ChefEnrichmentResult {
   miniBio: string | null;
   restaurants: z.infer<typeof RestaurantSchema>[];
   jamesBeardStatus: string | null;
+  photoUrl: string | null;
+  photoSource: 'show_website' | 'llm_search' | null;
+  photoConfidence: number;
   tokensUsed: TokenUsage;
   success: boolean;
   error?: string;
@@ -92,6 +98,7 @@ Your task: Use web search to find accurate, up-to-date information about the che
 1. A brief bio (2-3 sentences about their career and culinary style)
 2. Their current restaurants (owned, partner, or executive chef roles)
 3. James Beard Award status if any
+4. A high-quality professional headshot photo URL (if available with high confidence)
 
 Guidelines:
 - Only include restaurants where the chef has a significant role (owner, partner, executive chef)
@@ -100,6 +107,12 @@ Guidelines:
 - Be conservative - if unsure about a detail, omit it
 - Cuisine tags should be specific (e.g., "Japanese", "New American", "Southern")
 - Price range: $ (<$15/entree), $$ ($15-30), $$$ ($30-60), $$$$ ($60+)
+
+Photo Guidelines:
+- ONLY include a photoUrl if you find a high-quality professional headshot
+- Look for official sources: restaurant websites, show websites, verified social media
+- Avoid: group photos, cooking action shots, low-res images, ambiguous photos
+- Set photoConfidence: 0.9+ for official sources, 0.7-0.9 for likely matches, omit if <0.7
 
 IMPORTANT: Return your response as valid JSON matching this exact structure:
 {
@@ -118,7 +131,9 @@ IMPORTANT: Return your response as valid JSON matching this exact structure:
       "role": "owner" or "executive_chef" or "partner" or "consultant" or null
     }
   ],
-  "jamesBeardStatus": null or "winner" or "nominated" or "semifinalist"
+  "jamesBeardStatus": null or "winner" or "nominated" or "semifinalist",
+  "photoUrl": "https://..." or null,
+  "photoConfidence": 0.0 to 1.0 or null
 }`;
 
 const RESTAURANT_STATUS_SYSTEM_PROMPT = `You are a restaurant industry analyst verifying whether restaurants are currently open.
@@ -176,6 +191,7 @@ export function createLLMEnricher(
 ) {
   const modelName = config.model ?? 'gpt-5-mini';
   const maxRestaurants = config.maxRestaurantsPerChef ?? 10;
+  const showPhotoService = createShowPhotoService();
 
   let totalTokensUsed: TokenUsage = { prompt: 0, completion: 0, total: 0 };
 
@@ -219,12 +235,35 @@ export function createLLMEnricher(
 
       const restaurants = validated.restaurants.slice(0, maxRestaurants);
 
+      let photoUrl: string | null = null;
+      let photoSource: 'show_website' | 'llm_search' | null = null;
+      let photoConfidence = 0;
+
+      const showPhotoResult = await showPhotoService.getShowPhoto(
+        chefName,
+        showName,
+        options.season
+      );
+
+      if (showPhotoResult && showPhotoResult.confidence >= 0.85) {
+        photoUrl = showPhotoResult.url;
+        photoSource = 'show_website';
+        photoConfidence = showPhotoResult.confidence;
+      } else if (validated.photoUrl && (validated.photoConfidence ?? 0) >= 0.7) {
+        photoUrl = validated.photoUrl;
+        photoSource = 'llm_search';
+        photoConfidence = validated.photoConfidence ?? 0.7;
+      }
+
       return {
         chefId,
         chefName,
         miniBio: validated.miniBio,
         restaurants,
         jamesBeardStatus: validated.jamesBeardStatus ?? null,
+        photoUrl,
+        photoSource,
+        photoConfidence,
         tokensUsed,
         success: true,
       };
@@ -238,6 +277,9 @@ export function createLLMEnricher(
         miniBio: null,
         restaurants: [],
         jamesBeardStatus: null,
+        photoUrl: null,
+        photoSource: null,
+        photoConfidence: 0,
         tokensUsed: { prompt: 0, completion: 0, total: 0 },
         success: false,
         error: msg,
@@ -322,14 +364,22 @@ export function createLLMEnricher(
       return result;
     }
 
-    if (result.miniBio) {
+    if (result.miniBio || result.photoUrl) {
       const updateData: Record<string, unknown> = {
-        mini_bio: result.miniBio,
         updated_at: new Date().toISOString(),
       };
 
+      if (result.miniBio) {
+        updateData.mini_bio = result.miniBio;
+      }
+
       if (result.jamesBeardStatus) {
         updateData.james_beard_status = result.jamesBeardStatus;
+      }
+
+      if (result.photoUrl && result.photoSource) {
+        updateData.photo_url = result.photoUrl;
+        updateData.photo_source = result.photoSource;
       }
 
       const { error } = await (supabase
@@ -338,15 +388,20 @@ export function createLLMEnricher(
         .eq('id', chefId);
 
       if (error) {
-        console.error(`   ❌ Failed to save chef bio: ${error.message}`);
+        console.error(`   ❌ Failed to save chef data: ${error.message}`);
       } else {
         await logDataChange(supabase, {
           table_name: 'chefs',
           record_id: chefId,
           change_type: 'update',
-          new_data: { mini_bio: result.miniBio, james_beard_status: result.jamesBeardStatus },
+          new_data: { 
+            mini_bio: result.miniBio, 
+            james_beard_status: result.jamesBeardStatus,
+            photo_url: result.photoUrl,
+            photo_source: result.photoSource,
+          },
           source: 'llm_enricher',
-          confidence: 0.85,
+          confidence: result.photoConfidence > 0 ? Math.min(0.85, result.photoConfidence) : 0.85,
         });
       }
     }
