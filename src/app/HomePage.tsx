@@ -125,22 +125,6 @@ export default function Home() {
             <a href="/restaurants" className="nav-link">Restaurants</a>
             <a href="/cities" className="nav-link">Cities</a>
           </nav>
-          
-          <div className="header-actions">
-            <div className="search-wrapper">
-              <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="M21 21l-4.35-4.35"/>
-              </svg>
-              <input
-                type="text"
-                placeholder="Search chefs, restaurants, cities..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="search-input"
-              />
-            </div>
-          </div>
         </div>
       </header>
 
@@ -176,6 +160,20 @@ export default function Home() {
           <div className="sidebar-header">
             <h1 className="sidebar-title">{filteredRestaurants.length} Restaurants</h1>
             <p className="sidebar-subtitle">From TV cooking competitions</p>
+          </div>
+          
+          <div className="sidebar-search">
+            <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input
+              type="text"
+              placeholder="Search restaurants, chefs, cities..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="sidebar-search-input"
+            />
           </div>
           
           <div className="restaurant-list">

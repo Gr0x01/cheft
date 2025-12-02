@@ -174,54 +174,50 @@ body {
   letter-spacing: -0.02em;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.search-wrapper {
+.sidebar-search {
   position: relative;
-  width: 320px;
+  padding: 0 24px 16px;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+  background: var(--bg-secondary);
 }
 
-.search-icon {
+.sidebar-search .search-icon {
   position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
+  left: 36px;
+  top: 12px;
   width: 18px;
   height: 18px;
   color: var(--text-muted);
   pointer-events: none;
 }
 
-.search-input {
+.sidebar-search-input {
   width: 100%;
-  height: 40px;
+  height: 44px;
   padding: 0 12px 0 40px;
   background: var(--bg-tertiary);
-  border: 1px solid transparent;
+  border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
   font-size: 14px;
   color: var(--text-primary);
   transition: all 0.2s ease;
 }
 
-.search-input::placeholder {
+.sidebar-search-input::placeholder {
   color: var(--text-muted);
 }
 
-.search-input:hover {
+.sidebar-search-input:hover {
   background: var(--bg-secondary);
-  border-color: var(--border-light);
+  border-color: var(--border-medium);
 }
 
-.search-input:focus {
+.sidebar-search-input:focus {
   outline: none;
   background: var(--bg-secondary);
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(211, 94, 15, 0.08);
 }
 
 .filter-select {
@@ -275,8 +271,7 @@ body {
 }
 
 .sidebar-header {
-  padding: 24px;
-  border-bottom: 1px solid var(--border-light);
+  padding: 24px 24px 16px;
   flex-shrink: 0;
 }
 
@@ -1339,13 +1334,12 @@ body {
     border-top: 1px solid var(--border-light);
   }
   
-  .header-actions {
-    width: 100%;
-    flex-wrap: wrap;
+  .sidebar-search {
+    padding: 12px 16px;
   }
   
-  .search-wrapper {
-    width: 100%;
+  .sidebar-search .search-icon {
+    left: 28px;
   }
   
   .main-content {
@@ -1529,7 +1523,7 @@ body {
 }
 
 .featured-chefs-container {
-  max-width: 1600px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 0 24px;
 }

@@ -127,10 +127,6 @@ export default function RestaurantMap({
           />
         ))}
       </MapContainer>
-      
-      <div className="map-overlay-info">
-        <span>{validRestaurants.length} locations</span>
-      </div>
     </div>
   );
 }
