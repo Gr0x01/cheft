@@ -357,8 +357,8 @@ export const db = {
   async getShowSeason(showSlug: string, season: string) {
     const client = getSupabaseClient();
     const { data, error } = await (client as any).rpc('get_show_season_data', { 
-      show_slug: showSlug, 
-      season_number: season 
+      p_show_slug: showSlug, 
+      p_season_number: season 
     });
     
     if (error) throw error;
@@ -396,7 +396,12 @@ export const db = {
           slug: row.restaurant_slug,
           city: row.restaurant_city,
           state: row.restaurant_state,
-          status: row.restaurant_status
+          status: row.restaurant_status,
+          photo_urls: row.restaurant_photo_urls,
+          price_tier: row.restaurant_price_tier,
+          cuisine_tags: row.restaurant_cuisine_tags,
+          google_rating: row.restaurant_google_rating,
+          google_review_count: row.restaurant_google_review_count
         });
       }
     });

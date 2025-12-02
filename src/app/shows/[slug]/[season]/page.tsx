@@ -5,6 +5,8 @@ import { db } from '@/lib/supabase';
 import { createStaticClient } from '@/lib/supabase/static';
 import { ChefCard } from '@/components/chef/ChefCard';
 import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCompact';
+import { Header } from '@/components/ui/Header';
+import { PageHero } from '@/components/ui/PageHero';
 
 export const revalidate = 604800;
 
@@ -78,83 +80,40 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="max-w-3xl mb-12">
-          <div className="flex items-center gap-3 mb-4">
-            <Link
-              href="/shows"
-              className="font-mono text-sm hover:text-[var(--accent-primary)] transition-colors"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              ← Shows
-            </Link>
-            <span style={{ color: 'var(--text-muted)' }}>•</span>
-            <Link
-              href={`/shows/${slug}`}
-              className="font-mono text-sm hover:text-[var(--accent-primary)] transition-colors"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              {seasonData.name}
-            </Link>
-          </div>
-
-          <h1
-            className="font-display text-5xl sm:text-6xl font-bold mb-6 tracking-tight"
-            style={{ color: 'var(--text-primary)' }}
+      <Header />
+      <PageHero
+        title={seasonName}
+        subtitle={seasonData.name}
+        breadcrumbItems={[
+          { label: 'Shows', href: '/shows' },
+          { label: seasonData.name, href: `/shows/${slug}` },
+          { label: seasonName },
+        ]}
+        stats={[
+          { value: seasonData.chef_shows?.length || 0, label: 'CHEFS' },
+          { value: allRestaurants.length, label: 'RESTAURANTS' },
+        ]}
+      >
+        {winner && (
+          <div
+            className="mt-6 p-4"
+            style={{
+              background: 'var(--accent-success)',
+              color: 'white',
+            }}
           >
-            {seasonName}
-          </h1>
-
-          <div className="flex flex-wrap gap-6 mb-8">
-            <div>
-              <div
-                className="font-mono text-4xl font-bold"
-                style={{ color: 'var(--accent-primary)' }}
-              >
-                {seasonData.chef_shows?.length || 0}
-              </div>
-              <div
-                className="font-mono text-sm tracking-wide uppercase"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                Chefs
-              </div>
-            </div>
-            <div>
-              <div
-                className="font-mono text-4xl font-bold"
-                style={{ color: 'var(--accent-primary)' }}
-              >
-                {allRestaurants.length}
-              </div>
-              <div
-                className="font-mono text-sm tracking-wide uppercase"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                Restaurants
-              </div>
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+              </svg>
+              <span className="font-mono text-sm font-bold tracking-wide uppercase">
+                Winner: {winner.chef.name}
+              </span>
             </div>
           </div>
-
-          {winner && (
-            <div
-              className="p-4 mb-8"
-              style={{
-                background: 'var(--accent-success)',
-                color: 'white',
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                </svg>
-                <span className="font-mono text-sm font-bold tracking-wide uppercase">
-                  Winner: {winner.chef.name}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
+      </PageHero>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
         {winner && (
           <div className="mb-12">

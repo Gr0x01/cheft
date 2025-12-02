@@ -1,6 +1,8 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { db } from '@/lib/supabase';
+import { Header } from '@/components/ui/Header';
+import { PageHero } from '@/components/ui/PageHero';
 
 export const revalidate = 604800;
 
@@ -16,23 +18,22 @@ export const metadata: Metadata = {
 export default async function ShowsPage() {
   const shows = await db.getShowsWithCounts();
 
+  const totalChefs = shows.reduce((sum: number, show: any) => sum + show.chef_count, 0);
+  const totalRestaurants = shows.reduce((sum: number, show: any) => sum + show.restaurant_count, 0);
+
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+      <Header />
+      <PageHero
+        title="TV Cooking Shows"
+        subtitle="Browse restaurants by the TV shows that made these chefs famous. From Top Chef winners to Iron Chef competitors, find where the stars are cooking today."
+        stats={[
+          { value: shows.length, label: 'SHOWS' },
+          { value: totalChefs, label: 'CHEFS' },
+          { value: totalRestaurants, label: 'RESTAURANTS' },
+        ]}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="max-w-3xl mb-12">
-          <h1 
-            className="font-display text-5xl sm:text-6xl font-bold mb-6 tracking-tight"
-            style={{ color: 'var(--text-primary)' }}
-          >
-            TV Cooking Shows
-          </h1>
-          <p 
-            className="text-lg sm:text-xl leading-relaxed"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            Browse restaurants by the TV shows that made these chefs famous. From Top Chef winners to Iron Chef competitors, find where the stars are cooking today.
-          </p>
-        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {shows.map((show: any) => (

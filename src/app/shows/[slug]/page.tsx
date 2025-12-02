@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import { db } from '@/lib/supabase';
 import { createStaticClient } from '@/lib/supabase/static';
 import { ChefCard } from '@/components/chef/ChefCard';
+import { Header } from '@/components/ui/Header';
+import { PageHero } from '@/components/ui/PageHero';
 
 export const revalidate = 604800;
 
@@ -66,83 +68,21 @@ export default async function ShowPage({ params }: ShowPageProps) {
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+      <Header />
+      <PageHero
+        title={show.name}
+        subtitle={show.network}
+        breadcrumbItems={[
+          { label: 'Shows', href: '/shows' },
+          { label: show.name },
+        ]}
+        stats={[
+          { value: allChefs.length, label: 'CHEFS' },
+          { value: totalRestaurants, label: 'RESTAURANTS' },
+          ...(seasons.length > 0 ? [{ value: seasons.length, label: 'SEASONS' }] : []),
+        ]}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="max-w-3xl mb-12">
-          <div className="flex items-center gap-3 mb-4">
-            <Link
-              href="/shows"
-              className="font-mono text-sm hover:text-[var(--accent-primary)] transition-colors"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              ← Shows
-            </Link>
-            {show.network && (
-              <>
-                <span style={{ color: 'var(--text-muted)' }}>•</span>
-                <span
-                  className="font-mono text-xs tracking-wide uppercase"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  {show.network}
-                </span>
-              </>
-            )}
-          </div>
-
-          <h1
-            className="font-display text-5xl sm:text-6xl font-bold mb-6 tracking-tight"
-            style={{ color: 'var(--text-primary)' }}
-          >
-            {show.name}
-          </h1>
-
-          <div className="flex flex-wrap gap-6 mb-8">
-            <div>
-              <div
-                className="font-mono text-4xl font-bold"
-                style={{ color: 'var(--accent-primary)' }}
-              >
-                {allChefs.length}
-              </div>
-              <div
-                className="font-mono text-sm tracking-wide uppercase"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                Chefs
-              </div>
-            </div>
-            <div>
-              <div
-                className="font-mono text-4xl font-bold"
-                style={{ color: 'var(--accent-primary)' }}
-              >
-                {totalRestaurants}
-              </div>
-              <div
-                className="font-mono text-sm tracking-wide uppercase"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                Restaurants
-              </div>
-            </div>
-            {seasons.length > 0 && (
-              <div>
-                <div
-                  className="font-mono text-4xl font-bold"
-                  style={{ color: 'var(--accent-primary)' }}
-                >
-                  {seasons.length}
-                </div>
-                <div
-                  className="font-mono text-sm tracking-wide uppercase"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  Seasons
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
 
         {seasons.length > 0 && (
           <div className="mb-12">
