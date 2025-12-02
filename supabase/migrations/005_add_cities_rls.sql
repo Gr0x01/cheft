@@ -9,7 +9,16 @@ ALTER TABLE cities ENABLE ROW LEVEL SECURITY;
 -- ============================================
 -- RLS POLICIES FOR CITIES (PUBLIC ACCESS)
 -- ============================================
-CREATE POLICY "Public read cities" ON cities FOR SELECT USING (true);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'cities' 
+        AND policyname = 'Public read cities'
+    ) THEN
+        CREATE POLICY "Public read cities" ON cities FOR SELECT USING (true);
+    END IF;
+END $$;
 
 -- ============================================
 -- RLS POLICIES FOR ADMIN TABLES
@@ -18,19 +27,46 @@ CREATE POLICY "Public read cities" ON cities FOR SELECT USING (true);
 -- Admin tables should only be accessed via API routes with service role key
 
 -- Review Queue: No public access
-CREATE POLICY "Service role only review_queue" ON review_queue FOR ALL 
-USING (false);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'review_queue' 
+        AND policyname = 'Service role only review_queue'
+    ) THEN
+        CREATE POLICY "Service role only review_queue" ON review_queue FOR ALL 
+        USING (false);
+    END IF;
+END $$;
 
 -- Data Changes: No public access
-CREATE POLICY "Service role only data_changes" ON data_changes FOR ALL 
-USING (false);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'data_changes' 
+        AND policyname = 'Service role only data_changes'
+    ) THEN
+        CREATE POLICY "Service role only data_changes" ON data_changes FOR ALL 
+        USING (false);
+    END IF;
+END $$;
 
 -- Excluded Names: No public access
-CREATE POLICY "Service role only excluded_names" ON excluded_names FOR ALL 
-USING (false);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'excluded_names' 
+        AND policyname = 'Service role only excluded_names'
+    ) THEN
+        CREATE POLICY "Service role only excluded_names" ON excluded_names FOR ALL 
+        USING (false);
+    END IF;
+END $$;
 
 -- ============================================
--- COMMENTS
+-- COMMENTS (idempotent)
 -- ============================================
 COMMENT ON POLICY "Public read cities" ON cities IS 'Allow public read access to all cities';
 COMMENT ON POLICY "Service role only review_queue" ON review_queue IS 'Block anon access - use service role key in API routes';
