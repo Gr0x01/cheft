@@ -253,7 +253,7 @@ export const db = {
     if (error) throw error;
     
     const chefsWithRestaurantCount = await Promise.all(
-      (data || []).map(async (chef) => {
+      (data || []).map(async (chef: any) => {
         const { count } = await client
           .from('restaurants')
           .select('id', { count: 'exact', head: true })
@@ -270,8 +270,8 @@ export const db = {
     return chefsWithRestaurantCount
       .filter(chef => chef.restaurant_count > 0)
       .sort((a, b) => {
-        const aIsWinner = a.chef_shows?.some(cs => cs.result === 'winner') || a.james_beard_status === 'winner';
-        const bIsWinner = b.chef_shows?.some(cs => cs.result === 'winner') || b.james_beard_status === 'winner';
+        const aIsWinner = a.chef_shows?.some((cs: any) => cs.result === 'winner') || a.james_beard_status === 'winner';
+        const bIsWinner = b.chef_shows?.some((cs: any) => cs.result === 'winner') || b.james_beard_status === 'winner';
         
         if (aIsWinner && !bIsWinner) return -1;
         if (!aIsWinner && bIsWinner) return 1;
