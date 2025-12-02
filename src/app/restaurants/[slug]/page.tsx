@@ -67,7 +67,7 @@ async function getCitySlug(city: string, state: string | null): Promise<string |
     .from('cities')
     .select('slug')
     .eq('name', city)
-    .eq('state', state)
+    .eq('state', state || '')
     .single();
   
   return data?.slug || null;

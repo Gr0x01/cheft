@@ -32,8 +32,8 @@ interface ChefWithRestaurants {
     id: string;
     season: string | null;
     result: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
-    is_primary: boolean;
-    show: { name: string } | null;
+    is_primary: boolean | null;
+    show: { name: string };
   }>;
   restaurants: Array<{ id: string; city: string }>;
   restaurant_count?: number;

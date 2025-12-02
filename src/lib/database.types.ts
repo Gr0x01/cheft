@@ -6,41 +6,9 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
-      chefs: {
-        Row: {
-          id: string
-          name: string
-          slug: string
-          mini_bio: string | null
-          country: string
-          james_beard_status: 'semifinalist' | 'nominated' | 'winner' | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          slug: string
-          mini_bio?: string | null
-          country?: string
-          james_beard_status?: 'semifinalist' | 'nominated' | 'winner' | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          slug?: string
-          mini_bio?: string | null
-          country?: string
-          james_beard_status?: 'semifinalist' | 'nominated' | 'winner' | null
-          created_at?: string
-          updated_at?: string
-        }
-      }
       chef_shows: {
         Row: {
           id: string
@@ -49,7 +17,7 @@ export type Database = {
           season: string | null
           season_name: string | null
           result: 'winner' | 'finalist' | 'contestant' | 'judge' | null
-          is_primary: boolean
+          is_primary: boolean | null
           created_at: string
         }
         Insert: {
@@ -59,7 +27,7 @@ export type Database = {
           season?: string | null
           season_name?: string | null
           result?: 'winner' | 'finalist' | 'contestant' | 'judge' | null
-          is_primary?: boolean
+          is_primary?: boolean | null
           created_at?: string
         }
         Update: {
@@ -69,9 +37,127 @@ export type Database = {
           season?: string | null
           season_name?: string | null
           result?: 'winner' | 'finalist' | 'contestant' | 'judge' | null
-          is_primary?: boolean
+          is_primary?: boolean | null
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "chef_shows_chef_id_fkey"
+            columns: ["chef_id"]
+            isOneToOne: false
+            referencedRelation: "chefs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chef_shows_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "shows"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      chefs: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          mini_bio: string | null
+          country: string | null
+          james_beard_status: 'semifinalist' | 'nominated' | 'winner' | null
+          photo_url: string | null
+          photo_source: 'wikipedia' | 'tmdb' | 'llm_search' | 'manual' | null
+          social_links: Json | null
+          notable_awards: string[] | null
+          instagram_handle: string | null
+          cookbook_titles: string[] | null
+          youtube_channel: string | null
+          current_role: string | null
+          mentor: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          mini_bio?: string | null
+          country?: string | null
+          james_beard_status?: 'semifinalist' | 'nominated' | 'winner' | null
+          photo_url?: string | null
+          photo_source?: 'wikipedia' | 'tmdb' | 'llm_search' | 'manual' | null
+          social_links?: Json | null
+          notable_awards?: string[] | null
+          instagram_handle?: string | null
+          cookbook_titles?: string[] | null
+          youtube_channel?: string | null
+          current_role?: string | null
+          mentor?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          mini_bio?: string | null
+          country?: string | null
+          james_beard_status?: 'semifinalist' | 'nominated' | 'winner' | null
+          photo_url?: string | null
+          photo_source?: 'wikipedia' | 'tmdb' | 'llm_search' | 'manual' | null
+          social_links?: Json | null
+          notable_awards?: string[] | null
+          instagram_handle?: string | null
+          cookbook_titles?: string[] | null
+          youtube_channel?: string | null
+          current_role?: string | null
+          mentor?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cities: {
+        Row: {
+          id: string
+          name: string
+          state: string | null
+          country: string | null
+          slug: string
+          restaurant_count: number | null
+          chef_count: number | null
+          hero_image_url: string | null
+          meta_description: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          state?: string | null
+          country?: string | null
+          slug: string
+          restaurant_count?: number | null
+          chef_count?: number | null
+          hero_image_url?: string | null
+          meta_description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          state?: string | null
+          country?: string | null
+          slug?: string
+          restaurant_count?: number | null
+          chef_count?: number | null
+          hero_image_url?: string | null
+          meta_description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       data_changes: {
         Row: {
@@ -107,6 +193,7 @@ export type Database = {
           confidence?: number | null
           created_at?: string
         }
+        Relationships: []
       }
       excluded_names: {
         Row: {
@@ -133,6 +220,47 @@ export type Database = {
           source?: string | null
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "excluded_names_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "shows"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      restaurant_embeddings: {
+        Row: {
+          id: string
+          restaurant_id: string
+          embedding: string | null
+          text_content: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          restaurant_id: string
+          embedding?: string | null
+          text_content?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          restaurant_id?: string
+          embedding?: string | null
+          text_content?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_embeddings_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       restaurants: {
         Row: {
@@ -140,22 +268,40 @@ export type Database = {
           name: string
           slug: string
           chef_id: string
-          chef_role: 'owner' | 'executive_chef' | 'partner' | 'consultant'
+          chef_role: 'owner' | 'executive_chef' | 'partner' | 'consultant' | null
           address: string | null
           city: string
           state: string | null
-          country: string
+          country: string | null
           lat: number | null
           lng: number | null
           price_tier: '$' | '$$' | '$$$' | '$$$$' | null
           cuisine_tags: string[] | null
-          status: 'open' | 'closed' | 'unknown'
+          status: 'open' | 'closed' | 'unknown' | null
           website_url: string | null
           maps_url: string | null
           source_notes: string | null
           last_verified_at: string | null
           verification_source: string | null
-          is_public: boolean
+          is_public: boolean | null
+          description: string | null
+          google_place_id: string | null
+          google_rating: number | null
+          google_review_count: number | null
+          google_price_level: number | null
+          google_photos: Json | null
+          photo_urls: string[] | null
+          last_enriched_at: string | null
+          phone: string | null
+          reservation_url: string | null
+          signature_dishes: string[] | null
+          michelin_stars: number | null
+          year_opened: number | null
+          hours: Json | null
+          vibe_tags: string[] | null
+          dietary_options: string[] | null
+          awards: string[] | null
+          gift_card_url: string | null
           created_at: string
           updated_at: string
         }
@@ -164,22 +310,40 @@ export type Database = {
           name: string
           slug: string
           chef_id: string
-          chef_role?: 'owner' | 'executive_chef' | 'partner' | 'consultant'
+          chef_role?: 'owner' | 'executive_chef' | 'partner' | 'consultant' | null
           address?: string | null
           city: string
           state?: string | null
-          country?: string
+          country?: string | null
           lat?: number | null
           lng?: number | null
           price_tier?: '$' | '$$' | '$$$' | '$$$$' | null
           cuisine_tags?: string[] | null
-          status?: 'open' | 'closed' | 'unknown'
+          status?: 'open' | 'closed' | 'unknown' | null
           website_url?: string | null
           maps_url?: string | null
           source_notes?: string | null
           last_verified_at?: string | null
           verification_source?: string | null
-          is_public?: boolean
+          is_public?: boolean | null
+          description?: string | null
+          google_place_id?: string | null
+          google_rating?: number | null
+          google_review_count?: number | null
+          google_price_level?: number | null
+          google_photos?: Json | null
+          photo_urls?: string[] | null
+          last_enriched_at?: string | null
+          phone?: string | null
+          reservation_url?: string | null
+          signature_dishes?: string[] | null
+          michelin_stars?: number | null
+          year_opened?: number | null
+          hours?: Json | null
+          vibe_tags?: string[] | null
+          dietary_options?: string[] | null
+          awards?: string[] | null
+          gift_card_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -188,57 +352,61 @@ export type Database = {
           name?: string
           slug?: string
           chef_id?: string
-          chef_role?: 'owner' | 'executive_chef' | 'partner' | 'consultant'
+          chef_role?: 'owner' | 'executive_chef' | 'partner' | 'consultant' | null
           address?: string | null
           city?: string
           state?: string | null
-          country?: string
+          country?: string | null
           lat?: number | null
           lng?: number | null
           price_tier?: '$' | '$$' | '$$$' | '$$$$' | null
           cuisine_tags?: string[] | null
-          status?: 'open' | 'closed' | 'unknown'
+          status?: 'open' | 'closed' | 'unknown' | null
           website_url?: string | null
           maps_url?: string | null
           source_notes?: string | null
           last_verified_at?: string | null
           verification_source?: string | null
-          is_public?: boolean
+          is_public?: boolean | null
+          description?: string | null
+          google_place_id?: string | null
+          google_rating?: number | null
+          google_review_count?: number | null
+          google_price_level?: number | null
+          google_photos?: Json | null
+          photo_urls?: string[] | null
+          last_enriched_at?: string | null
+          phone?: string | null
+          reservation_url?: string | null
+          signature_dishes?: string[] | null
+          michelin_stars?: number | null
+          year_opened?: number | null
+          hours?: Json | null
+          vibe_tags?: string[] | null
+          dietary_options?: string[] | null
+          awards?: string[] | null
+          gift_card_url?: string | null
           created_at?: string
           updated_at?: string
         }
-      }
-      restaurant_embeddings: {
-        Row: {
-          id: string
-          restaurant_id: string
-          embedding: number[] | null
-          text_content: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          restaurant_id: string
-          embedding?: number[] | null
-          text_content?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          restaurant_id?: string
-          embedding?: number[] | null
-          text_content?: string | null
-          created_at?: string
-        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurants_chef_id_fkey"
+            columns: ["chef_id"]
+            isOneToOne: false
+            referencedRelation: "chefs"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       review_queue: {
         Row: {
           id: string
-          type: 'new_chef' | 'new_restaurant' | 'update' | 'status_change'
+          type: string
           data: Json
           source: string | null
           confidence: number | null
-          status: 'pending' | 'approved' | 'rejected'
+          status: 'pending' | 'approved' | 'rejected' | null
           notes: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -246,11 +414,11 @@ export type Database = {
         }
         Insert: {
           id?: string
-          type: 'new_chef' | 'new_restaurant' | 'update' | 'status_change'
+          type: string
           data: Json
           source?: string | null
           confidence?: number | null
-          status?: 'pending' | 'approved' | 'rejected'
+          status?: 'pending' | 'approved' | 'rejected' | null
           notes?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -258,16 +426,17 @@ export type Database = {
         }
         Update: {
           id?: string
-          type?: 'new_chef' | 'new_restaurant' | 'update' | 'status_change'
+          type?: string
           data?: Json
           source?: string | null
           confidence?: number | null
-          status?: 'pending' | 'approved' | 'rejected'
+          status?: 'pending' | 'approved' | 'rejected' | null
           notes?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           created_at?: string
         }
+        Relationships: []
       }
       shows: {
         Row: {
@@ -294,6 +463,7 @@ export type Database = {
           wikipedia_source?: string | null
           created_at?: string
         }
+        Relationships: []
       }
     }
     Views: {
@@ -311,6 +481,85 @@ export type Database = {
   }
 }
 
-export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
-export type InsertTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert']
-export type UpdateTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update']
+export type Tables<
+  PublicTableNameOrOptions extends
+    | keyof (Database["public"]["Tables"] & Database["public"]["Views"])
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+        Database[PublicTableNameOrOptions["schema"]]["Views"])
+    : never = never
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : PublicTableNameOrOptions extends keyof (Database["public"]["Tables"] &
+      Database["public"]["Views"])
+  ? (Database["public"]["Tables"] &
+      Database["public"]["Views"])[PublicTableNameOrOptions] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : never
+
+export type TablesInsert<
+  PublicTableNameOrOptions extends
+    | keyof Database["public"]["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
+  ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : never
+
+export type TablesUpdate<
+  PublicTableNameOrOptions extends
+    | keyof Database["public"]["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
+  ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : never
+
+export type Enums<
+  PublicEnumNameOrOptions extends
+    | keyof Database["public"]["Enums"]
+    | { schema: keyof Database },
+  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+    : never = never
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof Database["public"]["Enums"]
+  ? Database["public"]["Enums"][PublicEnumNameOrOptions]
+  : never
+
+// Legacy type aliases for backward compatibility
+export type { Tables as TablesRow, TablesInsert as InsertTables, TablesUpdate as UpdateTables }

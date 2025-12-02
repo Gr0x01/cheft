@@ -137,11 +137,8 @@ export function PhotoGalleryModal({
                     key={index}
                     onClick={() => onNavigate(index)}
                     className={`relative flex-shrink-0 w-20 h-20 transition-all ${
-                      index === currentIndex ? 'ring-4 scale-110' : 'opacity-50 hover:opacity-100'
+                      index === currentIndex ? 'ring-4 ring-blue-500 scale-110' : 'opacity-50 hover:opacity-100'
                     }`}
-                    style={{
-                      ringColor: index === currentIndex ? 'var(--accent-primary)' : 'transparent',
-                    }}
                     aria-label={`View photo ${index + 1}`}
                     aria-current={index === currentIndex ? 'true' : 'false'}
                   >

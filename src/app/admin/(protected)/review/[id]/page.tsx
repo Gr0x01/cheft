@@ -87,7 +87,7 @@ export default async function ReviewItemPage({ params }: PageProps) {
     }
   };
 
-  const statusStyles = getStatusStyles(item.status);
+  const statusStyles = getStatusStyles(item.status || 'pending');
   const typeStyles = getTypeStyles(item.type);
   const TypeIcon = typeIcons[item.type] || RefreshCw;
   const StatusIcon = statusStyles.icon;
@@ -147,7 +147,7 @@ export default async function ReviewItemPage({ params }: PageProps) {
                   <div className="flex items-center gap-4">
                     <span className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border ${statusStyles.bg} ${statusStyles.text} ${statusStyles.border}`}>
                       <StatusIcon className="w-4 h-4" />
-                      {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                      {(item.status || 'pending').charAt(0).toUpperCase() + (item.status || 'pending').slice(1)}
                     </span>
                     
                     {item.confidence !== null && (
@@ -162,7 +162,7 @@ export default async function ReviewItemPage({ params }: PageProps) {
                   </div>
                 </div>
                 
-                {item.status === 'pending' && (
+                {(!item.status || item.status === 'pending') && (
                   <div className="shrink-0">
                     <ReviewItemActions id={item.id} />
                   </div>
@@ -254,11 +254,11 @@ export default async function ReviewItemPage({ params }: PageProps) {
             ) : (
               <div className="space-y-4">
                 <p className="font-ui text-sm text-slate-600">
-                  This item has been <span className={`font-medium ${statusStyles.text}`}>{item.status}</span> and is no longer pending review.
+                  This item has been <span className={`font-medium ${statusStyles.text}`}>{item.status || 'pending'}</span> and is no longer pending review.
                 </p>
                 <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
                   <div className="font-ui text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Status</div>
-                  <div className={`font-medium ${statusStyles.text}`}>{item.status.charAt(0).toUpperCase() + item.status.slice(1)}</div>
+                  <div className={`font-medium ${statusStyles.text}`}>{(item.status || 'pending').charAt(0).toUpperCase() + (item.status || 'pending').slice(1)}</div>
                 </div>
               </div>
             )}

@@ -23,7 +23,7 @@ interface RestaurantWithChef {
   slug: string;
   city: string;
   state: string | null;
-  price_tier: string | null;
+  price_tier: '$' | '$$' | '$$$' | '$$$$' | null;
   cuisine_tags: string[] | null;
   status: 'open' | 'closed' | 'unknown';
   google_rating: number | null;
@@ -82,8 +82,8 @@ export default async function RestaurantsPage({
     query = query.eq('status', 'closed');
   }
 
-  if (params.price) {
-    query = query.eq('price_tier', params.price);
+  if (params.price && ['$', '$$', '$$$', '$$$$'].includes(params.price)) {
+    query = query.eq('price_tier', params.price as '$' | '$$' | '$$$' | '$$$$');
   }
 
   if (params.city) {
