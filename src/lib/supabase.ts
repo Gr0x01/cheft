@@ -165,6 +165,7 @@ export const db = {
   // Search restaurants by name or chef name
   async searchRestaurants(query: string) {
     const client = getSupabaseClient();
+    const sanitizedQuery = query.replace(/[%_]/g, '\\$&');
     const { data, error } = await client
       .from('restaurants')
       .select(`
@@ -178,7 +179,7 @@ export const db = {
         )
       `)
       .eq('is_public', true)
-      .ilike('name', `%${query}%`)
+      .ilike('name', `%${sanitizedQuery}%`)
       .order('name');
     
     if (error) throw error;
@@ -279,6 +280,137 @@ export const db = {
         return b.restaurant_count - a.restaurant_count;
       })
       .slice(0, limit);
+  },
+
+  // Get all shows with chef and restaurant counts
+  async getShowsWithCounts(): Promise<Array<{
+    id: string;
+    name: string;
+    slug: string;
+    network: string | null;
+    created_at: string;
+    chef_count: number;
+    restaurant_count: number;
+  }>> {
+    const client = getSupabaseClient();
+    const { data, error } = await (client as any).rpc('get_shows_with_counts');
+    
+    if (error) throw error;
+    return (data as any) || [];
+  },
+
+  // Get show by slug with all chefs
+  async getShow(slug: string) {
+    const client = getSupabaseClient();
+    const { data: show, error: showError } = await client
+      .from('shows')
+      .select('id, name, slug, network, created_at')
+      .eq('slug', slug)
+      .single();
+    
+    if (showError) throw showError;
+    
+    const { data: chefData, error: chefError } = await (client as any).rpc('get_show_with_chef_counts', { show_slug: slug });
+    
+    if (chefError) throw chefError;
+    
+    const chefShowsMap = new Map();
+    (chefData || []).forEach((row: any) => {
+      const chefId = row.chef_id;
+      if (!chefShowsMap.has(chefId)) {
+        chefShowsMap.set(chefId, {
+          id: row.chef_show_id,
+          chef_id: row.chef_id,
+          show_id: row.show_id,
+          season: row.season,
+          season_name: row.season_name,
+          result: row.result,
+          is_primary: row.is_primary,
+          chef: {
+            id: row.chef_id,
+            name: row.chef_name,
+            slug: row.chef_slug,
+            photo_url: row.chef_photo_url,
+            mini_bio: row.chef_mini_bio,
+            restaurant_count: row.restaurant_count
+          }
+        });
+      }
+    });
+    
+    return {
+      ...(show as any),
+      chef_shows: Array.from(chefShowsMap.values())
+    };
+  },
+
+  // Get all unique seasons for a show
+  async getShowSeasons(showSlug: string) {
+    const client = getSupabaseClient();
+    const { data, error } = await (client as any).rpc('get_show_seasons', { show_slug: showSlug });
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Get chefs for a specific show season
+  async getShowSeason(showSlug: string, season: string) {
+    const client = getSupabaseClient();
+    const { data, error } = await (client as any).rpc('get_show_season_data', { 
+      show_slug: showSlug, 
+      season_number: season 
+    });
+    
+    if (error) throw error;
+    if (!data || data.length === 0) return null;
+    
+    const firstRow = data[0];
+    const chefsMap = new Map();
+    
+    data.forEach((row: any) => {
+      if (!chefsMap.has(row.chef_id)) {
+        chefsMap.set(row.chef_id, {
+          id: row.chef_show_id,
+          chef_id: row.chef_id,
+          show_id: row.show_id,
+          season: row.season,
+          season_name: row.season_name,
+          result: row.result,
+          is_primary: row.is_primary,
+          chef: {
+            id: row.chef_id,
+            name: row.chef_name,
+            slug: row.chef_slug,
+            photo_url: row.chef_photo_url,
+            mini_bio: row.chef_mini_bio,
+            restaurants: []
+          }
+        });
+      }
+      
+      if (row.restaurant_id) {
+        const chef = chefsMap.get(row.chef_id);
+        chef.chef.restaurants.push({
+          id: row.restaurant_id,
+          name: row.restaurant_name,
+          slug: row.restaurant_slug,
+          city: row.restaurant_city,
+          state: row.restaurant_state,
+          status: row.restaurant_status
+        });
+      }
+    });
+    
+    return {
+      id: firstRow.show_id,
+      name: firstRow.show_name,
+      slug: firstRow.show_slug,
+      network: firstRow.show_network,
+      created_at: firstRow.show_created_at,
+      season: firstRow.season,
+      season_name: firstRow.season_name,
+      chef_shows: Array.from(chefsMap.values())
+    };
   }
 };
 

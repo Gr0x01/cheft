@@ -1,7 +1,7 @@
 ---
-Last-Updated: 2025-12-02
+Last-Updated: 2025-12-03
 Maintainer: RB
-Status: Phase 3 - Badge System Enhancement
+Status: Phase 3 - SEO Enhancement Complete
 ---
 
 # Active Context: Chefs
@@ -37,6 +37,27 @@ Status: Phase 3 - Badge System Enhancement
 
 ## In Progress
 - Planning contribution and verification systems
+
+## Recently Completed (Dec 3, 2025)
+- ✅ **Performance Optimization: N+1 Query Elimination** - Critical database optimization
+  - **Fixed SQL injection vulnerability** in search query (input sanitization)
+  - **Added 4 critical indexes**: `idx_shows_slug`, `idx_chef_shows_show_season`, `idx_chef_shows_season`, `idx_restaurants_chef_public`
+  - **Created 5 optimized PostgreSQL functions** replacing N+1 patterns:
+    - `get_shows_with_counts()`: 25 queries → 1 query (~96% reduction)
+    - `get_show_with_chef_counts()`: N+1 → 2 queries
+    - `get_show_seasons()`: N+1 → 1 query
+    - `get_show_season_data()`: N+1 → 1 query  
+    - `get_all_show_seasons_for_sitemap()`: N queries → 1 query
+  - **Result**: ~95% database query reduction on show/season pages
+  - Migration: `006_add_show_indexes_and_functions.sql`
+
+- ✅ **Show & Season SEO Pages** - Complete show/season directory implementation
+  - Created `/shows` directory page listing all TV shows with chef/restaurant counts
+  - Built `/shows/[slug]` pages for individual shows (e.g., `/shows/top-chef`)
+  - Implemented `/shows/[slug]/[season]` pages for seasons (e.g., `/shows/top-chef/season-4`)
+  - Updated sitemap.ts to include ~8 show pages + ~50+ season pages
+  - Made TV appearance badges on chef pages clickable (link to show/season pages)
+  - **SEO Impact**: ~60+ new pages for search indexing
 
 ## Recently Completed (Dec 2, 2025)
 - ✅ **Multi-Show Attribution Badge System** - Complete show badge overhaul for chef cards

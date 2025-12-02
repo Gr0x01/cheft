@@ -1,0 +1,217 @@
+import { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { db } from '@/lib/supabase';
+import { ChefCard } from '@/components/chef/ChefCard';
+
+export const revalidate = 604800;
+
+interface ShowPageProps {
+  params: Promise<{
+    slug: string;
+  }>;
+}
+
+export async function generateMetadata({ params }: ShowPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  try {
+    const show = await db.getShow(slug);
+    const chefCount = show.chef_shows?.length || 0;
+    const restaurantCount = show.chef_shows?.reduce((sum: number, cs: any) => sum + (cs.chef.restaurant_count || 0), 0) || 0;
+
+    return {
+      title: `${show.name} Chefs & Restaurants | TV Chef Directory`,
+      description: `Discover ${chefCount} chefs from ${show.name} and their ${restaurantCount} restaurants. Find where ${show.name} winners and contestants are cooking today.`,
+      openGraph: {
+        title: `${show.name} | TV Chef Restaurants`,
+        description: `${chefCount} chefs • ${restaurantCount} restaurants`,
+      },
+    };
+  } catch {
+    return {
+      title: 'Show Not Found',
+    };
+  }
+}
+
+export default async function ShowPage({ params }: ShowPageProps) {
+  const { slug } = await params;
+  
+  let show;
+  try {
+    show = await db.getShow(slug);
+  } catch {
+    notFound();
+  }
+
+  const seasons: Array<{ season: string; season_name: string | null }> = await db.getShowSeasons(slug);
+  const winners = show.chef_shows?.filter((cs: any) => cs.result === 'winner') || [];
+  const finalists = show.chef_shows?.filter((cs: any) => cs.result === 'finalist') || [];
+  const allChefs = show.chef_shows?.filter((cs: any) => cs.chef.restaurant_count > 0) || [];
+
+  const totalRestaurants = allChefs.reduce((sum: number, cs: any) => sum + (cs.chef.restaurant_count || 0), 0);
+
+  return (
+    <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-3xl mb-12">
+          <div className="flex items-center gap-3 mb-4">
+            <Link
+              href="/shows"
+              className="font-mono text-sm hover:text-[var(--accent-primary)] transition-colors"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              ← Shows
+            </Link>
+            {show.network && (
+              <>
+                <span style={{ color: 'var(--text-muted)' }}>•</span>
+                <span
+                  className="font-mono text-xs tracking-wide uppercase"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  {show.network}
+                </span>
+              </>
+            )}
+          </div>
+
+          <h1
+            className="font-display text-5xl sm:text-6xl font-bold mb-6 tracking-tight"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            {show.name}
+          </h1>
+
+          <div className="flex flex-wrap gap-6 mb-8">
+            <div>
+              <div
+                className="font-mono text-4xl font-bold"
+                style={{ color: 'var(--accent-primary)' }}
+              >
+                {allChefs.length}
+              </div>
+              <div
+                className="font-mono text-sm tracking-wide uppercase"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                Chefs
+              </div>
+            </div>
+            <div>
+              <div
+                className="font-mono text-4xl font-bold"
+                style={{ color: 'var(--accent-primary)' }}
+              >
+                {totalRestaurants}
+              </div>
+              <div
+                className="font-mono text-sm tracking-wide uppercase"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                Restaurants
+              </div>
+            </div>
+            {seasons.length > 0 && (
+              <div>
+                <div
+                  className="font-mono text-4xl font-bold"
+                  style={{ color: 'var(--accent-primary)' }}
+                >
+                  {seasons.length}
+                </div>
+                <div
+                  className="font-mono text-sm tracking-wide uppercase"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  Seasons
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {seasons.length > 0 && (
+          <div className="mb-12">
+            <h2
+              className="font-display text-2xl font-bold mb-6"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              Browse by Season
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {seasons.map((season) => (
+                <Link
+                  key={season.season}
+                  href={`/shows/${slug}/${season.season}`}
+                  className="group relative bg-white p-4 text-center transition-all duration-300 hover:-translate-y-1"
+                  style={{ border: '1px solid var(--border-light)' }}
+                >
+                  <div
+                    className="absolute top-0 left-0 w-1 h-full transition-all duration-300 group-hover:w-2"
+                    style={{ background: 'var(--accent-primary)' }}
+                  />
+                  <div
+                    className="font-display text-2xl font-bold group-hover:text-[var(--accent-primary)] transition-colors"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    {season.season_name || `Season ${season.season}`}
+                  </div>
+                  <div
+                    className="absolute inset-0 border-2 border-transparent transition-colors duration-300 pointer-events-none group-hover:border-[var(--accent-primary)]"
+                  />
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {winners.length > 0 && (
+          <div className="mb-12">
+            <h2
+              className="font-display text-2xl font-bold mb-6"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              Winners
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {winners.map((cs: any, index: number) => (
+                <ChefCard key={cs.chef.id} chef={cs.chef} index={index} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {finalists.length > 0 && (
+          <div className="mb-12">
+            <h2
+              className="font-display text-2xl font-bold mb-6"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              Finalists
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {finalists.map((cs: any, index: number) => (
+                <ChefCard key={cs.chef.id} chef={cs.chef} index={index} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="mb-12">
+          <h2
+            className="font-display text-2xl font-bold mb-6"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            All Chefs
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {allChefs.map((cs: any, index: number) => (
+              <ChefCard key={cs.chef.id} chef={cs.chef} index={index} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

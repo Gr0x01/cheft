@@ -24,6 +24,12 @@ export function TVAppearanceBadge({
     judge: { bg: '#6366f1', color: 'white' },
   };
 
+  const showUrl = show.slug && season 
+    ? `/shows/${show.slug}/${season}`
+    : show.slug 
+    ? `/shows/${show.slug}` 
+    : null;
+
   const content = (
     <div
       className="relative p-4 transition-all duration-200 group"
@@ -32,10 +38,15 @@ export function TVAppearanceBadge({
         border: isPrimary ? '2px solid var(--accent-primary)' : '1px solid var(--border-light)',
       }}
     >
-      {/* Copper accent for primary */}
+      {showUrl && (
+        <div 
+          className="absolute inset-0 border-2 border-transparent transition-colors duration-300 pointer-events-none group-hover:border-[var(--accent-primary)]"
+        />
+      )}
+
       {isPrimary && (
         <div 
-          className="absolute top-0 left-0 w-1 h-full"
+          className="absolute top-0 left-0 w-1 h-full transition-all duration-300 group-hover:w-2"
           style={{ background: 'var(--accent-primary)' }}
         />
       )}
@@ -43,7 +54,7 @@ export function TVAppearanceBadge({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p 
-            className="font-display text-lg font-bold"
+            className={`font-display text-lg font-bold ${showUrl ? 'group-hover:text-[var(--accent-primary)] transition-colors' : ''}`}
             style={{ color: 'var(--text-primary)' }}
           >
             {show.name}
@@ -80,6 +91,14 @@ export function TVAppearanceBadge({
       )}
     </div>
   );
+
+  if (showUrl) {
+    return (
+      <Link href={showUrl} className="block">
+        {content}
+      </Link>
+    );
+  }
 
   return content;
 }
