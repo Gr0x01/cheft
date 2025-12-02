@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Virtuoso } from 'react-virtuoso';
 import { RestaurantWithDetails } from '@/lib/types';
 import { db } from '@/lib/supabase';
 import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCompact';
@@ -162,20 +161,17 @@ export default function Home() {
           </div>
           
           <div className="restaurant-list">
-            <Virtuoso
-              style={{ height: '100%' }}
-              data={filteredRestaurants}
-              itemContent={(index, restaurant) => (
-                <div
-                  className={`homepage-card-wrapper ${selectedRestaurant?.id === restaurant.id ? 'selected' : ''} ${hoveredRestaurant === restaurant.id ? 'hovered' : ''}`}
-                  onClick={() => handleRestaurantClick(restaurant)}
-                  onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
-                  onMouseLeave={() => setHoveredRestaurant(null)}
-                >
-                  <RestaurantCardCompact restaurant={restaurant} index={index} />
-                </div>
-              )}
-            />
+            {filteredRestaurants.map((restaurant, index) => (
+              <div
+                key={restaurant.id}
+                className={`homepage-card-wrapper ${selectedRestaurant?.id === restaurant.id ? 'selected' : ''} ${hoveredRestaurant === restaurant.id ? 'hovered' : ''}`}
+                onClick={() => handleRestaurantClick(restaurant)}
+                onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
+                onMouseLeave={() => setHoveredRestaurant(null)}
+              >
+                <RestaurantCardCompact restaurant={restaurant} index={index} />
+              </div>
+            ))}
           </div>
         </aside>
 
