@@ -5,6 +5,20 @@ import { BarChart3, Image, FileText, MapPin, Star } from 'lucide-react';
 type Chef = Database['public']['Tables']['chefs']['Row'];
 type Restaurant = Database['public']['Tables']['restaurants']['Row'];
 
+type ChefPreview = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+type RestaurantPreview = {
+  id: string;
+  name: string;
+  slug: string;
+  city: string;
+  state: string | null;
+};
+
 async function getDataStats() {
   const supabase = await createClient();
 
@@ -41,7 +55,11 @@ async function getDataStats() {
   };
 }
 
-async function getMissingData() {
+async function getMissingData(): Promise<{
+  chefsNoPhotos: ChefPreview[];
+  chefsNoBios: ChefPreview[];
+  restaurantsNoPlaces: RestaurantPreview[];
+}> {
   const supabase = await createClient();
 
   const [
@@ -70,9 +88,9 @@ async function getMissingData() {
   ]);
 
   return {
-    chefsNoPhotos: chefsNoPhotos || [],
-    chefsNoBios: chefsNoBios || [],
-    restaurantsNoPlaces: restaurantsNoPlaces || [],
+    chefsNoPhotos: (chefsNoPhotos || []) as ChefPreview[],
+    chefsNoBios: (chefsNoBios || []) as ChefPreview[],
+    restaurantsNoPlaces: (restaurantsNoPlaces || []) as RestaurantPreview[],
   };
 }
 
