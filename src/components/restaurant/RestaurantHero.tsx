@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { getRestaurantStatus, getChefAchievements, sanitizeText, sanitizeHtml, validateImageUrl } from '@/lib/utils/restaurant';
+import { getStorageUrl } from '@/lib/utils/storage';
 
 interface RestaurantHeroProps {
   restaurant: {
@@ -41,7 +42,7 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
   const sanitizedName = sanitizeText(restaurant.name);
   const sanitizedDescription = sanitizeHtml(restaurant.description);
   const sanitizedChefName = restaurant.chef ? sanitizeText(restaurant.chef.name) : '';
-  const heroPhoto = restaurant.google_photos?.[0] ? validateImageUrl(restaurant.google_photos[0]) : null;
+  const heroPhoto = getStorageUrl('restaurant-photos', restaurant.google_photos?.[0]);
 
   const fullAddress = [
     restaurant.address,
@@ -75,7 +76,7 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
                 }}
               >
                 <Image
-                  src={heroPhoto!}
+                  src={heroPhoto}
                   alt={restaurant.name}
                   fill
                   className="object-cover"
@@ -237,9 +238,9 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
                 className="w-16 h-16 relative overflow-hidden flex-shrink-0"
                 style={{ border: '2px solid var(--accent-primary)' }}
               >
-                {restaurant.chef.photo_url ? (
+                {getStorageUrl('chef-photos', restaurant.chef.photo_url) ? (
                   <Image
-                    src={restaurant.chef.photo_url}
+                    src={getStorageUrl('chef-photos', restaurant.chef.photo_url)!}
                     alt={`${sanitizeText(restaurant.chef.name)} profile photo`}
                     fill
                     className="object-cover"

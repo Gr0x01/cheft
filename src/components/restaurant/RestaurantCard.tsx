@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { getRestaurantStatus, getChefAchievements, sanitizeText, validateImageUrl } from '@/lib/utils/restaurant';
+import { getStorageUrl } from '@/lib/utils/storage';
 
 interface RestaurantCardProps {
   restaurant: {
@@ -36,7 +37,7 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
   const sanitizedCity = sanitizeText(restaurant.city);
   const sanitizedState = sanitizeText(restaurant.state);
   const sanitizedChefName = restaurant.chef ? sanitizeText(restaurant.chef.name) : '';
-  const photoUrl = restaurant.google_photos?.[0] ? validateImageUrl(restaurant.google_photos[0]) : null;
+  const photoUrl = getStorageUrl('restaurant-photos', restaurant.google_photos?.[0]);
 
   return (
     <Link

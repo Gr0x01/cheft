@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { getStorageUrl } from '@/lib/utils/storage';
 
 interface ChefCardProps {
   chef: {
@@ -27,6 +28,7 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
   const season = primaryShow?.season;
   const isWinner = result === 'winner';
   const isJBWinner = chef.james_beard_status === 'winner';
+  const photoUrl = getStorageUrl('chef-photos', chef.photo_url);
 
   return (
     <Link
@@ -44,9 +46,9 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
 
       {/* Image container with overlay */}
       <div className="relative aspect-[3/4] overflow-hidden" style={{ background: 'var(--slate-100)' }}>
-        {chef.photo_url ? (
+        {photoUrl ? (
           <Image
-            src={chef.photo_url}
+            src={photoUrl}
             alt={chef.name}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
