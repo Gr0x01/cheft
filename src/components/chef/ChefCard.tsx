@@ -22,6 +22,7 @@ interface ChefCardProps {
 }
 
 export function ChefCard({ chef, index = 0 }: ChefCardProps) {
+  const isPriority = index < 4;
   const primaryShow = chef.chef_shows?.find(cs => cs.is_primary) || chef.chef_shows?.[0];
   const result = primaryShow?.result;
   const season = primaryShow?.season;
@@ -52,6 +53,8 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            priority={isPriority}
+            quality={60}
           />
         ) : (
           <div 

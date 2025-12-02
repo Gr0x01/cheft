@@ -1,12 +1,16 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { RestaurantWithDetails } from '@/lib/types';
-import { db } from '@/lib/supabase';
 import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCompact';
 import { ChefCard } from '@/components/chef/ChefCard';
 import { Header } from '@/components/ui/Header';
+
+interface HomePageProps {
+  initialRestaurants: RestaurantWithDetails[];
+  initialFeaturedChefs: any[];
+}
 
 const RestaurantMap = dynamic(() => import('@/components/RestaurantMap'), { 
   ssr: false,
@@ -18,45 +22,34 @@ const RestaurantMap = dynamic(() => import('@/components/RestaurantMap'), {
   )
 });
 
-export default function Home() {
+export default function Home({ initialRestaurants, initialFeaturedChefs }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [selectedShow, setSelectedShow] = useState<string>('all');
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
   const [selectedRestaurant, setSelectedRestaurant] = useState<RestaurantWithDetails | null>(null);
   const [hoveredRestaurant, setHoveredRestaurant] = useState<string | null>(null);
-  const [restaurants, setRestaurants] = useState<RestaurantWithDetails[]>([]);
-  const [featuredChefs, setFeaturedChefs] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showMobileMap, setShowMobileMap] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(20);
+  
+  const restaurants = initialRestaurants;
+  const featuredChefs = initialFeaturedChefs;
+  const isLoading = false;
+  const error = null;
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setIsLoading(true);
-        const [restaurantsData, chefsData] = await Promise.all([
-          db.getRestaurants(),
-          db.getFeaturedChefs(12)
-        ]);
-        setRestaurants(restaurantsData as RestaurantWithDetails[]);
-        setFeaturedChefs(chefsData);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Failed to load data. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchData();
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchQuery(value);
+    }, 300);
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const filteredRestaurants = useMemo(() => {
     let filtered = restaurants;
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+    if (debouncedSearchQuery) {
+      const query = debouncedSearchQuery.toLowerCase();
       filtered = filtered.filter(restaurant =>
         restaurant.name.toLowerCase().includes(query) ||
         restaurant.chef?.name.toLowerCase().includes(query) ||
@@ -76,7 +69,7 @@ export default function Home() {
     }
 
     return filtered;
-  }, [searchQuery, selectedShow, selectedPriceRange, restaurants]);
+  }, [debouncedSearchQuery, selectedShow, selectedPriceRange, restaurants]);
 
   const handleRestaurantClick = (restaurant: RestaurantWithDetails) => {
     setSelectedRestaurant(restaurant);
@@ -130,44 +123,51 @@ export default function Home() {
               type="text"
               placeholder="Search restaurants, chefs, cities..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="sidebar-search-input"
             />
           </div>
           
           <div className="restaurant-list">
-            {isLoading ? (
-              Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="homepage-card-wrapper">
-                  <div className="restaurant-card-compact skeleton">
-                    <div className="skeleton-image"></div>
-                    <div className="skeleton-content">
-                      <div className="skeleton-title"></div>
-                      <div className="skeleton-text"></div>
-                      <div className="skeleton-text short"></div>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : error ? (
-              <div className="error-screen">
-                <p className="error-message">{error}</p>
-                <button onClick={() => window.location.reload()} className="retry-button">
-                  Retry
-                </button>
+            {filteredRestaurants.slice(0, visibleCount).map((restaurant, index) => (
+              <div
+                key={restaurant.id}
+                className={`homepage-card-wrapper ${selectedRestaurant?.id === restaurant.id ? 'selected' : ''} ${hoveredRestaurant === restaurant.id ? 'hovered' : ''}`}
+                onClick={() => handleRestaurantClick(restaurant)}
+                onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
+                onMouseLeave={() => setHoveredRestaurant(null)}
+              >
+                <RestaurantCardCompact restaurant={restaurant} index={index} />
               </div>
-            ) : (
-              filteredRestaurants.map((restaurant, index) => (
-                <div
-                  key={restaurant.id}
-                  className={`homepage-card-wrapper ${selectedRestaurant?.id === restaurant.id ? 'selected' : ''} ${hoveredRestaurant === restaurant.id ? 'hovered' : ''}`}
-                  onClick={() => handleRestaurantClick(restaurant)}
-                  onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
-                  onMouseLeave={() => setHoveredRestaurant(null)}
+            ))}
+            {visibleCount < filteredRestaurants.length && (
+              <div className="px-4 pb-4 flex flex-col items-center gap-2">
+                <button
+                  onClick={() => setVisibleCount(prev => Math.min(prev + 20, filteredRestaurants.length))}
+                  className="py-3 px-6 font-mono text-sm font-semibold tracking-wide transition-all duration-200"
+                  style={{
+                    background: 'var(--bg-tertiary)',
+                    color: 'var(--text-secondary)',
+                    border: '2px solid var(--border-light)',
+                    borderRadius: 'var(--radius-md)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--accent-primary)';
+                    e.currentTarget.style.color = 'white';
+                    e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'var(--bg-tertiary)';
+                    e.currentTarget.style.color = 'var(--text-secondary)';
+                    e.currentTarget.style.borderColor = 'var(--border-light)';
+                  }}
                 >
-                  <RestaurantCardCompact restaurant={restaurant} index={index} />
-                </div>
-              ))
+                  LOAD MORE
+                </button>
+                <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>
+                  {filteredRestaurants.length - visibleCount} remaining
+                </span>
+              </div>
             )}
           </div>
         </aside>
@@ -258,21 +258,9 @@ export default function Home() {
             </a>
           </div>
           <div className="featured-chefs-grid">
-            {isLoading ? (
-              Array.from({ length: 12 }).map((_, i) => (
-                <div key={i} className="chef-card skeleton">
-                  <div className="skeleton-image"></div>
-                  <div className="skeleton-content">
-                    <div className="skeleton-title"></div>
-                    <div className="skeleton-text"></div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              featuredChefs.map((chef, index) => (
-                <ChefCard key={chef.id} chef={chef} index={index} />
-              ))
-            )}
+            {featuredChefs.slice(0, 8).map((chef, index) => (
+              <ChefCard key={chef.id} chef={chef} index={index} />
+            ))}
           </div>
         </div>
       </section>

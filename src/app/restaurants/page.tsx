@@ -7,6 +7,8 @@ import { FilterBar } from '@/components/ui/FilterBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ItemListSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: 'TV Chef Restaurants - 311 Locations Nationwide | Cheft',
   description:

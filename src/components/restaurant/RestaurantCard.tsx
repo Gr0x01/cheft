@@ -30,6 +30,7 @@ interface RestaurantCardProps {
 }
 
 export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
+  const isPriority = index < 4;
   const status = getRestaurantStatus(restaurant.status);
   const chefAchievements = restaurant.chef ? getChefAchievements(restaurant.chef) : { isShowWinner: false, isJBWinner: false, isJBNominee: false, isJBSemifinalist: false };
   
@@ -58,6 +59,8 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+            priority={isPriority}
+            quality={60}
           />
         </div>
       ) : (
