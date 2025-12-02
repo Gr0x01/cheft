@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Breadcrumbs } from '../seo/Breadcrumbs';
-import { getRestaurantStatus, getChefAchievements, sanitizeText, sanitizeHtml, validateImageUrl } from '@/lib/utils/restaurant';
+import { getRestaurantStatus, getChefAchievements, sanitizeText, validateImageUrl } from '@/lib/utils/restaurant';
 import { getStorageUrl } from '@/lib/utils/storage';
 import { PhotoGalleryModal } from './PhotoGalleryModal';
 
@@ -49,7 +49,7 @@ export function RestaurantHero({ restaurant, breadcrumbItems }: RestaurantHeroPr
   const chefAchievements = restaurant.chef ? getChefAchievements(restaurant.chef) : { isShowWinner: false, isJBWinner: false, isJBNominee: false, isJBSemifinalist: false };
   
   const sanitizedName = sanitizeText(restaurant.name);
-  const sanitizedDescription = sanitizeHtml(restaurant.description);
+  const sanitizedDescription = sanitizeText(restaurant.description);
   const sanitizedChefName = restaurant.chef ? sanitizeText(restaurant.chef.name) : '';
   
   const photos = (restaurant.photo_urls || []).filter(Boolean);

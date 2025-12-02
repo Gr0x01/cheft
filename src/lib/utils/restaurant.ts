@@ -1,5 +1,3 @@
-import DOMPurify from 'isomorphic-dompurify';
-
 export interface RestaurantStatus {
   isOpen: boolean;
   isClosed: boolean;
@@ -49,15 +47,7 @@ export function getChefAchievements(chef: {
 
 export function sanitizeText(text: string | null | undefined): string {
   if (!text) return '';
-  return DOMPurify.sanitize(text, { ALLOWED_TAGS: [] });
-}
-
-export function sanitizeHtml(html: string | null | undefined): string {
-  if (!html) return '';
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br'],
-    ALLOWED_ATTR: ['href', 'target', 'rel'],
-  });
+  return text.trim();
 }
 
 export function validateImageUrl(url: string | null | undefined): string | null {
