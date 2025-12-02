@@ -81,14 +81,6 @@ export function TVAppearanceBadge({
     </div>
   );
 
-  if (show.slug) {
-    return (
-      <Link href={`/shows/${show.slug}`} className="block hover:opacity-90">
-        {content}
-      </Link>
-    );
-  }
-
   return content;
 }
 
