@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { RestaurantWithDetails } from '@/lib/types';
 import { db } from '@/lib/supabase';
+import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCompact';
 
 const RestaurantMap = dynamic(() => import('@/components/RestaurantMap'), { 
   ssr: false,
@@ -159,48 +160,15 @@ export default function Home() {
           </div>
           
           <div className="restaurant-list">
-            {filteredRestaurants.map((restaurant) => (
+            {filteredRestaurants.map((restaurant, index) => (
               <div
                 key={restaurant.id}
-                className={`restaurant-card ${selectedRestaurant?.id === restaurant.id ? 'selected' : ''} ${hoveredRestaurant === restaurant.id ? 'hovered' : ''}`}
+                className={`homepage-card-wrapper ${selectedRestaurant?.id === restaurant.id ? 'selected' : ''} ${hoveredRestaurant === restaurant.id ? 'hovered' : ''}`}
                 onClick={() => handleRestaurantClick(restaurant)}
                 onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
                 onMouseLeave={() => setHoveredRestaurant(null)}
               >
-                <div className="card-accent"></div>
-                <div className="card-content">
-                  <div className="card-header">
-                    <h3 className="restaurant-name">{restaurant.name}</h3>
-                    <span className="price-badge">{restaurant.price_tier}</span>
-                  </div>
-                  
-                  <p className="chef-name">{restaurant.chef?.name}</p>
-                  
-                  <div className="location-row">
-                    <svg className="location-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                      <circle cx="12" cy="10" r="3"/>
-                    </svg>
-                    <span className="location-text">{restaurant.city}, {restaurant.state}</span>
-                  </div>
-                  
-                  <div className="card-footer">
-                    <div className="tags">
-                      {restaurant.chef?.top_chef_result === 'winner' && (
-                        <span className="tag tag-winner">Winner</span>
-                      )}
-                      {restaurant.chef?.top_chef_result === 'finalist' && (
-                        <span className="tag tag-finalist">Finalist</span>
-                      )}
-                      {restaurant.chef?.top_chef_season && (
-                        <span className="tag tag-season">{restaurant.chef.top_chef_season}</span>
-                      )}
-                    </div>
-                    {restaurant.cuisine_tags && restaurant.cuisine_tags.length > 0 && (
-                      <span className="cuisine-text">{restaurant.cuisine_tags[0]}</span>
-                    )}
-                  </div>
-                </div>
+                <RestaurantCardCompact restaurant={restaurant} index={index} />
               </div>
             ))}
           </div>
