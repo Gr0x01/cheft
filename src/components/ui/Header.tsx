@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 interface HeaderProps {
-  currentPage?: 'chefs' | 'restaurants' | 'home';
+  currentPage?: 'chefs' | 'restaurants' | 'cities' | 'home';
 }
 
 export function Header({ currentPage }: HeaderProps) {
@@ -56,6 +56,21 @@ export function Header({ currentPage }: HeaderProps) {
             }}
           >
             RESTAURANTS
+          </Link>
+          <Link 
+            href="/cities" 
+            className={`font-mono text-xs tracking-wider transition-colors ${
+              currentPage === 'cities' 
+                ? 'font-semibold' 
+                : 'hover:text-[var(--accent-primary)]'
+            }`}
+            style={{ 
+              color: currentPage === 'cities' 
+                ? 'var(--accent-primary)' 
+                : 'var(--text-muted)' 
+            }}
+          >
+            CITIES
           </Link>
         </nav>
       </div>

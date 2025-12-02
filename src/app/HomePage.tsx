@@ -6,6 +6,7 @@ import { RestaurantWithDetails } from '@/lib/types';
 import { db } from '@/lib/supabase';
 import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCompact';
 import { ChefCard } from '@/components/chef/ChefCard';
+import { Header } from '@/components/ui/Header';
 
 const RestaurantMap = dynamic(() => import('@/components/RestaurantMap'), { 
   ssr: false,
@@ -84,26 +85,7 @@ export default function Home() {
 
   return (
     <div className="app-container map-layout">
-      <header className="app-header">
-        <div className="header-inner">
-          <div className="logo">
-            <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-              <svg className="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                <path d="M2 17l10 5 10-5"/>
-                <path d="M2 12l10 5 10-5"/>
-              </svg>
-              <span className="logo-text">Cheft</span>
-            </a>
-          </div>
-          
-          <nav className="header-nav">
-            <a href="/chefs" className="nav-link">Chefs</a>
-            <a href="/restaurants" className="nav-link">Restaurants</a>
-            <a href="/cities" className="nav-link">Cities</a>
-          </nav>
-        </div>
-      </header>
+      <Header currentPage="home" />
 
       <section className="hero-section">
         <div className="hero-container">
