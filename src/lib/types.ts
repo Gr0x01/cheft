@@ -26,6 +26,7 @@ export interface Chef {
   mini_bio: string | null;
   country: string | null;
   james_beard_status: 'semifinalist' | 'nominated' | 'winner' | null;
+  photo_url?: string | null;
   created_at: string;
   updated_at: string;
   chef_shows?: ChefShow[];
@@ -50,7 +51,10 @@ export interface Restaurant {
   is_public: boolean;
   created_at: string;
   updated_at: string;
-  chef?: Chef; // Joined data
+  photo_urls?: string[] | null;
+  google_rating?: number | null;
+  google_review_count?: number | null;
+  chef?: Chef;
 }
 
 export interface RestaurantEmbedding {

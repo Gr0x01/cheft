@@ -53,6 +53,8 @@ export function RestaurantCardCompact({ restaurant, index = 0 }: RestaurantCardC
             width={80}
             height={80}
             className="compact-image"
+            loading="lazy"
+            sizes="80px"
           />
         ) : (
           <div className="compact-image-placeholder">

@@ -25,6 +25,8 @@ export default function RestaurantPopup({ restaurant }: RestaurantPopupProps) {
             width={280}
             height={140}
             className="popup-image"
+            loading="lazy"
+            sizes="280px"
           />
           <div className="popup-image-overlay" />
         </div>
