@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
 import { createStaticClient } from '@/lib/supabase/static';
 import { Header } from '@/components/ui/Header';
 import { ItemListSchema } from '@/components/seo/SchemaOrg';
@@ -42,7 +41,7 @@ interface ChefWithRestaurants {
 
 export async function generateMetadata({ params }: CityPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const supabase = await createClient();
+  const supabase = createStaticClient();
 
   const { data: city } = await supabase
     .from('cities')
@@ -89,7 +88,7 @@ export const dynamicParams = true;
 
 export default async function CityPage({ params }: CityPageProps) {
   const { slug } = await params;
-  const supabase = await createClient();
+  const supabase = createStaticClient();
 
   const { data: city, error: cityError } = await supabase
     .from('cities')

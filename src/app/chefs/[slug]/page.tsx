@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
 import { createStaticClient } from '@/lib/supabase/static';
 import { Header } from '@/components/ui/Header';
 import { ChefHero } from '@/components/chef/ChefHero';
@@ -48,7 +47,7 @@ interface ChefData {
 
 async function getChef(slug: string): Promise<ChefData | null> {
   try {
-    const supabase = await createClient();
+    const supabase = createStaticClient();
 
     const { data, error } = await supabase
       .from('chefs')
@@ -104,7 +103,7 @@ async function getChef(slug: string): Promise<ChefData | null> {
 }
 
 async function getRelatedChefs(chef: ChefData) {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
 
   const primaryShow = chef.chef_shows?.find(cs => cs.is_primary) || chef.chef_shows?.[0];
   const cities = [...new Set(chef.restaurants.map(r => r.city))];

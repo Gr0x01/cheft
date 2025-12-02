@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
 import { createStaticClient } from '@/lib/supabase/static';
 import { Header } from '@/components/ui/Header';
 import { RestaurantHero } from '@/components/restaurant/RestaurantHero';
@@ -61,7 +60,7 @@ interface SiblingRestaurant {
 }
 
 async function getCitySlug(city: string, state: string | null): Promise<string | null> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   
   const { data } = await supabase
     .from('cities')
@@ -74,7 +73,7 @@ async function getCitySlug(city: string, state: string | null): Promise<string |
 }
 
 async function getRestaurant(slug: string): Promise<RestaurantData | null> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
 
   const { data, error } = await supabase
     .from('restaurants')
