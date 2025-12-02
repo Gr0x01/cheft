@@ -4,7 +4,7 @@ Maintainer: RB
 Status: Active Development
 ---
 
-# Quickstart: TV Chef Map
+# Quickstart: Cheft
 
 ## Current Status
 - **Phase**: Phase 3 - User Engagement & Community Features

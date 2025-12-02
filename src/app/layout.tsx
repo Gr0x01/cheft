@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import PlausibleProvider from "next-plausible";
 import "./globals.css";
 
 const inter = Inter({
@@ -45,6 +46,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <PlausibleProvider domain="cheft.app" />
         <link rel="preconnect" href="https://clktrvyieegouggrpfaj.supabase.co" />
         <link rel="dns-prefetch" href="https://lh3.googleusercontent.com" />
         <link rel="dns-prefetch" href="https://upload.wikimedia.org" />
