@@ -8,7 +8,7 @@ Status: Implemented
 
 ## Overview
 
-The TV Chef Map project implements comprehensive Row Level Security (RLS) to ensure safe public access to restaurant data while preventing unauthorized modifications. This setup allows anonymous users to read public restaurant information without any risk of data corruption or security breaches.
+Cheft implements comprehensive Row Level Security (RLS) to ensure safe public access to restaurant data while preventing unauthorized modifications. This setup allows anonymous users to read public restaurant information without any risk of data corruption or security breaches.
 
 ## RLS Implementation Status
 

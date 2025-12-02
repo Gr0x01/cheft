@@ -1,5 +1,5 @@
 ---
-Last-Updated: 2025-12-02
+Last-Updated: 2025-12-03
 Maintainer: RB
 Status: Active Development
 ---
@@ -7,10 +7,10 @@ Status: Active Development
 # Quickstart: TV Chef Map
 
 ## Current Status
-- **Phase**: Phase 2 - SEO Pages + Admin Tooling Complete
-- **Version**: 0.3.0
-- **Environment**: Development (Database Ready, Admin Panel Live)
-- **Next Milestone**: Data enrichment completion + technical SEO
+- **Phase**: Phase 3 - User Engagement & Community Features
+- **Version**: 0.4.0
+- **Environment**: Production (Live on Vercel)
+- **Next Milestone**: Community contribution system + data verification UI
 
 ## Key Commands
 ```bash
@@ -30,10 +30,10 @@ npm run test:e2e     # Run Playwright tests
 ```
 
 ## Active Focus
-- Completing data enrichment (photos, bios, Google Places)
-- Admin panel for data management and photo uploads
-- Technical SEO optimization (sitemap, robots.txt)
-- City landing pages and internal linking
+- Community contribution forms (suggest chef/restaurant)
+- User verification UI (thumbs up/down for data quality)
+- Chef show attribution badges (Top Chef, Iron Chef, etc.)
+- Admin review workflows for user submissions
 
 ## Quick Links
 - [Project Brief](./projectbrief.md)
@@ -44,17 +44,19 @@ npm run test:e2e     # Run Playwright tests
 1. ✅ Next.js project initialized
 2. ✅ Supabase project setup and MCP integration
 3. ✅ Environment variables configured
-4. ✅ Database schema deployed with 311 restaurants
+4. ✅ Database schema deployed with 560 restaurants
 5. ✅ SEO pages live (chefs, restaurants, cities)
 6. ✅ Admin panel with data management and photo uploads
-7. ⏳ Data enrichment (photos, bios, ratings)
+7. ✅ Data enrichment complete (bios, Google Places)
+8. ✅ Site deployed to Vercel production
+9. ⏳ User engagement features (contributions, verification)
 
 ## Database Status
-- **Restaurants**: 311 Top Chef locations
-- **Chefs**: 180 unique contestants/winners  
-- **Coverage**: 162 cities across 45 US states
-- **Data Quality**: 100% geocoded with complete metadata
-- **Enrichment**: 26% chef photos, 19% restaurant Google Places
+- **Restaurants**: 560 TV chef locations
+- **Chefs**: 182 unique contestants/winners  
+- **Coverage**: 162 cities across US
+- **Data Quality**: 100% geocoded, 100% bios, 100% Google Places
+- **Enrichment**: 88% chef photos, 72% restaurant photos
 
 ## Admin Panel
 - **Login**: `/admin/login` (Supabase Auth with magic link)

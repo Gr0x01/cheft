@@ -1,92 +1,67 @@
 ---
-Last-Updated: 2025-12-02
+Last-Updated: 2025-12-03
 Maintainer: RB
-Status: Data Enrichment Complete - Technical SEO Next
+Status: Phase 3 - User Engagement Features
 ---
 
 # Active Context: Chefs
 
 ## Current Sprint Goals
-- **Sprint**: Data Enrichment + Technical SEO
+- **Sprint**: User Engagement & Community Features
 - **Duration**: 1-2 weeks
-- **Focus**: Complete data enrichment pipeline, add technical SEO polish, admin tooling
+- **Focus**: Add contribution system, data verification, and chef show attribution
 
-### Primary Objectives
-1. ✅ Deploy SEO page fields migration (chefs, restaurants, cities table)
-2. ✅ Run full enrichment pipeline (photos, bios, Google Places)
-3. ✅ Build chef pages (`/chefs`, `/chefs/[slug]`)
-4. ✅ Build restaurant pages (`/restaurants`, `/restaurants/[slug]`)
-5. ✅ Build city landing pages (`/cities/[slug]`)
+### Primary Objectives (Phase 3: Community Engagement)
+1. **Contribution System**:
+   - Add "Suggest a Chef" form on chef directory page
+   - Add "Suggest a Restaurant" form on restaurant pages (linked to chef)
+   - Create admin review queue for community submissions
+   
+2. **Data Verification UI**:
+   - Add thumbs up/down buttons on chef pages (triggers verification check)
+   - Add thumbs up/down buttons on restaurant pages (status/info validation)
+   - Create admin dashboard showing items flagged for review
+   
+3. **Show Attribution Badges**:
+   - Add visual badges on chef cards/pages ("Top Chef S4", "Iron Chef", etc.)
+   - Add filter by show/TV personality on chef directory
+   - Enhance Schema.org awards markup for SEO
 
 ### Secondary Objectives
-- Add Schema.org JSON-LD for rich snippets
-- Implement ad slots for monetization
-- Set up Cloudflare for AI bot protection
-- Add sitemap.xml generation
+- Improve mobile responsiveness for new UI elements
+- Add analytics tracking for user engagement
+- Create user feedback loop documentation
 
 ## Current Blockers
 - None
 
 ## In Progress
-- **User adding chefs manually** via admin interface
+- Planning Phase 3 feature implementation
 
 ## Recently Completed
-- ✅ **Restaurant Data Enrichment Complete** (2025-12-02)
-  - Fixed restaurant discovery to only capture CURRENT positions (not historical)
-  - Cleaned out ~250-300 historical/closed restaurants
-  - Re-ran restaurant enrichment on all 182 chefs → ~310 current restaurants
-  - Recovered 3 failed chefs (Brian Malarkey, Paul Qui, Jeff McInnis) → +14 restaurants
-  - **Google Places enrichment: 560/560 (100%)**
-    - All restaurants have Place IDs, ratings, maps URLs, website URLs
-    - 405/560 (72%) have photos (155 don't have photos in Google Places)
-  - Added `last_enriched_at` timestamp tracking to chefs table
-  - Created scripts: `enrich-single-chef.ts`, `enrich-places.ts`, `add-photos-to-existing.ts`
-- ✅ **Admin Panel Enhancements** (2025-12-02)
-  - Data Dashboard (`/admin/data`) with completeness stats and progress bars
-  - Manual Data Management (`/admin/manage`) with searchable tables for chefs/restaurants
-  - Photo upload/delete via Supabase Storage with security validation
-  - Re-enrichment triggers for photos, bios, and Google Places
-  - Security hardening: UUID validation, file type checks, URL sanitization
-  - API routes: `upload-photo`, `delete-photo`, `enrich-photo`, `enrich-bio`, `enrich-place`
-- ✅ **City Pages Launch** (2025-12-02)
-  - City landing pages `/cities/[slug]` for 161 cities
-  - Hero with city stats (restaurant count, chef count)
-  - All restaurants grid sorted by rating
-  - Featured chefs section (chefs in that city)
-  - Schema.org ItemList for SEO
-  - Database-driven slug lookup from restaurant pages
-  - Proper TypeScript types (`ChefWithRestaurants`)
-  - Fixed `generateStaticParams` to use `createStaticClient()`
-  - Code review and fixes (type safety, env variables, slug generation)
-- ✅ **Chef Photo Display Fix** (2025-12-02)
-  - Removed `getStorageUrl()` helper - use URLs directly from DB
-  - Added Supabase hostname to Next.js image config
-  - Cleared 9 external photo URLs (non-Supabase sources)
-  - Script: `scripts/clear-external-photos.ts`
-- ✅ **Restaurant Pages Launch** (2025-12-01)
-  - Restaurant list page `/restaurants` with filters, search, photo support
-  - Restaurant detail pages `/restaurants/[slug]` with hero, map, chef link
-  - "More in {City}" section linking to city pages
-  - Schema.org JSON-LD for Restaurant type
-- ✅ **SEO page fields migration** (2025-12-01)
-  - Cities table created and populated (161 cities)
-  - Chef enrichment fields added
-  - Restaurant enrichment fields added
+- ✅ **Site Deployed to Vercel** (Dec 3) - Production live with 652+ SEO pages
+- ✅ **Data Enrichment Complete** (Dec 2) - 100% bios, 100% Google Places, 88% chef photos
+- ✅ **Phase 2 Complete** (Dec 1-2) - Chef/restaurant/city pages, admin panel, internal linking
+  
+(Full Phase 2 details archived in `/memory-bank/archive/phase-2-details.md`)
 
 ## Next Steps
-1. **User-Driven Tasks**:
+1. **Phase 3 Implementation** (Priority):
+   - Design and implement chef/restaurant suggestion forms
+   - Add thumbs up/down verification UI to pages
+   - Create database schema for user contributions and verification flags
+   - Build admin review workflows for community input
+   - Implement show attribution badge system
+   
+2. **Data Quality** (Ongoing):
    - User manually adding chefs via admin interface
    - Run enrichment on newly added chefs as needed
-2. **Technical SEO** - Phase 5 of `seo-pages-spec.md`:
-   - sitemap.xml generation for all pages
-   - robots.txt with AI bot blocks
-   - Cloudflare AI bot protection setup
-   - Open Graph meta tags for social sharing
-3. **Optional Enhancements**:
-   - Chef photos: 22 remaining (88% complete)
-   - Ad slot infrastructure (if monetization desired)
-   - Related chefs section on chef pages
-   - City directory page `/cities` (index of all cities)
+   - Monitor and respond to user verification signals
+   
+3. **Optional Polish**:
+   - City directory index page `/cities`
+   - Remaining 22 chef photos (88% complete)
+   - Enhanced mobile optimizations
 
 ## Data Summary (as of 2025-12-02)
 - **Chefs**: 182 total
