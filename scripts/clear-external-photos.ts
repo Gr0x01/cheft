@@ -1,49 +1,59 @@
+import { config } from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
 
-dotenv.config({ path: '.env.local' });
+config({ path: '.env.local' });
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function clearExternalPhotos() {
-  const { data: chefs, error } = await supabase
+  console.log('\n🧹 Clearing external photo URLs\n');
+  console.log('='.repeat(60) + '\n');
+
+  const { data: chefs } = await supabase
     .from('chefs')
     .select('id, name, photo_url')
-    .not('photo_url', 'is', null)
-    .not('photo_url', 'like', '%supabase.co%');
+    .not('photo_url', 'is', null);
 
-  if (error) {
-    console.error('Error fetching chefs:', error);
+  const externalChefs = chefs?.filter(c => !c.photo_url?.includes('supabase.co')) || [];
+
+  if (externalChefs.length === 0) {
+    console.log('✅ No external photo URLs found\n');
     return;
   }
 
-  console.log(`Found ${chefs?.length || 0} chefs with external photo URLs:`);
-  chefs?.forEach(chef => {
-    console.log(`  - ${chef.name}: ${chef.photo_url}`);
-  });
+  console.log(`Found ${externalChefs.length} chefs with external URLs:\n`);
 
-  if (chefs && chefs.length > 0) {
-    const { error: updateError } = await supabase
+  let successCount = 0;
+  let failCount = 0;
+
+  for (const chef of externalChefs) {
+    console.log(`📝 ${chef.name}`);
+    console.log(`   URL: ${chef.photo_url}`);
+
+    const { error } = await supabase
       .from('chefs')
-      .update({
+      .update({ 
         photo_url: null,
-        photo_source: null,
+        photo_source: null 
       })
-      .not('photo_url', 'is', null)
-      .not('photo_url', 'like', '%supabase.co%');
+      .eq('id', chef.id);
 
-    if (updateError) {
-      console.error('Error clearing photos:', updateError);
-      return;
+    if (error) {
+      console.log(`   ❌ Failed: ${error.message}\n`);
+      failCount++;
+    } else {
+      console.log(`   ✅ Cleared\n`);
+      successCount++;
     }
-
-    console.log(`✓ Cleared ${chefs.length} external photo URLs`);
-  } else {
-    console.log('✓ No external photo URLs found');
   }
+
+  console.log('='.repeat(60));
+  console.log(`\n📊 Summary:`);
+  console.log(`   Cleared: ${successCount}`);
+  console.log(`   Failed: ${failCount}`);
+  console.log(`   Total: ${externalChefs.length}\n`);
 }
 
 clearExternalPhotos();
