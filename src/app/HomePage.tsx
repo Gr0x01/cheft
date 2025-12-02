@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { Virtuoso } from 'react-virtuoso';
 import { RestaurantWithDetails } from '@/lib/types';
 import { db } from '@/lib/supabase';
 import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCompact';
@@ -25,6 +26,7 @@ export default function Home() {
   const [restaurants, setRestaurants] = useState<RestaurantWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showMobileMap, setShowMobileMap] = useState(false);
 
   useEffect(() => {
     async function fetchRestaurants() {
@@ -160,17 +162,20 @@ export default function Home() {
           </div>
           
           <div className="restaurant-list">
-            {filteredRestaurants.map((restaurant, index) => (
-              <div
-                key={restaurant.id}
-                className={`homepage-card-wrapper ${selectedRestaurant?.id === restaurant.id ? 'selected' : ''} ${hoveredRestaurant === restaurant.id ? 'hovered' : ''}`}
-                onClick={() => handleRestaurantClick(restaurant)}
-                onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
-                onMouseLeave={() => setHoveredRestaurant(null)}
-              >
-                <RestaurantCardCompact restaurant={restaurant} index={index} />
-              </div>
-            ))}
+            <Virtuoso
+              style={{ height: '100%' }}
+              data={filteredRestaurants}
+              itemContent={(index, restaurant) => (
+                <div
+                  className={`homepage-card-wrapper ${selectedRestaurant?.id === restaurant.id ? 'selected' : ''} ${hoveredRestaurant === restaurant.id ? 'hovered' : ''}`}
+                  onClick={() => handleRestaurantClick(restaurant)}
+                  onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
+                  onMouseLeave={() => setHoveredRestaurant(null)}
+                >
+                  <RestaurantCardCompact restaurant={restaurant} index={index} />
+                </div>
+              )}
+            />
           </div>
         </aside>
 
@@ -184,6 +189,46 @@ export default function Home() {
           />
         </section>
       </main>
+
+      {/* Mobile Map Toggle Button */}
+      <button 
+        className="mobile-map-fab"
+        onClick={() => setShowMobileMap(true)}
+        aria-label="Show map"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        <span>Map</span>
+      </button>
+
+      {/* Mobile Map Overlay */}
+      {showMobileMap && (
+        <div className="mobile-map-overlay">
+          <div className="mobile-map-header">
+            <button 
+              className="mobile-map-close"
+              onClick={() => setShowMobileMap(false)}
+              aria-label="Close map"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+            <span className="mobile-map-title">{filteredRestaurants.length} Restaurants</span>
+          </div>
+          <div className="mobile-map-content">
+            <RestaurantMap 
+              restaurants={filteredRestaurants}
+              selectedRestaurant={selectedRestaurant}
+              hoveredRestaurantId={hoveredRestaurant}
+              onRestaurantSelect={handleRestaurantClick}
+              isLoading={isLoading}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
