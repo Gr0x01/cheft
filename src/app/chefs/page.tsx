@@ -1,9 +1,11 @@
 import { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { ChefCard } from '@/components/chef/ChefCard';
-import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
+import { Header } from '@/components/ui/Header';
+import { PageHero } from '@/components/ui/PageHero';
+import { FilterBar } from '@/components/ui/FilterBar';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { ItemListSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
-import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'All TV Chefs - Top Chef, Iron Chef & More | ChefMap',
@@ -109,6 +111,22 @@ export default async function ChefsPage({
   const winnersCount = chefsWithCount.filter(c => c.chef_shows?.some(cs => cs.result === 'winner')).length;
   const jbCount = chefsWithCount.filter(c => c.james_beard_status).length;
 
+  const filterOptions = [
+    { href: '/chefs', label: 'ALL', isActive: !params.show && !params.jb },
+    { href: '/chefs?show=top+chef', label: 'TOP CHEF', isActive: params.show === 'top chef' },
+    { 
+      href: '/chefs?jb=winner', 
+      label: 'JB WINNERS', 
+      isActive: params.jb === 'winner',
+      variant: 'warning' as const,
+      icon: (
+        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+        </svg>
+      )
+    },
+  ];
+
   return (
     <>
       <ItemListSchema
@@ -120,187 +138,30 @@ export default async function ChefsPage({
       <BreadcrumbSchema items={breadcrumbItems} />
 
       <div className="min-h-screen overflow-auto" style={{ background: 'var(--bg-primary)' }}>
-        {/* Header */}
-        <header 
-          className="sticky top-0 z-50 border-b"
-          style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
-        >
-          <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div 
-                className="w-8 h-8 flex items-center justify-center"
-                style={{ background: 'var(--accent-primary)' }}
-              >
-                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                  <path d="M2 17l10 5 10-5" />
-                  <path d="M2 12l10 5 10-5" />
-                </svg>
-              </div>
-              <span className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                ChefMap
-              </span>
-            </Link>
-            <nav className="flex gap-8">
-              <Link 
-                href="/chefs" 
-                className="font-mono text-xs tracking-wider font-semibold"
-                style={{ color: 'var(--accent-primary)' }}
-              >
-                CHEFS
-              </Link>
-              <Link 
-                href="/restaurants" 
-                className="font-mono text-xs tracking-wider transition-colors hover:text-[var(--accent-primary)]"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                RESTAURANTS
-              </Link>
-            </nav>
-          </div>
-        </header>
+        <Header currentPage="chefs" />
 
-        {/* Hero Section */}
-        <section 
-          className="relative overflow-hidden border-b"
-          style={{ background: 'var(--slate-900)', borderColor: 'var(--accent-primary)' }}
-        >
-          {/* Pattern */}
-          <div 
-            className="absolute inset-0 opacity-5"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }}
-          />
-          
-          <div className="relative max-w-7xl mx-auto px-4 py-16 sm:py-20">
-            <Breadcrumbs
-              items={[{ label: 'Chefs' }]}
-              className="mb-8 [&_a]:text-white/50 [&_a:hover]:text-white [&_span]:text-white [&_svg]:text-white/30"
-            />
-            
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-              <div>
-                <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-white tracking-tight">
-                  TV Chefs
-                </h1>
-                <p className="mt-4 font-ui text-lg" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                  {chefsWithCount.length} competition chefs and their restaurants
-                </p>
-              </div>
-              
-              <div className="flex gap-6">
-                <div className="text-center">
-                  <div className="font-mono text-3xl font-bold text-white">{winnersCount}</div>
-                  <div className="font-mono text-[10px] tracking-widest" style={{ color: 'var(--accent-primary)' }}>WINNERS</div>
-                </div>
-                <div 
-                  className="w-px"
-                  style={{ background: 'rgba(255,255,255,0.2)' }}
-                />
-                <div className="text-center">
-                  <div className="font-mono text-3xl font-bold text-white">{jbCount}</div>
-                  <div className="font-mono text-[10px] tracking-widest" style={{ color: 'var(--accent-primary)' }}>JAMES BEARD</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Copper accent */}
-          <div 
-            className="absolute bottom-0 left-0 right-0 h-1"
-            style={{ background: 'var(--accent-primary)' }}
-          />
-        </section>
+        <PageHero
+          title="TV Chefs"
+          subtitle={`${chefsWithCount.length} competition chefs and their restaurants`}
+          stats={[
+            { value: winnersCount, label: 'WINNERS' },
+            { value: jbCount, label: 'JAMES BEARD' },
+          ]}
+          breadcrumbItems={[{ label: 'Chefs' }]}
+        />
 
-        {/* Filters */}
-        <section className="border-b" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}>
-          <div className="max-w-7xl mx-auto px-4 py-4">
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-              <form className="w-full sm:w-auto sm:min-w-[300px]">
-                <div className="relative">
-                  <input
-                    type="search"
-                    name="q"
-                    placeholder="Search chefs..."
-                    defaultValue={params.q || ''}
-                    className="w-full h-11 pl-11 pr-4 font-ui text-sm border-2 transition-colors focus:outline-none"
-                    style={{ 
-                      background: 'var(--bg-primary)',
-                      borderColor: 'var(--border-light)',
-                      color: 'var(--text-primary)'
-                    }}
-                  />
-                  <svg
-                    className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4"
-                    style={{ color: 'var(--text-muted)' }}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="M21 21l-4.35-4.35" />
-                  </svg>
-                </div>
-              </form>
+        <FilterBar
+          searchPlaceholder="Search chefs..."
+          searchDefaultValue={params.q}
+          filterOptions={filterOptions}
+        />
 
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  href="/chefs"
-                  className="font-mono text-xs tracking-wider font-semibold px-4 py-2.5 transition-all"
-                  style={{ 
-                    background: !params.show && !params.jb ? 'var(--accent-primary)' : 'transparent',
-                    color: !params.show && !params.jb ? 'white' : 'var(--text-secondary)',
-                    border: `2px solid ${!params.show && !params.jb ? 'var(--accent-primary)' : 'var(--border-light)'}`
-                  }}
-                >
-                  ALL
-                </Link>
-                <Link
-                  href="/chefs?show=top+chef"
-                  className="font-mono text-xs tracking-wider font-semibold px-4 py-2.5 transition-all"
-                  style={{ 
-                    background: params.show === 'top chef' ? 'var(--accent-primary)' : 'transparent',
-                    color: params.show === 'top chef' ? 'white' : 'var(--text-secondary)',
-                    border: `2px solid ${params.show === 'top chef' ? 'var(--accent-primary)' : 'var(--border-light)'}`
-                  }}
-                >
-                  TOP CHEF
-                </Link>
-                <Link
-                  href="/chefs?jb=winner"
-                  className="font-mono text-xs tracking-wider font-semibold px-4 py-2.5 transition-all flex items-center gap-1.5"
-                  style={{ 
-                    background: params.jb === 'winner' ? 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)' : 'transparent',
-                    color: params.jb === 'winner' ? '#78350f' : 'var(--text-secondary)',
-                    border: `2px solid ${params.jb === 'winner' ? '#f59e0b' : 'var(--border-light)'}`
-                  }}
-                >
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                  JB WINNERS
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Grid */}
         <main className="max-w-7xl mx-auto px-4 py-12">
           {chefsWithCount.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="font-ui text-lg" style={{ color: 'var(--text-muted)' }}>
-                No chefs found matching your criteria
-              </p>
-              <Link 
-                href="/chefs" 
-                className="mt-4 inline-block font-mono text-sm tracking-wider"
-                style={{ color: 'var(--accent-primary)' }}
-              >
-                CLEAR FILTERS →
-              </Link>
-            </div>
+            <EmptyState
+              message="No chefs found matching your criteria"
+              actionHref="/chefs"
+            />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {chefsWithCount.map((chef, index) => (

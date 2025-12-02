@@ -6,6 +6,7 @@ import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { ItemListSchema } from '@/components/seo/SchemaOrg';
 import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
 import { ChefCard } from '@/components/chef/ChefCard';
+import { PageHero } from '@/components/ui/PageHero';
 
 interface CityPageProps {
   params: Promise<{ slug: string }>;
@@ -186,62 +187,14 @@ export default async function CityPage({ params }: CityPageProps) {
       
       <Breadcrumbs items={breadcrumbs} />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden" style={{ background: 'var(--slate-900)' }}>
-        <div
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
-        <div
-          className="absolute top-0 left-0 right-0 h-1"
-          style={{ background: 'var(--accent-primary)' }}
-        />
-
-        <div className="relative max-w-6xl mx-auto px-4 py-12 sm:py-16">
-          <div className="text-center">
-            <h1
-              className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-none tracking-tight"
-            >
-              {displayName}
-            </h1>
-            <p className="mt-4 font-ui text-lg" style={{ color: 'rgba(255,255,255,0.7)' }}>
-              TV Chef Restaurants & Dining Experiences
-            </p>
-
-            <div className="mt-6 flex items-center justify-center gap-8">
-              <div className="text-center">
-                <div className="font-display text-3xl font-bold text-white">
-                  {city.restaurant_count}
-                </div>
-                <div
-                  className="mt-1 font-mono text-xs tracking-wider uppercase"
-                  style={{ color: 'var(--accent-primary)' }}
-                >
-                  Restaurants
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="font-display text-3xl font-bold text-white">
-                  {city.chef_count}
-                </div>
-                <div
-                  className="mt-1 font-mono text-xs tracking-wider uppercase"
-                  style={{ color: 'var(--accent-primary)' }}
-                >
-                  Chefs
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          className="absolute bottom-0 left-0 right-0 h-1"
-          style={{ background: 'var(--accent-primary)' }}
-        />
-      </section>
+      <PageHero
+        title={displayName}
+        subtitle="TV Chef Restaurants & Dining Experiences"
+        stats={[
+          { value: city.restaurant_count, label: 'RESTAURANTS' },
+          { value: city.chef_count, label: 'CHEFS' },
+        ]}
+      />
 
       {/* Restaurants */}
       <section className="max-w-7xl mx-auto px-4 py-12">

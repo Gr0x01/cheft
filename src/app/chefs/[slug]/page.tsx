@@ -1,11 +1,12 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { createStaticClient } from '@/lib/supabase/static';
+import { Header } from '@/components/ui/Header';
 import { ChefHero } from '@/components/chef/ChefHero';
 import { TVAppearanceList } from '@/components/chef/TVAppearanceBadge';
 import { RelatedChefs } from '@/components/chef/RelatedChefs';
+import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { PersonSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 
@@ -42,6 +43,7 @@ interface ChefData {
     status: 'open' | 'closed' | 'unknown';
     google_rating: number | null;
     google_review_count: number | null;
+    photo_urls: string[] | null;
   }>;
 }
 
@@ -78,7 +80,8 @@ async function getChef(slug: string): Promise<ChefData | null> {
         cuisine_tags,
         status,
         google_rating,
-        google_review_count
+        google_review_count,
+        photo_urls
       )
     `)
     .eq('slug', slug)
@@ -260,45 +263,7 @@ export default async function ChefPage({ params }: ChefPageProps) {
       <BreadcrumbSchema items={breadcrumbItems} />
 
       <div className="min-h-screen overflow-auto" style={{ background: 'var(--bg-primary)' }}>
-        {/* Header */}
-        <header 
-          className="sticky top-0 z-50 border-b"
-          style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
-        >
-          <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div 
-                className="w-8 h-8 flex items-center justify-center"
-                style={{ background: 'var(--accent-primary)' }}
-              >
-                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                  <path d="M2 17l10 5 10-5" />
-                  <path d="M2 12l10 5 10-5" />
-                </svg>
-              </div>
-              <span className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                ChefMap
-              </span>
-            </Link>
-            <nav className="flex gap-8">
-              <Link 
-                href="/chefs" 
-                className="font-mono text-xs tracking-wider font-semibold"
-                style={{ color: 'var(--accent-primary)' }}
-              >
-                CHEFS
-              </Link>
-              <Link 
-                href="/restaurants" 
-                className="font-mono text-xs tracking-wider transition-colors hover:text-[var(--accent-primary)]"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                RESTAURANTS
-              </Link>
-            </nav>
-          </div>
-        </header>
+        <Header currentPage="chefs" />
 
         <main>
           {/* Breadcrumbs */}
@@ -343,97 +308,12 @@ export default async function ChefPage({ params }: ChefPageProps) {
                 </div>
                 
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {openRestaurants.map(restaurant => (
-                    <Link
+                  {openRestaurants.map((restaurant, index) => (
+                    <RestaurantCard
                       key={restaurant.id}
-                      href={`/restaurants/${restaurant.slug}`}
-                      className="group relative block bg-white overflow-hidden transition-all duration-300 hover:-translate-y-1"
-                    >
-                      {/* Copper accent */}
-                      <div 
-                        className="absolute top-0 left-0 w-1 h-full transition-all duration-300 group-hover:w-2"
-                        style={{ background: 'var(--accent-primary)' }}
-                      />
-                      
-                      <div className="p-5 pl-6">
-                        <div className="flex justify-between items-start gap-3">
-                          <div className="min-w-0">
-                            <h3 
-                              className="font-display text-xl font-bold truncate transition-colors group-hover:text-[var(--accent-primary)]"
-                              style={{ color: 'var(--text-primary)' }}
-                            >
-                              {restaurant.name}
-                            </h3>
-                            <p className="font-mono text-xs tracking-wide mt-1" style={{ color: 'var(--text-muted)' }}>
-                              {restaurant.city}{restaurant.state ? `, ${restaurant.state}` : ''}
-                            </p>
-                          </div>
-                          {restaurant.price_tier && (
-                            <span 
-                              className="font-mono text-sm font-bold flex-shrink-0"
-                              style={{ color: 'var(--accent-primary)' }}
-                            >
-                              {restaurant.price_tier}
-                            </span>
-                          )}
-                        </div>
-                        
-                        {restaurant.google_rating && (
-                          <div className="mt-4 flex items-center gap-2">
-                            <div className="flex items-center gap-1" style={{ color: '#f59e0b' }}>
-                              <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                              </svg>
-                              <span className="font-mono text-sm font-bold">{restaurant.google_rating}</span>
-                            </div>
-                            {restaurant.google_review_count && (
-                              <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
-                                ({restaurant.google_review_count.toLocaleString()})
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        
-                        {restaurant.cuisine_tags && restaurant.cuisine_tags.length > 0 && (
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            {restaurant.cuisine_tags.slice(0, 3).map((tag, i) => (
-                              <span
-                                key={i}
-                                className="font-mono text-[10px] tracking-wide px-2 py-1"
-                                style={{ 
-                                  background: 'var(--bg-primary)', 
-                                  color: 'var(--text-secondary)',
-                                  border: '1px solid var(--border-light)'
-                                }}
-                              >
-                                {tag.toUpperCase()}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-
-                        <div 
-                          className="mt-4 pt-4 flex items-center justify-between border-t"
-                          style={{ borderColor: 'var(--border-light)' }}
-                        >
-                          <span 
-                            className="font-mono text-[10px] tracking-widest"
-                            style={{ color: 'var(--accent-success)' }}
-                          >
-                            OPEN
-                          </span>
-                          <span 
-                            className="font-mono text-xs font-semibold tracking-wide transition-transform group-hover:translate-x-1"
-                            style={{ color: 'var(--accent-primary)' }}
-                          >
-                            VIEW →
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Hover border */}
-                      <div className="absolute inset-0 border-2 border-transparent transition-colors duration-300 pointer-events-none group-hover:border-[var(--accent-primary)]" />
-                    </Link>
+                      restaurant={restaurant}
+                      index={index}
+                    />
                   ))}
                 </div>
               </div>
