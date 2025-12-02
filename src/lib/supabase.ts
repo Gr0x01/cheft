@@ -227,6 +227,58 @@ export const db = {
     
     if (error) throw error;
     return data as Chef & { restaurants: Restaurant[] };
+  },
+
+  // Get featured chefs (winners with photos, sorted by restaurant count)
+  async getFeaturedChefs(limit: number = 12) {
+    const client = getSupabaseClient();
+    const { data, error } = await client
+      .from('chefs')
+      .select(`
+        id,
+        name,
+        slug,
+        photo_url,
+        mini_bio,
+        james_beard_status,
+        chef_shows(
+          *,
+          show:shows(*)
+        )
+      `)
+      .not('photo_url', 'is', null)
+      .order('created_at', { ascending: true })
+      .limit(limit);
+    
+    if (error) throw error;
+    
+    const chefsWithRestaurantCount = await Promise.all(
+      (data || []).map(async (chef) => {
+        const { count } = await client
+          .from('restaurants')
+          .select('id', { count: 'exact', head: true })
+          .eq('chef_id', chef.id)
+          .eq('is_public', true);
+        
+        return {
+          ...chef,
+          restaurant_count: count || 0
+        };
+      })
+    );
+    
+    return chefsWithRestaurantCount
+      .filter(chef => chef.restaurant_count > 0)
+      .sort((a, b) => {
+        const aIsWinner = a.chef_shows?.some(cs => cs.result === 'winner') || a.james_beard_status === 'winner';
+        const bIsWinner = b.chef_shows?.some(cs => cs.result === 'winner') || b.james_beard_status === 'winner';
+        
+        if (aIsWinner && !bIsWinner) return -1;
+        if (!aIsWinner && bIsWinner) return 1;
+        
+        return b.restaurant_count - a.restaurant_count;
+      })
+      .slice(0, limit);
   }
 };
 

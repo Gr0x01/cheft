@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { RestaurantWithDetails } from '@/lib/types';
 import { db } from '@/lib/supabase';
 import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCompact';
+import { ChefCard } from '@/components/chef/ChefCard';
 
 const RestaurantMap = dynamic(() => import('@/components/RestaurantMap'), { 
   ssr: false,
@@ -23,26 +24,31 @@ export default function Home() {
   const [selectedRestaurant, setSelectedRestaurant] = useState<RestaurantWithDetails | null>(null);
   const [hoveredRestaurant, setHoveredRestaurant] = useState<string | null>(null);
   const [restaurants, setRestaurants] = useState<RestaurantWithDetails[]>([]);
+  const [featuredChefs, setFeaturedChefs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMobileMap, setShowMobileMap] = useState(false);
 
   useEffect(() => {
-    async function fetchRestaurants() {
+    async function fetchData() {
       try {
         setIsLoading(true);
-        const data = await db.getRestaurants();
-        setRestaurants(data as RestaurantWithDetails[]);
+        const [restaurantsData, chefsData] = await Promise.all([
+          db.getRestaurants(),
+          db.getFeaturedChefs(12)
+        ]);
+        setRestaurants(restaurantsData as RestaurantWithDetails[]);
+        setFeaturedChefs(chefsData);
         setError(null);
       } catch (err) {
-        console.error('Error fetching restaurants:', err);
-        setError('Failed to load restaurants. Please try again later.');
+        console.error('Error fetching data:', err);
+        setError('Failed to load data. Please try again later.');
       } finally {
         setIsLoading(false);
       }
     }
 
-    fetchRestaurants();
+    fetchData();
   }, []);
 
   const filteredRestaurants = useMemo(() => {
@@ -104,12 +110,14 @@ export default function Home() {
       <header className="app-header">
         <div className="header-inner">
           <div className="logo">
-            <svg className="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-              <path d="M2 12l10 5 10-5"/>
-            </svg>
-            <span className="logo-text">Cheft</span>
+            <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+              <svg className="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
+              </svg>
+              <span className="logo-text">Cheft</span>
+            </a>
           </div>
           
           <div className="header-actions">
@@ -152,6 +160,39 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      <section className="hero-section">
+        <div className="hero-container">
+          <div className="hero-content">
+            <h1 className="hero-title">
+              Elite Chef<br />Restaurant Map
+            </h1>
+            <p className="hero-subtitle">
+              Discover restaurants from Top Chef, Iron Chef, and Tournament of Champions winners and contestants
+            </p>
+            <div className="hero-cta-buttons">
+              <a href="/chefs" className="hero-cta-button">Browse Chefs</a>
+              <a href="/restaurants" className="hero-cta-button">Browse Restaurants</a>
+              <a href="/cities" className="hero-cta-button">Browse Cities</a>
+            </div>
+          </div>
+          
+          <div className="hero-stats-column">
+            <div className="hero-stat-item">
+              <div className="hero-stat-number">560</div>
+              <div className="hero-stat-label">Restaurants</div>
+            </div>
+            <div className="hero-stat-item">
+              <div className="hero-stat-number">182</div>
+              <div className="hero-stat-label">Chefs</div>
+            </div>
+            <div className="hero-stat-item">
+              <div className="hero-stat-number">162</div>
+              <div className="hero-stat-label">Cities</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <main className="main-content">
         <aside className="sidebar">
@@ -225,6 +266,23 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Featured Chefs Section */}
+      <section className="featured-chefs-section">
+        <div className="featured-chefs-container">
+          <div className="featured-chefs-header">
+            <h2 className="featured-chefs-title">Featured Chefs</h2>
+            <a href="/chefs" className="featured-chefs-view-all">
+              View All Chefs →
+            </a>
+          </div>
+          <div className="featured-chefs-grid">
+            {featuredChefs.map((chef, index) => (
+              <ChefCard key={chef.id} chef={chef} index={index} />
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

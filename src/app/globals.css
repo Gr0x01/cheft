@@ -96,8 +96,8 @@ body {
 .app-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
 .app-header {
@@ -219,7 +219,7 @@ body {
 
 .main-content {
   display: flex;
-  flex: 1;
+  height: 600px;
   overflow: hidden;
 }
 
@@ -1304,5 +1304,290 @@ body {
   
   .compact-card {
     border-radius: var(--radius-md);
+  }
+}
+
+.hero-section {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-tertiary) 100%);
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 200px;
+  height: 200px;
+  background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23d35e0f' fill-opacity='0.03'%3E%3Cpath d='M0 0h40v40H0z'/%3E%3Cpath d='M20 20h20v20H20z'/%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.hero-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 48px 64px;
+  min-height: 240px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 120px;
+  align-items: center;
+}
+
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 800px;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 5vw, 64px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--text-primary);
+  line-height: 0.9;
+  margin: 0;
+  animation: slideUpReveal 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-subtitle {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 540px;
+  margin: 0;
+  animation: slideUpReveal 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  animation-delay: 0.1s;
+  animation-fill-mode: both;
+}
+
+.hero-cta-buttons {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  animation: slideUpReveal 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  animation-delay: 0.2s;
+  animation-fill-mode: both;
+}
+
+.hero-cta-button {
+  padding: 12px 24px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-light);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-cta-button:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--copper-100), transparent);
+  transition: left 0.5s ease;
+}
+
+.hero-cta-button:hover {
+  border-color: var(--copper-500);
+  color: var(--copper-500);
+  transform: translateX(2px);
+}
+
+.hero-cta-button:hover:before {
+  left: 100%;
+}
+
+.hero-stats-column {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  text-align: right;
+  align-self: center;
+  min-width: 180px;
+}
+
+.hero-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: slideUpReveal 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: both;
+}
+
+.hero-stat-item:nth-child(1) { animation-delay: 0.3s; }
+.hero-stat-item:nth-child(2) { animation-delay: 0.4s; }
+.hero-stat-item:nth-child(3) { animation-delay: 0.5s; }
+
+.hero-stat-number {
+  font-family: var(--font-mono);
+  font-size: clamp(40px, 5vw, 56px);
+  font-weight: 800;
+  color: var(--copper-500);
+  letter-spacing: -0.02em;
+  line-height: 0.9;
+}
+
+.hero-stat-label {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+@keyframes slideUpReveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.featured-chefs-section {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-light);
+  padding: 64px 0;
+}
+
+.featured-chefs-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.featured-chefs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.featured-chefs-title {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.featured-chefs-view-all {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.featured-chefs-view-all:hover {
+  transform: translateX(4px);
+}
+
+.featured-chefs-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 1200px) {
+  .featured-chefs-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .featured-chefs-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-container {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 32px 16px;
+    text-align: center;
+  }
+  
+  .hero-title {
+    font-size: 32px;
+    line-height: 1.1;
+  }
+  
+  .hero-subtitle {
+    max-width: 100%;
+  }
+  
+  .hero-cta-buttons {
+    justify-content: center;
+    gap: 12px;
+  }
+  
+  .hero-cta-button {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .hero-stats-column {
+    flex-direction: row;
+    justify-content: center;
+    gap: 24px;
+    text-align: center;
+    padding-right: 0;
+  }
+
+  .hero-stat-number {
+    font-size: 32px;
+  }
+  
+  .hero-stat-label {
+    font-size: 10px;
+  }
+
+  .featured-chefs-section {
+    padding: 48px 0;
+  }
+
+  .featured-chefs-container {
+    padding: 0 16px;
+  }
+
+  .featured-chefs-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .featured-chefs-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
 }

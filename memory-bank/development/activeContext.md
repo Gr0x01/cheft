@@ -1,7 +1,7 @@
 ---
 Last-Updated: 2025-12-02
 Maintainer: RB
-Status: SEO Pages Complete - Data Enrichment Focus
+Status: Data Enrichment Complete - Technical SEO Next
 ---
 
 # Active Context: Chefs
@@ -13,7 +13,7 @@ Status: SEO Pages Complete - Data Enrichment Focus
 
 ### Primary Objectives
 1. ✅ Deploy SEO page fields migration (chefs, restaurants, cities table)
-2. 🔄 Run full enrichment pipeline (photos, bios, Google Places)
+2. ✅ Run full enrichment pipeline (photos, bios, Google Places)
 3. ✅ Build chef pages (`/chefs`, `/chefs/[slug]`)
 4. ✅ Build restaurant pages (`/restaurants`, `/restaurants/[slug]`)
 5. ✅ Build city landing pages (`/cities/[slug]`)
@@ -28,10 +28,19 @@ Status: SEO Pages Complete - Data Enrichment Focus
 - None
 
 ## In Progress
-- **Bio enrichment running**: ~100s per chef with web search
-- First batch of 50 photos + 50 Google Places done
+- **User adding chefs manually** via admin interface
 
 ## Recently Completed
+- ✅ **Restaurant Data Enrichment Complete** (2025-12-02)
+  - Fixed restaurant discovery to only capture CURRENT positions (not historical)
+  - Cleaned out ~250-300 historical/closed restaurants
+  - Re-ran restaurant enrichment on all 182 chefs → ~310 current restaurants
+  - Recovered 3 failed chefs (Brian Malarkey, Paul Qui, Jeff McInnis) → +14 restaurants
+  - **Google Places enrichment: 560/560 (100%)**
+    - All restaurants have Place IDs, ratings, maps URLs, website URLs
+    - 405/560 (72%) have photos (155 don't have photos in Google Places)
+  - Added `last_enriched_at` timestamp tracking to chefs table
+  - Created scripts: `enrich-single-chef.ts`, `enrich-places.ts`, `add-photos-to-existing.ts`
 - ✅ **Admin Panel Enhancements** (2025-12-02)
   - Data Dashboard (`/admin/data`) with completeness stats and progress bars
   - Manual Data Management (`/admin/manage`) with searchable tables for chefs/restaurants
@@ -65,26 +74,28 @@ Status: SEO Pages Complete - Data Enrichment Focus
   - Restaurant enrichment fields added
 
 ## Next Steps
-1. **Data Enrichment** - Populate new fields (Priority):
-   - Run Google Places enrichment for all 311 restaurants to get `google_photos`
-   - Chef bios: ~170 remaining (~5 hours)
-   - Chef photos: 134 remaining (~12 min)
-   - Restaurant Places: 251 remaining (~25 min, includes photos)
+1. **User-Driven Tasks**:
+   - User manually adding chefs via admin interface
+   - Run enrichment on newly added chefs as needed
 2. **Technical SEO** - Phase 5 of `seo-pages-spec.md`:
    - sitemap.xml generation for all pages
    - robots.txt with AI bot blocks
    - Cloudflare AI bot protection setup
    - Open Graph meta tags for social sharing
 3. **Optional Enhancements**:
+   - Chef photos: 22 remaining (88% complete)
    - Ad slot infrastructure (if monetization desired)
    - Related chefs section on chef pages
    - City directory page `/cities` (index of all cities)
 
-## Data Summary
-- **Restaurants**: 311 locations
-- **Chefs**: 180 unique Top Chef contestants/winners
-- **Cities**: 162 with restaurant counts
-- **Enrichment Progress**:
-  - Chef photos: 46/180 (26%)
-  - Chef bios: ~10/180 (6%)
-  - Restaurant Google Places: 60/311 (19%)
+## Data Summary (as of 2025-12-02)
+- **Chefs**: 182 total
+  - Bios: 182/182 (100%) ✅
+  - Photos: 160/182 (88%)
+  - Restaurant enrichment: 182/182 (100%) ✅
+- **Restaurants**: 560 locations
+  - Google Place IDs: 560/560 (100%) ✅
+  - Photos: 405/560 (72%)
+  - Ratings/URLs: 560/560 (100%) ✅
+- **Cities**: 162 cities with restaurant counts
+- **Enrichment Status**: ✅ COMPLETE (except 22 chef photos)
