@@ -3,6 +3,7 @@ import { Database } from '../../../src/lib/database.types';
 import { createWikipediaImageService } from '../services/wikipedia-images';
 import { createGooglePlacesService, CostTracker } from '../services/google-places';
 import { logDataChange } from '../queue/audit-log';
+import { createImageStorageService } from '../services/image-storage';
 
 export interface ChefImageEnrichmentResult {
   chefId: string;
@@ -48,6 +49,7 @@ export function createMediaEnricher(
   const googlePlacesService = config.googlePlacesApiKey
     ? createGooglePlacesService({ apiKey: config.googlePlacesApiKey })
     : null;
+  const imageStorageService = createImageStorageService(supabase);
 
   const stats: EnrichmentStats = {
     chefsProcessed: 0,
@@ -191,21 +193,38 @@ export function createMediaEnricher(
         };
       }
 
-      const maxPhotos = config.maxPhotosPerRestaurant ?? 3;
+      const maxPhotos = config.maxPhotosPerRestaurant ?? 5;
       const photoMaxWidth = config.photoMaxWidth ?? 800;
-      const photoUrls: string[] = [];
+      const googlePhotoUrls: string[] = [];
 
       if (details.photos && details.photos.length > 0) {
         const photosToFetch = details.photos.slice(0, maxPhotos);
         for (const photo of photosToFetch) {
           const url = await googlePlacesService.getPhotoUrl(photo.name, photoMaxWidth);
           if (url) {
-            photoUrls.push(url);
+            googlePhotoUrls.push(url);
           }
         }
       }
 
+      const uploadedPhotoUrls: string[] = [];
+      for (let i = 0; i < googlePhotoUrls.length; i++) {
+        const result = await imageStorageService.downloadAndUploadRestaurantPhoto(
+          restaurantId,
+          restaurantName,
+          googlePhotoUrls[i],
+          i
+        );
+        
+        if (result.success) {
+          uploadedPhotoUrls.push(result.publicUrl);
+        } else {
+          uploadedPhotoUrls.push(googlePhotoUrls[i]);
+        }
+      }
+
       const priceLevel = parsePriceLevel(details.priceLevel);
+      const status = mapBusinessStatus(details.businessStatus);
 
       const { error } = await (supabase
         .from('restaurants') as ReturnType<typeof supabase.from>)
@@ -214,7 +233,8 @@ export function createMediaEnricher(
           google_rating: details.rating ?? null,
           google_review_count: details.userRatingsTotal ?? null,
           google_price_level: priceLevel,
-          photo_urls: photoUrls.length > 0 ? photoUrls : null,
+          photo_urls: uploadedPhotoUrls.length > 0 ? uploadedPhotoUrls : null,
+          status: status,
           last_enriched_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
@@ -232,7 +252,7 @@ export function createMediaEnricher(
           google_place_id: details.placeId,
           google_rating: details.rating,
           google_review_count: details.userRatingsTotal,
-          photo_count: photoUrls.length,
+          photo_count: uploadedPhotoUrls.length,
         },
         source: 'media_enricher',
         confidence: placeMatch.confidence,
@@ -247,12 +267,13 @@ export function createMediaEnricher(
         googleRating: details.rating ?? null,
         googleReviewCount: details.userRatingsTotal ?? null,
         googlePriceLevel: priceLevel,
-        photoUrls,
+        photoUrls: uploadedPhotoUrls,
         matchConfidence: placeMatch.confidence,
         success: true,
       };
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
+      console.error(`   ❌ Restaurant enrichment error for "${restaurantName}":`, msg);
       return {
         restaurantId,
         restaurantName,
@@ -416,6 +437,20 @@ function parsePriceLevel(priceLevel?: string): number | null {
   };
 
   return mapping[priceLevel] ?? null;
+}
+
+function mapBusinessStatus(businessStatus?: string): 'open' | 'closed' | 'unknown' {
+  if (!businessStatus) return 'unknown';
+  
+  switch (businessStatus) {
+    case 'OPERATIONAL':
+      return 'open';
+    case 'CLOSED_TEMPORARILY':
+    case 'CLOSED_PERMANENTLY':
+      return 'closed';
+    default:
+      return 'unknown';
+  }
 }
 
 export type MediaEnricher = ReturnType<typeof createMediaEnricher>;
