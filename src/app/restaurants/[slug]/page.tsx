@@ -141,7 +141,7 @@ export async function generateMetadata({ params }: RestaurantPageProps): Promise
 
   if (!restaurant) {
     return {
-      title: 'Restaurant Not Found | ChefMap',
+      title: 'Restaurant Not Found | Cheft',
     };
   }
 
@@ -154,7 +154,7 @@ export async function generateMetadata({ params }: RestaurantPageProps): Promise
     : `${restaurant.name} by ${chefName} in ${restaurant.city}${restaurant.state ? `, ${restaurant.state}` : ''}.${ratingText}${priceText}`;
 
   return {
-    title: `${restaurant.name} by ${chefName} - ${restaurant.city} | ChefMap`,
+    title: `${restaurant.name} by ${chefName} - ${restaurant.city} | Cheft`,
     description,
     openGraph: {
       title: `${restaurant.name} by ${chefName}`,

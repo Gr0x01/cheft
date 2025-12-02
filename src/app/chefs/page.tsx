@@ -8,11 +8,11 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ItemListSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 
 export const metadata: Metadata = {
-  title: 'All TV Chefs - Top Chef, Iron Chef & More | ChefMap',
+  title: 'All TV Chefs - Top Chef, Iron Chef & More | Cheft',
   description:
     'Browse 180+ chefs from Top Chef, Iron Chef, and other cooking competitions. Find their restaurants, see their achievements, and discover where they cook.',
   openGraph: {
-    title: 'All TV Chefs - Top Chef, Iron Chef & More | ChefMap',
+    title: 'All TV Chefs - Top Chef, Iron Chef & More | Cheft',
     description:
       'Browse 180+ chefs from Top Chef, Iron Chef, and other cooking competitions.',
     type: 'website',

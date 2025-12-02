@@ -158,7 +158,7 @@ export async function generateMetadata({ params }: ChefPageProps): Promise<Metad
 
   if (!chef) {
     return {
-      title: 'Chef Not Found | ChefMap',
+      title: 'Chef Not Found | Cheft',
     };
   }
 
@@ -176,7 +176,7 @@ export async function generateMetadata({ params }: ChefPageProps): Promise<Metad
       }`;
 
   return {
-    title: `${chef.name} - ${showInfo}${resultInfo} | ChefMap`,
+    title: `${chef.name} - ${showInfo}${resultInfo} | Cheft`,
     description,
     openGraph: {
       title: `${chef.name} - ${showInfo}${resultInfo}`,

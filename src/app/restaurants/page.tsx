@@ -8,11 +8,11 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ItemListSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 
 export const metadata: Metadata = {
-  title: 'TV Chef Restaurants - 311 Locations Nationwide | ChefMap',
+  title: 'TV Chef Restaurants - 311 Locations Nationwide | Cheft',
   description:
     'Browse 311 restaurants from Top Chef, Iron Chef, and other cooking competition winners and contestants. Find TV chef restaurants near you.',
   openGraph: {
-    title: 'TV Chef Restaurants - 311 Locations Nationwide | ChefMap',
+    title: 'TV Chef Restaurants - 311 Locations Nationwide | Cheft',
     description:
       'Browse 311 restaurants from Top Chef, Iron Chef, and other cooking competition contestants.',
     type: 'website',

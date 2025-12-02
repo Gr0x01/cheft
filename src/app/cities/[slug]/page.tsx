@@ -56,7 +56,7 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
     };
   }
 
-  const title = `TV Chef Restaurants in ${city.name}${city.state ? `, ${city.state}` : ''} (${city.restaurant_count} Locations) | ChefMap`;
+  const title = `TV Chef Restaurants in ${city.name}${city.state ? `, ${city.state}` : ''} (${city.restaurant_count} Locations) | Cheft`;
   const description = `Discover ${city.restaurant_count} restaurants by Top Chef winners and contestants in ${city.name}${city.state ? `, ${city.state}` : ''}. Find chef-driven dining experiences with ratings, photos, and reviews.`;
 
   return {

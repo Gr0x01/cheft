@@ -107,7 +107,7 @@ export default function Home() {
               <path d="M2 17l10 5 10-5"/>
               <path d="M2 12l10 5 10-5"/>
             </svg>
-            <span className="logo-text">ChefMap</span>
+            <span className="logo-text">Cheft</span>
           </div>
           
           <div className="header-actions">

@@ -37,7 +37,7 @@ export default async function AdminLayout({
                 </div>
                 <div>
                   <span className="font-display text-lg font-semibold text-slate-900 tracking-tight">
-                    TV Chef Map
+                    Cheft
                   </span>
                   <div className="font-mono text-[10px] text-slate-400 uppercase tracking-widest">
                     Admin v0.2

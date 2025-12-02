@@ -6,7 +6,7 @@ export function Header() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
         <div className="flex items-center space-x-3">
           <h1 className="text-2xl font-bold text-gray-900">
-            TV Chef Map
+            Cheft
           </h1>
           <span className="rounded bg-orange-100 px-2 py-1 text-xs font-medium text-orange-800">
             Beta

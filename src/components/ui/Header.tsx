@@ -23,7 +23,7 @@ export function Header({ currentPage }: HeaderProps) {
             </svg>
           </div>
           <span className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-            ChefMap
+            Cheft
           </span>
         </Link>
         <nav className="flex gap-8">

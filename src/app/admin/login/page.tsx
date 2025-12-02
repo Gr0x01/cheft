@@ -64,7 +64,7 @@ function LoginForm() {
                 </svg>
               </div>
               <span className="font-display text-2xl text-white font-semibold tracking-tight">
-                TV Chef Map
+                Cheft
               </span>
             </div>
             
@@ -116,7 +116,7 @@ function LoginForm() {
                   <line x1="6" y1="17" x2="18" y2="17"/>
                 </svg>
               </div>
-              <span className="font-display text-xl text-slate-900 font-semibold">TV Chef Map</span>
+              <span className="font-display text-xl text-slate-900 font-semibold">Cheft</span>
             </div>
           </div>
 
@@ -192,7 +192,7 @@ function LoginForm() {
 
           <div className="mt-6 text-center">
             <p className="text-xs font-mono text-slate-400 tracking-wide">
-              TV CHEF MAP • DATA PIPELINE v0.2
+              CHEFT • DATA PIPELINE v0.2
             </p>
           </div>
         </div>

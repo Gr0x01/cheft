@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
@@ -41,13 +42,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid file type. Allowed: jpg, png, webp' }, { status: 400 });
   }
 
-  const fileName = `${type}s/${itemId}.${fileExt}`;
+  const bucketName = type === 'chef' ? 'chef-photos' : 'restaurant-photos';
+  const fileName = `${itemId}/photo-${Date.now()}.${fileExt}`;
 
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  const { data: uploadData, error: uploadError } = await supabase.storage
-    .from('photos')
+  const serviceSupabase = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { data: uploadData, error: uploadError } = await serviceSupabase.storage
+    .from(bucketName)
     .upload(fileName, buffer, {
       contentType: file.type,
       upsert: true,
@@ -59,10 +66,10 @@ export async function POST(request: NextRequest) {
 
   const {
     data: { publicUrl },
-  } = supabase.storage.from('photos').getPublicUrl(fileName);
+  } = serviceSupabase.storage.from(bucketName).getPublicUrl(fileName);
 
   if (type === 'chef') {
-    const { error: updateError } = await supabase
+    const { error: updateError } = await serviceSupabase
       .from('chefs')
       .update({
         photo_url: publicUrl,
@@ -74,7 +81,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
   } else {
-    const { data: restaurant } = await supabase
+    const { data: restaurant } = await serviceSupabase
       .from('restaurants')
       .select('photo_urls')
       .eq('id', itemId)
@@ -83,7 +90,7 @@ export async function POST(request: NextRequest) {
     const photoUrls = restaurant?.photo_urls || [];
     photoUrls.unshift(publicUrl);
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await serviceSupabase
       .from('restaurants')
       .update({
         photo_urls: photoUrls,
