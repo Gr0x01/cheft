@@ -9,7 +9,7 @@ Status: SEO Pages Complete - Data Enrichment Focus
 ## Current Sprint Goals
 - **Sprint**: Data Enrichment + Technical SEO
 - **Duration**: 1-2 weeks
-- **Focus**: Complete data enrichment pipeline, add technical SEO polish
+- **Focus**: Complete data enrichment pipeline, add technical SEO polish, admin tooling
 
 ### Primary Objectives
 1. ✅ Deploy SEO page fields migration (chefs, restaurants, cities table)
@@ -32,6 +32,13 @@ Status: SEO Pages Complete - Data Enrichment Focus
 - First batch of 50 photos + 50 Google Places done
 
 ## Recently Completed
+- ✅ **Admin Panel Enhancements** (2025-12-02)
+  - Data Dashboard (`/admin/data`) with completeness stats and progress bars
+  - Manual Data Management (`/admin/manage`) with searchable tables for chefs/restaurants
+  - Photo upload/delete via Supabase Storage with security validation
+  - Re-enrichment triggers for photos, bios, and Google Places
+  - Security hardening: UUID validation, file type checks, URL sanitization
+  - API routes: `upload-photo`, `delete-photo`, `enrich-photo`, `enrich-bio`, `enrich-place`
 - ✅ **City Pages Launch** (2025-12-02)
   - City landing pages `/cities/[slug]` for 161 cities
   - Hero with city stats (restaurant count, chef count)

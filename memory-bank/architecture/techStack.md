@@ -13,6 +13,7 @@ Modern web stack optimized for rapid development and minimal operational overhea
 - **Runtime**: Node.js 18+ (via Next.js API routes)
 - **Framework**: Next.js 14+ (App Router)
 - **Database**: Supabase (PostgreSQL with vector extensions)
+- **Storage**: Supabase Storage (for chef/restaurant photos)
 - **Authentication**: Supabase Auth (for admin tools)
 - **LLM**: OpenAI API (GPT-4 for enrichment, GPT-3.5-turbo for query interpretation)
 
@@ -27,6 +28,7 @@ Modern web stack optimized for rapid development and minimal operational overhea
 ### Infrastructure
 - **Hosting**: Vercel (seamless Next.js integration)
 - **Database Hosting**: Supabase (managed Postgres with vector support)
+- **File Storage**: Supabase Storage (photo uploads with RLS policies)
 - **CDN**: Vercel Edge Network (included)
 - **Monitoring**: Vercel Analytics + Supabase monitoring
 
@@ -61,15 +63,19 @@ Modern web stack optimized for rapid development and minimal operational overhea
 ### API Design
 - **Next.js API Routes**: Server-side API endpoints within same codebase
 - **RESTful Design**: Simple GET/POST endpoints for restaurants and search
+- **Admin API Routes**: Photo upload/delete, data enrichment triggers
 - **Type Safety**: Shared TypeScript types between client and server
 - **Error Handling**: Consistent error responses with proper HTTP status codes
+- **Input Validation**: UUID validation, file type/size checks, URL sanitization
 
 ### Security Considerations
 - **Environment Variables**: All API keys stored in Vercel env vars
 - **CORS**: Next.js default CORS handling for same-origin requests
-- **Input Validation**: Zod schemas for all user inputs
+- **Input Validation**: Zod schemas for all user inputs, UUID validation for admin operations
+- **File Upload Security**: Type/size validation (5MB max, jpg/png/webp only), URL sanitization
 - **Admin Auth**: Supabase Auth for admin-only enrichment endpoints
 - **Rate Limiting**: Vercel automatic rate limiting + custom LLM call limits
+- **Storage Security**: RLS policies on Supabase Storage buckets
 
 ### Performance Considerations
 - **Static Generation**: Pre-generate pages where possible

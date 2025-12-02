@@ -10,13 +10,13 @@ export interface GoogleImageResult {
   source: string;
 }
 
-const GOOGLE_CUSTOM_SEARCH_API_KEY = process.env.GOOGLE_CUSTOM_SEARCH_API_KEY;
-const GOOGLE_SEARCH_ENGINE_ID = process.env.GOOGLE_SEARCH_ENGINE_ID;
-
 export async function searchGoogleImages(
   query: string,
   options: { count?: number } = {}
 ): Promise<GoogleImageResult[]> {
+  const GOOGLE_CUSTOM_SEARCH_API_KEY = process.env.GOOGLE_CUSTOM_SEARCH_API_KEY;
+  const GOOGLE_SEARCH_ENGINE_ID = process.env.GOOGLE_SEARCH_ENGINE_ID;
+  
   if (!GOOGLE_CUSTOM_SEARCH_API_KEY || !GOOGLE_SEARCH_ENGINE_ID) {
     console.warn('Google Custom Search API not configured');
     return [];

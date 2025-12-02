@@ -1,8 +1,8 @@
 ---
-Last-Updated: 2025-12-01
+Last-Updated: 2025-12-02
 Maintainer: RB
-Status: Phase 3 Complete - Restaurant Pages Live
-Next-Action: Data enrichment (populate google_photos, descriptions)
+Status: Phase 5 Complete - SEO Polish Done (Ads Skipped)
+Next-Action: Phase 6 - Testing & Launch preparation
 ---
 
 # SEO Pages Architecture Spec
@@ -779,32 +779,40 @@ Focus: Chefs, Restaurants, and Cities. Shows/seasons can come later.
 
 ---
 
-### Phase 5: SEO Polish & Ads (1 day)
+### Phase 5: SEO Polish & Ads (1 day) ✅ COMPLETE (Ads Skipped)
 
-**Goal**: Production-ready with monetization.
+**Goal**: Production-ready SEO implementation.
 
-#### 5.1 Technical SEO
-- [ ] `sitemap.xml` via Next.js generateSitemap
-- [ ] `robots.txt` with AI bot blocks + sitemap reference
-- [ ] `X-Robots-Tag: noai` header in next.config.js
-- [ ] Canonical URLs on all pages
-- [ ] Open Graph meta tags for social sharing
+#### 5.1 Technical SEO ✅
+- [x] `sitemap.xml` via Next.js generateSitemap - Dynamic with all pages
+- [x] `robots.txt` with AI bot blocks + sitemap reference - 18 AI bots blocked
+- [x] `X-Robots-Tag: noai` header in next.config.js - Content protection active
+- [x] Canonical URLs on all pages - Already implemented in metadata
+- [x] Open Graph meta tags for social sharing - Enhanced with Twitter cards
 
-#### 5.2 Content Protection
-- [ ] Set up Cloudflare (free tier)
-- [ ] Enable "AI Scrapers and Crawlers" toggle
-- [ ] Test bot blocking
+#### 5.2 Content Protection 🔄 DEFERRED
+- [ ] Set up Cloudflare (free tier) - Deferred to deployment
+- [ ] Enable "AI Scrapers and Crawlers" toggle - Deferred to deployment
+- [ ] Test bot blocking - robots.txt blocking verified
 
-#### 5.3 Ad Infrastructure
+#### 5.3 Ad Infrastructure ⏭️ SKIPPED
 - [ ] Create `AdSlot` component with CLS-safe placeholders
 - [ ] Add ad slots to chef pages (after restaurants section)
 - [ ] Add ad slots to restaurant pages (sidebar/after map)
 - [ ] Add ad slots to directory pages (every 8th card)
 
-#### 5.4 Internal Linking Polish
-- [ ] "Related Chefs" section on chef pages (same show/city)
-- [ ] "Other Restaurants in {City}" on restaurant pages
-- [ ] Breadcrumbs component on all pages
+**Note**: Ad infrastructure intentionally skipped per user request.
+
+#### 5.4 Internal Linking Polish ✅
+- [x] "Related Chefs" section on chef pages (same show/city) - 8 related chefs shown
+- [x] "Other Restaurants in {City}" on restaurant pages - City link button added
+- [x] Breadcrumbs component on all pages - Already implemented
+
+#### 5.5 Code Quality Fixes ✅
+- [x] Fixed SQL injection risk: Use `show_id` UUID instead of slug in related chefs query
+- [x] Added error handling to sitemap generation with fallback to static routes
+
+**Status**: SEO implementation complete and tested. Commit `47801af`.
 
 ---
 

@@ -632,6 +632,22 @@ To add a new show:
 
 ## Future Enhancements
 
+### Admin Panel Improvements
+- **Enhanced visibility dashboard**:
+  - Show what data is available per chef/restaurant (photo, bio, rating, etc.)
+  - Flag missing data fields (no photo, no bio, no Google Places data)
+  - Summary stats (X% with photos, Y% with bios)
+- **Manual upload section**:
+  - Upload/replace chef photos
+  - Upload/replace restaurant photos
+  - Edit/delete any field
+  - Bulk operations (delete all photos, re-enrich batch)
+- **Photo management**:
+  - Preview uploaded photos
+  - Delete from Supabase Storage
+  - Re-run photo enrichment for specific chefs/restaurants
+
+### System Enhancements
 - **Slack/Discord notifications** for pending reviews
 - **Bulk approve** for high-confidence batches
 - **Source priority ranking** when multiple sources conflict

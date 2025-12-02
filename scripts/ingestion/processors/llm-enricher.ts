@@ -220,6 +220,7 @@ export function createLLMEnricher(
           system: CHEF_ENRICHMENT_SYSTEM_PROMPT,
           prompt,
           maxTokens: 8000,
+          maxSteps: 10,
         }),
         `enrich chef ${chefName}`
       );
@@ -233,6 +234,13 @@ export function createLLMEnricher(
       totalTokensUsed.prompt += tokensUsed.prompt;
       totalTokensUsed.completion += tokensUsed.completion;
       totalTokensUsed.total += tokensUsed.total;
+
+      if (!result.text || result.text.trim() === '') {
+        console.error(`   ❌ Empty response from LLM for "${chefName}"`);
+        console.error(`   Steps used: ${result.steps?.length || 0}/10`);
+        console.error(`   Finish reason: ${result.finishReason}`);
+        throw new Error('LLM returned empty response - likely hit step limit without final answer');
+      }
 
       const jsonText = extractJsonFromText(result.text);
       const parsed = JSON.parse(jsonText);
@@ -262,8 +270,9 @@ export function createLLMEnricher(
         if (uploadResult.success) {
           photoUrl = uploadResult.publicUrl;
         } else {
-          console.warn(`   ⚠️  Failed to upload photo, storing source URL instead`);
-          photoUrl = sourcePhotoUrl;
+          console.warn(`   ⚠️  Photo upload failed: ${uploadResult.error || 'unknown error'}`);
+          photoUrl = null;
+          photoSource = null;
         }
       }
 
