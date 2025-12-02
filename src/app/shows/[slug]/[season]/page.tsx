@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/supabase';
+import { createStaticClient } from '@/lib/supabase/static';
 import { ChefCard } from '@/components/chef/ChefCard';
 import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCompact';
 
@@ -40,6 +41,17 @@ export async function generateMetadata({ params }: SeasonPageProps): Promise<Met
       title: 'Season Not Found',
     };
   }
+}
+
+export async function generateStaticParams() {
+  const supabase = createStaticClient();
+  
+  const { data: allSeasons } = await (supabase as any).rpc('get_all_show_seasons_for_sitemap');
+
+  return ((allSeasons || []) as Array<{ show_slug: string; season: string }>).map(season => ({
+    slug: season.show_slug,
+    season: season.season,
+  }));
 }
 
 export default async function SeasonPage({ params }: SeasonPageProps) {

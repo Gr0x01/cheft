@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/supabase';
+import { createStaticClient } from '@/lib/supabase/static';
 import { ChefCard } from '@/components/chef/ChefCard';
 
 export const revalidate = 604800;
@@ -32,6 +33,18 @@ export async function generateMetadata({ params }: ShowPageProps): Promise<Metad
       title: 'Show Not Found',
     };
   }
+}
+
+export async function generateStaticParams() {
+  const supabase = createStaticClient();
+  
+  const { data: shows } = await supabase
+    .from('shows')
+    .select('slug');
+
+  return ((shows || []) as Array<{ slug: string }>).map(show => ({
+    slug: show.slug,
+  }));
 }
 
 export default async function ShowPage({ params }: ShowPageProps) {
