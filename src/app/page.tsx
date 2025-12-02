@@ -1,189 +1,43 @@
-'use client';
+import { Metadata } from 'next';
+import { createClient } from '@/lib/supabase/server';
+import HomePage from './HomePage';
 
-import { useState, useMemo, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import { RestaurantWithDetails } from '@/lib/types';
-import { db } from '@/lib/supabase';
-import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCompact';
+export async function generateMetadata(): Promise<Metadata> {
+  const supabase = await createClient();
 
-const RestaurantMap = dynamic(() => import('@/components/RestaurantMap'), { 
-  ssr: false,
-  loading: () => (
-    <div className="map-loading">
-      <div className="map-loading-spinner"></div>
-      <span>Loading map...</span>
-    </div>
-  )
-});
+  const [
+    { count: restaurantCount },
+    { count: chefCount },
+    { count: cityCount }
+  ] = await Promise.all([
+    supabase.from('restaurants').select('*', { count: 'exact', head: true }).eq('is_public', true),
+    supabase.from('chefs').select('*', { count: 'exact', head: true }),
+    supabase.from('cities').select('*', { count: 'exact', head: true })
+  ]);
 
-export default function Home() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedShow, setSelectedShow] = useState<string>('all');
-  const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
-  const [selectedRestaurant, setSelectedRestaurant] = useState<RestaurantWithDetails | null>(null);
-  const [hoveredRestaurant, setHoveredRestaurant] = useState<string | null>(null);
-  const [restaurants, setRestaurants] = useState<RestaurantWithDetails[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const restaurants = restaurantCount || 311;
+  const chefs = chefCount || 180;
+  const cities = cityCount || 162;
 
-  useEffect(() => {
-    async function fetchRestaurants() {
-      try {
-        setIsLoading(true);
-        const data = await db.getRestaurants();
-        setRestaurants(data as RestaurantWithDetails[]);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching restaurants:', err);
-        setError('Failed to load restaurants. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
-    }
+  const description = `Discover ${restaurants} restaurants owned by Top Chef, Iron Chef, and Tournament of Champions winners and contestants. Interactive map with filters, ratings, and detailed profiles of ${chefs} chefs across ${cities} cities.`;
+  const shortDescription = `Discover ${restaurants} restaurants owned by Top Chef, Iron Chef, and Tournament of Champions winners and contestants.`;
 
-    fetchRestaurants();
-  }, []);
-
-  const filteredRestaurants = useMemo(() => {
-    let filtered = restaurants;
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(restaurant =>
-        restaurant.name.toLowerCase().includes(query) ||
-        restaurant.chef?.name.toLowerCase().includes(query) ||
-        restaurant.city.toLowerCase().includes(query) ||
-        restaurant.cuisine_tags?.some(tag => tag.toLowerCase().includes(query))
-      );
-    }
-
-    if (selectedShow !== 'all') {
-      filtered = filtered.filter(restaurant => 
-        restaurant.chef?.primary_show?.name.toLowerCase() === selectedShow.toLowerCase()
-      );
-    }
-
-    if (selectedPriceRange !== 'all') {
-      filtered = filtered.filter(restaurant => restaurant.price_tier === selectedPriceRange);
-    }
-
-    return filtered;
-  }, [searchQuery, selectedShow, selectedPriceRange, restaurants]);
-
-  const handleRestaurantClick = (restaurant: RestaurantWithDetails) => {
-    setSelectedRestaurant(restaurant);
+  return {
+    title: 'Cheft | TV Chef Restaurant Map - Find Top Chef & Iron Chef Restaurants',
+    description,
+    openGraph: {
+      title: 'Cheft | TV Chef Restaurant Map',
+      description: shortDescription,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Cheft | TV Chef Restaurant Map',
+      description: shortDescription,
+    },
   };
+}
 
-  if (isLoading) {
-    return (
-      <div className="app-container map-layout">
-        <div className="loading-screen">
-          <div className="loading-spinner"></div>
-          <p>Loading restaurants...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="app-container map-layout">
-        <div className="error-screen">
-          <p className="error-message">{error}</p>
-          <button onClick={() => window.location.reload()} className="retry-button">
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="app-container map-layout">
-      <header className="app-header">
-        <div className="header-inner">
-          <div className="logo">
-            <svg className="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-              <path d="M2 12l10 5 10-5"/>
-            </svg>
-            <span className="logo-text">Cheft</span>
-          </div>
-          
-          <div className="header-actions">
-            <div className="search-wrapper">
-              <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="M21 21l-4.35-4.35"/>
-              </svg>
-              <input
-                type="text"
-                placeholder="Search chefs, restaurants, cities..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="search-input"
-              />
-            </div>
-            
-            <select
-              value={selectedShow}
-              onChange={(e) => setSelectedShow(e.target.value)}
-              className="filter-select"
-            >
-              <option value="all">All Shows</option>
-              <option value="top chef">Top Chef</option>
-              <option value="iron chef">Iron Chef</option>
-              <option value="hell's kitchen">Hell&apos;s Kitchen</option>
-            </select>
-            
-            <select
-              value={selectedPriceRange}
-              onChange={(e) => setSelectedPriceRange(e.target.value)}
-              className="filter-select"
-            >
-              <option value="all">All Prices</option>
-              <option value="$">$</option>
-              <option value="$$">$$</option>
-              <option value="$$$">$$$</option>
-              <option value="$$$$">$$$$</option>
-            </select>
-          </div>
-        </div>
-      </header>
-
-      <main className="main-content">
-        <aside className="sidebar">
-          <div className="sidebar-header">
-            <h1 className="sidebar-title">{filteredRestaurants.length} Restaurants</h1>
-            <p className="sidebar-subtitle">From TV cooking competitions</p>
-          </div>
-          
-          <div className="restaurant-list">
-            {filteredRestaurants.map((restaurant, index) => (
-              <div
-                key={restaurant.id}
-                className={`homepage-card-wrapper ${selectedRestaurant?.id === restaurant.id ? 'selected' : ''} ${hoveredRestaurant === restaurant.id ? 'hovered' : ''}`}
-                onClick={() => handleRestaurantClick(restaurant)}
-                onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
-                onMouseLeave={() => setHoveredRestaurant(null)}
-              >
-                <RestaurantCardCompact restaurant={restaurant} index={index} />
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        <section className="map-section">
-          <RestaurantMap 
-            restaurants={filteredRestaurants}
-            selectedRestaurant={selectedRestaurant}
-            hoveredRestaurantId={hoveredRestaurant}
-            onRestaurantSelect={handleRestaurantClick}
-            isLoading={isLoading}
-          />
-        </section>
-      </main>
-    </div>
-  );
+export default function Page() {
+  return <HomePage />;
 }
