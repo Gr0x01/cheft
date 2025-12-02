@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { ShowBadgeStrip } from './ShowBadgeStrip';
+import { abbreviateShowName, formatSeasonDisplay } from '@/lib/utils/showBadges';
 
 interface ChefCardProps {
   chef: {
@@ -26,9 +28,11 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
   const primaryShow = chef.chef_shows?.find(cs => cs.is_primary) || chef.chef_shows?.[0];
   const result = primaryShow?.result;
   const season = primaryShow?.season;
+  const showName = primaryShow?.show?.name;
   const isWinner = result === 'winner';
   const isJBWinner = chef.james_beard_status === 'winner';
   const photoUrl = chef.photo_url;
+  const hasMultipleShows = (chef.chef_shows?.length || 0) > 1;
 
   return (
     <Link
@@ -97,7 +101,7 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
         </div>
 
         {/* Name and info - bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-4">
+        <div className="absolute bottom-0 left-0 right-0 p-4" style={{ paddingBottom: hasMultipleShows ? '48px' : '16px' }}>
           <h3 
             className="font-display text-2xl font-bold leading-tight tracking-tight text-white"
             style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}
@@ -119,16 +123,38 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
                 {result}
               </span>
             )}
-            {season && (
+            {showName && (
               <span 
-                className="font-mono text-[10px] tracking-wide px-2 py-0.5"
+                className="font-mono text-[10px] tracking-wide px-2 py-0.5 flex items-center gap-1"
                 style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.9)' }}
               >
-                {season}
+                <span className="font-bold">{abbreviateShowName(showName)}</span>
+                {season && (
+                  <>
+                    <span style={{ opacity: 0.6 }}>•</span>
+                    <span>{formatSeasonDisplay(season)}</span>
+                  </>
+                )}
               </span>
             )}
           </div>
         </div>
+
+        {/* Secondary shows strip */}
+        {hasMultipleShows && (
+          <ShowBadgeStrip 
+            shows={chef.chef_shows || []} 
+            maxVisible={3}
+            className="hidden sm:flex"
+          />
+        )}
+        {hasMultipleShows && (
+          <ShowBadgeStrip 
+            shows={chef.chef_shows || []} 
+            maxVisible={2}
+            className="flex sm:hidden"
+          />
+        )}
       </div>
 
       {/* Footer info */}

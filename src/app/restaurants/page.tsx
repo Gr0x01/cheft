@@ -33,6 +33,7 @@ interface RestaurantWithChef {
   google_rating: number | null;
   google_review_count: number | null;
   photo_urls: string[] | null;
+  michelin_stars: number | null;
   chef: {
     id: string;
     name: string;
@@ -67,6 +68,7 @@ export default async function RestaurantsPage({
       google_rating,
       google_review_count,
       photo_urls,
+      michelin_stars,
       chef:chefs (
         id,
         name,

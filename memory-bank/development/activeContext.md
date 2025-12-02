@@ -1,7 +1,7 @@
 ---
-Last-Updated: 2025-12-03
+Last-Updated: 2025-12-02
 Maintainer: RB
-Status: Phase 3 - User Engagement Features
+Status: Phase 3 - Badge System Enhancement
 ---
 
 # Active Context: Chefs
@@ -36,14 +36,26 @@ Status: Phase 3 - User Engagement Features
 - None
 
 ## In Progress
-- Planning Phase 3 feature implementation
+- Planning contribution and verification systems
 
-## Recently Completed
+## Recently Completed (Dec 2, 2025)
+- ✅ **Multi-Show Attribution Badge System** - Complete show badge overhaul for chef cards
+  - Created utility functions for show abbreviation and formatting
+  - Built `ShowBadgeCompact` and `ShowBadgeStrip` components
+  - Updated `ChefCard` to display primary show (abbreviated) + secondary shows
+  - Primary badge now shows "TC • S4" instead of just "Season 4"
+  - Secondary badge strip shows 2-3 additional shows with overflow indicator
+  - Responsive: 2 badges on mobile, 3 on desktop
+  
+- ✅ **Michelin Star Badges** - Restaurant prestige display
+  - Created `MichelinStar` icon component with official Michelin SVG
+  - Added Michelin star badges to restaurant cards (white stars on red #D3072B)
+  - Updated queries and TypeScript types for `michelin_stars` field
+  - Displays 1-3 stars on restaurant photos (top-right corner)
+
 - ✅ **Site Deployed to Vercel** (Dec 3) - Production live with 652+ SEO pages
 - ✅ **Data Enrichment Complete** (Dec 2) - 100% bios, 100% Google Places, 88% chef photos
 - ✅ **Phase 2 Complete** (Dec 1-2) - Chef/restaurant/city pages, admin panel, internal linking
-  
-(Full Phase 2 details archived in `/memory-bank/archive/phase-2-details.md`)
 
 ## Next Steps
 1. **Phase 3 Implementation** (Priority):

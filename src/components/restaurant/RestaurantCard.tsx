@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getRestaurantStatus, getChefAchievements, sanitizeText, validateImageUrl } from '@/lib/utils/restaurant';
 import { getStorageUrl } from '@/lib/utils/storage';
+import { MichelinStar } from '../icons/MichelinStar';
 
 interface RestaurantCardProps {
   restaurant: {
@@ -16,6 +17,7 @@ interface RestaurantCardProps {
     google_rating?: number | null;
     google_review_count?: number | null;
     photo_urls?: string[] | null;
+    michelin_stars?: number | null;
     chef?: {
       name: string;
       slug: string;
@@ -62,6 +64,19 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
             priority={isPriority}
             quality={60}
           />
+          
+          {restaurant.michelin_stars && restaurant.michelin_stars > 0 && (
+            <div className="absolute top-3 right-3">
+              <div 
+                className="flex items-center gap-1 px-2 py-1"
+                style={{ background: '#D3072B' }}
+              >
+                {Array.from({ length: restaurant.michelin_stars }).map((_, i) => (
+                  <MichelinStar key={i} size={12} className="text-white" />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div 
