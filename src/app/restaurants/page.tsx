@@ -117,7 +117,7 @@ export default async function RestaurantsPage({
 
   const filteredRestaurants = (restaurants || []) as unknown as RestaurantWithChef[];
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://chefmap.com';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://cheft.app';
   const schemaItems = filteredRestaurants.slice(0, 100).map((restaurant, index) => ({
     name: restaurant.name,
     url: `${baseUrl}/restaurants/${restaurant.slug}`,

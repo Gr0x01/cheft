@@ -96,7 +96,7 @@ export default async function ChefsPage({
     restaurant_count: chef.restaurants?.length || 0,
   }));
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://chefmap.com';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://cheft.app';
   const schemaItems = chefsWithCount.slice(0, 100).map((chef, index) => ({
     name: chef.name,
     url: `${baseUrl}/chefs/${chef.slug}`,

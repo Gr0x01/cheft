@@ -162,7 +162,7 @@ export default async function CityPage({ params }: CityPageProps) {
   }, [] as ChefWithRestaurants[]);
 
   const displayName = `${city.name}${city.state ? `, ${city.state}` : ''}`;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://chefmap.com';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://cheft.app';
   const cityUrl = `${baseUrl}/cities/${slug}`;
 
   return (

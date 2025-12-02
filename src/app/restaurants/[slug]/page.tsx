@@ -201,7 +201,7 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
 
   const citySlug = await getCitySlug(restaurant.city, restaurant.state);
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://chefmap.com';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://cheft.app';
   const restaurantUrl = `${baseUrl}/restaurants/${restaurant.slug}`;
 
   const breadcrumbItems = [

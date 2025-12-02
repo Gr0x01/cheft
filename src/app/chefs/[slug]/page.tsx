@@ -225,7 +225,7 @@ export default async function ChefPage({ params }: ChefPageProps) {
 
   const relatedChefs = await getRelatedChefs(chef);
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://chefmap.com';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://cheft.app';
   const chefUrl = `${baseUrl}/chefs/${chef.slug}`;
 
   const awards: string[] = [];
