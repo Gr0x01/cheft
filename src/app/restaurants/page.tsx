@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/static';
 import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
 import { Header } from '@/components/ui/Header';
 import { PageHero } from '@/components/ui/PageHero';
@@ -49,7 +49,7 @@ export default async function RestaurantsPage({
   searchParams: Promise<{ city?: string; price?: string; cuisine?: string; status?: string; q?: string; sort?: string }>;
 }) {
   const params = await searchParams;
-  const supabase = await createClient();
+  const supabase = createStaticClient();
 
   let query = supabase
     .from('restaurants')
