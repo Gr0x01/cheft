@@ -501,6 +501,10 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
     }
   }
 
+  function sanitizeRestaurantName(name: string): string {
+    return name.replace(/\s*\(\[.*?\]\(.*?\)\)/g, '').trim();
+  }
+
   function generateSlug(name: string, city?: string): string {
     const cleanName = name.toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
@@ -520,23 +524,25 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
     chefId: string,
     restaurant: z.infer<typeof RestaurantSchema>
   ): Promise<{ success: boolean; restaurantId?: string; isNew: boolean }> {
+    const cleanName = sanitizeRestaurantName(restaurant.name);
+    
     const existing = await (supabase
       .from('restaurants') as ReturnType<typeof supabase.from>)
       .select('id, chef_id')
-      .eq('name', restaurant.name)
+      .eq('name', cleanName)
       .eq('city', restaurant.city || '')
       .maybeSingle();
 
     if (existing.data) {
       if (existing.data.chef_id !== chefId) {
-        console.log(`      ⚠️  Restaurant "${restaurant.name}" already linked to different chef`);
+        console.log(`      ⚠️  Restaurant "${cleanName}" already linked to different chef`);
       }
       return { success: true, restaurantId: existing.data.id, isNew: false };
     }
 
-    const slug = generateSlug(restaurant.name, restaurant.city || undefined);
+    const slug = generateSlug(cleanName, restaurant.city || undefined);
     const insertData = {
-      name: restaurant.name,
+      name: cleanName,
       slug,
       chef_id: chefId,
       chef_role: restaurant.role || 'owner',

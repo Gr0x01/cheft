@@ -120,6 +120,12 @@ export default function Home() {
             </a>
           </div>
           
+          <nav className="header-nav">
+            <a href="/chefs" className="nav-link">Chefs</a>
+            <a href="/restaurants" className="nav-link">Restaurants</a>
+            <a href="/cities" className="nav-link">Cities</a>
+          </nav>
+          
           <div className="header-actions">
             <div className="search-wrapper">
               <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -134,29 +140,6 @@ export default function Home() {
                 className="search-input"
               />
             </div>
-            
-            <select
-              value={selectedShow}
-              onChange={(e) => setSelectedShow(e.target.value)}
-              className="filter-select"
-            >
-              <option value="all">All Shows</option>
-              <option value="top chef">Top Chef</option>
-              <option value="iron chef">Iron Chef</option>
-              <option value="hell's kitchen">Hell&apos;s Kitchen</option>
-            </select>
-            
-            <select
-              value={selectedPriceRange}
-              onChange={(e) => setSelectedPriceRange(e.target.value)}
-              className="filter-select"
-            >
-              <option value="all">All Prices</option>
-              <option value="$">$</option>
-              <option value="$$">$$</option>
-              <option value="$$$">$$$</option>
-              <option value="$$$$">$$$$</option>
-            </select>
           </div>
         </div>
       </header>
@@ -165,30 +148,24 @@ export default function Home() {
         <div className="hero-container">
           <div className="hero-content">
             <h1 className="hero-title">
-              Elite Chef<br />Restaurant Map
+              Find Chef-Driven Restaurants
             </h1>
             <p className="hero-subtitle">
-              Discover restaurants from Top Chef, Iron Chef, and Tournament of Champions winners and contestants
+              Top Chef, Iron Chef, James Beard winners, and more
             </p>
-            <div className="hero-cta-buttons">
-              <a href="/chefs" className="hero-cta-button">Browse Chefs</a>
-              <a href="/restaurants" className="hero-cta-button">Browse Restaurants</a>
-              <a href="/cities" className="hero-cta-button">Browse Cities</a>
-            </div>
-          </div>
-          
-          <div className="hero-stats-column">
-            <div className="hero-stat-item">
-              <div className="hero-stat-number">560</div>
-              <div className="hero-stat-label">Restaurants</div>
-            </div>
-            <div className="hero-stat-item">
-              <div className="hero-stat-number">182</div>
-              <div className="hero-stat-label">Chefs</div>
-            </div>
-            <div className="hero-stat-item">
-              <div className="hero-stat-number">162</div>
-              <div className="hero-stat-label">Cities</div>
+            <div className="hero-stats-row">
+              <div className="hero-stat-item">
+                <div className="hero-stat-number">560</div>
+                <div className="hero-stat-label">Restaurants</div>
+              </div>
+              <div className="hero-stat-item">
+                <div className="hero-stat-number">182</div>
+                <div className="hero-stat-label">Chefs</div>
+              </div>
+              <div className="hero-stat-item">
+                <div className="hero-stat-number">162</div>
+                <div className="hero-stat-label">Cities</div>
+              </div>
             </div>
           </div>
         </div>
@@ -217,6 +194,31 @@ export default function Home() {
         </aside>
 
         <section className="map-section">
+          <div className="map-filters-overlay">
+            <select
+              value={selectedShow}
+              onChange={(e) => setSelectedShow(e.target.value)}
+              className="map-filter-select"
+            >
+              <option value="all">All Shows</option>
+              <option value="top chef">Top Chef</option>
+              <option value="iron chef">Iron Chef</option>
+              <option value="hell's kitchen">Hell&apos;s Kitchen</option>
+            </select>
+            
+            <select
+              value={selectedPriceRange}
+              onChange={(e) => setSelectedPriceRange(e.target.value)}
+              className="map-filter-select"
+            >
+              <option value="all">All Prices</option>
+              <option value="$">$</option>
+              <option value="$$">$$</option>
+              <option value="$$$">$$$</option>
+              <option value="$$$$">$$$$</option>
+            </select>
+          </div>
+          
           <RestaurantMap 
             restaurants={filteredRestaurants}
             selectedRestaurant={selectedRestaurant}
