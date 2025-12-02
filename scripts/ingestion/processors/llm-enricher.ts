@@ -5,6 +5,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../src/lib/database.types';
 import { logDataChange } from '../queue/audit-log';
 import { createImageStorageService } from '../services/image-storage';
+import { createGoogleImageSearchTool } from '../services/google-images';
 
 function stripCitations(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -109,10 +110,13 @@ Guidelines:
 - Price range: $ (<$15/entree), $$ ($15-30), $$$ ($30-60), $$$$ ($60+)
 
 Photo Guidelines:
-- ONLY include a photoUrl if you find a high-quality professional headshot
-- Look for official sources: restaurant websites, show websites, verified social media
-- Avoid: group photos, cooking action shots, low-res images, ambiguous photos
-- Set photoConfidence: 0.9+ for official sources, 0.7-0.9 for likely matches, omit if <0.7
+- Use the google_image_search tool to find professional headshots
+- Search for: "{chef name} chef headshot" or "{chef name} chef professional photo"
+- Look through the results and select the BEST professional headshot
+- Choose photos that are: clear headshots, professional lighting, recent, solo portraits
+- Avoid: group photos, cooking action shots, low-res images, logos, graphics
+- Return the direct image URL (not a web page URL)
+- Set photoConfidence: 0.9+ for clear professional headshots, 0.7-0.9 for decent photos, omit if <0.7
 
 IMPORTANT: Return your response as valid JSON matching this exact structure:
 {
@@ -211,6 +215,7 @@ export function createLLMEnricher(
             web_search_preview: openai.tools.webSearchPreview({
               searchContextSize: 'medium',
             }),
+            google_image_search: createGoogleImageSearchTool(),
           },
           system: CHEF_ENRICHMENT_SYSTEM_PROMPT,
           prompt,
