@@ -195,6 +195,60 @@ export interface Database {
         }
         Relationships: []
       }
+      enrichment_jobs: {
+        Row: {
+          id: string
+          chef_id: string
+          queue_item_id: string | null
+          status: 'queued' | 'processing' | 'completed' | 'failed'
+          error_message: string | null
+          locked_until: string | null
+          locked_by: string | null
+          started_at: string | null
+          completed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          chef_id: string
+          queue_item_id?: string | null
+          status: 'queued' | 'processing' | 'completed' | 'failed'
+          error_message?: string | null
+          locked_until?: string | null
+          locked_by?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          chef_id?: string
+          queue_item_id?: string | null
+          status?: 'queued' | 'processing' | 'completed' | 'failed'
+          error_message?: string | null
+          locked_until?: string | null
+          locked_by?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrichment_jobs_chef_id_fkey"
+            columns: ["chef_id"]
+            isOneToOne: false
+            referencedRelation: "chefs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrichment_jobs_queue_item_id_fkey"
+            columns: ["queue_item_id"]
+            isOneToOne: false
+            referencedRelation: "review_queue"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       excluded_names: {
         Row: {
           id: string
@@ -410,6 +464,7 @@ export interface Database {
           notes: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          processed_at: string | null
           created_at: string
         }
         Insert: {
@@ -422,6 +477,7 @@ export interface Database {
           notes?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          processed_at?: string | null
           created_at?: string
         }
         Update: {
@@ -434,6 +490,7 @@ export interface Database {
           notes?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          processed_at?: string | null
           created_at?: string
         }
         Relationships: []
