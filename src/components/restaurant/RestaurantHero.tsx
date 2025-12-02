@@ -1,7 +1,11 @@
+'use client';
+
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getRestaurantStatus, getChefAchievements, sanitizeText, sanitizeHtml, validateImageUrl } from '@/lib/utils/restaurant';
 import { getStorageUrl } from '@/lib/utils/storage';
+import { PhotoGalleryModal } from './PhotoGalleryModal';
 
 interface RestaurantHeroProps {
   restaurant: {
@@ -15,7 +19,7 @@ interface RestaurantHeroProps {
     status: 'open' | 'closed' | 'unknown';
     google_rating?: number | null;
     google_review_count?: number | null;
-    google_photos?: string[] | null;
+    photo_urls?: string[] | null;
     description?: string | null;
     phone?: string | null;
     website_url?: string | null;
@@ -35,6 +39,9 @@ interface RestaurantHeroProps {
 }
 
 export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  
   const status = getRestaurantStatus(restaurant.status);
   const primaryShow = restaurant.chef?.chef_shows?.find(cs => cs.is_primary) || restaurant.chef?.chef_shows?.[0];
   const chefAchievements = restaurant.chef ? getChefAchievements(restaurant.chef) : { isShowWinner: false, isJBWinner: false, isJBNominee: false, isJBSemifinalist: false };
@@ -42,7 +49,14 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
   const sanitizedName = sanitizeText(restaurant.name);
   const sanitizedDescription = sanitizeHtml(restaurant.description);
   const sanitizedChefName = restaurant.chef ? sanitizeText(restaurant.chef.name) : '';
-  const heroPhoto = getStorageUrl('restaurant-photos', restaurant.google_photos?.[0]);
+  
+  const photos = (restaurant.photo_urls || []).filter(Boolean);
+  const photoCount = photos.length;
+  
+  const openGallery = (index: number) => {
+    setCurrentPhotoIndex(index);
+    setGalleryOpen(true);
+  };
 
   const fullAddress = [
     restaurant.address,
@@ -66,27 +80,6 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
 
       <div className="relative max-w-6xl mx-auto px-4 py-12 sm:py-16">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
-          {heroPhoto && (
-            <div className="flex-shrink-0 relative">
-              <div 
-                className="w-full lg:w-80 h-56 lg:h-64 relative overflow-hidden"
-                style={{ 
-                  border: '4px solid var(--accent-primary)',
-                  boxShadow: '8px 8px 0 var(--accent-primary)'
-                }}
-              >
-                <Image
-                  src={heroPhoto}
-                  alt={restaurant.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 320px"
-                  priority
-                />
-              </div>
-            </div>
-          )}
-
           <div className="flex-1 min-w-0">
             <div className="flex items-start gap-4 flex-wrap">
               <h1 
@@ -220,6 +213,107 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
               )}
             </div>
           </div>
+
+          {photoCount > 0 && (
+            <div className="flex-shrink-0 w-full lg:w-[420px]">
+              {photoCount === 1 && (
+                <button
+                  onClick={() => openGallery(0)}
+                  className="w-full h-80 relative overflow-hidden group cursor-pointer"
+                  style={{ 
+                    border: '4px solid var(--accent-primary)',
+                    boxShadow: '8px 8px 0 var(--accent-primary)'
+                  }}
+                  aria-label="View photo gallery"
+                >
+                  <Image
+                    src={getStorageUrl('restaurant-photos', photos[0])!}
+                    alt={restaurant.name}
+                    fill
+                    className="object-cover transition-transform group-hover:scale-105"
+                    sizes="(max-width: 1024px) 100vw, 420px"
+                    priority
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                </button>
+              )}
+              
+              {photoCount === 2 && (
+                <div className="grid grid-rows-2 gap-2 h-80">
+                  {photos.slice(0, 2).map((photo, i) => (
+                    <button
+                      key={i}
+                      onClick={() => openGallery(i)}
+                      className="relative overflow-hidden group cursor-pointer"
+                      style={{ border: '2px solid var(--accent-primary)' }}
+                      aria-label={`View photo ${i + 1}`}
+                    >
+                      <Image
+                        src={getStorageUrl('restaurant-photos', photo)!}
+                        alt={`${restaurant.name} - Photo ${i + 1}`}
+                        fill
+                        className="object-cover transition-transform group-hover:scale-105"
+                        sizes="(max-width: 1024px) 100vw, 420px"
+                        priority={i === 0}
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {photoCount >= 3 && (
+                <div className="space-y-2 h-80">
+                  <button
+                    onClick={() => openGallery(0)}
+                    className="relative overflow-hidden w-full h-48 group cursor-pointer"
+                    style={{ border: '2px solid var(--accent-primary)' }}
+                    aria-label="View photo 1"
+                  >
+                    <Image
+                      src={getStorageUrl('restaurant-photos', photos[0])!}
+                      alt={`${restaurant.name} - Photo 1`}
+                      fill
+                      className="object-cover transition-transform group-hover:scale-105"
+                      sizes="(max-width: 1024px) 100vw, 420px"
+                      priority
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                  </button>
+                  <div className="grid grid-cols-2 gap-2" style={{ height: 'calc(20rem - 12rem - 0.5rem)' }}>
+                    {photos.slice(1, photoCount >= 5 ? 5 : photoCount).map((photo, i) => (
+                      <button
+                        key={i + 1}
+                        onClick={() => openGallery(i + 1)}
+                        className="relative overflow-hidden group cursor-pointer"
+                        style={{ border: '2px solid var(--accent-primary)' }}
+                        aria-label={`View photo ${i + 2}`}
+                      >
+                        <Image
+                          src={getStorageUrl('restaurant-photos', photo)!}
+                          alt={`${restaurant.name} - Photo ${i + 2}`}
+                          fill
+                          className="object-cover transition-transform group-hover:scale-105"
+                          sizes="(max-width: 1024px) 50vw, 210px"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                        {i === 3 && photoCount > 5 && (
+                          <div 
+                            className="absolute inset-0 flex items-center justify-center"
+                            style={{ background: 'rgba(0,0,0,0.7)' }}
+                          >
+                            <span className="font-mono text-xl font-bold text-white">
+                              +{photoCount - 5}
+                            </span>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {restaurant.chef && (
@@ -307,6 +401,17 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
         className="absolute bottom-0 left-0 right-0 h-1"
         style={{ background: 'var(--accent-primary)' }}
       />
+      
+      {photoCount > 0 && (
+        <PhotoGalleryModal
+          photos={photos}
+          currentIndex={currentPhotoIndex}
+          isOpen={galleryOpen}
+          onClose={() => setGalleryOpen(false)}
+          onNavigate={setCurrentPhotoIndex}
+          restaurantName={restaurant.name}
+        />
+      )}
     </section>
   );
 }

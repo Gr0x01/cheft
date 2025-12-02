@@ -29,7 +29,7 @@ interface RestaurantData {
   maps_url: string | null;
   google_rating: number | null;
   google_review_count: number | null;
-  google_photos: string[] | null;
+  photo_urls: string[] | null;
   description: string | null;
   phone: string | null;
   chef: {
@@ -95,7 +95,7 @@ async function getRestaurant(slug: string): Promise<RestaurantData | null> {
       maps_url,
       google_rating,
       google_review_count,
-      google_photos,
+      photo_urls,
       description,
       phone,
       chef:chefs (
@@ -160,13 +160,13 @@ export async function generateMetadata({ params }: RestaurantPageProps): Promise
       title: `${restaurant.name} by ${chefName}`,
       description,
       type: 'website',
-      images: restaurant.google_photos?.[0] ? [restaurant.google_photos[0]] : undefined,
+      images: restaurant.photo_urls?.[0] ? [restaurant.photo_urls[0]] : undefined,
     },
     twitter: {
       card: 'summary_large_image',
       title: `${restaurant.name} by ${chefName}`,
       description,
-      images: restaurant.google_photos?.[0] ? [restaurant.google_photos[0]] : undefined,
+      images: restaurant.photo_urls?.[0] ? [restaurant.photo_urls[0]] : undefined,
     },
   };
 }
@@ -216,7 +216,7 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
       <RestaurantSchema
         name={restaurant.name}
         description={restaurant.description}
-        image={restaurant.google_photos || []}
+        image={restaurant.photo_urls || []}
         url={restaurantUrl}
         telephone={restaurant.phone}
         priceRange={restaurant.price_tier}
