@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
-import { ClipboardList, Activity } from 'lucide-react';
+import { ClipboardList, Activity, Database, Upload } from 'lucide-react';
 
 const navItems = [
   { href: '/admin/review', label: 'Review Queue', icon: ClipboardList },
   { href: '/admin/activity', label: 'Activity Log', icon: Activity },
+  { href: '/admin/data', label: 'Data Dashboard', icon: Database },
+  { href: '/admin/manage', label: 'Manage Data', icon: Upload },
 ];
 
 export function AdminNav() {
