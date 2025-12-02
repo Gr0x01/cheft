@@ -81,29 +81,6 @@ export default function Home() {
     setSelectedRestaurant(restaurant);
   };
 
-  if (isLoading) {
-    return (
-      <div className="app-container map-layout">
-        <div className="loading-screen">
-          <div className="loading-spinner"></div>
-          <p>Loading restaurants...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="app-container map-layout">
-        <div className="error-screen">
-          <p className="error-message">{error}</p>
-          <button onClick={() => window.location.reload()} className="retry-button">
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="app-container map-layout">
@@ -177,17 +154,39 @@ export default function Home() {
           </div>
           
           <div className="restaurant-list">
-            {filteredRestaurants.map((restaurant, index) => (
-              <div
-                key={restaurant.id}
-                className={`homepage-card-wrapper ${selectedRestaurant?.id === restaurant.id ? 'selected' : ''} ${hoveredRestaurant === restaurant.id ? 'hovered' : ''}`}
-                onClick={() => handleRestaurantClick(restaurant)}
-                onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
-                onMouseLeave={() => setHoveredRestaurant(null)}
-              >
-                <RestaurantCardCompact restaurant={restaurant} index={index} />
+            {isLoading ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="homepage-card-wrapper">
+                  <div className="restaurant-card-compact skeleton">
+                    <div className="skeleton-image"></div>
+                    <div className="skeleton-content">
+                      <div className="skeleton-title"></div>
+                      <div className="skeleton-text"></div>
+                      <div className="skeleton-text short"></div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : error ? (
+              <div className="error-screen">
+                <p className="error-message">{error}</p>
+                <button onClick={() => window.location.reload()} className="retry-button">
+                  Retry
+                </button>
               </div>
-            ))}
+            ) : (
+              filteredRestaurants.map((restaurant, index) => (
+                <div
+                  key={restaurant.id}
+                  className={`homepage-card-wrapper ${selectedRestaurant?.id === restaurant.id ? 'selected' : ''} ${hoveredRestaurant === restaurant.id ? 'hovered' : ''}`}
+                  onClick={() => handleRestaurantClick(restaurant)}
+                  onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
+                  onMouseLeave={() => setHoveredRestaurant(null)}
+                >
+                  <RestaurantCardCompact restaurant={restaurant} index={index} />
+                </div>
+              ))
+            )}
           </div>
         </aside>
 
@@ -277,9 +276,21 @@ export default function Home() {
             </a>
           </div>
           <div className="featured-chefs-grid">
-            {featuredChefs.map((chef, index) => (
-              <ChefCard key={chef.id} chef={chef} index={index} />
-            ))}
+            {isLoading ? (
+              Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="chef-card skeleton">
+                  <div className="skeleton-image"></div>
+                  <div className="skeleton-content">
+                    <div className="skeleton-title"></div>
+                    <div className="skeleton-text"></div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              featuredChefs.map((chef, index) => (
+                <ChefCard key={chef.id} chef={chef} index={index} />
+              ))
+            )}
           </div>
         </div>
       </section>
