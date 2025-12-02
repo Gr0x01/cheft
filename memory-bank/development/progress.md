@@ -56,10 +56,12 @@ Status: Phase 2 Complete - SEO Pages Live
 - ✅ Chef detail pages `/chefs/[slug]` with bios, photos, restaurants
 - ✅ Restaurant directory `/restaurants` with filtering and search
 - ✅ Restaurant detail pages `/restaurants/[slug]` with maps, photos, ratings
+- ✅ City landing pages `/cities/[slug]` for 161 cities with restaurant/chef grids
 - ✅ Responsive design with custom CSS variables (industrial editorial style)
-- ✅ Schema.org JSON-LD for SEO (Person, Restaurant types)
+- ✅ Schema.org JSON-LD for SEO (Person, Restaurant, ItemList types)
 - ✅ Database migration for enrichment fields (`google_photos`, ratings, etc.)
 - ✅ Cities table created and populated (161 cities)
+- ✅ Full internal linking structure (chef ↔ restaurant ↔ city)
 
 ## Key Milestones
 
@@ -76,7 +78,15 @@ Status: Phase 2 Complete - SEO Pages Live
 - Industrial editorial design system implemented
 - **Impact**: 311 restaurant pages + 180 chef pages indexed for search
 
-### ⏳ Milestone 3: Enhanced Search (Target: Jan 2026)
+### ✅ Milestone 3: City Pages & Internal Linking (Dec 2, 2025)
+- City landing pages live (`/cities/[slug]`) for 161 cities
+- Complete internal linking structure: chefs → restaurants → cities
+- Database-driven slug generation for reliable linking
+- Schema.org ItemList for city pages
+- Code review process implemented with automated subagent
+- **Impact**: 652+ SEO-optimized pages (180 chefs + 311 restaurants + 161 cities) with strong internal linking for PageRank distribution
+
+### ⏳ Milestone 4: Enhanced Search (Target: Jan 2026)
 - Natural language search implementation
 - Advanced filtering and geographic search
 - Performance optimization

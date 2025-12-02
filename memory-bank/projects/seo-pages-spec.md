@@ -750,23 +750,32 @@ Focus: Chefs, Restaurants, and Cities. Shows/seasons can come later.
 
 ---
 
-### Phase 4: City Pages (1 day)
+### Phase 4: City Pages (1 day) ✅ COMPLETE
 
 **Goal**: `/cities/[slug]` landing pages for top cities.
 
 #### 4.1 City Detail Page (`/cities/[slug]/page.tsx`)
-- [ ] `generateStaticParams` for cities with 3+ restaurants
-- [ ] `generateMetadata` with city-specific SEO
-- [ ] Hero: City name, restaurant count, chef count
-- [ ] Featured restaurants grid (top rated)
-- [ ] All restaurants list with filters
-- [ ] Featured chefs in this city
-- [ ] Schema.org JSON-LD (`ItemList` of restaurants)
+- [x] `generateStaticParams` for cities with 3+ restaurants (using `createStaticClient`)
+- [x] `generateMetadata` with city-specific SEO
+- [x] Hero: City name, restaurant count, chef count stats
+- [x] All restaurants grid (sorted by rating)
+- [x] Featured chefs section (chefs with restaurants in city)
+- [x] Schema.org JSON-LD (`ItemList` of restaurants)
+- [x] TypeScript interfaces (`ChefWithRestaurants`)
+- [x] Environment variable for base URL
 
 #### 4.2 SEO Optimization
-- [ ] Title: `TV Chef Restaurants in {City}, {State} ({N} Locations) | ChefMap`
-- [ ] Meta: Focus on local search intent
-- [ ] Internal links from restaurant pages
+- [x] Title: `TV Chef Restaurants in {City}, {State} ({N} Locations) | ChefMap`
+- [x] Meta: Focus on local search intent
+- [x] Internal links from restaurant pages (query cities table for slug)
+
+#### 4.3 Internal Linking
+- [x] Restaurant pages → "More in {City}" button → City page (using database slug lookup)
+- [x] City page → Restaurant cards → Restaurant detail pages
+- [x] City page → Chef cards → Chef detail pages
+- [x] Breadcrumbs navigation
+
+**Status**: City pages are live and functional. Proper type safety, database-driven slug generation, and Schema.org markup implemented.
 
 ---
 

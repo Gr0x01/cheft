@@ -60,6 +60,19 @@ interface SiblingRestaurant {
   google_rating: number | null;
 }
 
+async function getCitySlug(city: string, state: string | null): Promise<string | null> {
+  const supabase = await createClient();
+  
+  const { data } = await supabase
+    .from('cities')
+    .select('slug')
+    .eq('name', city)
+    .eq('state', state)
+    .single();
+  
+  return data?.slug || null;
+}
+
 async function getRestaurant(slug: string): Promise<RestaurantData | null> {
   const supabase = await createClient();
 
@@ -186,6 +199,8 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
     .filter(r => r.id !== restaurant.id)
     .sort((a, b) => (b.google_rating || 0) - (a.google_rating || 0))
     .slice(0, 6) || [];
+
+  const citySlug = await getCitySlug(restaurant.city, restaurant.state);
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://chefmap.com';
   const restaurantUrl = `${baseUrl}/restaurants/${restaurant.slug}`;
@@ -337,10 +352,40 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
             </section>
           )}
 
-          {otherRestaurants.length > 0 && (
+          {/* More in City */}
+          {citySlug && (
             <section 
               className="py-12 border-t"
               style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
+            >
+              <div className="max-w-6xl mx-auto px-4">
+                <h2 className="font-display text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+                  More in {restaurant.city}
+                </h2>
+                <p className="font-ui mb-6" style={{ color: 'var(--text-muted)' }}>
+                  Explore all TV chef restaurants in this city
+                </p>
+                <Link
+                  href={`/cities/${citySlug}`}
+                  className="inline-flex items-center gap-2 font-mono text-sm font-semibold px-4 py-2 transition-colors"
+                  style={{ 
+                    background: 'var(--accent-primary)', 
+                    color: 'white'
+                  }}
+                >
+                  VIEW ALL RESTAURANTS IN {restaurant.city.toUpperCase()}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Link>
+              </div>
+            </section>
+          )}
+
+          {otherRestaurants.length > 0 && (
+            <section 
+              className="py-12 border-t"
+              style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-light)' }}
             >
               <div className="max-w-6xl mx-auto px-4">
                 <div className="flex items-baseline gap-4 mb-8">
