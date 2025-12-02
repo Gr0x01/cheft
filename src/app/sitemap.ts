@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 import { createStaticClient } from '@/lib/supabase/static';
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://topchef.fyi';
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://cheft.app';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = createStaticClient();

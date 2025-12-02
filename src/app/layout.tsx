@@ -13,7 +13,7 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://topchef.fyi';
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://cheft.app';
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
