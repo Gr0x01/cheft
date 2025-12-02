@@ -40,6 +40,8 @@ const RestaurantSchema = z.object({
   website: z.string().nullable().optional(),
   role: z.string().nullable().optional(),
   opened: z.number().nullable().optional(),
+  michelinStars: z.number().min(0).max(3).nullable().optional().transform(val => val === null ? null : val),
+  awards: z.array(z.string()).nullable().optional(),
   source: z.string().nullable().optional(),
 }).passthrough();
 
@@ -47,6 +49,7 @@ const ChefEnrichmentSchema = z.object({
   miniBio: z.string().transform(val => stripCitations(val) || val),
   restaurants: z.array(RestaurantSchema).optional().default([]),
   jamesBeardStatus: enumWithCitationStrip(['winner', 'nominated', 'semifinalist'] as const),
+  notableAwards: z.array(z.string()).nullable().optional(),
   photoUrl: z.string().url().nullable().optional(),
   photoConfidence: z.number().min(0).max(1).nullable().optional(),
 }).passthrough();
@@ -63,6 +66,7 @@ export interface ChefEnrichmentResult {
   miniBio: string | null;
   restaurants: z.infer<typeof RestaurantSchema>[];
   jamesBeardStatus: string | null;
+  notableAwards: string[] | null;
   photoUrl: string | null;
   photoSource: 'show_website' | 'llm_search' | null;
   photoConfidence: number;
@@ -110,7 +114,8 @@ Your task: Use web search to find accurate, up-to-date information about the che
 1. A brief bio (2-3 sentences about their career and culinary style)
 2. Their current restaurants (owned, partner, or executive chef roles)
 3. James Beard Award status if any
-4. A high-quality professional headshot photo URL (if available with high confidence)
+4. Notable awards (e.g., Michelin Guide recognition, World's 50 Best, AAA Five Diamond)
+5. A high-quality professional headshot photo URL (if available with high confidence)
 
 Guidelines:
 - Only include restaurants where the chef has a significant role (owner, partner, executive chef)
@@ -119,6 +124,12 @@ Guidelines:
 - Be conservative - if unsure about a detail, omit it
 - Cuisine tags should be specific (e.g., "Japanese", "New American", "Southern")
 - Price range: $ (<$15/entree), $$ ($15-30), $$$ ($30-60), $$$$ ($60+)
+
+Awards Guidelines:
+- For restaurants: Track Michelin stars (1-3) and notable awards (James Beard awards, AAA diamonds, Zagat ratings)
+- For chefs: Track notable awards beyond James Beard (World's 50 Best Chefs, Michelin Guide recognition, S.Pellegrino awards)
+- Be specific with award names and years if available
+- Only include prestigious, verifiable awards
 
 Photo Guidelines:
 - Use the google_image_search tool to find professional headshots
@@ -143,10 +154,13 @@ IMPORTANT: Return your response as valid JSON matching this exact structure:
       "priceRange": "$$" or null,
       "status": "open" or "closed" or "unknown",
       "website": "https://..." or null,
-      "role": "owner" or "executive_chef" or "partner" or "consultant" or null
+      "role": "owner" or "executive_chef" or "partner" or "consultant" or null,
+      "michelinStars": 0-3 or null,
+      "awards": ["Award Name (Year)"] or null
     }
   ],
   "jamesBeardStatus": null or "winner" or "nominated" or "semifinalist",
+  "notableAwards": ["Award Name (Year)"] or null,
   "photoUrl": "https://..." or null,
   "photoConfidence": 0.0 to 1.0 or null
 }`;
@@ -164,6 +178,7 @@ Guidelines:
 - Be conservative - if unsure about current status, omit it
 - Cuisine tags should be specific (e.g., "Japanese", "New American", "Southern")
 - Price range: $ (<$15/entree), $$ ($15-30), $$$ ($30-60), $$$$ ($60+)
+- Track Michelin stars (1-3) and notable awards if available
 
 IMPORTANT: Return your response as valid JSON matching this exact structure:
 {
@@ -179,7 +194,9 @@ IMPORTANT: Return your response as valid JSON matching this exact structure:
       "status": "open" or "closed" or "unknown",
       "website": "https://..." or null,
       "role": "owner" or "executive_chef" or "partner" or "consultant" or null,
-      "opened": 2020 or null
+      "opened": 2020 or null,
+      "michelinStars": 0-3 or null,
+      "awards": ["Award Name (Year)"] or null
     }
   ]
 }`;
@@ -326,6 +343,7 @@ export function createLLMEnricher(
         miniBio: validated.miniBio,
         restaurants,
         jamesBeardStatus: validated.jamesBeardStatus ?? null,
+        notableAwards: validated.notableAwards ?? null,
         photoUrl,
         photoSource,
         photoConfidence,
@@ -342,6 +360,7 @@ export function createLLMEnricher(
         miniBio: null,
         restaurants: [],
         jamesBeardStatus: null,
+        notableAwards: null,
         photoUrl: null,
         photoSource: null,
         photoConfidence: 0,
@@ -554,6 +573,8 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
       status: restaurant.status || 'unknown',
       website_url: restaurant.website,
       year_opened: restaurant.opened,
+      michelin_stars: restaurant.michelinStars || 0,
+      awards: restaurant.awards || null,
       source_notes: `Discovered via LLM enrichment from ${restaurant.source || 'chef bio'}`,
       is_public: true,
     };
@@ -584,7 +605,7 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
       return result;
     }
 
-    if (result.miniBio || result.photoUrl) {
+    if (result.miniBio || result.photoUrl || result.notableAwards) {
       const updateData: Record<string, unknown> = {
         updated_at: new Date().toISOString(),
         last_enriched_at: new Date().toISOString(),
@@ -596,6 +617,10 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
 
       if (result.jamesBeardStatus) {
         updateData.james_beard_status = result.jamesBeardStatus;
+      }
+
+      if (result.notableAwards && result.notableAwards.length > 0) {
+        updateData.notable_awards = result.notableAwards;
       }
 
       if (result.photoUrl && result.photoSource) {
@@ -618,6 +643,7 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
           new_data: { 
             mini_bio: result.miniBio, 
             james_beard_status: result.jamesBeardStatus,
+            notable_awards: result.notableAwards,
             photo_url: result.photoUrl,
             photo_source: result.photoSource,
           },

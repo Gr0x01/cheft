@@ -21,7 +21,7 @@
       "slug": "tournament-of-champions",
       "network": "Food Network",
       "wikipedia_source": "Tournament_of_Champions_(TV_series)",
-      "enabled": false,
+      "enabled": true,
       "priority": 3
     },
     {

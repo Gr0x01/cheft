@@ -156,6 +156,70 @@ async function scrapeTopChefContestants(page: Page, show: ShowConfig): Promise<S
   return contestants;
 }
 
+async function scrapeTournamentOfChampions(page: Page, show: ShowConfig): Promise<ScrapedContestant[]> {
+  const contestants: ScrapedContestant[] = [];
+  const sourceUrl = getWikipediaUrl(show);
+  
+  const allTables = await page.$$('table');
+  
+  for (const table of allTables) {
+    const className = await table.getAttribute('class');
+    if (className && (className.includes('infobox') || className.includes('navbox'))) {
+      continue;
+    }
+    
+    const rows = await table.$$('tr');
+    if (rows.length < 3 || rows.length > 25) continue;
+    
+    for (const row of rows) {
+      const cells = await row.$$('td');
+      
+      for (const cell of cells) {
+        const cellText = await cell.textContent();
+        if (!cellText) continue;
+        
+        const cleanText = cellText
+          .replace(/\[.*?\]/g, '')
+          .replace(/\(.*?\)/g, '')
+          .trim();
+        
+        if (cleanText.length > 3 && 
+            /^[A-Z]/.test(cleanText) &&
+            !cleanText.match(/^\d+$/) &&
+            !cleanText.match(/^(EA|EB|WA|WB|DA|DB|Final|Semifinals|First Round|Second Round|Round|Score|Finale)/i) &&
+            cleanText.split(/\s+/).length >= 2 &&
+            cleanText.split(/\s+/).length <= 4 &&
+            !cleanText.includes('|') &&
+            cleanText.length < 30) {
+          
+          const hasNumbers = /\d/.test(cleanText);
+          if (!hasNumbers) {
+            try {
+              const slug = generateChefSlug(cleanText);
+              
+              const existing = contestants.find(c => c.slug === slug);
+              if (!existing) {
+                contestants.push({
+                  name: cleanText,
+                  slug,
+                  season: null,
+                  seasonName: null,
+                  result: 'contestant',
+                  hometown: null,
+                  sourceUrl
+                });
+              }
+            } catch (error) {
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  return contestants;
+}
+
 async function scrapeGenericContestants(page: Page, show: ShowConfig): Promise<ScrapedContestant[]> {
   const contestants: ScrapedContestant[] = [];
   const sourceUrl = getWikipediaUrl(show);
@@ -290,6 +354,8 @@ export async function scrapeWikipediaContestants(
     
     if (show.slug === 'top-chef') {
       result.contestants = await scrapeTopChefContestants(page, show);
+    } else if (show.slug === 'tournament-of-champions') {
+      result.contestants = await scrapeTournamentOfChampions(page, show);
     } else {
       result.contestants = await scrapeGenericContestants(page, show);
     }
