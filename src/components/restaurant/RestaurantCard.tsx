@@ -15,7 +15,7 @@ interface RestaurantCardProps {
     status: 'open' | 'closed' | 'unknown';
     google_rating?: number | null;
     google_review_count?: number | null;
-    google_photos?: string[] | null;
+    photo_urls?: string[] | null;
     chef?: {
       name: string;
       slug: string;
@@ -37,7 +37,7 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
   const sanitizedCity = sanitizeText(restaurant.city);
   const sanitizedState = sanitizeText(restaurant.state);
   const sanitizedChefName = restaurant.chef ? sanitizeText(restaurant.chef.name) : '';
-  const photoUrl = getStorageUrl('restaurant-photos', restaurant.google_photos?.[0]);
+  const photoUrl = getStorageUrl('restaurant-photos', restaurant.photo_urls?.[0]);
 
   return (
     <Link
@@ -50,7 +50,7 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
         style={{ background: status.isClosed ? 'var(--text-muted)' : 'var(--accent-primary)' }}
       />
 
-      {photoUrl && (
+      {photoUrl ? (
         <div className="relative w-full h-48 overflow-hidden bg-gray-100">
           <Image
             src={photoUrl}
@@ -59,6 +59,45 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
           />
+        </div>
+      ) : (
+        <div 
+          className="relative w-full h-48 overflow-hidden flex items-center justify-center"
+          style={{ background: 'var(--slate-900)' }}
+        >
+          <div 
+            className="absolute inset-0 opacity-5"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          />
+          <svg 
+            className="relative w-16 h-16" 
+            style={{ color: 'var(--accent-primary)' }}
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+            strokeWidth="1.5"
+          >
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              d="M12 8.25v-1.5m0 1.5c-1.355 0-2.697.056-4.024.166C6.845 8.51 6 9.473 6 10.608v2.513m6-4.871c1.355 0 2.697.056 4.024.166C17.155 8.51 18 9.473 18 10.608v2.513M15 8.25v-1.5m-6 1.5v-1.5m12 9.75-1.5.75a3.354 3.354 0 0 1-3 0 3.354 3.354 0 0 0-3 0 3.354 3.354 0 0 1-3 0 3.354 3.354 0 0 0-3 0 3.354 3.354 0 0 1-3 0L3 16.5m15-3.379a48.474 48.474 0 0 0-6-.371c-2.032 0-4.034.126-6 .371m12 0c.39.049.777.102 1.163.16 1.07.16 1.837 1.094 1.837 2.175v5.169c0 .621-.504 1.125-1.125 1.125H4.125A1.125 1.125 0 0 1 3 20.625v-5.17c0-1.08.768-2.014 1.837-2.174A47.78 47.78 0 0 1 6 13.12M12.265 3.11a.375.375 0 1 1-.53 0L12 2.845l.265.265Zm-3 0a.375.375 0 1 1-.53 0L9 2.845l.265.265Zm6 0a.375.375 0 1 1-.53 0L15 2.845l.265.265Z"
+            />
+          </svg>
+          {status.isClosed && (
+            <div 
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ background: 'rgba(0,0,0,0.7)' }}
+            >
+              <span 
+                className="font-mono text-lg font-bold tracking-widest"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                CLOSED
+              </span>
+            </div>
+          )}
         </div>
       )}
 

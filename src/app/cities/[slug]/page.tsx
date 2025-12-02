@@ -114,7 +114,7 @@ export default async function CityPage({ params }: CityPageProps) {
       website_url,
       google_rating,
       google_review_count,
-      google_photos,
+      photo_urls,
       chef:chefs!restaurants_chef_id_fkey (
         id,
         name,
