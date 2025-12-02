@@ -459,6 +459,27 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
               </div>
             </section>
           )}
+
+          {citySlug && (
+            <section className="py-12">
+              <div className="max-w-6xl mx-auto px-4 text-center">
+                <Link
+                  href={`/cities/${citySlug}`}
+                  className="inline-flex items-center gap-2 px-6 py-3 font-mono text-sm font-semibold tracking-wide transition-all duration-300 hover:-translate-y-0.5"
+                  style={{ 
+                    background: 'var(--accent-primary)', 
+                    color: 'white',
+                  }}
+                >
+                  VIEW ALL RESTAURANTS IN {restaurant.city.toUpperCase()}
+                  {restaurant.state && `, ${restaurant.state.toUpperCase()}`}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+            </section>
+          )}
         </main>
       </div>
     </>

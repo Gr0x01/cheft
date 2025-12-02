@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createStaticClient } from '@/lib/supabase/static';
 import { ChefHero } from '@/components/chef/ChefHero';
 import { TVAppearanceList } from '@/components/chef/TVAppearanceBadge';
+import { RelatedChefs } from '@/components/chef/RelatedChefs';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { PersonSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 
@@ -27,6 +28,7 @@ interface ChefData {
     season: string | null;
     result: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
     is_primary: boolean;
+    show_id: string;
     show: { name: string; slug: string } | null;
   }>;
   restaurants: Array<{
@@ -63,6 +65,7 @@ async function getChef(slug: string): Promise<ChefData | null> {
         season,
         result,
         is_primary,
+        show_id,
         show:shows (name, slug)
       ),
       restaurants!restaurants_chef_id_fkey (
@@ -86,6 +89,65 @@ async function getChef(slug: string): Promise<ChefData | null> {
   }
 
   return data as unknown as ChefData;
+}
+
+async function getRelatedChefs(chef: ChefData) {
+  const supabase = await createClient();
+
+  const primaryShow = chef.chef_shows?.find(cs => cs.is_primary) || chef.chef_shows?.[0];
+  const cities = [...new Set(chef.restaurants.map(r => r.city))];
+
+  const relatedChefs = new Map();
+
+  if (primaryShow?.show_id) {
+    const { data: showChefs } = await supabase
+      .from('chef_shows')
+      .select(`
+        chef:chefs (
+          id,
+          name,
+          slug,
+          photo_url,
+          james_beard_status,
+          chef_shows (result, show:shows(name))
+        ),
+        season
+      `)
+      .eq('show_id', primaryShow.show_id)
+      .limit(20);
+
+    showChefs?.forEach((item: any) => {
+      if (item.chef && item.chef.id !== chef.id) {
+        relatedChefs.set(item.chef.id, item.chef);
+      }
+    });
+  }
+
+  if (cities.length > 0 && relatedChefs.size < 8) {
+    const { data: cityChefs } = await supabase
+      .from('restaurants')
+      .select(`
+        chef:chefs (
+          id,
+          name,
+          slug,
+          photo_url,
+          james_beard_status,
+          chef_shows (result, show:shows(name))
+        )
+      `)
+      .in('city', cities)
+      .eq('is_public', true)
+      .limit(20);
+
+    cityChefs?.forEach((item: any) => {
+      if (item.chef && item.chef.id !== chef.id && relatedChefs.size < 8) {
+        relatedChefs.set(item.chef.id, item.chef);
+      }
+    });
+  }
+
+  return Array.from(relatedChefs.values()).slice(0, 8);
 }
 
 export async function generateMetadata({ params }: ChefPageProps): Promise<Metadata> {
@@ -149,6 +211,8 @@ export default async function ChefPage({ params }: ChefPageProps) {
   if (!chef) {
     notFound();
   }
+
+  const relatedChefs = await getRelatedChefs(chef);
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://chefmap.com';
   const chefUrl = `${baseUrl}/chefs/${chef.slug}`;
@@ -414,6 +478,19 @@ export default async function ChefPage({ params }: ChefPageProps) {
                     </div>
                   ))}
                 </div>
+              </div>
+            </section>
+          )}
+
+          {/* Related Chefs */}
+          {relatedChefs.length > 0 && (
+            <section className="py-12">
+              <div className="max-w-6xl mx-auto px-4">
+                <RelatedChefs
+                  chefs={relatedChefs}
+                  title="Related Chefs"
+                  subtitle="Other chefs from the same shows or cities"
+                />
               </div>
             </section>
           )}

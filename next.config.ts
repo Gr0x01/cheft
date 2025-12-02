@@ -25,6 +25,19 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noai, noimageai',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
