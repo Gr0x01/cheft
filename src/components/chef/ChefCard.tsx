@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getStorageUrl } from '@/lib/utils/storage';
 
 interface ChefCardProps {
   chef: {
@@ -28,7 +27,7 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
   const season = primaryShow?.season;
   const isWinner = result === 'winner';
   const isJBWinner = chef.james_beard_status === 'winner';
-  const photoUrl = getStorageUrl('chef-photos', chef.photo_url);
+  const photoUrl = chef.photo_url;
 
   return (
     <Link

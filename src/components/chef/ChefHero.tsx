@@ -1,5 +1,4 @@
 import Image from 'next/image';
-import { getStorageUrl } from '@/lib/utils/storage';
 
 interface ChefHeroProps {
   chef: {
@@ -28,7 +27,7 @@ export function ChefHero({ chef }: ChefHeroProps) {
   const primaryShow = chef.chef_shows?.find(cs => cs.is_primary) || chef.chef_shows?.[0];
   const isWinner = primaryShow?.result === 'winner';
   const isJBWinner = chef.james_beard_status === 'winner';
-  const photoUrl = getStorageUrl('chef-photos', chef.photo_url);
+  const photoUrl = chef.photo_url;
 
   return (
     <section className="relative overflow-hidden" style={{ background: 'var(--slate-900)' }}>
