@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Breadcrumbs } from '../seo/Breadcrumbs';
 import { getRestaurantStatus, getChefAchievements, sanitizeText, sanitizeHtml, validateImageUrl } from '@/lib/utils/restaurant';
 import { getStorageUrl } from '@/lib/utils/storage';
 import { PhotoGalleryModal } from './PhotoGalleryModal';
 
 interface RestaurantHeroProps {
+  breadcrumbItems?: Array<{ label: string; href?: string }>;
   restaurant: {
     name: string;
     address?: string | null;
@@ -38,7 +40,7 @@ interface RestaurantHeroProps {
   };
 }
 
-export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
+export function RestaurantHero({ restaurant, breadcrumbItems }: RestaurantHeroProps) {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   
@@ -79,6 +81,12 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
       />
 
       <div className="relative max-w-6xl mx-auto px-4 py-12 sm:py-16">
+        {breadcrumbItems && (
+          <Breadcrumbs
+            items={breadcrumbItems}
+            className="mb-8 [&_a]:text-white/50 [&_a:hover]:text-white [&_span]:text-white [&_svg]:text-white/30"
+          />
+        )}
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
           <div className="flex-1 min-w-0">
             <div className="flex items-start gap-4 flex-wrap">

@@ -1,6 +1,8 @@
 import Image from 'next/image';
+import { Breadcrumbs } from '../seo/Breadcrumbs';
 
 interface ChefHeroProps {
+  breadcrumbItems?: Array<{ label: string; href?: string }>;
   chef: {
     name: string;
     photo_url?: string | null;
@@ -23,7 +25,7 @@ interface ChefHeroProps {
   className?: string;
 }
 
-export function ChefHero({ chef }: ChefHeroProps) {
+export function ChefHero({ chef, breadcrumbItems }: ChefHeroProps) {
   const primaryShow = chef.chef_shows?.find(cs => cs.is_primary) || chef.chef_shows?.[0];
   const isWinner = primaryShow?.result === 'winner';
   const isJBWinner = chef.james_beard_status === 'winner';
@@ -46,6 +48,12 @@ export function ChefHero({ chef }: ChefHeroProps) {
       />
 
       <div className="relative max-w-6xl mx-auto px-4 py-12 sm:py-16">
+        {breadcrumbItems && (
+          <Breadcrumbs
+            items={breadcrumbItems}
+            className="mb-8 [&_a]:text-white/50 [&_a:hover]:text-white [&_span]:text-white [&_svg]:text-white/30"
+          />
+        )}
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
           {/* Photo */}
           <div className="flex-shrink-0 relative">

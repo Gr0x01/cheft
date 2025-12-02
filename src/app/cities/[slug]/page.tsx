@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createStaticClient } from '@/lib/supabase/static';
-import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
+import { Header } from '@/components/ui/Header';
 import { ItemListSchema } from '@/components/seo/SchemaOrg';
 import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
 import { ChefCard } from '@/components/chef/ChefCard';
@@ -162,18 +162,12 @@ export default async function CityPage({ params }: CityPageProps) {
     return acc;
   }, [] as ChefWithRestaurants[]);
 
-  const breadcrumbs = [
-    { label: 'Home', href: '/' },
-    { label: 'Cities', href: '/cities' },
-    { label: `${city.name}${city.state ? `, ${city.state}` : ''}` },
-  ];
-
   const displayName = `${city.name}${city.state ? `, ${city.state}` : ''}`;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://chefmap.com';
   const cityUrl = `${baseUrl}/cities/${slug}`;
 
   return (
-    <main className="min-h-screen" style={{ background: 'var(--page-background)' }}>
+    <>
       <ItemListSchema
         name={`TV Chef Restaurants in ${displayName}`}
         description={`${city.restaurant_count} restaurants by Top Chef winners and contestants in ${displayName}`}
@@ -184,20 +178,25 @@ export default async function CityPage({ params }: CityPageProps) {
           position: i + 1,
         })) ?? []}
       />
-      
-      <Breadcrumbs items={breadcrumbs} />
 
-      <PageHero
-        title={displayName}
-        subtitle="TV Chef Restaurants & Dining Experiences"
-        stats={[
-          { value: city.restaurant_count, label: 'RESTAURANTS' },
-          { value: city.chef_count, label: 'CHEFS' },
-        ]}
-      />
+      <div className="min-h-screen overflow-auto" style={{ background: 'var(--bg-primary)' }}>
+        <Header />
 
-      {/* Restaurants */}
-      <section className="max-w-7xl mx-auto px-4 py-12">
+        <PageHero
+          title={displayName}
+          subtitle="TV Chef Restaurants & Dining Experiences"
+          stats={[
+            { value: city.restaurant_count, label: 'RESTAURANTS' },
+            { value: city.chef_count, label: 'CHEFS' },
+          ]}
+          breadcrumbItems={[
+            { label: 'Cities', href: '/cities' },
+            { label: displayName },
+          ]}
+        />
+
+        {/* Restaurants */}
+        <section className="max-w-7xl mx-auto px-4 py-12">
         <div className="mb-8">
           <h2
             className="font-display text-3xl font-bold"
@@ -214,12 +213,12 @@ export default async function CityPage({ params }: CityPageProps) {
           {restaurants?.map((restaurant: any) => (
             <RestaurantCard key={restaurant.id} restaurant={restaurant} />
           ))}
-        </div>
-      </section>
+          </div>
+        </section>
 
-      {/* Chefs */}
-      {uniqueChefs && uniqueChefs.length > 0 && (
-        <section
+        {/* Chefs */}
+        {uniqueChefs && uniqueChefs.length > 0 && (
+          <section
           className="max-w-7xl mx-auto px-4 py-12 border-t"
           style={{ borderColor: 'var(--border-light)' }}
         >
@@ -238,10 +237,11 @@ export default async function CityPage({ params }: CityPageProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {uniqueChefs.map((chef: any) => (
               <ChefCard key={chef.id} chef={chef} />
-            ))}
-          </div>
-        </section>
-      )}
-    </main>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    </>
   );
 }

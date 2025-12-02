@@ -7,7 +7,6 @@ import { ChefHero } from '@/components/chef/ChefHero';
 import { TVAppearanceList } from '@/components/chef/TVAppearanceBadge';
 import { RelatedChefs } from '@/components/chef/RelatedChefs';
 import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
-import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { PersonSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 
 interface ChefPageProps {
@@ -266,18 +265,13 @@ export default async function ChefPage({ params }: ChefPageProps) {
         <Header currentPage="chefs" />
 
         <main>
-          {/* Breadcrumbs */}
-          <div className="max-w-6xl mx-auto px-4 pt-6">
-            <Breadcrumbs
-              items={[
-                { label: 'Chefs', href: '/chefs' },
-                { label: chef.name },
-              ]}
-            />
-          </div>
-
-          {/* Hero */}
-          <ChefHero chef={chef} />
+          <ChefHero 
+            chef={chef}
+            breadcrumbItems={[
+              { label: 'Chefs', href: '/chefs' },
+              { label: chef.name },
+            ]}
+          />
 
           {/* TV Appearances */}
           {chef.chef_shows && chef.chef_shows.length > 0 && (

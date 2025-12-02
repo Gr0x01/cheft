@@ -6,7 +6,6 @@ import { createStaticClient } from '@/lib/supabase/static';
 import { Header } from '@/components/ui/Header';
 import { RestaurantHero } from '@/components/restaurant/RestaurantHero';
 import { MiniMapWrapper } from '@/components/restaurant/MiniMapWrapper';
-import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { RestaurantSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 
 interface RestaurantPageProps {
@@ -247,16 +246,13 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
         <Header currentPage="restaurants" />
 
         <main>
-          <div className="max-w-6xl mx-auto px-4 pt-6">
-            <Breadcrumbs
-              items={[
-                { label: 'Restaurants', href: '/restaurants' },
-                { label: restaurant.name },
-              ]}
-            />
-          </div>
-
-          <RestaurantHero restaurant={restaurant} />
+          <RestaurantHero 
+            restaurant={restaurant}
+            breadcrumbItems={[
+              { label: 'Restaurants', href: '/restaurants' },
+              { label: restaurant.name },
+            ]}
+          />
 
           {restaurant.lat && restaurant.lng && (
             <section className="py-12">
