@@ -47,50 +47,60 @@ interface ChefData {
 }
 
 async function getChef(slug: string): Promise<ChefData | null> {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from('chefs')
-    .select(`
-      id,
-      name,
-      slug,
-      photo_url,
-      mini_bio,
-      james_beard_status,
-      instagram_handle,
-      current_position,
-      social_links,
-      chef_shows (
-        id,
-        season,
-        result,
-        is_primary,
-        show_id,
-        show:shows (name, slug)
-      ),
-      restaurants!restaurants_chef_id_fkey (
+    const { data, error } = await supabase
+      .from('chefs')
+      .select(`
         id,
         name,
         slug,
-        city,
-        state,
-        price_tier,
-        cuisine_tags,
-        status,
-        google_rating,
-        google_review_count,
-        photo_urls
-      )
-    `)
-    .eq('slug', slug)
-    .single();
+        photo_url,
+        mini_bio,
+        james_beard_status,
+        instagram_handle,
+        current_position,
+        social_links,
+        chef_shows (
+          id,
+          season,
+          result,
+          is_primary,
+          show_id,
+          show:shows (name, slug)
+        ),
+        restaurants!restaurants_chef_id_fkey (
+          id,
+          name,
+          slug,
+          city,
+          state,
+          price_tier,
+          cuisine_tags,
+          status,
+          google_rating,
+          google_review_count,
+          photo_urls
+        )
+      `)
+      .eq('slug', slug)
+      .single();
 
-  if (error || !data) {
+    if (error) {
+      console.error('Error fetching chef:', error);
+      return null;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return data as unknown as ChefData;
+  } catch (error) {
+    console.error('Exception in getChef:', error);
     return null;
   }
-
-  return data as unknown as ChefData;
 }
 
 async function getRelatedChefs(chef: ChefData) {

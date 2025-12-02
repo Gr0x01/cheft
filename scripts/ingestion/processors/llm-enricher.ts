@@ -82,6 +82,17 @@ export interface RestaurantStatusResult {
   error?: string;
 }
 
+export interface RestaurantOnlyResult {
+  chefId: string;
+  chefName: string;
+  restaurants: z.infer<typeof RestaurantSchema>[];
+  newRestaurants: number;
+  existingRestaurants: number;
+  tokensUsed: TokenUsage;
+  success: boolean;
+  error?: string;
+}
+
 export interface TokenUsage {
   prompt: number;
   completion: number;
@@ -138,6 +149,39 @@ IMPORTANT: Return your response as valid JSON matching this exact structure:
   "jamesBeardStatus": null or "winner" or "nominated" or "semifinalist",
   "photoUrl": "https://..." or null,
   "photoConfidence": 0.0 to 1.0 or null
+}`;
+
+const RESTAURANT_ONLY_SYSTEM_PROMPT = `You are a culinary industry expert helping to find CURRENT restaurants where TV chef contestants actively work.
+
+Your task: Use web search to find ONLY restaurants where this chef is CURRENTLY working as of 2025.
+
+Guidelines:
+- Only include restaurants where the chef CURRENTLY has a significant role (owner, partner, executive chef)
+- DO NOT include past restaurants or positions the chef has left
+- DO NOT include closed restaurants
+- Verify the restaurant is currently open and operating
+- Verify the chef is still actively involved (check recent news, social media, restaurant website)
+- Be conservative - if unsure about current status, omit it
+- Cuisine tags should be specific (e.g., "Japanese", "New American", "Southern")
+- Price range: $ (<$15/entree), $$ ($15-30), $$$ ($30-60), $$$$ ($60+)
+
+IMPORTANT: Return your response as valid JSON matching this exact structure:
+{
+  "restaurants": [
+    {
+      "name": "Restaurant Name",
+      "address": "123 Main St" or null,
+      "city": "City",
+      "state": "ST" or null,
+      "country": "US",
+      "cuisine": ["Cuisine Type"] or null,
+      "priceRange": "$$" or null,
+      "status": "open" or "closed" or "unknown",
+      "website": "https://..." or null,
+      "role": "owner" or "executive_chef" or "partner" or "consultant" or null,
+      "opened": 2020 or null
+    }
+  ]
 }`;
 
 const RESTAURANT_STATUS_SYSTEM_PROMPT = `You are a restaurant industry analyst verifying whether restaurants are currently open.
@@ -220,7 +264,7 @@ export function createLLMEnricher(
           system: CHEF_ENRICHMENT_SYSTEM_PROMPT,
           prompt,
           maxTokens: 8000,
-          maxSteps: 10,
+          maxSteps: 20,
         }),
         `enrich chef ${chefName}`
       );
@@ -373,6 +417,155 @@ export function createLLMEnricher(
     }
   }
 
+  async function enrichRestaurantsOnly(
+    chefId: string,
+    chefName: string,
+    showName: string,
+    options: { season?: string; result?: string } = {}
+  ): Promise<RestaurantOnlyResult> {
+    const seasonInfo = options.season ? ` (${showName} ${options.season})` : ` (${showName})`;
+    const resultInfo = options.result ? `, ${options.result}` : '';
+    const prompt = `Find ONLY current/active restaurants where chef ${chefName}${seasonInfo}${resultInfo} currently works.
+
+Search for restaurants where ${chefName} is CURRENTLY (as of 2025):
+- Owner
+- Partner
+- Executive Chef
+- Culinary Director
+
+IMPORTANT: Only include restaurants where the chef is actively working NOW. Do not include past restaurants or positions they have left. Verify the restaurant is currently open and operating.`;
+
+    try {
+      const result = await withRetry(
+        () => generateText({
+          model: openai.responses(modelName),
+          tools: {
+            web_search_preview: openai.tools.webSearchPreview({
+              searchContextSize: 'medium',
+            }),
+          },
+          system: RESTAURANT_ONLY_SYSTEM_PROMPT,
+          prompt,
+          maxTokens: 6000,
+          maxSteps: 15,
+        }),
+        `find restaurants for ${chefName}`
+      );
+
+      const tokensUsed: TokenUsage = {
+        prompt: result.usage?.promptTokens || 0,
+        completion: result.usage?.completionTokens || 0,
+        total: result.usage?.totalTokens || 0,
+      };
+
+      totalTokensUsed.prompt += tokensUsed.prompt;
+      totalTokensUsed.completion += tokensUsed.completion;
+      totalTokensUsed.total += tokensUsed.total;
+
+      if (!result.text || result.text.trim() === '') {
+        throw new Error('LLM returned empty response');
+      }
+
+      const jsonText = extractJsonFromText(result.text);
+      const parsed = JSON.parse(jsonText);
+      const RestaurantsOnlySchema = z.object({
+        restaurants: z.array(RestaurantSchema).default([]),
+      });
+      const validated = RestaurantsOnlySchema.parse(parsed);
+
+      const restaurants = validated.restaurants.slice(0, maxRestaurants);
+
+      return {
+        chefId,
+        chefName,
+        restaurants,
+        newRestaurants: 0,
+        existingRestaurants: 0,
+        tokensUsed,
+        success: true,
+      };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`   ❌ Restaurant enrichment error for "${chefName}": ${msg}`);
+      
+      return {
+        chefId,
+        chefName,
+        restaurants: [],
+        newRestaurants: 0,
+        existingRestaurants: 0,
+        tokensUsed: { prompt: 0, completion: 0, total: 0 },
+        success: false,
+        error: msg,
+      };
+    }
+  }
+
+  function generateSlug(name: string, city?: string): string {
+    const cleanName = name.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+    
+    if (city) {
+      const cleanCity = city.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+      return `${cleanName}-${cleanCity}`;
+    }
+    
+    return cleanName;
+  }
+
+  async function saveDiscoveredRestaurant(
+    chefId: string,
+    restaurant: z.infer<typeof RestaurantSchema>
+  ): Promise<{ success: boolean; restaurantId?: string; isNew: boolean }> {
+    const existing = await (supabase
+      .from('restaurants') as ReturnType<typeof supabase.from>)
+      .select('id, chef_id')
+      .eq('name', restaurant.name)
+      .eq('city', restaurant.city || '')
+      .maybeSingle();
+
+    if (existing.data) {
+      if (existing.data.chef_id !== chefId) {
+        console.log(`      ⚠️  Restaurant "${restaurant.name}" already linked to different chef`);
+      }
+      return { success: true, restaurantId: existing.data.id, isNew: false };
+    }
+
+    const slug = generateSlug(restaurant.name, restaurant.city || undefined);
+    const insertData = {
+      name: restaurant.name,
+      slug,
+      chef_id: chefId,
+      chef_role: restaurant.role || 'owner',
+      address: restaurant.address,
+      city: restaurant.city,
+      state: restaurant.state,
+      country: restaurant.country || 'US',
+      price_tier: restaurant.priceRange,
+      status: restaurant.status || 'unknown',
+      website_url: restaurant.website,
+      year_opened: restaurant.opened,
+      source_notes: `Discovered via LLM enrichment from ${restaurant.source || 'chef bio'}`,
+      is_public: true,
+    };
+
+    const { data, error } = await (supabase
+      .from('restaurants') as ReturnType<typeof supabase.from>)
+      .insert(insertData)
+      .select('id')
+      .single();
+
+    if (error) {
+      console.error(`      ❌ Failed to save restaurant "${restaurant.name}": ${error.message}`);
+      return { success: false, isNew: false };
+    }
+
+    return { success: true, restaurantId: data.id, isNew: true };
+  }
+
   async function enrichAndSaveChef(
     chefId: string,
     chefName: string,
@@ -388,6 +581,7 @@ export function createLLMEnricher(
     if (result.miniBio || result.photoUrl) {
       const updateData: Record<string, unknown> = {
         updated_at: new Date().toISOString(),
+        last_enriched_at: new Date().toISOString(),
       };
 
       if (result.miniBio) {
@@ -424,6 +618,33 @@ export function createLLMEnricher(
           source: 'llm_enricher',
           confidence: result.photoConfidence > 0 ? Math.min(0.85, result.photoConfidence) : 0.85,
         });
+      }
+    }
+
+    if (result.restaurants && result.restaurants.length > 0) {
+      let newRestaurants = 0;
+      let existingRestaurants = 0;
+
+      for (const restaurant of result.restaurants) {
+        if (!restaurant.name || !restaurant.city) {
+          console.log(`      ⚠️  Skipping restaurant with missing name or city`);
+          continue;
+        }
+
+        const saveResult = await saveDiscoveredRestaurant(chefId, restaurant);
+
+        if (saveResult.success) {
+          if (saveResult.isNew) {
+            newRestaurants++;
+            console.log(`      ➕ Added: ${restaurant.name} (${restaurant.city})`);
+          } else {
+            existingRestaurants++;
+          }
+        }
+      }
+
+      if (newRestaurants > 0) {
+        console.log(`      📍 Saved ${newRestaurants} new restaurants (${existingRestaurants} already existed)`);
       }
     }
 
@@ -473,6 +694,64 @@ export function createLLMEnricher(
     return result;
   }
 
+  async function findAndSaveRestaurants(
+    chefId: string,
+    chefName: string,
+    showName: string,
+    options: { season?: string; result?: string; dryRun?: boolean } = {}
+  ): Promise<RestaurantOnlyResult> {
+    const result = await enrichRestaurantsOnly(chefId, chefName, showName, options);
+
+    if (!result.success || options.dryRun) {
+      return result;
+    }
+
+    let newRestaurants = 0;
+    let existingRestaurants = 0;
+
+    if (result.restaurants && result.restaurants.length > 0) {
+      for (const restaurant of result.restaurants) {
+        if (!restaurant.name || !restaurant.city) {
+          console.log(`      ⚠️  Skipping restaurant with missing name or city`);
+          continue;
+        }
+
+        const saveResult = await saveDiscoveredRestaurant(chefId, restaurant);
+
+        if (saveResult.success) {
+          if (saveResult.isNew) {
+            newRestaurants++;
+            console.log(`      ➕ Added: ${restaurant.name} (${restaurant.city})`);
+          } else {
+            existingRestaurants++;
+          }
+        }
+      }
+
+      if (newRestaurants > 0) {
+        console.log(`      📍 Saved ${newRestaurants} new restaurants (${existingRestaurants} already existed)`);
+      }
+    }
+
+    const { error: timestampError } = await (supabase
+      .from('chefs') as ReturnType<typeof supabase.from>)
+      .update({
+        last_enriched_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', chefId);
+
+    if (timestampError) {
+      console.error(`      ⚠️  Failed to update last_enriched_at: ${timestampError.message}`);
+    }
+
+    return {
+      ...result,
+      newRestaurants,
+      existingRestaurants,
+    };
+  }
+
   function getTotalTokensUsed(): TokenUsage {
     return { ...totalTokensUsed };
   }
@@ -492,6 +771,7 @@ export function createLLMEnricher(
   return {
     enrichChef,
     enrichAndSaveChef,
+    findAndSaveRestaurants,
     verifyRestaurantStatus,
     verifyAndUpdateStatus,
     getTotalTokensUsed,

@@ -26,6 +26,7 @@ interface OrchestratorOptions {
   statusCheck: boolean;
   enrich: boolean;
   enrichBios: boolean;
+  enrichRestaurantsOnly: boolean;
   filter: boolean;
   dryRun: boolean;
   limit: number;
@@ -59,6 +60,11 @@ interface PipelineReport {
     chefsWithBios: number;
     restaurantsDiscovered: number;
   };
+  restaurantEnrichmentResults?: {
+    chefsProcessed: number;
+    newRestaurants: number;
+    existingRestaurants: number;
+  };
   llmStats?: {
     totalCalls: number;
     totalTokens: number;
@@ -79,6 +85,7 @@ function parseArgs(): OrchestratorOptions {
     statusCheck: args.includes('--status-check'),
     enrich: args.includes('--enrich'),
     enrichBios: args.includes('--enrich-bios'),
+    enrichRestaurantsOnly: args.includes('--enrich-restaurants-only'),
     filter: args.includes('--filter'),
     dryRun: args.includes('--dry-run'),
     limit: isNaN(limit) ? 10 : limit,
@@ -548,7 +555,9 @@ async function runBioEnrichmentPipeline(
     }
 
     if (chefs && chefs.length > 0) {
-      for (const chef of chefs) {
+      console.log(`     Processing ${chefs.length} chefs in parallel...`);
+      
+      const enrichPromises = chefs.map(async (chef) => {
         const showInfo = chef.chef_shows?.[0];
         const showName = showInfo?.shows?.name || 'Top Chef';
         const season = showInfo?.season || undefined;
@@ -563,22 +572,24 @@ async function runBioEnrichmentPipeline(
           { season, result: chefResult, dryRun: false }
         );
 
-        chefsProcessed++;
-
         if (enrichResult.success && enrichResult.miniBio) {
-          chefsWithBios++;
-          console.log(`       ✅ Bio generated (${enrichResult.miniBio.length} chars)`);
+          console.log(`       ✅ ${chef.name}: Bio generated (${enrichResult.miniBio.length} chars)`);
           
           if (enrichResult.restaurants.length > 0) {
-            console.log(`       🍽️  Found ${enrichResult.restaurants.length} restaurants`);
-            restaurantsDiscovered += enrichResult.restaurants.length;
+            console.log(`       🍽️  ${chef.name}: Found ${enrichResult.restaurants.length} restaurants`);
           }
         } else if (enrichResult.error) {
-          console.log(`       ❌ Error: ${enrichResult.error}`);
+          console.log(`       ❌ ${chef.name}: ${enrichResult.error}`);
         }
 
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
+        return enrichResult;
+      });
+
+      const results = await Promise.all(enrichPromises);
+      
+      chefsProcessed = results.length;
+      chefsWithBios = results.filter(r => r.success && r.miniBio).length;
+      restaurantsDiscovered = results.reduce((sum, r) => sum + r.restaurants.length, 0);
 
       const tokens = llmEnricher.getTotalTokensUsed();
       llmStats.totalCalls += chefsProcessed;
@@ -594,6 +605,91 @@ async function runBioEnrichmentPipeline(
     chefsProcessed,
     chefsWithBios,
     restaurantsDiscovered,
+  };
+}
+
+async function enrichRestaurantsOnly(
+  supabase: SupabaseClient<Database>,
+  llmEnricher: ReturnType<typeof createLLMEnricher>,
+  llmStats: { totalCalls: number; totalTokens: number; estimatedCost: number },
+  options: { dryRun: boolean; limit: number }
+): Promise<{ chefsProcessed: number; newRestaurants: number; existingRestaurants: number }> {
+  console.log(`\n🍽️  Restaurant-only Enrichment`);
+  
+  let chefsProcessed = 0;
+  let totalNewRestaurants = 0;
+  let totalExistingRestaurants = 0;
+
+  try {
+    const { data: chefs } = await supabase
+      .from('chefs')
+      .select('id, name, slug, mini_bio, chef_shows(shows(name), season, result)')
+      .not('mini_bio', 'is', null)
+      .limit(options.limit);
+
+    const { count } = await supabase
+      .from('chefs')
+      .select('*', { count: 'exact', head: true })
+      .not('mini_bio', 'is', null);
+
+    console.log(`     Found ${count || 0} chefs with bios`);
+
+    if (options.dryRun) {
+      console.log(`     [DRY RUN] Would process up to ${options.limit} of ${count || 0} chefs`);
+      return { chefsProcessed: 0, newRestaurants: 0, existingRestaurants: 0 };
+    }
+
+    if (chefs && chefs.length > 0) {
+      console.log(`     Processing ${chefs.length} chefs in parallel...`);
+      
+      const enrichPromises = chefs.map(async (chef) => {
+        const showInfo = chef.chef_shows?.[0];
+        const showName = showInfo?.shows?.name || 'Top Chef';
+        const season = showInfo?.season || undefined;
+        const chefResult = showInfo?.result || undefined;
+
+        console.log(`     Processing: ${chef.name}...`);
+
+        const enrichResult = await llmEnricher.findAndSaveRestaurants(
+          chef.id,
+          chef.name,
+          showName,
+          { season, result: chefResult, dryRun: false }
+        );
+
+        if (enrichResult.success) {
+          console.log(`       ✅ ${chef.name}: Found ${enrichResult.restaurants.length} restaurants`);
+          
+          if (enrichResult.newRestaurants > 0) {
+            console.log(`       🍽️  ${chef.name}: Saved ${enrichResult.newRestaurants} new (${enrichResult.existingRestaurants} already existed)`);
+          }
+        } else if (enrichResult.error) {
+          console.log(`       ❌ ${chef.name}: ${enrichResult.error}`);
+        }
+
+        return enrichResult;
+      });
+
+      const results = await Promise.all(enrichPromises);
+      
+      chefsProcessed = results.length;
+      totalNewRestaurants = results.reduce((sum, r) => sum + r.newRestaurants, 0);
+      totalExistingRestaurants = results.reduce((sum, r) => sum + r.existingRestaurants, 0);
+
+      const tokens = llmEnricher.getTotalTokensUsed();
+      llmStats.totalCalls += chefsProcessed;
+      llmStats.totalTokens += tokens.total;
+      llmStats.estimatedCost += llmEnricher.estimateCost();
+    }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error(`   ❌ Restaurant enrichment error: ${msg}`);
+  }
+
+  return {
+    chefsProcessed,
+    newRestaurants: totalNewRestaurants,
+    existingRestaurants: totalExistingRestaurants,
   };
 }
 
@@ -631,8 +727,8 @@ async function main() {
   console.log('═'.repeat(60));
   console.log(`Started: ${new Date().toISOString()}`);
   
-  if (!options.discovery && !options.statusCheck && !options.enrich && !options.enrichBios) {
-    console.log('\n⚠️  No pipeline selected. Use --discovery, --status-check, --enrich, or --enrich-bios');
+  if (!options.discovery && !options.statusCheck && !options.enrich && !options.enrichBios && !options.enrichRestaurantsOnly) {
+    console.log('\n⚠️  No pipeline selected. Use --discovery, --status-check, --enrich, --enrich-bios, or --enrich-restaurants-only');
     console.log('\nUsage:');
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --discovery');
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --discovery --filter');
@@ -640,6 +736,7 @@ async function main() {
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --enrich');
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --enrich --limit 10');
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --enrich-bios --limit 5');
+    console.log('  npx tsx scripts/ingestion/orchestrator.ts --enrich-restaurants-only --limit 10');
     console.log('  npx tsx scripts/ingestion/orchestrator.ts --discovery --dry-run');
     process.exit(1);
   }
@@ -699,6 +796,14 @@ async function main() {
         report.llmStats = llmStats;
       }
     }
+
+    if (options.enrichRestaurantsOnly) {
+      const llmEnricher = createLLMEnricher(supabase);
+      report.restaurantEnrichmentResults = await enrichRestaurantsOnly(supabase, llmEnricher, llmStats, options);
+      if (llmStats.totalCalls > 0 || llmStats.totalTokens > 0) {
+        report.llmStats = llmStats;
+      }
+    }
     
     await printSystemStatus(supabase);
     
@@ -753,6 +858,12 @@ async function main() {
     console.log(`  - Chefs processed: ${report.bioEnrichmentResults.chefsProcessed}`);
     console.log(`  - Chefs with bios: ${report.bioEnrichmentResults.chefsWithBios}`);
     console.log(`  - Restaurants discovered: ${report.bioEnrichmentResults.restaurantsDiscovered}`);
+  }
+  if (report.restaurantEnrichmentResults) {
+    console.log(`Restaurant Enrichment:`);
+    console.log(`  - Chefs processed: ${report.restaurantEnrichmentResults.chefsProcessed}`);
+    console.log(`  - New restaurants saved: ${report.restaurantEnrichmentResults.newRestaurants}`);
+    console.log(`  - Existing restaurants: ${report.restaurantEnrichmentResults.existingRestaurants}`);
   }
   if (report.errors.length > 0) {
     console.log(`Errors: ${report.errors.length}`);
