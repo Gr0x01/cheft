@@ -6,6 +6,7 @@ import { Database } from '../../../src/lib/database.types';
 import { logDataChange } from '../queue/audit-log';
 import { createImageStorageService } from '../services/image-storage';
 import { createGoogleImageSearchTool } from '../services/google-images';
+import { checkForDuplicate } from '../../../src/lib/duplicates/detector';
 
 function stripCitations(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -559,18 +560,59 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
   ): Promise<{ success: boolean; restaurantId?: string; isNew: boolean }> {
     const cleanName = sanitizeRestaurantName(restaurant.name);
     
-    const existing = await (supabase
+    const exactMatch = await (supabase
       .from('restaurants') as ReturnType<typeof supabase.from>)
-      .select('id, chef_id')
+      .select('id, chef_id, name, address')
       .eq('name', cleanName)
       .eq('city', restaurant.city || '')
       .maybeSingle();
 
-    if (existing.data) {
-      if (existing.data.chef_id !== chefId) {
+    if (exactMatch.data) {
+      if (exactMatch.data.chef_id !== chefId) {
         console.log(`      ⚠️  Restaurant "${cleanName}" already linked to different chef`);
       }
-      return { success: true, restaurantId: existing.data.id, isNew: false };
+      return { success: true, restaurantId: exactMatch.data.id, isNew: false };
+    }
+
+    const cityMatches = await (supabase
+      .from('restaurants') as ReturnType<typeof supabase.from>)
+      .select('id, chef_id, name, address')
+      .eq('city', restaurant.city || '')
+      .limit(50);
+
+    if (cityMatches.data && cityMatches.data.length > 0) {
+      for (const existing of cityMatches.data) {
+        const dupeCheck = await checkForDuplicate({
+          name1: cleanName,
+          name2: existing.name,
+          city: restaurant.city || '',
+          address1: restaurant.address,
+          address2: existing.address,
+          state: restaurant.state,
+        });
+
+        if (dupeCheck.isDuplicate && dupeCheck.confidence >= 0.85) {
+          console.log(`      🔍 DUPLICATE DETECTED: "${cleanName}" matches existing "${existing.name}"`);
+          console.log(`         Confidence: ${dupeCheck.confidence.toFixed(2)} | Reason: ${dupeCheck.reasoning}`);
+
+          await logDataChange(supabase as any, {
+            table_name: 'restaurants',
+            record_id: existing.id,
+            change_type: 'update',
+            new_data: {
+              duplicate_prevented: true,
+              attempted_name: cleanName,
+              matched_name: existing.name,
+              confidence: dupeCheck.confidence,
+              reasoning: dupeCheck.reasoning,
+            },
+            source: 'llm_enricher_duplicate_prevention',
+            confidence: dupeCheck.confidence,
+          });
+
+          return { success: true, restaurantId: existing.id, isNew: false };
+        }
+      }
     }
 
     const slug = generateSlug(cleanName, restaurant.city || undefined);
@@ -809,6 +851,10 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
     return (totalTokensUsed.prompt / 1_000_000) * inputCostPer1M +
            (totalTokensUsed.completion / 1_000_000) * outputCostPer1M;
   }
+  
+  function getModelName(): string {
+    return modelName;
+  }
 
   function resetTokenCounter(): void {
     totalTokensUsed = { prompt: 0, completion: 0, total: 0 };
@@ -823,6 +869,7 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
     getTotalTokensUsed,
     estimateCost,
     resetTokenCounter,
+    getModelName,
   };
 }
 
