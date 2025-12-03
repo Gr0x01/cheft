@@ -676,3 +676,41 @@ body {
     0% { left: -100%; }
     100% { left: 100%; }
 }
+
+/* FEATURED CHEF HERO SECTION */
+.featured-chef-hero {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: var(--space-brutal);
+}
+
+.featured-chef-hero .floating-badge {
+    cursor: help;
+}
+
+.featured-chef-hero .floating-badge:hover {
+    transform: rotate(0deg) scale(1.05);
+}
+
+/* Floating badge animations */
+@keyframes badge-float {
+    0%, 100% { transform: translateY(0) rotate(var(--badge-rotation, 0deg)); }
+    50% { transform: translateY(-8px) rotate(var(--badge-rotation, 0deg)); }
+}
+
+.featured-chef-hero .floating-badge {
+    animation: badge-float 3s ease-in-out infinite;
+}
+
+/* Restaurant preview card hover effects */
+.featured-chef-hero .group\/preview:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 1023px) {
+    .featured-chef-hero {
+        padding-top: var(--space-harsh);
+        padding-bottom: var(--space-harsh);
+    }
+}

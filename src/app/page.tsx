@@ -4,12 +4,10 @@ import HomePage from './HomePage';
 import { RestaurantWithDetails } from '@/lib/types';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const restaurants = 522;
-  const chefs = 182;
-  const cities = 162;
+  const stats = await db.getStats();
 
-  const description = `Discover ${restaurants} restaurants owned by Top Chef, Iron Chef, and Tournament of Champions winners and contestants. Interactive map with filters, ratings, and detailed profiles of ${chefs} chefs across ${cities} cities.`;
-  const shortDescription = `Discover ${restaurants} restaurants owned by Top Chef, Iron Chef, and Tournament of Champions winners and contestants.`;
+  const description = `Discover ${stats.restaurants} restaurants owned by Top Chef, Iron Chef, and Tournament of Champions winners and contestants. Interactive map with filters, ratings, and detailed profiles of ${stats.chefs} chefs across ${stats.cities} cities.`;
+  const shortDescription = `Discover ${stats.restaurants} restaurants owned by Top Chef, Iron Chef, and Tournament of Champions winners and contestants.`;
 
   return {
     title: 'Cheft | TV Chef Restaurant Map - Find Top Chef & Iron Chef Restaurants',
@@ -28,15 +26,19 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page() {
-  const [restaurantsData, chefsData] = await Promise.all([
+  const [restaurantsData, chefsData, stats, featuredChef] = await Promise.all([
     db.getRestaurants(),
-    db.getFeaturedChefs(12)
+    db.getFeaturedChefs(12),
+    db.getStats(),
+    db.getFeaturedChef()
   ]);
 
   return (
     <HomePage 
       initialRestaurants={restaurantsData as RestaurantWithDetails[]}
       initialFeaturedChefs={chefsData}
+      stats={stats}
+      featuredChef={featuredChef}
     />
   );
 }

@@ -6,10 +6,13 @@ import { RestaurantWithDetails } from '@/lib/types';
 import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCompact';
 import { ChefCard } from '@/components/chef/ChefCard';
 import { Header } from '@/components/ui/Header';
+import { FeaturedChefHero } from '@/components/chef/FeaturedChefHero';
 
 interface HomePageProps {
   initialRestaurants: RestaurantWithDetails[];
   initialFeaturedChefs: any[];
+  stats: { restaurants: number; chefs: number; cities: number };
+  featuredChef: any | null;
 }
 
 const RestaurantMap = dynamic(() => import('@/components/RestaurantMap'), { 
@@ -22,7 +25,7 @@ const RestaurantMap = dynamic(() => import('@/components/RestaurantMap'), {
   )
 });
 
-export default function Home({ initialRestaurants, initialFeaturedChefs }: HomePageProps) {
+export default function Home({ initialRestaurants, initialFeaturedChefs, stats, featuredChef }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [selectedShow, setSelectedShow] = useState<string>('all');
@@ -91,21 +94,24 @@ export default function Home({ initialRestaurants, initialFeaturedChefs }: HomeP
             </p>
             <div className="hero-stats-row">
               <div className="hero-stat-item">
-                <div className="hero-stat-number">560</div>
+                <div className="hero-stat-number">{stats.restaurants}</div>
                 <div className="hero-stat-label">Restaurants</div>
               </div>
               <div className="hero-stat-item">
-                <div className="hero-stat-number">182</div>
+                <div className="hero-stat-number">{stats.chefs}</div>
                 <div className="hero-stat-label">Chefs</div>
               </div>
               <div className="hero-stat-item">
-                <div className="hero-stat-number">162</div>
+                <div className="hero-stat-number">{stats.cities}</div>
                 <div className="hero-stat-label">Cities</div>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Featured Chef Hero */}
+      {featuredChef && <FeaturedChefHero chef={featuredChef} />}
 
       <main className="main-content">
         <aside className="sidebar">

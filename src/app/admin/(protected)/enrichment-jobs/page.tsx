@@ -1,11 +1,17 @@
 import { createClient } from '@/lib/supabase/server';
 import { Clock, CheckCircle2, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { BudgetTracker } from '@/components/admin/enrichment/BudgetTracker';
+import { RefreshScheduleStatus } from '@/components/admin/enrichment/RefreshScheduleStatus';
+import { ManualTriggerSection } from '@/components/admin/enrichment/ManualTriggerSection';
 
 interface EnrichmentJob {
   id: string;
   chef_id: string;
   status: 'queued' | 'processing' | 'completed' | 'failed';
+  enrichment_type: string | null;
+  cost_usd: string | null;
+  triggered_by: string | null;
   error_message: string | null;
   started_at: string | null;
   completed_at: string | null;
@@ -42,49 +48,73 @@ export default async function EnrichmentJobsPage() {
     supabase
       .from('enrichment_jobs')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'completed'),
+      .eq('status', 'completed')
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
     supabase
       .from('enrichment_jobs')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'failed'),
+      .eq('status', 'failed')
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
   ]);
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80 p-8">
-        <h1 className="font-display text-3xl font-bold text-slate-900 mb-2">
-          Enrichment Jobs
-        </h1>
-        <p className="font-ui text-slate-500">
-          Background processing status for chef data enrichment
-        </p>
+      <div className="bg-gradient-to-r from-copper-500 to-copper-600 rounded-2xl shadow-xl shadow-copper-500/30 p-8 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-transparent pointer-events-none" />
+        <div className="relative flex items-center gap-4 mb-3">
+          <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
+            <RefreshCw className="w-8 h-8 drop-shadow-lg" />
+          </div>
+          <div>
+            <h1 className="font-display text-4xl font-black tracking-tight drop-shadow-lg">
+              Enrichment Control Center
+            </h1>
+            <p className="font-mono text-sm uppercase tracking-widest text-copper-100 mt-1 drop-shadow-md">
+              Data Refresh Management System
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Queued"
-          value={queuedCount || 0}
-          icon={Clock}
-          color="blue"
-        />
-        <StatCard
-          label="Processing"
-          value={processingCount || 0}
-          icon={RefreshCw}
-          color="yellow"
-        />
-        <StatCard
-          label="Completed"
-          value={completedCount || 0}
-          icon={CheckCircle2}
-          color="green"
-        />
-        <StatCard
-          label="Failed"
-          value={failedCount || 0}
-          icon={XCircle}
-          color="red"
-        />
+      <BudgetTracker />
+
+      <RefreshScheduleStatus />
+
+      <ManualTriggerSection />
+
+      <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-1 h-6 bg-copper-500 rounded-full" />
+          <h2 className="font-display text-xl font-bold text-slate-900">
+            Job Queue Status
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            label="Queued"
+            value={queuedCount || 0}
+            icon={Clock}
+            color="blue"
+          />
+          <StatCard
+            label="Processing"
+            value={processingCount || 0}
+            icon={RefreshCw}
+            color="yellow"
+          />
+          <StatCard
+            label="Completed (24h)"
+            value={completedCount || 0}
+            icon={CheckCircle2}
+            color="green"
+          />
+          <StatCard
+            label="Failed (24h)"
+            value={failedCount || 0}
+            icon={XCircle}
+            color="red"
+          />
+        </div>
       </div>
 
       {jobs && jobs.length > 0 ? (
@@ -93,19 +123,25 @@ export default async function EnrichmentJobsPage() {
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-4 text-left font-ui text-sm font-semibold text-slate-700">
+                  <th className="px-6 py-4 text-left font-mono text-xs font-semibold text-slate-700 uppercase tracking-wider">
                     Chef
                   </th>
-                  <th className="px-6 py-4 text-left font-ui text-sm font-semibold text-slate-700">
+                  <th className="px-6 py-4 text-left font-mono text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-6 py-4 text-left font-mono text-xs font-semibold text-slate-700 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-4 text-left font-ui text-sm font-semibold text-slate-700">
-                    Error
+                  <th className="px-6 py-4 text-left font-mono text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                    Cost
                   </th>
-                  <th className="px-6 py-4 text-left font-ui text-sm font-semibold text-slate-700">
+                  <th className="px-6 py-4 text-left font-mono text-xs font-semibold text-slate-700 uppercase tracking-wider">
                     Duration
                   </th>
-                  <th className="px-6 py-4 text-left font-ui text-sm font-semibold text-slate-700">
+                  <th className="px-6 py-4 text-left font-mono text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                    Triggered By
+                  </th>
+                  <th className="px-6 py-4 text-left font-mono text-xs font-semibold text-slate-700 uppercase tracking-wider">
                     Created
                   </th>
                 </tr>
@@ -124,24 +160,42 @@ export default async function EnrichmentJobsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
+                      <TypeBadge type={job.enrichment_type} />
+                    </td>
+                    <td className="px-6 py-4">
                       <StatusBadge status={job.status} />
                     </td>
                     <td className="px-6 py-4">
-                      {job.error_message ? (
-                        <div className="flex items-start gap-2">
-                          <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                          <span className="font-ui text-sm text-slate-700 line-clamp-2">
-                            {job.error_message}
-                          </span>
-                        </div>
+                      {job.cost_usd ? (
+                        <span className="font-mono text-sm font-semibold text-copper-600">
+                          ${Number(job.cost_usd).toFixed(2)}
+                        </span>
                       ) : (
-                        <span className="font-ui text-sm text-slate-400">-</span>
+                        <span className="font-mono text-sm text-slate-400">-</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       <span className="font-mono text-sm text-slate-700">
                         {calculateDuration(job)}
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {job.triggered_by ? (
+                        <span className="font-ui text-sm text-slate-700">
+                          {job.triggered_by === 'cron' ? (
+                            <span className="flex items-center gap-1.5">
+                              <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                              Cron
+                            </span>
+                          ) : (
+                            <span className="truncate max-w-[150px] inline-block">
+                              {job.triggered_by}
+                            </span>
+                          )}
+                        </span>
+                      ) : (
+                        <span className="font-ui text-sm text-slate-400">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <span className="font-ui text-sm text-slate-600">
@@ -194,14 +248,37 @@ function StatCard({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80 p-6">
+    <div className="bg-gradient-to-br from-slate-50 to-white rounded-xl border border-slate-200/80 p-5 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between mb-3">
-        <div className={`p-3 rounded-xl border ${colorClasses[color]}`}>
-          <Icon className="w-5 h-5" />
+        <div className={`p-2.5 rounded-lg border ${colorClasses[color]}`}>
+          <Icon className="w-4 h-4" />
         </div>
       </div>
-      <div className="font-mono text-3xl font-bold text-slate-900 mb-1">{value}</div>
-      <div className="font-ui text-sm text-slate-500">{label}</div>
+      <div className="font-mono text-3xl font-black text-slate-900 mb-1">{value}</div>
+      <div className="font-mono text-xs text-slate-500 uppercase tracking-wider">{label}</div>
+    </div>
+  );
+}
+
+function TypeBadge({ type }: { type: string | null }) {
+  const typeConfig: Record<string, { label: string; classes: string }> = {
+    initial: { label: 'Initial', classes: 'bg-blue-100 text-blue-700 border-blue-200' },
+    manual_full: { label: 'Manual Full', classes: 'bg-amber-100 text-amber-700 border-amber-200' },
+    manual_restaurants: { label: 'Restaurants', classes: 'bg-amber-100 text-amber-700 border-amber-200' },
+    manual_status: { label: 'Status Check', classes: 'bg-amber-100 text-amber-700 border-amber-200' },
+    monthly_refresh: { label: 'Monthly', classes: 'bg-purple-100 text-purple-700 border-purple-200' },
+    weekly_status: { label: 'Weekly', classes: 'bg-teal-100 text-teal-700 border-teal-200' },
+  };
+
+  const config = type ? typeConfig[type] : null;
+
+  if (!config) {
+    return <span className="font-mono text-xs text-slate-400">-</span>;
+  }
+
+  return (
+    <div className={`inline-flex px-2.5 py-1 rounded-md border font-mono text-xs font-semibold uppercase tracking-wider ${config.classes}`}>
+      {config.label}
     </div>
   );
 }

@@ -230,6 +230,79 @@ export const db = {
     return data as Chef & { restaurants: Restaurant[] };
   },
 
+  // Get featured chef for homepage hero (one spotlight chef)
+  async getFeaturedChef() {
+    const client = getSupabaseClient();
+    
+    const { data: chefs, error } = await client
+      .from('chefs')
+      .select(`
+        id,
+        name,
+        slug,
+        photo_url,
+        mini_bio,
+        james_beard_status,
+        chef_shows(
+          id,
+          result,
+          season,
+          is_primary,
+          show:shows(name)
+        ),
+        restaurants!chef_id(
+          id,
+          name,
+          slug,
+          city,
+          state,
+          photo_urls,
+          google_rating,
+          google_review_count,
+          price_tier,
+          status
+        )
+      `)
+      .not('photo_url', 'is', null)
+      .not('mini_bio', 'is', null)
+      .eq('restaurants.is_public', true)
+      .order('created_at', { ascending: true })
+      .limit(50);
+    
+    if (error) {
+      console.error('Error fetching featured chef:', error);
+      return null;
+    }
+    if (!chefs || chefs.length === 0) return null;
+    
+    const chefsWithData = (chefs as any[]).map((chef: any) => {
+      const restaurants = (chef.restaurants || [])
+        .filter((r: any) => r.google_rating !== null)
+        .sort((a: any, b: any) => (b.google_rating || 0) - (a.google_rating || 0))
+        .slice(0, 4);
+      
+      return {
+        ...chef,
+        restaurants,
+        restaurant_count: (chef.restaurants || []).length
+      };
+    });
+    
+    const eligibleChefs = chefsWithData.filter(chef => chef.restaurant_count > 0);
+    
+    eligibleChefs.sort((a, b) => {
+      const aIsWinner = a.chef_shows?.some((cs: any) => cs.result === 'winner') || a.james_beard_status === 'winner';
+      const bIsWinner = b.chef_shows?.some((cs: any) => cs.result === 'winner') || b.james_beard_status === 'winner';
+      
+      if (aIsWinner && !bIsWinner) return -1;
+      if (!aIsWinner && bIsWinner) return 1;
+      
+      return b.restaurant_count - a.restaurant_count;
+    });
+    
+    return eligibleChefs[0] || null;
+  },
+
   // Get featured chefs (winners with photos, sorted by restaurant count)
   async getFeaturedChefs(limit: number = 12) {
     const client = getSupabaseClient();
@@ -280,6 +353,21 @@ export const db = {
         return b.restaurant_count - a.restaurant_count;
       })
       .slice(0, limit);
+  },
+
+  async getStats() {
+    const client = getSupabaseClient();
+    const [restaurantsResult, chefsResult, citiesResult] = await Promise.all([
+      client.from('restaurants').select('id', { count: 'exact', head: true }).eq('is_public', true),
+      client.from('chefs').select('id', { count: 'exact', head: true }),
+      client.from('cities').select('id', { count: 'exact', head: true })
+    ]);
+    
+    return {
+      restaurants: restaurantsResult.count || 0,
+      chefs: chefsResult.count || 0,
+      cities: citiesResult.count || 0
+    };
   },
 
   // Get all shows with chef and restaurant counts
