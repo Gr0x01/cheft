@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { ReviewTable } from './ReviewTable';
+import { ReviewTabs } from './ReviewTabs';
+import { DuplicatesSection } from './components/DuplicatesSection';
 import { Clock, CheckCircle2, XCircle, BarChart3, UserPlus, Store, RefreshCw, ToggleRight, Inbox } from 'lucide-react';
 
 interface QueueStats {
@@ -56,7 +58,7 @@ const typeLabels: Record<string, string> = {
 export default async function ReviewQueuePage() {
   const supabase = await createClient();
   
-  const [stats, { data: pendingItems }] = await Promise.all([
+  const [stats, { data: pendingItems }, { count: duplicateCount }] = await Promise.all([
     getQueueStats(supabase),
     supabase
       .from('review_queue')
@@ -64,17 +66,16 @@ export default async function ReviewQueuePage() {
       .eq('status', 'pending')
       .order('created_at', { ascending: true })
       .limit(50),
+    supabase
+      .from('duplicate_candidates')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending'),
   ]);
 
   const total = stats.pending + stats.approved + stats.rejected;
 
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80 p-8">
-        <h1 className="font-display text-3xl font-bold text-slate-900 mb-2">Review Queue</h1>
-        <p className="font-ui text-slate-500">Editorial oversight for the culinary data pipeline</p>
-      </div>
-
+  const queueContent = (
+    <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
           label="Pending Review" 
@@ -142,6 +143,21 @@ export default async function ReviewQueuePage() {
           </p>
         </div>
       )}
+    </>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80 p-8">
+        <h1 className="font-display text-3xl font-bold text-slate-900 mb-2">Editorial Review</h1>
+        <p className="font-ui text-slate-500">Approve submissions and manage data quality</p>
+      </div>
+
+      <ReviewTabs
+        queueContent={queueContent}
+        duplicatesContent={<DuplicatesSection />}
+        duplicateCount={duplicateCount || 0}
+      />
     </div>
   );
 }

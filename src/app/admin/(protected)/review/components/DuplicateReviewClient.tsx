@@ -20,15 +20,17 @@ interface Restaurant {
   chef_id: string;
 }
 
-interface DuplicateGroup {
-  restaurants: Restaurant[];
+interface DuplicateCandidate {
+  id: string;
+  restaurant_ids: string[];
   confidence: number;
   reasoning: string;
-  similarity: number;
+  status: string;
+  restaurants: Restaurant[];
 }
 
-interface DuplicateReviewProps {
-  groups: DuplicateGroup[];
+interface DuplicateReviewClientProps {
+  candidates: DuplicateCandidate[];
 }
 
 function calculateDataScore(restaurant: Restaurant): number {
@@ -148,15 +150,15 @@ function RestaurantCard({ restaurant, score, isRecommended }: {
   );
 }
 
-export function DuplicateReview({ groups }: DuplicateReviewProps) {
+export function DuplicateReviewClient({ candidates }: DuplicateReviewClientProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [merging, setMerging] = useState(false);
   const [skipped, setSkipped] = useState<Set<number>>(new Set());
 
-  const currentGroup = groups[currentIndex];
-  if (!currentGroup) return null;
+  const currentCandidate = candidates[currentIndex];
+  if (!currentCandidate) return null;
 
-  const [restaurant1, restaurant2] = currentGroup.restaurants;
+  const [restaurant1, restaurant2] = currentCandidate.restaurants;
   const score1 = calculateDataScore(restaurant1);
   const score2 = calculateDataScore(restaurant2);
 
@@ -193,15 +195,15 @@ export function DuplicateReview({ groups }: DuplicateReviewProps) {
     }
   };
 
-  const progress = ((currentIndex + 1) / groups.length) * 100;
-  const remaining = groups.length - currentIndex - skipped.size;
+  const progress = ((currentIndex + 1) / candidates.length) * 100;
+  const remaining = candidates.length - currentIndex - skipped.size;
 
   return (
     <div>
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm font-medium text-slate-700">
-            Progress: {currentIndex + 1} of {groups.length}
+            Progress: {currentIndex + 1} of {candidates.length}
           </span>
           <span className="text-sm text-slate-500">
             {remaining} remaining
@@ -224,10 +226,9 @@ export function DuplicateReview({ groups }: DuplicateReviewProps) {
           </div>
           <div>
             <h3 className="font-semibold text-slate-900 mb-1">AI Analysis</h3>
-            <p className="text-sm text-slate-700">{currentGroup.reasoning}</p>
+            <p className="text-sm text-slate-700">{currentCandidate.reasoning}</p>
             <div className="mt-2 flex gap-4 text-xs text-slate-500">
-              <span>Confidence: <strong>{(currentGroup.confidence * 100).toFixed(0)}%</strong></span>
-              <span>Similarity: <strong>{(currentGroup.similarity * 100).toFixed(0)}%</strong></span>
+              <span>Confidence: <strong>{(currentCandidate.confidence * 100).toFixed(0)}%</strong></span>
             </div>
           </div>
         </div>
@@ -280,7 +281,7 @@ export function DuplicateReview({ groups }: DuplicateReviewProps) {
         </button>
       </div>
 
-      {currentIndex >= groups.length - 1 && (
+      {currentIndex >= candidates.length - 1 && (
         <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4 text-center">
           <p className="text-green-900 font-semibold">
             🎉 All duplicates reviewed! {skipped.size} pairs kept separate.

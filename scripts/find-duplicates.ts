@@ -1,7 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import { checkForDuplicate, calculateNameSimilarity } from '../src/lib/duplicates/detector';
-import * as fs from 'fs';
-import * as path from 'path';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -165,19 +163,54 @@ async function scanForDuplicates(): Promise<DuplicateReport> {
   return report;
 }
 
+async function saveDuplicatesToDatabase(groups: DuplicateGroup[]): Promise<number> {
+  let savedCount = 0;
+
+  for (const group of groups) {
+    const [r1, r2] = group.restaurants;
+    
+    const { error } = await supabase
+      .from('duplicate_candidates')
+      .insert({
+        restaurant_ids: [r1.id, r2.id],
+        confidence: group.confidence,
+        reasoning: group.reasoning,
+        status: 'pending',
+      });
+
+    if (error) {
+      console.error(`   ⚠️  Failed to save duplicate: ${error.message}`);
+    } else {
+      savedCount++;
+    }
+  }
+
+  return savedCount;
+}
+
 async function main() {
   try {
+    console.log('\n🗄️  Clearing previous scan results...');
+    const { error: deleteError } = await supabase
+      .from('duplicate_candidates')
+      .delete()
+      .eq('status', 'pending');
+
+    if (deleteError) {
+      console.error(`   ⚠️  Warning: Could not clear old results: ${deleteError.message}`);
+    }
+
     const report = await scanForDuplicates();
 
-    const outputPath = path.join(process.cwd(), 'duplicate-report.json');
-    fs.writeFileSync(outputPath, JSON.stringify(report, null, 2));
+    console.log('\n💾 Saving duplicate candidates to database...');
+    const savedCount = await saveDuplicatesToDatabase(report.groups);
 
     console.log('\n\n✅ Scan complete!');
-    console.log(`📝 Report saved to: ${outputPath}`);
     console.log(`\n📊 Summary:`);
     console.log(`   - Total restaurants scanned: ${report.totalRestaurants}`);
     console.log(`   - Cities scanned: ${report.citiesScanned}`);
-    console.log(`   - Duplicate groups found: ${report.duplicateGroupsFound}`);
+    console.log(`   - Duplicate pairs found: ${report.duplicateGroupsFound}`);
+    console.log(`   - Saved to database: ${savedCount}`);
     console.log(`   - Estimated cost: $${report.estimatedCost.toFixed(4)}`);
 
     if (report.duplicateGroupsFound > 0) {
@@ -188,7 +221,7 @@ async function main() {
       });
     }
 
-    console.log(`\n👉 Review duplicates at: http://localhost:3003/admin/duplicates`);
+    console.log(`\n👉 Review duplicates at: http://localhost:3003/admin/review (Duplicates tab)`);
   } catch (error) {
     console.error('❌ Error:', error);
     process.exit(1);

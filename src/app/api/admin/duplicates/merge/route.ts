@@ -166,6 +166,16 @@ export async function POST(request: NextRequest) {
       confidence: 1.0,
     });
 
+    await supabase
+      .from('duplicate_candidates')
+      .update({
+        status: 'resolved',
+        merged_into: winnerId,
+        resolved_at: new Date().toISOString(),
+        resolved_by: user.email || 'admin',
+      })
+      .or(`restaurant_ids.cs.{${winnerId}},restaurant_ids.cs.{${loserId}}`);
+
     return NextResponse.json({
       success: true,
       winnerId,
