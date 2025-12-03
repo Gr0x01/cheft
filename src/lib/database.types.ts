@@ -204,6 +204,45 @@ export interface Database {
         };
         Relationships: [];
       };
+      duplicate_candidates: {
+        Row: {
+          id: string;
+          restaurant_ids: string[];
+          confidence: number;
+          reasoning: string;
+          status: "pending" | "resolved" | "ignored";
+          resolved_at: string | null;
+          resolved_by: string | null;
+          merged_into: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          restaurant_ids: string[];
+          confidence: number;
+          reasoning: string;
+          status?: "pending" | "resolved" | "ignored";
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          merged_into?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          restaurant_ids?: string[];
+          confidence?: number;
+          reasoning?: string;
+          status?: "pending" | "resolved" | "ignored";
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          merged_into?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       enrichment_budgets: {
         Row: {
           id: string;

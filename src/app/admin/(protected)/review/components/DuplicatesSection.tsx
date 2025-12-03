@@ -1,26 +1,44 @@
 import { createClient } from '@/lib/supabase/server';
 import { DuplicateReviewClient } from './DuplicateReviewClient';
+import { Copy, CheckCircle } from 'lucide-react';
+import type { Database } from '@/lib/database.types';
+
+type DuplicateCandidate = Database['public']['Tables']['duplicate_candidates']['Row'];
+
+interface Restaurant {
+  id: string;
+  name: string;
+  slug: string;
+  city: string;
+  state: string | null;
+  address: string | null;
+  google_place_id: string | null;
+  google_rating: number | null;
+  photo_urls: string[] | null;
+  status: 'open' | 'closed' | 'unknown' | null;
+  price_tier: string | null;
+  website_url: string | null;
+  chef_id: string;
+}
+
+interface DuplicateCandidateWithRestaurants extends DuplicateCandidate {
+  restaurants: Restaurant[];
+}
 
 export async function DuplicatesSection() {
   const supabase = await createClient();
 
   const { data: candidates, error } = await supabase
     .from('duplicate_candidates')
-    .select(`
-      id,
-      restaurant_ids,
-      confidence,
-      reasoning,
-      status
-    `)
+    .select('*')
     .eq('status', 'pending')
     .order('confidence', { ascending: false });
 
   if (error) {
+    console.error('Error fetching duplicates:', error);
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-        <h3 className="font-semibold text-red-900 mb-2">Error Loading Duplicates</h3>
-        <p className="text-red-700">{error.message}</p>
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-900">Failed to load duplicate candidates</p>
       </div>
     );
   }
@@ -30,18 +48,13 @@ export async function DuplicatesSection() {
       <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80 p-12 text-center">
         <div className="flex justify-center mb-6">
           <div className="p-5 bg-green-50 rounded-full">
-            <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <CheckCircle className="w-8 h-8 text-green-500" />
           </div>
         </div>
         <h3 className="font-display text-2xl font-semibold text-slate-900 mb-2">No Duplicates Found</h3>
-        <p className="font-ui text-slate-500 max-w-md mx-auto mb-4">
-          Your restaurant database is clean. Run the duplicate scan to check for new duplicates.
+        <p className="font-ui text-slate-500 max-w-md mx-auto">
+          All restaurant entries appear to be unique. Run the duplicate detection script to scan for potential duplicates.
         </p>
-        <code className="inline-block bg-slate-900 text-slate-100 px-4 py-2 rounded font-mono text-sm">
-          npm run find-duplicates
-        </code>
       </div>
     );
   }
@@ -52,12 +65,46 @@ export async function DuplicatesSection() {
     .select('id, name, slug, city, state, address, google_place_id, google_rating, photo_urls, status, price_tier, website_url, chef_id')
     .in('id', restaurantIds);
 
-  const restaurantMap = new Map(restaurants?.map(r => [r.id, r]) || []);
+  if (!restaurants) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-900">Failed to load restaurant details</p>
+      </div>
+    );
+  }
 
-  const candidatesWithRestaurants = candidates.map(candidate => ({
-    ...candidate,
-    restaurants: candidate.restaurant_ids.map(id => restaurantMap.get(id)).filter(Boolean),
-  })).filter(c => c.restaurants.length === 2);
+  const restaurantMap = new Map<string, Restaurant>(
+    restaurants.map(r => [r.id, r as Restaurant])
+  );
 
-  return <DuplicateReviewClient candidates={candidatesWithRestaurants} />;
+  const candidatesWithRestaurants: DuplicateCandidateWithRestaurants[] = candidates
+    .map(candidate => ({
+      ...candidate,
+      restaurants: candidate.restaurant_ids
+        .map((id: string) => restaurantMap.get(id))
+        .filter((r): r is Restaurant => r !== undefined),
+    }))
+    .filter((c): c is DuplicateCandidateWithRestaurants => c.restaurants.length === 2);
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80 p-8">
+        <div className="flex items-center gap-3 mb-2">
+          <Copy className="w-6 h-6 text-orange-500" />
+          <h2 className="font-display text-2xl font-bold text-slate-900">Potential Duplicates</h2>
+        </div>
+        <p className="font-ui text-slate-500">
+          Review restaurant pairs that may be duplicates. Merge duplicates to keep data clean.
+        </p>
+        <div className="mt-4 flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+            <span className="font-ui text-slate-600">{candidatesWithRestaurants.length} pairs to review</span>
+          </div>
+        </div>
+      </div>
+
+      <DuplicateReviewClient candidates={candidatesWithRestaurants} />
+    </div>
+  );
 }

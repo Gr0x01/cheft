@@ -1,4 +1,4 @@
-import { generateText } from 'ai';
+import { generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 
@@ -21,6 +21,10 @@ export interface RestaurantComparison {
   address1?: string | null;
   address2?: string | null;
   state?: string | null;
+  rating1?: number | null;
+  rating2?: number | null;
+  reviewCount1?: number | null;
+  reviewCount2?: number | null;
 }
 
 const DUPLICATE_DETECTION_SYSTEM_PROMPT = `You are a restaurant data analyst helping to identify duplicate restaurant entries in a database.
@@ -32,57 +36,50 @@ Guidelines:
 - Same restaurant name in DIFFERENT cities = NOT DUPLICATE (e.g., "Aba Austin" vs "Aba Chicago")
 - Different restaurants with similar names = NOT DUPLICATE (e.g., "221 South Oak" vs "221 South Oak Bistro" could be different)
 - Check addresses if provided - different addresses in same city usually means different locations
+- Use Google ratings and review counts as strong signals:
+  * Similar ratings and review counts = likely the same restaurant
+  * Very different review counts (e.g., 500 vs 50) = likely different locations
+  * One has rating/reviews, other doesn't = likely one is verified, other is unverified duplicate
 - Consider context: chains, franchise locations, sister restaurants
 
 Confidence levels:
-- 0.95+: Definitely the same restaurant (minor name variation)
-- 0.8-0.95: Very likely the same (needs address confirmation)
+- 0.95+: Definitely the same restaurant (minor name variation + similar ratings/reviews)
+- 0.8-0.95: Very likely the same (needs address or rating confirmation)
 - 0.5-0.8: Possibly the same (ambiguous)
-- <0.5: Probably different restaurants
-
-CRITICAL: You MUST respond with ONLY valid JSON. No explanatory text.
-
-Your response must match this exact structure:
-{
-  "isDuplicate": true or false,
-  "confidence": 0.0 to 1.0,
-  "reasoning": "Brief explanation of your decision"
-}
-
-Do NOT include any text before or after the JSON object.`;
+- <0.5: Probably different restaurants`;
 
 export async function checkForDuplicate(
   comparison: RestaurantComparison
 ): Promise<DuplicateCheckResult> {
-  const { name1, name2, city, address1, address2, state } = comparison;
+  const { name1, name2, city, address1, address2, state, rating1, rating2, reviewCount1, reviewCount2 } = comparison;
 
   const location = state ? `${city}, ${state}` : city;
   const addr1 = address1 ? ` at "${address1}"` : '';
   const addr2 = address2 ? ` at "${address2}"` : '';
+  
+  const rating1Text = rating1 ? ` (${rating1}★, ${reviewCount1 || 0} reviews)` : '';
+  const rating2Text = rating2 ? ` (${rating2}★, ${reviewCount2 || 0} reviews)` : '';
 
   const prompt = `Compare these two restaurants in ${location}:
 
-Restaurant A: "${name1}"${addr1}
-Restaurant B: "${name2}"${addr2}
+Restaurant A: "${name1}"${addr1}${rating1Text}
+Restaurant B: "${name2}"${addr2}${rating2Text}
 
-Are these the same restaurant? Consider name variations, addresses, and context.`;
+Are these the same restaurant? Consider name variations, addresses, ratings, and review counts.`;
 
   try {
-    const result = await generateText({
-      model: openai('gpt-5-nano'),
+    const result = await generateObject({
+      model: openai('gpt-4.1-nano'),
       system: DUPLICATE_DETECTION_SYSTEM_PROMPT,
       prompt,
+      schema: DuplicateCheckSchema,
       maxTokens: 500,
     });
 
-    const jsonText = extractJsonFromText(result.text);
-    const parsed = JSON.parse(jsonText);
-    const validated = DuplicateCheckSchema.parse(parsed);
-
     return {
-      isDuplicate: validated.isDuplicate,
-      confidence: validated.confidence,
-      reasoning: validated.reasoning,
+      isDuplicate: result.object.isDuplicate,
+      confidence: result.object.confidence,
+      reasoning: result.object.reasoning,
     };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
@@ -103,14 +100,6 @@ export async function checkMultipleDuplicates(
     comparisons.map(comp => checkForDuplicate(comp))
   );
   return results;
-}
-
-function extractJsonFromText(text: string): string {
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
-    return jsonMatch[0];
-  }
-  return text;
 }
 
 export function normalizeRestaurantName(name: string): string {

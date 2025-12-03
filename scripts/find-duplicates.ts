@@ -19,6 +19,7 @@ interface Restaurant {
   address: string | null;
   google_place_id: string | null;
   google_rating: number | null;
+  google_review_count: number | null;
   photo_urls: string[] | null;
   status: 'open' | 'closed' | 'unknown' | null;
   price_tier: string | null;
@@ -45,7 +46,7 @@ interface DuplicateReport {
 async function getAllRestaurants(): Promise<Restaurant[]> {
   const { data, error } = await supabase
     .from('restaurants')
-    .select('id, name, slug, city, state, address, google_place_id, google_rating, photo_urls, status, price_tier, website_url, chef_id')
+    .select('id, name, slug, city, state, address, google_place_id, google_rating, google_review_count, photo_urls, status, price_tier, website_url, chef_id')
     .eq('is_public', true)
     .order('city', { ascending: true })
     .order('name', { ascending: true });
@@ -77,6 +78,7 @@ async function findDuplicatesInCity(
 ): Promise<DuplicateGroup[]> {
   const duplicates: DuplicateGroup[] = [];
   const checked = new Set<string>();
+  const comparisons: Array<{r1: Restaurant, r2: Restaurant, similarity: number}> = [];
 
   console.log(`\n🔍 Scanning ${cityName} (${restaurants.length} restaurants)...`);
 
@@ -95,33 +97,54 @@ async function findDuplicatesInCity(
         continue;
       }
 
-      console.log(`   Comparing: "${r1.name}" vs "${r2.name}" (similarity: ${nameSimilarity.toFixed(2)})`);
+      comparisons.push({ r1, r2, similarity: nameSimilarity });
+    }
+  }
 
-      const result = await checkForDuplicate({
-        name1: r1.name,
-        name2: r2.name,
-        city: r1.city,
-        address1: r1.address,
-        address2: r2.address,
-        state: r1.state,
-      });
+  if (comparisons.length === 0) {
+    return duplicates;
+  }
 
+  console.log(`   Found ${comparisons.length} potential pairs to check with LLM...`);
+
+  const BATCH_SIZE = 10;
+  for (let i = 0; i < comparisons.length; i += BATCH_SIZE) {
+    const batch = comparisons.slice(i, Math.min(i + BATCH_SIZE, comparisons.length));
+    console.log(`   Checking batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(comparisons.length / BATCH_SIZE)}...`);
+
+    const results = await Promise.all(
+      batch.map(async ({ r1, r2, similarity }) => {
+        const result = await checkForDuplicate({
+          name1: r1.name,
+          name2: r2.name,
+          city: r1.city,
+          address1: r1.address,
+          address2: r2.address,
+          state: r1.state,
+          rating1: r1.google_rating,
+          rating2: r2.google_rating,
+          reviewCount1: r1.google_review_count,
+          reviewCount2: r2.google_review_count,
+        });
+
+        return { r1, r2, similarity, result };
+      })
+    );
+
+    for (const { r1, r2, similarity, result } of results) {
       if (result.isDuplicate && result.confidence >= 0.7) {
-        console.log(`   ✅ DUPLICATE FOUND (confidence: ${result.confidence.toFixed(2)})`);
-        console.log(`      Reasoning: ${result.reasoning}`);
+        console.log(`   ✅ DUPLICATE: "${r1.name}" vs "${r2.name}" (confidence: ${result.confidence.toFixed(2)})`);
 
         duplicates.push({
           restaurants: [r1, r2],
           confidence: result.confidence,
           reasoning: result.reasoning,
-          similarity: nameSimilarity,
+          similarity,
         });
-      } else if (result.confidence >= 0.5) {
-        console.log(`   ⚠️  Possible duplicate (confidence: ${result.confidence.toFixed(2)})`);
       }
-
-      await new Promise(resolve => setTimeout(resolve, 200));
     }
+
+    await new Promise(resolve => setTimeout(resolve, 500));
   }
 
   return duplicates;
@@ -190,7 +213,7 @@ async function saveDuplicatesToDatabase(groups: DuplicateGroup[]): Promise<numbe
 
 async function main() {
   try {
-    console.log('\n🗄️  Clearing previous scan results...');
+    console.log('🗄️  Clearing previous pending duplicates...');
     const { error: deleteError } = await supabase
       .from('duplicate_candidates')
       .delete()
@@ -214,14 +237,17 @@ async function main() {
     console.log(`   - Estimated cost: $${report.estimatedCost.toFixed(4)}`);
 
     if (report.duplicateGroupsFound > 0) {
-      console.log(`\n🔍 Top duplicates:`);
-      report.groups.slice(0, 5).forEach((group, i) => {
-        console.log(`   ${i + 1}. "${group.restaurants[0].name}" vs "${group.restaurants[1].name}"`);
-        console.log(`      Confidence: ${group.confidence.toFixed(2)} | City: ${group.restaurants[0].city}`);
+      console.log(`\n🔍 All duplicates found:\n`);
+      report.groups.forEach((group, i) => {
+        const [r1, r2] = group.restaurants;
+        console.log(`${i + 1}. "${r1.name}" vs "${r2.name}"`);
+        console.log(`   City: ${r1.city}, ${r1.state || 'N/A'}`);
+        console.log(`   Confidence: ${group.confidence.toFixed(2)}`);
+        console.log(`   IDs: ${r1.id} | ${r2.id}`);
+        console.log('');
       });
+      console.log(`\n👉 Review duplicates at: http://localhost:3003/admin/review`);
     }
-
-    console.log(`\n👉 Review duplicates at: http://localhost:3003/admin/review (Duplicates tab)`);
   } catch (error) {
     console.error('❌ Error:', error);
     process.exit(1);
