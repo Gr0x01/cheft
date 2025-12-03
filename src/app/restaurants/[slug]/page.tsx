@@ -6,6 +6,7 @@ import { Header } from '@/components/ui/Header';
 import { RestaurantHero } from '@/components/restaurant/RestaurantHero';
 import { MiniMapWrapper } from '@/components/restaurant/MiniMapWrapper';
 import { RestaurantSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
+import { ReportIssueButton } from '@/components/feedback/ReportIssueButton';
 
 interface RestaurantPageProps {
   params: Promise<{ slug: string }>;
@@ -306,6 +307,11 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
                       VISIT WEBSITE
                     </a>
                   )}
+                  <ReportIssueButton 
+                    entityType="restaurant" 
+                    entityId={restaurant.id} 
+                    entityName={restaurant.name}
+                  />
                 </div>
               </div>
             </section>

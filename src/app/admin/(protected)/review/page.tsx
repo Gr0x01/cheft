@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { ReviewTable } from './ReviewTable';
 import { ReviewTabs } from './ReviewTabs';
 import { DuplicatesSection } from './components/DuplicatesSection';
+import { FeedbackSection } from './components/FeedbackSection';
 import { Clock, CheckCircle2, XCircle, BarChart3, UserPlus, Store, RefreshCw, ToggleRight, Inbox } from 'lucide-react';
 
 interface QueueStats {
@@ -58,7 +59,7 @@ const typeLabels: Record<string, string> = {
 export default async function ReviewQueuePage() {
   const supabase = await createClient();
   
-  const [stats, { data: pendingItems }, { count: duplicateCount }] = await Promise.all([
+  const [stats, { data: pendingItems }, { count: duplicateCount }, { count: feedbackCount }] = await Promise.all([
     getQueueStats(supabase),
     supabase
       .from('review_queue')
@@ -68,6 +69,10 @@ export default async function ReviewQueuePage() {
       .limit(50),
     supabase
       .from('duplicate_candidates')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending'),
+    supabase
+      .from('user_feedback')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'pending'),
   ]);
@@ -156,7 +161,9 @@ export default async function ReviewQueuePage() {
       <ReviewTabs
         queueContent={queueContent}
         duplicatesContent={<DuplicatesSection />}
+        feedbackContent={<FeedbackSection />}
         duplicateCount={duplicateCount || 0}
+        feedbackCount={feedbackCount || 0}
       />
     </div>
   );

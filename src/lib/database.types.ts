@@ -666,16 +666,80 @@ export interface Database {
         };
         Relationships: [];
       };
+      user_feedback: {
+        Row: {
+          id: string;
+          entity_type: "chef" | "restaurant";
+          entity_id: string;
+          issue_type: "closed" | "incorrect_info" | "wrong_photo" | "other";
+          message: string | null;
+          status: "pending" | "reviewed" | "resolved";
+          created_at: string;
+          updated_at: string;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          resolved_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          entity_type: "chef" | "restaurant";
+          entity_id: string;
+          issue_type: "closed" | "incorrect_info" | "wrong_photo" | "other";
+          message?: string | null;
+          status?: "pending" | "reviewed" | "resolved";
+          created_at?: string;
+          updated_at?: string;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          resolved_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          entity_type?: "chef" | "restaurant";
+          entity_id?: string;
+          issue_type?: "closed" | "incorrect_info" | "wrong_photo" | "other";
+          message?: string | null;
+          status?: "pending" | "reviewed" | "resolved";
+          created_at?: string;
+          updated_at?: string;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          resolved_at?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      get_feedback_summary: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          entity_type: string;
+          entity_id: string;
+          entity_name: string;
+          issue_type: string;
+          count: number;
+          latest_message: string | null;
+          latest_created_at: string;
+          pending_count: number;
+        }[];
+      };
       increment_budget_spend: {
         Args: {
           p_month: string;
           p_amount: number;
           p_is_manual: boolean;
+        };
+        Returns: undefined;
+      };
+      resolve_feedback: {
+        Args: {
+          p_entity_type: string;
+          p_entity_id: string;
+          p_issue_type: string;
+          p_reviewed_by: string;
         };
         Returns: undefined;
       };

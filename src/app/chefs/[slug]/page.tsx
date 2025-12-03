@@ -7,6 +7,7 @@ import { TVAppearanceList } from '@/components/chef/TVAppearanceBadge';
 import { RelatedChefs } from '@/components/chef/RelatedChefs';
 import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
 import { PersonSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
+import { ReportIssueButton } from '@/components/feedback/ReportIssueButton';
 
 interface ChefPageProps {
   params: Promise<{ slug: string }>;
@@ -289,9 +290,16 @@ export default async function ChefPage({ params }: ChefPageProps) {
               style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
             >
               <div className="max-w-6xl mx-auto px-4">
-                <h2 className="font-display text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
-                  TV Appearances
-                </h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                    TV Appearances
+                  </h2>
+                  <ReportIssueButton 
+                    entityType="chef" 
+                    entityId={chef.id} 
+                    entityName={chef.name}
+                  />
+                </div>
                 <TVAppearanceList appearances={chef.chef_shows} />
               </div>
             </section>
