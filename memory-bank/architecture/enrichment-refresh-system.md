@@ -1,11 +1,11 @@
 ---
 Last-Updated: 2025-12-03
 Maintainer: RB
-Status: Planning
-Phase: Design & Specification
+Status: Phase 3 Complete - Production Ready
+Phase: Implementation
 ---
 
-# Enrichment Refresh System: Project Document
+# Enrichment Refresh System: Architecture Document
 
 ## Executive Summary
 
@@ -654,38 +654,56 @@ EnrichmentControlCenter (Server Component)
 
 ---
 
-### Phase 3: Scheduled Cron Jobs (Day 2-3) ⏰
+### Phase 3: Scheduled Cron Jobs (Day 2-3) ⏰ ✅ COMPLETE
 
 **Tasks**:
-- [ ] Create `/api/cron/monthly-refresh/route.ts`
-  - [ ] Verify cron secret authentication
-  - [ ] Check monthly budget (stop if >80% used)
-  - [ ] Implement priority scoring algorithm
-    - [ ] Calculate scores based on: restaurant count, staleness, manual flags
-    - [ ] Order chefs by priority DESC
-  - [ ] Select top 50 chefs by priority
-  - [ ] Create enrichment jobs with `type='monthly_refresh'`
-  - [ ] Set batch limits (5-10 jobs max per run)
-  - [ ] Return summary stats
+- [x] Create `/api/cron/monthly-refresh/route.ts`
+  - [x] Verify cron secret authentication
+  - [x] Check monthly budget (stop if >80% used)
+  - [x] Implement priority scoring algorithm
+    - [x] Calculate scores based on: restaurant count, staleness, manual flags
+    - [x] Order chefs by priority DESC
+  - [x] Select top 50 chefs by priority
+  - [x] Create enrichment jobs with `type='monthly_refresh'`
+  - [x] Set batch limits (5 jobs max per run, adaptive)
+  - [x] Return summary stats
 
-- [ ] Create `/api/cron/weekly-status-check/route.ts`
-  - [ ] Verify cron secret authentication
-  - [ ] Select restaurants with status='open' and last_verified_at >30 days old
-  - [ ] Order by verification_priority DESC
-  - [ ] Limit to 100 restaurants
-  - [ ] Create enrichment jobs with `type='weekly_status'`
-  - [ ] Process in batches (10-20 per cron run)
+- [x] Create `/api/cron/weekly-status-check/route.ts`
+  - [x] Verify cron secret authentication
+  - [x] Select restaurants with status='open' and last_verified_at >30 days old
+  - [x] Order by verification_priority DESC
+  - [x] Limit to 100 restaurants
+  - [x] Create enrichment jobs with `type='weekly_status'`
+  - [x] Process in batches (20 jobs per cron run)
 
-- [ ] Update `vercel.json` with new cron schedules
-  - [ ] Add monthly-refresh: `0 2 1 * *` (1st of month, 2 AM UTC)
-  - [ ] Add weekly-status-check: `0 3 * * 0` (Sunday, 3 AM UTC)
+- [x] Update `vercel.json` with new cron schedules
+  - [x] Add monthly-refresh: `0 2 1 * *` (1st of month, 2 AM UTC)
+  - [x] Add weekly-status-check: `0 3 * * 0` (Sunday, 3 AM UTC)
 
-- [ ] Test cron jobs locally (manual trigger via curl)
+- [x] Test cron jobs locally (manual trigger via curl)
+
+- [x] Code review and fixes
+  - [x] **code-reviewer subagent review** completed
+  - [x] UUID validation for chef_id added
+  - [x] Hard-coded values moved to constants (VERIFICATION_CONFIG)
+  - [x] Error handling standardized (continue instead of throw)
+  - [x] Error logging consistency improved
 
 **Deliverables**:
-- 2 new cron routes with budget safety checks
-- Updated `vercel.json` with 3 total cron jobs
-- Local cron tests pass (manual HTTP calls)
+- ✅ `/src/app/api/cron/monthly-refresh/route.ts` (215 lines)
+- ✅ `/src/app/api/cron/weekly-status-check/route.ts` (181 lines)
+- ✅ Updated `vercel.json` with 3 total cron jobs
+- ✅ Local cron tests pass (5 jobs + 20 jobs created successfully)
+- ✅ TypeScript compilation clean for new files
+- ✅ All code review fixes applied
+
+**Key Features Implemented**:
+- Priority scoring: `(restaurants × 10) + (staleness × 0.5) + manual_flag + base_priority`
+- Budget safety checks with adaptive batch sizing (halves at 80% threshold)
+- UUID validation with custom regex function
+- Configuration constants (VERIFICATION_CONFIG)
+- Graceful error handling without breaking job processing
+- Comprehensive logging for monitoring
 
 ---
 

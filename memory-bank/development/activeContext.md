@@ -37,8 +37,24 @@ Status: Phase 3 - SEO Enhancement Complete
 
 ## In Progress
 - Planning contribution and verification systems
+- Enrichment refresh system: Phase 4 (Admin UI Enhancement) - see `/memory-bank/architecture/enrichment-refresh-system.md`
 
 ## Recently Completed (Dec 3, 2025)
+- ✅ **Enrichment Refresh System Phase 3: Scheduled Cron Jobs** - Automated data refresh
+  - **Monthly refresh cron**: Re-enriches top 50 chefs on 1st of month (2 AM UTC)
+  - **Weekly status check cron**: Verifies restaurant status every Sunday (3 AM UTC)
+  - **Features**:
+    - Priority scoring: `(restaurants × 10) + (staleness × 0.5) + manual_flag + base_priority`
+    - Budget safety with adaptive batch sizing (halves at 80% threshold)
+    - UUID validation for data integrity
+    - Configuration constants (VERIFICATION_CONFIG)
+    - Standardized error handling for resilience
+  - **Files**: `monthly-refresh/route.ts` (215 lines), `weekly-status-check/route.ts` (181 lines)
+  - **Testing**: 5 monthly jobs + 20 weekly jobs created successfully
+  - **Code review**: All critical/warning issues addressed
+  - **Status**: Ready for Vercel deployment
+
+## Recently Completed (Dec 3, 2025) - Earlier
 - ✅ **Performance Optimization: N+1 Query Elimination** - Critical database optimization
   - **Fixed SQL injection vulnerability** in search query (input sanitization)
   - **Added 4 critical indexes**: `idx_shows_slug`, `idx_chef_shows_show_season`, `idx_chef_shows_season`, `idx_restaurants_chef_public`
