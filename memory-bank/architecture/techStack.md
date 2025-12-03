@@ -15,7 +15,7 @@ Modern web stack optimized for rapid development and minimal operational overhea
 - **Database**: Supabase (PostgreSQL with vector extensions)
 - **Storage**: Supabase Storage (for chef/restaurant photos)
 - **Authentication**: Supabase Auth (for admin tools)
-- **LLM**: OpenAI API (GPT-4 for enrichment, GPT-3.5-turbo for query interpretation)
+- **LLM**: OpenAI API (primary: gpt-5-mini for enrichment, see [llm-models.md](./llm-models.md) for complete model reference and pricing)
 
 ### Frontend
 - **Framework**: Next.js 14+ with React 18

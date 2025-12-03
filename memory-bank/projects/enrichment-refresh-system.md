@@ -599,37 +599,58 @@ EnrichmentControlCenter (Server Component)
 
 ---
 
-### Phase 2: Budget & Cost Tracking + API Endpoints (Day 2) 🔌
+### Phase 2: Budget & Cost Tracking + API Endpoints (Day 2) 🔌 ✅ COMPLETE
 
 **Tasks**:
-- [ ] Create budget helper library
-  - [ ] `lib/enrichment/constants.ts` - Config defaults (budget limits, batch sizes, cost estimates)
-  - [ ] `lib/enrichment/budget.ts` - Helper functions
-    - [ ] `estimateCost(tokensUsed)` based on gpt-5-mini pricing
-    - [ ] `getBudgetForMonth(date)` query function
-    - [ ] `checkBudgetAvailable(estimatedCost)` validation
+- [x] Create budget helper library
+  - [x] `lib/enrichment/constants.ts` - Config defaults (budget limits, batch sizes, cost estimates, model pricing)
+  - [x] `lib/enrichment/budget.ts` - Helper functions
+    - [x] `getModelPricing(modelName)` - Get pricing for any model from constants
+    - [x] `estimateCostFromTokens(tokensUsed, modelName)` - Calculate cost from token usage
+    - [x] `getBudgetForMonth(date)` - Query monthly budget from DB
+    - [x] `checkBudgetAvailable(estimatedCost)` - Validate against budget limits
+    - [x] `incrementBudgetSpend(month, cost, isManual)` - Update budget tracking
+    - [x] `ensureBudgetExists()` - Initialize budget for new month
+    - [x] `updateBudgetLimit()` - Admin function to change budget
 
-- [ ] Update existing enrichment flow
-  - [ ] Modify `process-approved-queue/route.ts` to set `enrichment_type='initial'`
-  - [ ] Update to save `tokens_used` and `cost_usd` after enrichment
-  - [ ] Call `increment_budget_spend()` after successful enrichment
+- [x] Update existing enrichment flow
+  - [x] Modified `process-approved-queue/route.ts` to set `enrichment_type='initial'`
+  - [x] Updated to save `tokens_used` and `cost_usd` after enrichment
+  - [x] Call `incrementBudgetSpend()` after successful enrichment
+  - [x] Added logging for cost tracking
 
-- [ ] Create `/api/admin/enrichment/*` routes
-  - [ ] `trigger-chef/route.ts` - Manual chef re-enrichment
-  - [ ] `trigger-restaurant-status/route.ts` - Manual restaurant status check
-  - [ ] `bulk-refresh/route.ts` - Batch operations
-  - [ ] `stats/route.ts` - Budget & job statistics
-  - [ ] `budget/route.ts` - Update budget limits
+- [x] Create `/api/admin/enrichment/*` routes
+  - [x] `trigger-chef/route.ts` - Manual chef re-enrichment with type selection
+  - [x] `trigger-restaurant-status/route.ts` - Manual restaurant status check
+  - [x] `bulk-refresh/route.ts` - Batch operations with budget validation
+  - [x] `stats/route.ts` - Budget & job statistics dashboard data
+  - [x] `budget/route.ts` - Update budget limits (PATCH endpoint)
 
-- [ ] Add auth middleware (verify admin user via Supabase Auth)
+- [x] Add auth middleware
+  - [x] `lib/auth/admin.ts` - Admin authentication helpers
+  - [x] `verifyAdminAuth()` - Verify Supabase Auth token
+  - [x] Response helpers for consistent error handling
 
-- [ ] Add error handling and validation (Zod schemas)
+- [x] Add error handling and validation
+  - [x] Zod schemas for all request bodies
+  - [x] Comprehensive error responses
+  - [x] Budget validation before job creation
 
 **Deliverables**:
-- Budget helper library (2 files)
-- Updated cron route with cost tracking
-- 5 new API route files
-- API tests (manual via curl or admin UI)
+- ✅ Budget helper library (2 files: constants.ts, budget.ts)
+- ✅ Auth middleware (1 file: lib/auth/admin.ts)
+- ✅ Updated cron route with cost tracking
+- ✅ 5 new API route files (trigger-chef, trigger-restaurant-status, bulk-refresh, stats, budget)
+- ✅ TypeScript types updated for new DB schema
+- ✅ Model pricing reference documentation (`memory-bank/architecture/llm-models.md`)
+- ✅ All TypeScript compilation errors resolved
+
+**Key Improvements**:
+- Centralized model pricing in architecture docs (not hardcoded)
+- Budget tracking separated for automated vs manual triggers
+- Comprehensive budget validation before expensive operations
+- Admin API secured with Supabase Auth
+- Cost estimation based on actual model pricing
 
 ---
 

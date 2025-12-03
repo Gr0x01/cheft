@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Database } from '@/lib/database.types';
 import { createLLMEnricher } from '../../../../../scripts/ingestion/processors/llm-enricher';
 import { extractShowSlugFromWikiUrl } from '@/lib/utils/show-mapping';
+import { estimateCostFromTokens, incrementBudgetSpend } from '@/lib/enrichment/budget';
+import { ENRICHMENT_TYPE, DEFAULT_MODEL } from '@/lib/enrichment/constants';
 
 export const maxDuration = 300;
 
@@ -147,6 +149,8 @@ export async function GET(request: NextRequest) {
             chef_id: newChef.id,
             queue_item_id: item.id,
             status: 'queued',
+            enrichment_type: ENRICHMENT_TYPE.INITIAL,
+            triggered_by: 'cron',
           })
           .select('id')
           .single();
@@ -231,16 +235,22 @@ export async function GET(request: NextRequest) {
           );
 
           if (enrichResult.success && enrichResult.miniBio) {
+            const costUsd = estimateCostFromTokens(enrichResult.tokensUsed, DEFAULT_MODEL);
+            
             await supabase
               .from('enrichment_jobs')
               .update({
                 status: 'completed',
                 completed_at: new Date().toISOString(),
+                tokens_used: JSON.parse(JSON.stringify(enrichResult.tokensUsed)),
+                cost_usd: costUsd,
               })
               .eq('id', job.id);
 
+            await incrementBudgetSpend(supabase, costUsd, false);
+
             results.enrichmentJobsCompleted++;
-            console.log(`[Cron] ✅ Enriched ${chef.name}: Bio + ${enrichResult.restaurants.length} restaurants`);
+            console.log(`[Cron] ✅ Enriched ${chef.name}: Bio + ${enrichResult.restaurants.length} restaurants (cost: $${costUsd.toFixed(4)})`);
           } else {
             throw new Error(enrichResult.error || 'Enrichment failed');
           }
