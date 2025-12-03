@@ -90,7 +90,7 @@ export default function Home({ initialRestaurants, initialFeaturedChefs, stats, 
               Find Chef-Driven Restaurants
             </h1>
             <p className="hero-subtitle">
-              Top Chef, Iron Chef, James Beard winners, and more
+              Top Chef, Tournament of Champions, James Beard winners, and more
             </p>
             <div className="hero-stats-row">
               <div className="hero-stat-item">

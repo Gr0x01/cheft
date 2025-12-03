@@ -98,6 +98,7 @@ body {
   flex-direction: column;
   min-height: 100vh;
   overflow-x: hidden;
+  padding-top: 64px;
 }
 
 .sidebar-search {

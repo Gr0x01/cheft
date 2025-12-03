@@ -1,14 +1,33 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 interface HeaderProps {
   currentPage?: 'chefs' | 'restaurants' | 'cities' | 'home';
 }
 
 export function Header({ currentPage }: HeaderProps) {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <header 
-      className="sticky top-0 z-50 border-b"
-      style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
+      className="fixed top-0 left-0 right-0 border-b transition-shadow duration-200"
+      style={{ 
+        background: 'var(--bg-secondary)', 
+        borderColor: 'var(--border-light)',
+        boxShadow: isScrolled ? '0 2px 8px rgba(0, 0, 0, 0.08)' : 'none',
+        zIndex: 9999
+      }}
     >
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">

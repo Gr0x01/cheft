@@ -266,8 +266,7 @@ export const db = {
       .not('photo_url', 'is', null)
       .not('mini_bio', 'is', null)
       .eq('restaurants.is_public', true)
-      .order('created_at', { ascending: true })
-      .limit(50);
+      .limit(100);
     
     if (error) {
       console.error('Error fetching featured chef:', error);
@@ -288,23 +287,16 @@ export const db = {
       };
     });
     
-    const eligibleChefs = chefsWithData.filter(chef => chef.restaurant_count > 0);
+    const eligibleChefs = chefsWithData.filter(chef => chef.restaurant_count >= 3);
     
-    eligibleChefs.sort((a, b) => {
-      const aIsWinner = a.chef_shows?.some((cs: any) => cs.result === 'winner') || a.james_beard_status === 'winner';
-      const bIsWinner = b.chef_shows?.some((cs: any) => cs.result === 'winner') || b.james_beard_status === 'winner';
-      
-      if (aIsWinner && !bIsWinner) return -1;
-      if (!aIsWinner && bIsWinner) return 1;
-      
-      return b.restaurant_count - a.restaurant_count;
-    });
+    if (eligibleChefs.length === 0) return null;
     
-    return eligibleChefs[0] || null;
+    const randomIndex = Math.floor(Math.random() * eligibleChefs.length);
+    return eligibleChefs[randomIndex];
   },
 
-  // Get featured chefs (winners with photos, sorted by restaurant count)
-  async getFeaturedChefs(limit: number = 12) {
+  // Get featured chefs (chefs with photos and restaurants, randomized)
+  async getFeaturedChefs(limit: number = 12, excludeChefId?: string) {
     const client = getSupabaseClient();
     const { data, error } = await client
       .from('chefs')
@@ -321,8 +313,7 @@ export const db = {
         )
       `)
       .not('photo_url', 'is', null)
-      .order('created_at', { ascending: true })
-      .limit(limit);
+      .limit(100);
     
     if (error) throw error;
     
@@ -341,18 +332,18 @@ export const db = {
       })
     );
     
-    return chefsWithRestaurantCount
-      .filter(chef => chef.restaurant_count > 0)
-      .sort((a, b) => {
-        const aIsWinner = a.chef_shows?.some((cs: any) => cs.result === 'winner') || a.james_beard_status === 'winner';
-        const bIsWinner = b.chef_shows?.some((cs: any) => cs.result === 'winner') || b.james_beard_status === 'winner';
-        
-        if (aIsWinner && !bIsWinner) return -1;
-        if (!aIsWinner && bIsWinner) return 1;
-        
-        return b.restaurant_count - a.restaurant_count;
-      })
-      .slice(0, limit);
+    let eligible = chefsWithRestaurantCount.filter(chef => chef.restaurant_count >= 2);
+    
+    if (excludeChefId) {
+      eligible = eligible.filter(chef => chef.id !== excludeChefId);
+    }
+    
+    for (let i = eligible.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [eligible[i], eligible[j]] = [eligible[j], eligible[i]];
+    }
+    
+    return eligible.slice(0, limit);
   },
 
   async getStats() {
