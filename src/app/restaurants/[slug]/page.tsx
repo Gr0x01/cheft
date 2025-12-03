@@ -241,7 +241,7 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
       />
       <BreadcrumbSchema items={breadcrumbItems} />
 
-      <div className="min-h-screen overflow-auto" style={{ background: 'var(--bg-primary)' }}>
+      <div className="min-h-screen overflow-auto" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
         <Header currentPage="restaurants" />
 
         <main>

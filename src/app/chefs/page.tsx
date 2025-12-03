@@ -116,6 +116,7 @@ export default async function ChefsPage({
   const filterOptions = [
     { href: '/chefs', label: 'ALL', isActive: !params.show && !params.jb },
     { href: '/chefs?show=top+chef', label: 'TOP CHEF', isActive: params.show === 'top chef' },
+    { href: '/chefs?show=tournament+of+champions', label: 'TOURNAMENT OF CHAMPIONS', isActive: params.show === 'tournament of champions' },
     { 
       href: '/chefs?jb=winner', 
       label: 'JB WINNERS', 
@@ -139,7 +140,7 @@ export default async function ChefsPage({
       />
       <BreadcrumbSchema items={breadcrumbItems} />
 
-      <div className="min-h-screen overflow-auto" style={{ background: 'var(--bg-primary)' }}>
+      <div className="min-h-screen overflow-auto" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
         <Header currentPage="chefs" />
 
         <PageHero

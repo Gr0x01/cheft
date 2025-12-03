@@ -91,7 +91,7 @@ export default async function CitiesPage({
       />
       <BreadcrumbSchema items={breadcrumbItems} />
 
-      <div className="min-h-screen overflow-auto" style={{ background: 'var(--bg-primary)' }}>
+      <div className="min-h-screen overflow-auto" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
         <Header currentPage="cities" />
 
         <PageHero

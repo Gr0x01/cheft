@@ -178,7 +178,7 @@ export default async function CityPage({ params }: CityPageProps) {
         })) ?? []}
       />
 
-      <div className="min-h-screen overflow-auto" style={{ background: 'var(--bg-primary)' }}>
+      <div className="min-h-screen overflow-auto" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
         <Header />
 
         <PageHero

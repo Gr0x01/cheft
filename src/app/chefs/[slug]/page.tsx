@@ -270,7 +270,7 @@ export default async function ChefPage({ params }: ChefPageProps) {
       />
       <BreadcrumbSchema items={breadcrumbItems} />
 
-      <div className="min-h-screen overflow-auto" style={{ background: 'var(--bg-primary)' }}>
+      <div className="min-h-screen overflow-auto" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
         <Header currentPage="chefs" />
 
         <main>

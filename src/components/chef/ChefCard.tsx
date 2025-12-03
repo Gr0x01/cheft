@@ -61,13 +61,10 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
             quality={60}
           />
         ) : (
-          <div 
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, var(--slate-100) 0%, var(--slate-200) 100%)' }}
-          >
+          <div className="compact-image-placeholder">
             <span 
               className="font-display text-7xl font-bold"
-              style={{ color: 'var(--slate-300)' }}
+              style={{ color: 'white' }}
             >
               {chef.name.charAt(0)}
             </span>

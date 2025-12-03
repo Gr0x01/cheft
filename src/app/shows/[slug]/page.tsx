@@ -67,7 +67,7 @@ export default async function ShowPage({ params }: ShowPageProps) {
   const totalRestaurants = allChefs.reduce((sum: number, cs: any) => sum + (cs.chef.restaurant_count || 0), 0);
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
       <Header />
       <PageHero
         title={show.name}

@@ -38,7 +38,6 @@ export default function Home({ initialRestaurants, initialFeaturedChefs, stats, 
   const restaurants = initialRestaurants;
   const featuredChefs = initialFeaturedChefs;
   const isLoading = false;
-  const error = null;
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
@@ -187,8 +186,7 @@ export default function Home({ initialRestaurants, initialFeaturedChefs, stats, 
             >
               <option value="all">All Shows</option>
               <option value="top chef">Top Chef</option>
-              <option value="iron chef">Iron Chef</option>
-              <option value="hell's kitchen">Hell&apos;s Kitchen</option>
+              <option value="tournament of champions">Tournament of Champions</option>
             </select>
             
             <select
