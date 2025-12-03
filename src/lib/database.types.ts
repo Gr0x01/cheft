@@ -207,6 +207,8 @@ export interface Database {
           started_at: string | null
           completed_at: string | null
           created_at: string
+          retry_count: number
+          last_retry_at: string | null
         }
         Insert: {
           id?: string
@@ -219,6 +221,8 @@ export interface Database {
           started_at?: string | null
           completed_at?: string | null
           created_at?: string
+          retry_count?: number
+          last_retry_at?: string | null
         }
         Update: {
           id?: string
@@ -226,6 +230,8 @@ export interface Database {
           queue_item_id?: string | null
           status?: 'queued' | 'processing' | 'completed' | 'failed'
           error_message?: string | null
+          retry_count?: number
+          last_retry_at?: string | null
           locked_until?: string | null
           locked_by?: string | null
           started_at?: string | null

@@ -27,6 +27,14 @@ interface ChefWithShows {
   }>;
 }
 
+interface EnrichmentJobWithChef {
+  id: string;
+  chef_id: string;
+  retry_count: number;
+  last_retry_at: string | null;
+  chefs: ChefWithShows;
+}
+
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
@@ -76,7 +84,7 @@ export async function GET(request: NextRequest) {
       errors: [] as string[],
     };
 
-    for (const item of approvedItems as QueueItem[]) {
+    for (const item of approvedItems as unknown as QueueItem[]) {
       try {
         const itemData = item.data;
         const chefName = itemData.name;
@@ -165,11 +173,20 @@ export async function GET(request: NextRequest) {
     const workerId = `cron-${Date.now()}`;
     const lockTimeout = new Date(Date.now() + 10 * 60 * 1000);
 
+    const now = new Date();
+    const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+    const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
+    const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
+
     const { data: queuedJobs, error: jobsError } = await supabase
       .from('enrichment_jobs')
-      .select('id, chef_id, chefs!inner(name, chef_shows(shows(name), season, result))')
-      .eq('status', 'queued')
-      .or('locked_until.is.null,locked_until.lt.' + new Date().toISOString())
+      .select('id, chef_id, retry_count, last_retry_at, chefs!inner(name, chef_shows(shows(name), season, result))')
+      .or(
+        `and(status.eq.queued,or(locked_until.is.null,locked_until.lt.${now.toISOString()})),` +
+        `and(status.eq.failed,retry_count.eq.0,or(last_retry_at.is.null,last_retry_at.lt.${fiveMinutesAgo.toISOString()})),` +
+        `and(status.eq.failed,retry_count.eq.1,last_retry_at.lt.${fifteenMinutesAgo.toISOString()}),` +
+        `and(status.eq.failed,retry_count.eq.2,last_retry_at.lt.${thirtyMinutesAgo.toISOString()})`
+      )
       .order('created_at', { ascending: true })
       .limit(2);
 
@@ -190,14 +207,14 @@ export async function GET(request: NextRequest) {
 
       const llmEnricher = createLLMEnricher(supabase);
 
-      for (const job of queuedJobs) {
+      for (const job of queuedJobs as EnrichmentJobWithChef[]) {
         try {
           await supabase
             .from('enrichment_jobs')
             .update({ status: 'processing', started_at: new Date().toISOString() })
             .eq('id', job.id);
 
-          const chef = job.chefs as ChefWithShows;
+          const chef = job.chefs;
           const showInfo = chef.chef_shows?.[0];
           const showName = showInfo?.shows?.name || 'Top Chef';
           const season = showInfo?.season;
@@ -209,7 +226,7 @@ export async function GET(request: NextRequest) {
             job.chef_id,
             chef.name,
             showName,
-            { season, result, dryRun: false }
+            { season: season ?? undefined, result: result ?? undefined, dryRun: false }
           );
 
           if (enrichResult.success && enrichResult.miniBio) {
@@ -230,14 +247,39 @@ export async function GET(request: NextRequest) {
           const errorMsg = error instanceof Error ? error.message : String(error);
           console.error(`[Cron] ❌ Failed to enrich job ${job.id}:`, errorMsg);
 
-          await supabase
-            .from('enrichment_jobs')
-            .update({
-              status: 'failed',
-              error_message: errorMsg.substring(0, 500),
-              completed_at: new Date().toISOString(),
-            })
-            .eq('id', job.id);
+          const currentRetryCount = job.retry_count;
+          const newRetryCount = currentRetryCount + 1;
+          const maxRetries = 3;
+
+          if (newRetryCount < maxRetries) {
+            await supabase
+              .from('enrichment_jobs')
+              .update({
+                status: 'queued',
+                error_message: errorMsg.substring(0, 500),
+                retry_count: newRetryCount,
+                last_retry_at: new Date().toISOString(),
+                locked_until: null,
+                locked_by: null,
+              })
+              .eq('id', job.id)
+              .eq('retry_count', currentRetryCount);
+
+            console.log(`[Cron] 🔄 Job ${job.id} will retry (attempt ${newRetryCount}/${maxRetries})`);
+          } else {
+            await supabase
+              .from('enrichment_jobs')
+              .update({
+                status: 'failed',
+                error_message: errorMsg.substring(0, 500),
+                completed_at: new Date().toISOString(),
+                retry_count: newRetryCount,
+                last_retry_at: new Date().toISOString(),
+              })
+              .eq('id', job.id);
+
+            console.log(`[Cron] ❌ Job ${job.id} permanently failed after ${maxRetries} retries`);
+          }
 
           results.enrichmentJobsFailed++;
           results.errors.push(`Enrichment job ${job.id}: ${errorMsg}`);
