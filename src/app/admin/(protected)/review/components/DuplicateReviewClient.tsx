@@ -193,10 +193,29 @@ export function DuplicateReviewClient({ groups }: DuplicateReviewClientProps) {
     }
   };
 
-  const handleKeepAll = () => {
-    setSkipped(prev => new Set([...prev, currentIndex]));
-    setSelectedIds(new Set());
-    setCurrentIndex(prev => prev + 1);
+  const handleKeepAll = async () => {
+    setMerging(true);
+    try {
+      const response = await fetch('/api/admin/duplicates/keep-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          groupId: currentGroup.group_id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Keep all failed');
+      }
+
+      setSelectedIds(new Set());
+      setCurrentIndex(prev => prev + 1);
+    } catch (error) {
+      console.error('Keep all error:', error);
+      alert('Failed to mark as reviewed. Please try again.');
+    } finally {
+      setMerging(false);
+    }
   };
 
   const handleBack = () => {
