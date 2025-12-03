@@ -648,6 +648,17 @@ body {
   height: 6px;
 }
 
+.marker-wrapper.closed .marker-dot {
+  background: #94a3b8;
+  box-shadow: 0 2px 8px rgba(148, 163, 184, 0.3), 0 0 0 1px rgba(148, 163, 184, 0.1);
+}
+
+.marker-wrapper.closed.selected .marker-dot,
+.marker-wrapper.closed.hovered .marker-dot {
+  background: #64748b;
+  box-shadow: 0 4px 12px rgba(100, 116, 139, 0.4), 0 0 0 2px #94a3b8;
+}
+
 .marker-label {
   position: absolute;
   top: -10px;

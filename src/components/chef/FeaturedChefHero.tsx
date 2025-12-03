@@ -42,7 +42,8 @@ export function FeaturedChefHero({ chef }: FeaturedChefHeroProps) {
   const isJudge = primaryShow?.result === 'judge';
   const photoUrl = chef.photo_url;
   const restaurants = chef.restaurants || [];
-  const displayRestaurants = restaurants.slice(0, 4);
+  const openRestaurants = restaurants.filter(r => r.status === 'open');
+  const displayRestaurants = openRestaurants.slice(0, 4);
 
   return (
     <section 
@@ -217,30 +218,41 @@ export function FeaturedChefHero({ chef }: FeaturedChefHeroProps) {
 
               {/* Restaurants Preview */}
               {displayRestaurants.length > 0 && (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {displayRestaurants.map((restaurant, index) => (
                       <RestaurantPreviewCard key={restaurant.id} restaurant={restaurant} index={index} />
                     ))}
                   </div>
-                  {chef.restaurant_count && chef.restaurant_count > 4 && (
-                    <Link
-                      href={`/chefs/${chef.slug}`}
-                      className="inline-flex items-center gap-2 font-mono text-sm font-semibold tracking-wide transition-colors duration-200 group"
-                      style={{ color: 'var(--accent-primary)' }}
+                  <Link
+                    href={`/chefs/${chef.slug}`}
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 font-mono text-sm font-bold tracking-wider uppercase transition-all duration-200 group"
+                    style={{
+                      background: 'var(--accent-primary)',
+                      color: 'white',
+                      borderRadius: 'var(--radius-md)',
+                      border: '2px solid var(--accent-primary)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'var(--accent-primary)';
+                      e.currentTarget.style.color = 'white';
+                    }}
+                  >
+                    View Full Profile
+                    <svg
+                      className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2.5}
                     >
-                      View All {chef.restaurant_count} Restaurants
-                      <svg
-                        className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        strokeWidth={2}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Link>
-                  )}
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
                 </div>
               )}
             </div>

@@ -276,7 +276,7 @@ export const db = {
     
     const chefsWithData = (chefs as any[]).map((chef: any) => {
       const restaurants = (chef.restaurants || [])
-        .filter((r: any) => r.google_rating !== null)
+        .filter((r: any) => r.status === 'open' && r.google_rating !== null)
         .sort((a: any, b: any) => (b.google_rating || 0) - (a.google_rating || 0))
         .slice(0, 4);
       

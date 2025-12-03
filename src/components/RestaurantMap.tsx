@@ -46,12 +46,14 @@ function RestaurantMarker({
     setIsMounted(true);
   }, []);
 
+  const isClosed = restaurant.status === 'closed';
+
   const markerIcon = useMemo(() => {
     if (!isMounted) return null;
     return new DivIcon({
       className: 'custom-marker',
       html: `
-        <div class="marker-wrapper ${isSelected ? 'selected' : ''} ${isHovered ? 'hovered' : ''}">
+        <div class="marker-wrapper ${isSelected ? 'selected' : ''} ${isHovered ? 'hovered' : ''} ${isClosed ? 'closed' : ''}">
           <div class="marker-dot">
             <div class="marker-inner"></div>
           </div>
@@ -62,7 +64,7 @@ function RestaurantMarker({
       iconAnchor: [6, 6],
       popupAnchor: [0, -8]
     });
-  }, [isMounted, isSelected, isHovered, restaurant.name]);
+  }, [isMounted, isSelected, isHovered, restaurant.name, isClosed]);
 
   if (!restaurant.lat || !restaurant.lng || !markerIcon) return null;
 
