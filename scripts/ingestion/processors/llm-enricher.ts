@@ -4,8 +4,6 @@ import { z } from 'zod';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../src/lib/database.types';
 import { logDataChange } from '../queue/audit-log';
-import { createImageStorageService } from '../services/image-storage';
-import { createGoogleImageSearchTool } from '../services/google-images';
 import { checkForDuplicate } from '../../../src/lib/duplicates/detector';
 
 function stripCitations(value: string | null | undefined): string | null {
@@ -69,7 +67,7 @@ export interface ChefEnrichmentResult {
   jamesBeardStatus: string | null;
   notableAwards: string[] | null;
   photoUrl: string | null;
-  photoSource: 'show_website' | 'llm_search' | null;
+  photoSource: 'wikipedia' | null;
   photoConfidence: number;
   tokensUsed: TokenUsage;
   success: boolean;
@@ -136,13 +134,9 @@ Awards Guidelines:
 - Only include prestigious, verifiable awards
 
 Photo Guidelines:
-- Use the google_image_search tool to find professional headshots
-- Search for: "{chef name} chef headshot" or "{chef name} chef professional photo"
-- Look through the results and select the BEST professional headshot
-- Choose photos that are: clear headshots, professional lighting, recent, solo portraits
-- Avoid: group photos, cooking action shots, low-res images, logos, graphics
-- Return the direct image URL (not a web page URL)
-- Set photoConfidence: 0.9+ for clear professional headshots, 0.7-0.9 for decent photos, omit if <0.7
+- DO NOT include photo URLs in your response
+- Photos will be sourced separately from Wikipedia/Wikimedia Commons
+- Set photoUrl to null and omit photoConfidence
 
 CRITICAL: You MUST respond with ONLY valid JSON. Do not include any explanatory text, conversational responses, or anything other than the JSON object itself.
 
@@ -272,7 +266,6 @@ export function createLLMEnricher(
 ) {
   const modelName = config.model ?? 'gpt-5-mini';
   const maxRestaurants = config.maxRestaurantsPerChef ?? 10;
-  const imageStorageService = createImageStorageService(supabase);
 
   let totalTokensUsed: TokenUsage = { prompt: 0, completion: 0, total: 0 };
 
@@ -324,33 +317,10 @@ export function createLLMEnricher(
 
       const restaurants = validated.restaurants.slice(0, maxRestaurants);
 
-      let photoUrl: string | null = null;
-      let photoSource: 'llm_search' | null = null;
-      let photoConfidence = 0;
-
-      let sourcePhotoUrl: string | null = null;
-
-      if (validated.photoUrl && (validated.photoConfidence ?? 0) >= 0.7) {
-        sourcePhotoUrl = validated.photoUrl;
-        photoSource = 'llm_search';
-        photoConfidence = validated.photoConfidence ?? 0.7;
-      }
-
-      if (sourcePhotoUrl && photoSource) {
-        const uploadResult = await imageStorageService.downloadAndUploadChefPhoto(
-          chefId,
-          chefName,
-          sourcePhotoUrl
-        );
-
-        if (uploadResult.success) {
-          photoUrl = uploadResult.publicUrl;
-        } else {
-          console.warn(`   ⚠️  Photo upload failed: ${uploadResult.error || 'unknown error'}`);
-          photoUrl = null;
-          photoSource = null;
-        }
-      }
+      // Photos are handled separately by media-enricher (Wikipedia-only)
+      const photoUrl: string | null = null;
+      const photoSource: 'wikipedia' | null = null;
+      const photoConfidence = 0;
 
       return {
         chefId,

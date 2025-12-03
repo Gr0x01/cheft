@@ -66,7 +66,7 @@ export interface Database {
           country: string | null;
           james_beard_status: "semifinalist" | "nominated" | "winner" | null;
           photo_url: string | null;
-          photo_source: "wikipedia" | "tmdb" | "llm_search" | "manual" | null;
+          photo_source: "wikipedia" | "manual" | null;
           social_links: Json | null;
           notable_awards: string[] | null;
           instagram_handle: string | null;
