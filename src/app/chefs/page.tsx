@@ -10,11 +10,11 @@ import { ItemListSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 export const revalidate = 604800; // 1 week
 
 export const metadata: Metadata = {
-  title: 'All TV Chefs - Top Chef, Iron Chef & More | Cheft',
+  title: 'Chefs - Top Chef, Iron Chef & More | Cheft',
   description:
     'Browse 180+ chefs from Top Chef, Iron Chef, and other cooking competitions. Find their restaurants, see their achievements, and discover where they cook.',
   openGraph: {
-    title: 'All TV Chefs - Top Chef, Iron Chef & More | Cheft',
+    title: 'Chefs - Top Chef, Iron Chef & More | Cheft',
     description:
       'Browse 180+ chefs from Top Chef, Iron Chef, and other cooking competitions.',
     type: 'website',
@@ -143,7 +143,7 @@ export default async function ChefsPage({
         <Header currentPage="chefs" />
 
         <PageHero
-          title="TV Chefs"
+          title="Chefs"
           subtitle={`${chefsWithCount.length} competition chefs and their restaurants`}
           stats={[
             { value: winnersCount, label: 'WINNERS' },

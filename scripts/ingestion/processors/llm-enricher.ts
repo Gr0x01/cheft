@@ -38,7 +38,7 @@ const RestaurantSchema = z.object({
   priceRange: enumWithCitationStrip(['$', '$$', '$$$', '$$$$'] as const),
   status: enumWithCitationStrip(['open', 'closed', 'unknown'] as const),
   website: z.string().nullable().optional(),
-  role: z.string().nullable().optional(),
+  role: enumWithCitationStrip(['owner', 'executive_chef', 'partner', 'consultant'] as const),
   opened: z.number().nullable().optional(),
   michelinStars: z.number().min(0).max(3).nullable().optional().transform(val => val === null ? null : val),
   awards: z.array(z.string()).nullable().optional(),
@@ -117,8 +117,11 @@ Your task: Use web search to find accurate, up-to-date information about the che
 4. Notable awards (e.g., Michelin Guide recognition, World's 50 Best, AAA Five Diamond)
 5. A high-quality professional headshot photo URL (if available with high confidence)
 
+IMPORTANT: After gathering enough information (typically 5-10 searches), YOU MUST return your final JSON response. Do not continue searching indefinitely.
+
 Guidelines:
 - Only include restaurants where the chef has a significant role (owner, partner, executive chef)
+- Limit to the chef's 5-10 most notable/current restaurants (don't search for every restaurant)
 - Include closed restaurants but mark them as "closed"
 - Verify restaurant status is current (within last year)
 - Be conservative - if unsure about a detail, omit it
@@ -140,7 +143,9 @@ Photo Guidelines:
 - Return the direct image URL (not a web page URL)
 - Set photoConfidence: 0.9+ for clear professional headshots, 0.7-0.9 for decent photos, omit if <0.7
 
-IMPORTANT: Return your response as valid JSON matching this exact structure:
+CRITICAL: You MUST respond with ONLY valid JSON. Do not include any explanatory text, conversational responses, or anything other than the JSON object itself.
+
+Your response must be a single JSON object matching this exact structure:
 {
   "miniBio": "2-3 sentence bio",
   "restaurants": [
@@ -163,7 +168,9 @@ IMPORTANT: Return your response as valid JSON matching this exact structure:
   "notableAwards": ["Award Name (Year)"] or null,
   "photoUrl": "https://..." or null,
   "photoConfidence": 0.0 to 1.0 or null
-}`;
+}
+
+Do NOT start your response with "I can..." or any other text. Start immediately with the opening brace {.`;
 
 const RESTAURANT_ONLY_SYSTEM_PROMPT = `You are a culinary industry expert helping to find CURRENT restaurants where TV chef contestants actively work.
 
@@ -180,7 +187,9 @@ Guidelines:
 - Price range: $ (<$15/entree), $$ ($15-30), $$$ ($30-60), $$$$ ($60+)
 - Track Michelin stars (1-3) and notable awards if available
 
-IMPORTANT: Return your response as valid JSON matching this exact structure:
+CRITICAL: You MUST respond with ONLY valid JSON. Do not include any explanatory text or anything other than the JSON object itself.
+
+Your response must be a single JSON object matching this exact structure:
 {
   "restaurants": [
     {
@@ -199,7 +208,9 @@ IMPORTANT: Return your response as valid JSON matching this exact structure:
       "awards": ["Award Name (Year)"] or null
     }
   ]
-}`;
+}
+
+Do NOT start your response with "I can..." or any other text. Start immediately with the opening brace {.`;
 
 const RESTAURANT_STATUS_SYSTEM_PROMPT = `You are a restaurant industry analyst verifying whether restaurants are currently open.
 
@@ -212,12 +223,16 @@ Guidelines:
 - Mark as "unknown" if you can't find conclusive information
 - Confidence: 0.9+ for clear evidence, 0.7-0.9 for likely, <0.7 for uncertain
 
-IMPORTANT: Return your response as valid JSON matching this exact structure:
+CRITICAL: You MUST respond with ONLY valid JSON. Do not include any explanatory text or anything other than the JSON object itself.
+
+Your response must be a single JSON object matching this exact structure:
 {
   "status": "open" or "closed" or "unknown",
   "confidence": 0.0 to 1.0,
   "reason": "Brief explanation of findings"
-}`;
+}
+
+Do NOT start your response with "I can..." or any other text. Start immediately with the opening brace {.`;
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
@@ -276,12 +291,11 @@ export function createLLMEnricher(
             web_search_preview: openai.tools.webSearchPreview({
               searchContextSize: 'medium',
             }),
-            google_image_search: createGoogleImageSearchTool(),
           },
           system: CHEF_ENRICHMENT_SYSTEM_PROMPT,
           prompt,
           maxTokens: 8000,
-          maxSteps: 20,
+          maxSteps: 50,
         }),
         `enrich chef ${chefName}`
       );
@@ -298,7 +312,7 @@ export function createLLMEnricher(
 
       if (!result.text || result.text.trim() === '') {
         console.error(`   ❌ Empty response from LLM for "${chefName}"`);
-        console.error(`   Steps used: ${result.steps?.length || 0}/10`);
+        console.error(`   Steps used: ${result.steps?.length || 0}/20`);
         console.error(`   Finish reason: ${result.finishReason}`);
         throw new Error('LLM returned empty response - likely hit step limit without final answer');
       }
@@ -466,7 +480,7 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
           system: RESTAURANT_ONLY_SYSTEM_PROMPT,
           prompt,
           maxTokens: 6000,
-          maxSteps: 15,
+          maxSteps: 20,
         }),
         `find restaurants for ${chefName}`
       );

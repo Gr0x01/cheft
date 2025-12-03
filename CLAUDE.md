@@ -43,6 +43,16 @@ Always adjust the metadata header (`Last-Updated`, `Maintainer`) when you edit a
 3. Stop and check in before layering abstractions, helpers, or advanced error handling.
 4. Follow KISS and YAGNI—do not build for hypothetical futures without explicit direction.
 
+### LLM Model Usage - CRITICAL
+**NEVER change LLM model names or configurations without explicit authorization.**
+
+- The project has a model reference with correct pricing and model names in `/memory-bank/architecture/techStack.md`
+- Current OpenAI models in use: `gpt-5-mini`, `gpt-5-nano`, etc.
+- **DO NOT** "fix" model names to `gpt-4o-mini` or other models you think are correct
+- **DO NOT** change model configurations based on assumed errors
+- If you believe there's an error in model naming, ASK FIRST before changing anything
+- The pricing and model names in the memory bank are authoritative - use them as reference
+
 ## SUBAGENTS & DELEGATION
 
 ### Available Specialized Subagents
