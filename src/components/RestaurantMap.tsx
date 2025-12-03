@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { LatLngTuple, DivIcon } from 'leaflet';
 import type { RestaurantWithDetails } from '@/lib/types';
@@ -40,22 +40,31 @@ function RestaurantMarker({
   isHovered: boolean;
   onSelect: (restaurant: RestaurantWithDetails) => void;
 }) {
-  const markerIcon = useMemo(() => new DivIcon({
-    className: 'custom-marker',
-    html: `
-      <div class="marker-wrapper ${isSelected ? 'selected' : ''} ${isHovered ? 'hovered' : ''}">
-        <div class="marker-dot">
-          <div class="marker-inner"></div>
-        </div>
-        ${(isSelected || isHovered) ? `<div class="marker-label">${restaurant.name}</div>` : ''}
-      </div>
-    `,
-    iconSize: [12, 12],
-    iconAnchor: [6, 6],
-    popupAnchor: [0, -8]
-  }), [isSelected, isHovered, restaurant.name]);
+  const [isMounted, setIsMounted] = useState(false);
 
-  if (!restaurant.lat || !restaurant.lng) return null;
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const markerIcon = useMemo(() => {
+    if (!isMounted) return null;
+    return new DivIcon({
+      className: 'custom-marker',
+      html: `
+        <div class="marker-wrapper ${isSelected ? 'selected' : ''} ${isHovered ? 'hovered' : ''}">
+          <div class="marker-dot">
+            <div class="marker-inner"></div>
+          </div>
+          ${(isSelected || isHovered) ? `<div class="marker-label">${restaurant.name}</div>` : ''}
+        </div>
+      `,
+      iconSize: [12, 12],
+      iconAnchor: [6, 6],
+      popupAnchor: [0, -8]
+    });
+  }, [isMounted, isSelected, isHovered, restaurant.name]);
+
+  if (!restaurant.lat || !restaurant.lng || !markerIcon) return null;
 
   return (
     <Marker 

@@ -3,6 +3,8 @@ import { db } from '@/lib/supabase';
 import HomePage from './HomePage';
 import { RestaurantWithDetails } from '@/lib/types';
 
+export const revalidate = 3600;
+
 export async function generateMetadata(): Promise<Metadata> {
   const stats = await db.getStats();
 
