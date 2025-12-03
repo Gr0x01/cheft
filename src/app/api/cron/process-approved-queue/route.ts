@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { Database } from '@/lib/database.types';
-import { createLLMEnricher } from '@/../../scripts/ingestion/processors/llm-enricher';
+import { createLLMEnricher } from '../../../../../scripts/ingestion/processors/llm-enricher';
 import { extractShowSlugFromWikiUrl } from '@/lib/utils/show-mapping';
 
 export const maxDuration = 300;
@@ -66,15 +66,14 @@ export async function GET(request: NextRequest) {
       .limit(20);
 
     if (fetchError) throw fetchError;
-    if (!approvedItems || approvedItems.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: 'No approved chefs to process',
-        processed: 0,
-      });
-    }
 
-    console.log(`[Cron] Processing ${approvedItems.length} approved chefs`);
+    const hasApprovedItems = approvedItems && approvedItems.length > 0;
+    
+    if (hasApprovedItems) {
+      console.log(`[Cron] Processing ${approvedItems.length} approved chefs`);
+    } else {
+      console.log('[Cron] No new chefs to create, checking for enrichment jobs');
+    }
 
     const results = {
       chefsCreated: 0,
@@ -84,7 +83,8 @@ export async function GET(request: NextRequest) {
       errors: [] as string[],
     };
 
-    for (const item of approvedItems as unknown as QueueItem[]) {
+    if (hasApprovedItems) {
+      for (const item of approvedItems as unknown as QueueItem[]) {
       try {
         const itemData = item.data;
         const chefName = itemData.name;
@@ -167,6 +167,7 @@ export async function GET(request: NextRequest) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         console.error(`[Cron] ❌ Failed to process ${item.data.name}:`, errorMsg);
         results.errors.push(`${item.data.name}: ${errorMsg}`);
+      }
       }
     }
 
