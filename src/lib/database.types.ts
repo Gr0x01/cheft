@@ -214,6 +214,7 @@ export interface Database {
           resolved_at: string | null;
           resolved_by: string | null;
           merged_into: string | null;
+          group_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -226,6 +227,7 @@ export interface Database {
           resolved_at?: string | null;
           resolved_by?: string | null;
           merged_into?: string | null;
+          group_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -238,6 +240,7 @@ export interface Database {
           resolved_at?: string | null;
           resolved_by?: string | null;
           merged_into?: string | null;
+          group_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };

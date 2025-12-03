@@ -4,8 +4,9 @@ import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
 const MergeRequestSchema = z.object({
-  winnerId: z.string().uuid(),
-  loserId: z.string().uuid(),
+  groupId: z.string().uuid(),
+  keeperIds: z.array(z.string().uuid()).min(1),
+  loserIds: z.array(z.string().uuid()),
 });
 
 export async function POST(request: NextRequest) {
@@ -35,37 +36,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { winnerId, loserId } = validation.data;
+    const { groupId, keeperIds, loserIds } = validation.data;
 
-    if (winnerId === loserId) {
+    const overlap = keeperIds.filter(id => loserIds.includes(id));
+    if (overlap.length > 0) {
       return NextResponse.json(
-        { success: false, error: 'Cannot merge a restaurant with itself' },
+        { success: false, error: 'Keeper and loser IDs cannot overlap' },
         { status: 400 }
       );
     }
 
-    const { data: winner, error: winnerError } = await adminClient
-      .from('restaurants')
-      .select('*')
-      .eq('id', winnerId)
-      .single();
-
-    if (winnerError || !winner) {
+    if (loserIds.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Winner restaurant not found' },
+        { success: false, error: 'No restaurants to hide' },
+        { status: 400 }
+      );
+    }
+
+    const { data: keepers } = await adminClient
+      .from('restaurants')
+      .select('id, name')
+      .in('id', keeperIds);
+
+    const { data: losers } = await adminClient
+      .from('restaurants')
+      .select('id, name')
+      .in('id', loserIds);
+
+    if (!keepers || keepers.length !== keeperIds.length) {
+      return NextResponse.json(
+        { success: false, error: 'Some keeper restaurants not found' },
         { status: 404 }
       );
     }
 
-    const { data: loser, error: loserError } = await adminClient
-      .from('restaurants')
-      .select('*')
-      .eq('id', loserId)
-      .single();
-
-    if (loserError || !loser) {
+    if (!losers || losers.length !== loserIds.length) {
       return NextResponse.json(
-        { success: false, error: 'Loser restaurant not found' },
+        { success: false, error: 'Some loser restaurants not found' },
         { status: 404 }
       );
     }
@@ -77,12 +84,12 @@ export async function POST(request: NextRequest) {
         status: 'closed',
         updated_at: new Date().toISOString(),
       })
-      .eq('id', loserId);
+      .in('id', loserIds);
 
     if (updateError) {
-      console.error('[Merge] Failed to hide loser restaurant:', updateError);
+      console.error('[Merge] Failed to hide loser restaurants:', updateError);
       return NextResponse.json(
-        { success: false, error: 'Failed to hide duplicate restaurant' },
+        { success: false, error: 'Failed to hide duplicate restaurants' },
         { status: 500 }
       );
     }
@@ -93,20 +100,24 @@ export async function POST(request: NextRequest) {
         status: 'resolved',
         resolved_at: new Date().toISOString(),
         resolved_by: user.email || 'admin',
-        merged_into: winnerId,
+        merged_into: keeperIds[0],
       })
-      .contains('restaurant_ids', [winnerId, loserId]);
+      .eq('group_id', groupId);
 
     if (candidateUpdateError) {
-      console.error('[Merge] Failed to update duplicate candidate:', candidateUpdateError);
+      console.error('[Merge] Failed to update duplicate candidates:', candidateUpdateError);
     }
 
-    console.log(`[Merge] Successfully merged ${loser.name} (${loserId}) into ${winner.name} (${winnerId})`);
+    console.log(`[Merge] Successfully merged group ${groupId}:`);
+    console.log(`  Kept: ${keepers.map(k => k.name).join(', ')}`);
+    console.log(`  Hidden: ${losers.map(l => l.name).join(', ')}`);
 
     return NextResponse.json({
       success: true,
-      winner: { id: winnerId, name: winner.name },
-      merged: { id: loserId, name: loser.name },
+      kept: keepers.length,
+      hidden: losers.length,
+      keepers: keepers.map(k => ({ id: k.id, name: k.name })),
+      merged: losers.map(l => ({ id: l.id, name: l.name })),
     });
 
   } catch (error) {

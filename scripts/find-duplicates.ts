@@ -150,6 +150,81 @@ async function findDuplicatesInCity(
   return duplicates;
 }
 
+class UnionFind {
+  private parent: Map<string, string> = new Map();
+  private rank: Map<string, number> = new Map();
+
+  find(x: string): string {
+    if (!this.parent.has(x)) {
+      this.parent.set(x, x);
+      this.rank.set(x, 0);
+    }
+    
+    if (this.parent.get(x) !== x) {
+      this.parent.set(x, this.find(this.parent.get(x)!));
+    }
+    
+    return this.parent.get(x)!;
+  }
+
+  union(x: string, y: string): void {
+    const rootX = this.find(x);
+    const rootY = this.find(y);
+    
+    if (rootX === rootY) return;
+    
+    const rankX = this.rank.get(rootX)!;
+    const rankY = this.rank.get(rootY)!;
+    
+    if (rankX < rankY) {
+      this.parent.set(rootX, rootY);
+    } else if (rankX > rankY) {
+      this.parent.set(rootY, rootX);
+    } else {
+      this.parent.set(rootY, rootX);
+      this.rank.set(rootX, rankX + 1);
+    }
+  }
+
+  getGroups(): Map<string, Set<string>> {
+    const groups = new Map<string, Set<string>>();
+    
+    for (const [node] of this.parent) {
+      const root = this.find(node);
+      if (!groups.has(root)) {
+        groups.set(root, new Set());
+      }
+      groups.get(root)!.add(node);
+    }
+    
+    return groups;
+  }
+}
+
+function clusterDuplicates(duplicates: DuplicateGroup[]): Map<string, DuplicateGroup[]> {
+  const uf = new UnionFind();
+  
+  for (const dup of duplicates) {
+    const [r1, r2] = dup.restaurants;
+    uf.union(r1.id, r2.id);
+  }
+  
+  const groups = uf.getGroups();
+  const clustered = new Map<string, DuplicateGroup[]>();
+  
+  for (const dup of duplicates) {
+    const [r1] = dup.restaurants;
+    const groupId = uf.find(r1.id);
+    
+    if (!clustered.has(groupId)) {
+      clustered.set(groupId, []);
+    }
+    clustered.get(groupId)!.push(dup);
+  }
+  
+  return clustered;
+}
+
 async function scanForDuplicates(): Promise<DuplicateReport> {
   console.log('🚀 Starting duplicate restaurant scan...\n');
 
@@ -187,26 +262,35 @@ async function scanForDuplicates(): Promise<DuplicateReport> {
 }
 
 async function saveDuplicatesToDatabase(groups: DuplicateGroup[]): Promise<number> {
+  console.log('🔗 Clustering duplicates into groups...');
+  const clustered = clusterDuplicates(groups);
+  console.log(`   Found ${clustered.size} distinct groups\n`);
+
   let savedCount = 0;
 
-  for (const group of groups) {
-    const [r1, r2] = group.restaurants;
+  for (const [groupId, groupDuplicates] of clustered) {
+    const groupUuid = groupId;
     
-    const { error } = await supabase
-      .from('duplicate_candidates')
-      .insert({
-        restaurant_ids: [r1.id, r2.id],
-        confidence: group.confidence,
-        reasoning: group.reasoning,
-        status: 'pending',
-      });
+    for (const group of groupDuplicates) {
+      const [r1, r2] = group.restaurants;
+      
+      const { error } = await supabase
+        .from('duplicate_candidates')
+        .insert({
+          restaurant_ids: [r1.id, r2.id],
+          confidence: group.confidence,
+          reasoning: group.reasoning,
+          status: 'pending',
+          group_id: groupUuid,
+        });
 
-    if (error) {
-      console.error(`   ⚠️  Failed to save duplicate: ${error.message}`);
-    } else {
-      savedCount++;
+        if (error) {
+          console.error(`   ⚠️  Failed to save duplicate: ${error.message}`);
+        } else {
+          savedCount++;
+        }
+      }
     }
-  }
 
   return savedCount;
 }

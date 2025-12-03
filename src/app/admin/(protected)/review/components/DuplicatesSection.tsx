@@ -14,6 +14,7 @@ interface Restaurant {
   address: string | null;
   google_place_id: string | null;
   google_rating: number | null;
+  google_review_count: number | null;
   photo_urls: string[] | null;
   status: 'open' | 'closed' | 'unknown' | null;
   price_tier: string | null;
@@ -25,6 +26,13 @@ interface DuplicateCandidateWithRestaurants extends DuplicateCandidate {
   restaurants: Restaurant[];
 }
 
+export interface DuplicateGroup {
+  group_id: string;
+  restaurants: Restaurant[];
+  candidates: DuplicateCandidate[];
+  maxConfidence: number;
+}
+
 export async function DuplicatesSection() {
   const supabase = await createClient();
 
@@ -32,6 +40,7 @@ export async function DuplicatesSection() {
     .from('duplicate_candidates')
     .select('*')
     .eq('status', 'pending')
+    .not('group_id', 'is', null)
     .order('confidence', { ascending: false });
 
   if (error) {
@@ -62,7 +71,7 @@ export async function DuplicatesSection() {
   const restaurantIds = candidates.flatMap(c => c.restaurant_ids);
   const { data: restaurants } = await supabase
     .from('restaurants')
-    .select('id, name, slug, city, state, address, google_place_id, google_rating, photo_urls, status, price_tier, website_url, chef_id')
+    .select('id, name, slug, city, state, address, google_place_id, google_rating, google_review_count, photo_urls, status, price_tier, website_url, chef_id')
     .in('id', restaurantIds);
 
   if (!restaurants) {
@@ -77,14 +86,34 @@ export async function DuplicatesSection() {
     restaurants.map(r => [r.id, r as Restaurant])
   );
 
-  const candidatesWithRestaurants: DuplicateCandidateWithRestaurants[] = candidates
-    .map(candidate => ({
-      ...candidate,
-      restaurants: candidate.restaurant_ids
-        .map((id: string) => restaurantMap.get(id))
-        .filter((r): r is Restaurant => r !== undefined),
-    }))
-    .filter((c): c is DuplicateCandidateWithRestaurants => c.restaurants.length === 2);
+  const groupsMap = new Map<string, DuplicateGroup>();
+  
+  for (const candidate of candidates) {
+    const groupId = candidate.group_id!;
+    
+    if (!groupsMap.has(groupId)) {
+      groupsMap.set(groupId, {
+        group_id: groupId,
+        restaurants: [],
+        candidates: [],
+        maxConfidence: 0,
+      });
+    }
+    
+    const group = groupsMap.get(groupId)!;
+    group.candidates.push(candidate);
+    group.maxConfidence = Math.max(group.maxConfidence, candidate.confidence);
+    
+    for (const restId of candidate.restaurant_ids) {
+      const restaurant = restaurantMap.get(restId);
+      if (restaurant && !group.restaurants.find(r => r.id === restId)) {
+        group.restaurants.push(restaurant);
+      }
+    }
+  }
+  
+  const duplicateGroups = Array.from(groupsMap.values())
+    .sort((a, b) => b.maxConfidence - a.maxConfidence);
 
   return (
     <div className="space-y-6">
@@ -99,12 +128,12 @@ export async function DuplicatesSection() {
         <div className="mt-4 flex items-center gap-4 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-            <span className="font-ui text-slate-600">{candidatesWithRestaurants.length} pairs to review</span>
+            <span className="font-ui text-slate-600">{duplicateGroups.length} groups to review</span>
           </div>
         </div>
       </div>
 
-      <DuplicateReviewClient candidates={candidatesWithRestaurants} />
+      <DuplicateReviewClient groups={duplicateGroups} />
     </div>
   );
 }
