@@ -18,10 +18,11 @@ function LoginForm() {
     setMessage(null);
 
     const supabase = createClient();
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/admin/auth/callback`,
+        emailRedirectTo: `${baseUrl}/admin/auth/callback`,
       },
     });
 
