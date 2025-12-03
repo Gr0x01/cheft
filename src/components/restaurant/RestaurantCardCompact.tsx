@@ -46,7 +46,7 @@ export function RestaurantCardCompact({ restaurant, index = 0 }: RestaurantCardC
       className="compact-card group"
       style={{ animationDelay: `${index * 50}ms` }}
     >
-      <div className="compact-image-wrapper">
+      <div className="compact-image-wrapper" data-closed={status.isClosed ? "true" : undefined}>
         {photoUrl ? (
           <Image
             src={photoUrl}

@@ -288,6 +288,24 @@ body {
   transform: scale(1.05);
 }
 
+.compact-image-wrapper[data-closed="true"] .compact-image {
+  filter: grayscale(100%) brightness(0.7);
+  transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+.compact-card:hover .compact-image-wrapper[data-closed="true"] .compact-image {
+  filter: grayscale(0%) brightness(1);
+}
+
+[data-closed="true"] .restaurant-card-image {
+  filter: grayscale(100%) brightness(0.7);
+  transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+.group:hover [data-closed="true"] .restaurant-card-image {
+  filter: grayscale(0%) brightness(1);
+}
+
 .compact-image-placeholder {
   width: 100%;
   height: 100%;

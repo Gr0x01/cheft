@@ -54,12 +54,12 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
       />
 
       {photoUrl ? (
-        <div className="relative w-full h-48 overflow-hidden bg-gray-100">
+        <div className="relative w-full h-48 overflow-hidden bg-gray-100" data-closed={status.isClosed ? "true" : undefined}>
           <Image
             src={photoUrl}
             alt={restaurant.name}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="restaurant-card-image object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
             priority={isPriority}
             quality={60}
