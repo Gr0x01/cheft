@@ -91,20 +91,23 @@ export default function Home({ initialRestaurants, initialFeaturedChefs, stats, 
             <p className="hero-subtitle">
               Top Chef, Tournament of Champions, James Beard winners, and more
             </p>
-            <div className="hero-stats-row">
+            <dl className="hero-stats-row">
               <div className="hero-stat-item">
-                <div className="hero-stat-number">{stats.restaurants}</div>
-                <div className="hero-stat-label">Restaurants</div>
+                <dt className="sr-only">Number of restaurants</dt>
+                <dd className="hero-stat-number" aria-label={`${stats.restaurants} restaurants`}>{stats.restaurants}</dd>
+                <dd className="hero-stat-label" aria-hidden="true">Restaurants</dd>
               </div>
               <div className="hero-stat-item">
-                <div className="hero-stat-number">{stats.chefs}</div>
-                <div className="hero-stat-label">Chefs</div>
+                <dt className="sr-only">Number of chefs</dt>
+                <dd className="hero-stat-number" aria-label={`${stats.chefs} chefs`}>{stats.chefs}</dd>
+                <dd className="hero-stat-label" aria-hidden="true">Chefs</dd>
               </div>
               <div className="hero-stat-item">
-                <div className="hero-stat-number">{stats.cities}</div>
-                <div className="hero-stat-label">Cities</div>
+                <dt className="sr-only">Number of cities</dt>
+                <dd className="hero-stat-number" aria-label={`${stats.cities} cities`}>{stats.cities}</dd>
+                <dd className="hero-stat-label" aria-hidden="true">Cities</dd>
               </div>
-            </div>
+            </dl>
           </div>
         </div>
       </section>
@@ -112,7 +115,7 @@ export default function Home({ initialRestaurants, initialFeaturedChefs, stats, 
       {/* Featured Chef Hero */}
       {featuredChef && <FeaturedChefHero chef={featuredChef} />}
 
-      <main className="main-content">
+      <main className="main-content" id="main-content">
         <aside className="sidebar">
           <div className="sidebar-header">
             <h1 className="sidebar-title">{filteredRestaurants.length} Restaurants</h1>
@@ -120,16 +123,21 @@ export default function Home({ initialRestaurants, initialFeaturedChefs, stats, 
           </div>
           
           <div className="sidebar-search">
-            <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <label htmlFor="restaurant-search" className="sr-only">
+              Search restaurants, chefs, and cities
+            </label>
+            <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <circle cx="11" cy="11" r="8"/>
               <path d="M21 21l-4.35-4.35"/>
             </svg>
             <input
+              id="restaurant-search"
               type="text"
               placeholder="Search restaurants, chefs, cities..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="sidebar-search-input"
+              aria-label="Search restaurants, chefs, and cities"
             />
           </div>
           
@@ -139,8 +147,17 @@ export default function Home({ initialRestaurants, initialFeaturedChefs, stats, 
                 key={restaurant.id}
                 className={`homepage-card-wrapper ${selectedRestaurant?.id === restaurant.id ? 'selected' : ''} ${hoveredRestaurant === restaurant.id ? 'hovered' : ''}`}
                 onClick={() => handleRestaurantClick(restaurant)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleRestaurantClick(restaurant);
+                  }
+                }}
                 onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
                 onMouseLeave={() => setHoveredRestaurant(null)}
+                role="button"
+                tabIndex={0}
+                aria-label={`View ${restaurant.name} in ${restaurant.city}`}
               >
                 <RestaurantCardCompact restaurant={restaurant} index={index} />
               </div>
@@ -149,27 +166,12 @@ export default function Home({ initialRestaurants, initialFeaturedChefs, stats, 
               <div className="px-4 pb-4 flex flex-col items-center gap-2">
                 <button
                   onClick={() => setVisibleCount(prev => Math.min(prev + 20, filteredRestaurants.length))}
-                  className="py-3 px-6 font-mono text-sm font-semibold tracking-wide transition-all duration-200"
-                  style={{
-                    background: 'var(--bg-tertiary)',
-                    color: 'var(--text-secondary)',
-                    border: '2px solid var(--border-light)',
-                    borderRadius: 'var(--radius-md)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--accent-primary)';
-                    e.currentTarget.style.color = 'white';
-                    e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'var(--bg-tertiary)';
-                    e.currentTarget.style.color = 'var(--text-secondary)';
-                    e.currentTarget.style.borderColor = 'var(--border-light)';
-                  }}
+                  className="load-more-button"
+                  aria-label={`Load ${Math.min(20, filteredRestaurants.length - visibleCount)} more restaurants`}
                 >
                   LOAD MORE
                 </button>
-                <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>
+                <span className="text-xs italic" style={{ color: 'var(--text-muted)' }} aria-live="polite">
                   {filteredRestaurants.length - visibleCount} remaining
                 </span>
               </div>
@@ -179,20 +181,30 @@ export default function Home({ initialRestaurants, initialFeaturedChefs, stats, 
 
         <section className="map-section">
           <div className="map-filters-overlay">
+            <label htmlFor="show-filter" className="sr-only">
+              Filter by TV show
+            </label>
             <select
+              id="show-filter"
               value={selectedShow}
               onChange={(e) => setSelectedShow(e.target.value)}
               className="map-filter-select"
+              aria-label="Filter restaurants by TV show"
             >
               <option value="all">All Shows</option>
               <option value="top chef">Top Chef</option>
               <option value="tournament of champions">Tournament of Champions</option>
             </select>
             
+            <label htmlFor="price-filter" className="sr-only">
+              Filter by price range
+            </label>
             <select
+              id="price-filter"
               value={selectedPriceRange}
               onChange={(e) => setSelectedPriceRange(e.target.value)}
               className="map-filter-select"
+              aria-label="Filter restaurants by price range"
             >
               <option value="all">All Prices</option>
               <option value="$">$</option>

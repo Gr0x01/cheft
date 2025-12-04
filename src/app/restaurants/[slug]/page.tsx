@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { createStaticClient } from '@/lib/supabase/static';
 import { Header } from '@/components/ui/Header';
 import { RestaurantHero } from '@/components/restaurant/RestaurantHero';
+import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
 import { MiniMapWrapper } from '@/components/restaurant/MiniMapWrapper';
 import { RestaurantSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 import { ReportIssueButton } from '@/components/feedback/ReportIssueButton';
@@ -58,6 +59,18 @@ interface SiblingRestaurant {
   price_tier: string | null;
   status: 'open' | 'closed' | 'unknown';
   google_rating: number | null;
+  photo_urls?: string[] | null;
+  cuisine_tags?: string[] | null;
+  chef?: {
+    id: string;
+    name: string;
+    slug: string;
+    james_beard_status?: 'semifinalist' | 'nominated' | 'winner' | null;
+    chef_shows?: Array<{
+      result?: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
+      is_primary?: boolean;
+    }>;
+  } | null;
 }
 
 async function getCitySlug(city: string, state: string | null): Promise<string | null> {
@@ -134,6 +147,43 @@ async function getRestaurant(slug: string): Promise<RestaurantData | null> {
   return data as unknown as RestaurantData;
 }
 
+async function getCityRestaurants(city: string, state: string | null, excludeId: string): Promise<SiblingRestaurant[]> {
+  const supabase = createStaticClient();
+
+  const { data } = await supabase
+    .from('restaurants')
+    .select(`
+      id,
+      name,
+      slug,
+      city,
+      state,
+      price_tier,
+      status,
+      google_rating,
+      photo_urls,
+      cuisine_tags,
+      chef:chefs!restaurants_chef_id_fkey (
+        id,
+        name,
+        slug,
+        james_beard_status,
+        chef_shows (
+          result,
+          is_primary
+        )
+      )
+    `)
+    .eq('city', city)
+    .eq('state', state || '')
+    .eq('is_public', true)
+    .neq('id', excludeId)
+    .order('google_rating', { ascending: false, nullsFirst: false })
+    .limit(6);
+
+  return (data || []) as unknown as SiblingRestaurant[];
+}
+
 
 export async function generateMetadata({ params }: RestaurantPageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -200,6 +250,7 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
     .sort((a, b) => (b.google_rating || 0) - (a.google_rating || 0))
     .slice(0, 6) || [];
 
+  const cityRestaurants = await getCityRestaurants(restaurant.city, restaurant.state, restaurant.id);
   const citySlug = await getCitySlug(restaurant.city, restaurant.state);
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://cheft.app';
@@ -253,99 +304,6 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
               { label: restaurant.name },
             ]}
           />
-
-          {restaurant.lat && restaurant.lng && (
-            <section className="py-12">
-              <div className="max-w-6xl mx-auto px-4">
-                <h2 className="font-display text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
-                  Location
-                </h2>
-                <div 
-                  className="h-64 sm:h-80 overflow-hidden"
-                  style={{ border: '2px solid var(--border-light)' }}
-                >
-                  <MiniMapWrapper 
-                    lat={restaurant.lat} 
-                    lng={restaurant.lng} 
-                    name={restaurant.name}
-                  />
-                </div>
-                <div className="mt-4 flex flex-wrap gap-4">
-                  {restaurant.maps_url && (
-                    <a
-                      href={restaurant.maps_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 font-mono text-sm font-semibold px-4 py-2 transition-colors"
-                      style={{ 
-                        background: 'var(--accent-primary)', 
-                        color: 'white'
-                      }}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      GET DIRECTIONS
-                    </a>
-                  )}
-                  {restaurant.website_url && (
-                    <a
-                      href={restaurant.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 font-mono text-sm font-semibold px-4 py-2 transition-colors"
-                      style={{ 
-                        background: 'var(--bg-secondary)', 
-                        color: 'var(--text-primary)',
-                        border: '2px solid var(--border-light)'
-                      }}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                      </svg>
-                      VISIT WEBSITE
-                    </a>
-                  )}
-                  <ReportIssueButton 
-                    entityType="restaurant" 
-                    entityId={restaurant.id} 
-                    entityName={restaurant.name}
-                  />
-                </div>
-              </div>
-            </section>
-          )}
-
-          {/* More in City */}
-          {citySlug && (
-            <section 
-              className="py-12 border-t"
-              style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
-            >
-              <div className="max-w-6xl mx-auto px-4">
-                <h2 className="font-display text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-                  More in {restaurant.city}
-                </h2>
-                <p className="font-ui mb-6" style={{ color: 'var(--text-muted)' }}>
-                  Explore all TV chef restaurants in this city
-                </p>
-                <Link
-                  href={`/cities/${citySlug}`}
-                  className="inline-flex items-center gap-2 font-mono text-sm font-semibold px-4 py-2 transition-colors"
-                  style={{ 
-                    background: 'var(--accent-primary)', 
-                    color: 'white'
-                  }}
-                >
-                  VIEW ALL RESTAURANTS IN {restaurant.city.toUpperCase()}
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </Link>
-              </div>
-            </section>
-          )}
 
           {otherRestaurants.length > 0 && (
             <section 
@@ -425,23 +383,108 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
             </section>
           )}
 
-          {citySlug && (
-            <section className="py-12">
-              <div className="max-w-6xl mx-auto px-4 text-center">
-                <Link
-                  href={`/cities/${citySlug}`}
-                  className="inline-flex items-center gap-2 px-6 py-3 font-mono text-sm font-semibold tracking-wide transition-all duration-300 hover:-translate-y-0.5"
-                  style={{ 
-                    background: 'var(--accent-primary)', 
-                    color: 'white',
-                  }}
+          {cityRestaurants.length > 0 && (
+            <section 
+              className="py-12 border-t"
+              style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
+            >
+              <div className="max-w-6xl mx-auto px-4">
+                <div className="flex items-baseline gap-4 mb-8">
+                  <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                    More in {restaurant.city}
+                  </h2>
+                  <span className="font-mono text-sm" style={{ color: 'var(--text-muted)' }}>
+                    {cityRestaurants.length}+ RESTAURANTS
+                  </span>
+                </div>
+
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {cityRestaurants.map((r: any) => (
+                    <RestaurantCard key={r.id} restaurant={r} />
+                  ))}
+                </div>
+
+                {citySlug && (
+                  <div className="mt-8 text-center">
+                    <Link
+                      href={`/cities/${citySlug}`}
+                      className="inline-flex items-center gap-2 font-mono text-sm font-semibold px-6 py-3 transition-colors"
+                      style={{ 
+                        background: 'var(--accent-primary)', 
+                        color: 'white'
+                      }}
+                    >
+                      VIEW ALL RESTAURANTS IN {restaurant.city.toUpperCase()}
+                      {restaurant.state && `, ${restaurant.state.toUpperCase()}`}
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {restaurant.lat && restaurant.lng && (
+            <section className="py-12 border-t" style={{ borderColor: 'var(--border-light)' }}>
+              <div className="max-w-6xl mx-auto px-4">
+                <h2 className="font-display text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
+                  Location
+                </h2>
+                <div 
+                  className="h-64 sm:h-80 overflow-hidden"
+                  style={{ border: '2px solid var(--border-light)' }}
                 >
-                  VIEW ALL RESTAURANTS IN {restaurant.city.toUpperCase()}
-                  {restaurant.state && `, ${restaurant.state.toUpperCase()}`}
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
+                  <MiniMapWrapper 
+                    lat={restaurant.lat} 
+                    lng={restaurant.lng} 
+                    name={restaurant.name}
+                  />
+                </div>
+                <div className="mt-4 flex flex-wrap gap-4">
+                  {restaurant.maps_url && (
+                    <a
+                      href={restaurant.maps_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 font-mono text-sm font-semibold px-4 py-2 transition-colors"
+                      style={{ 
+                        background: 'var(--accent-primary)', 
+                        color: 'white'
+                      }}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      GET DIRECTIONS
+                    </a>
+                  )}
+                  {restaurant.website_url && (
+                    <a
+                      href={restaurant.website_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 font-mono text-sm font-semibold px-4 py-2 transition-colors"
+                      style={{ 
+                        background: 'var(--bg-secondary)', 
+                        color: 'var(--text-primary)',
+                        border: '2px solid var(--border-light)'
+                      }}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                      </svg>
+                      VISIT WEBSITE
+                    </a>
+                  )}
+                  <ReportIssueButton 
+                    entityType="restaurant" 
+                    entityId={restaurant.id} 
+                    entityName={restaurant.name}
+                  />
+                </div>
               </div>
             </section>
           )}

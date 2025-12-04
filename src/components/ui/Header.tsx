@@ -20,16 +20,23 @@ export function Header({ currentPage }: HeaderProps) {
   }, []);
 
   return (
-    <header 
-      className="fixed top-0 left-0 right-0 border-b transition-shadow duration-200"
-      style={{ 
-        background: 'var(--bg-secondary)', 
-        borderColor: 'var(--border-light)',
-        boxShadow: isScrolled ? '0 2px 8px rgba(0, 0, 0, 0.08)' : 'none',
-        zIndex: 9999
-      }}
-    >
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+    <>
+      <a 
+        href="#main-content" 
+        className="skip-to-content"
+      >
+        Skip to main content
+      </a>
+      <header 
+        className="fixed top-0 left-0 right-0 border-b transition-shadow duration-200"
+        style={{ 
+          background: 'var(--bg-secondary)', 
+          borderColor: 'var(--border-light)',
+          boxShadow: isScrolled ? '0 2px 8px rgba(0, 0, 0, 0.08)' : 'none',
+          zIndex: 9999
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
           <div 
             className="w-8 h-8 flex items-center justify-center"
@@ -45,7 +52,7 @@ export function Header({ currentPage }: HeaderProps) {
             Cheft
           </span>
         </Link>
-        <nav className="flex gap-8">
+        <nav className="flex gap-8" aria-label="Main navigation">
           <Link 
             href="/chefs" 
             className={`font-mono text-xs tracking-wider transition-colors ${
@@ -58,6 +65,7 @@ export function Header({ currentPage }: HeaderProps) {
                 ? 'var(--accent-primary)' 
                 : 'var(--text-muted)' 
             }}
+            aria-current={currentPage === 'chefs' ? 'page' : undefined}
           >
             CHEFS
           </Link>
@@ -73,6 +81,7 @@ export function Header({ currentPage }: HeaderProps) {
                 ? 'var(--accent-primary)' 
                 : 'var(--text-muted)' 
             }}
+            aria-current={currentPage === 'restaurants' ? 'page' : undefined}
           >
             RESTAURANTS
           </Link>
@@ -88,6 +97,7 @@ export function Header({ currentPage }: HeaderProps) {
                 ? 'var(--accent-primary)' 
                 : 'var(--text-muted)' 
             }}
+            aria-current={currentPage === 'cities' ? 'page' : undefined}
           >
             CITIES
           </Link>
@@ -103,11 +113,13 @@ export function Header({ currentPage }: HeaderProps) {
                 ? 'var(--accent-primary)' 
                 : 'var(--text-muted)' 
             }}
+            aria-current={currentPage === 'about' ? 'page' : undefined}
           >
             ABOUT
           </Link>
         </nav>
-      </div>
-    </header>
+        </div>
+      </header>
+    </>
   );
 }
