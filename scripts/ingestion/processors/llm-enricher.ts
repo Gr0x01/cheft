@@ -72,6 +72,7 @@ const InstagramOnlySchema = z.object({
     if (!cleaned || !/^[a-zA-Z0-9._]{1,30}$/.test(cleaned)) return null;
     return cleaned;
   }),
+  isPrivate: z.boolean().optional().default(false),
 });
 
 export interface ChefEnrichmentResult {
@@ -263,14 +264,19 @@ Your task: Use web search to find the official Instagram account for this chef.
 Guidelines:
 - Search for "[Chef Name] Instagram"
 - Look for verified accounts or official links from restaurant websites
+- Check if the account is private (requires follow approval to view posts)
 - Return the username only (without @ symbol)
 - Be conservative - only return a handle if you're confident it's the correct chef
+- IMPORTANT: Set isPrivate to true if the account is private/locked
+
+Respect privacy: If the account is private, we will not add it to our database out of respect for the chef's privacy preferences.
 
 CRITICAL: You MUST respond with ONLY valid JSON. Do not include any explanatory text or anything other than the JSON object itself.
 
 Your response must be a single JSON object matching this exact structure:
 {
-  "instagramHandle": "username" or null
+  "instagramHandle": "username" or null,
+  "isPrivate": true or false
 }
 
 Do NOT start your response with "I can..." or any other text. Start immediately with the opening brace {.`;
@@ -479,7 +485,9 @@ Search for: "chef ${chefName} Instagram"
 
 Look for accounts where the bio mentions "chef" or cooking/culinary credentials. This helps confirm you have the right person if there are multiple people with the same name.
 
-Return the username if found, or null if not found after searching.`;
+IMPORTANT: Check if the account is private (locked/requires follow approval). Set isPrivate to true if it is.
+
+Return the username if found (or null if not found), and indicate whether the account is private.`;
 
     try {
       const result = await withRetry(
@@ -511,6 +519,17 @@ Return the username if found, or null if not found after searching.`;
       const jsonText = extractJsonFromText(result.text);
       const parsed = JSON.parse(jsonText);
       const validated = InstagramOnlySchema.parse(parsed);
+
+      if (validated.isPrivate && validated.instagramHandle) {
+        console.log(`   🔒 Account is private - respecting privacy, not adding handle`);
+        return {
+          chefId,
+          chefName,
+          instagramHandle: null,
+          tokensUsed,
+          success: true,
+        };
+      }
 
       return {
         chefId,

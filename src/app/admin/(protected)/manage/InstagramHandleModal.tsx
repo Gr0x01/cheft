@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { X, Instagram, ExternalLink } from 'lucide-react';
 import { Database } from '@/lib/database.types';
+import { getAuthHeaders } from '@/lib/supabase/client-auth';
 
 type Chef = Database['public']['Tables']['chefs']['Row'];
 
@@ -46,9 +47,10 @@ export function InstagramHandleModal({
     setError('');
 
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch(`/api/admin/chefs/${chef.id}/instagram`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ instagramHandle: cleaned }),
       });
 
