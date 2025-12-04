@@ -60,19 +60,19 @@ export function ChefTable({ chefs }: { chefs: Chef[] }) {
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-48">
                 Chef
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-44">
                 Photo
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-80">
                 Bio
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-44">
                 Instagram
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-48">
                 Actions
               </th>
             </tr>
@@ -105,7 +105,7 @@ export function ChefTable({ chefs }: { chefs: Chef[] }) {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="text-sm text-slate-900 max-w-md truncate">
+                  <div className="text-sm text-slate-900 max-w-xs truncate">
                     {chef.mini_bio || (
                       <span className="text-slate-400">No bio</span>
                     )}

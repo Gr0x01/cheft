@@ -75,56 +75,60 @@ async function enrichInstagramHandles(options: { limit?: number; test?: boolean 
     console.log('🧪 TEST MODE - Will process but show what would happen\n');
   }
 
-  for (let i = 0; i < chefs.length; i++) {
-    const chef = chefs[i];
-    const progress = `[${i + 1}/${stats.total}]`;
+  const BATCH_SIZE = 50;
+  
+  for (let batchStart = 0; batchStart < chefs.length; batchStart += BATCH_SIZE) {
+    const batch = chefs.slice(batchStart, batchStart + BATCH_SIZE);
+    
+    await Promise.all(batch.map(async (chef, batchIndex) => {
+      const i = batchStart + batchIndex;
+      const progress = `[${i + 1}/${stats.total}]`;
 
-    if (chef.instagram_handle) {
-      console.log(`${progress} ⏭️  ${chef.name} - Already has handle: @${chef.instagram_handle}`);
-      stats.alreadyHasHandle++;
-      continue;
-    }
+      if (chef.instagram_handle) {
+        console.log(`${progress} ⏭️  ${chef.name} - Already has handle: @${chef.instagram_handle}`);
+        stats.alreadyHasHandle++;
+        return;
+      }
 
-    console.log(`${progress} 🔎 ${chef.name}...`);
-    stats.processed++;
+      console.log(`${progress} 🔎 ${chef.name}...`);
+      stats.processed++;
 
-    const result = await enricher.enrichInstagramOnly(chef.id, chef.name);
+      const result = await enricher.enrichInstagramOnly(chef.id, chef.name);
 
-    const tokenCost = (result.tokensUsed.prompt / 1_000_000) * 0.25 +
-                      (result.tokensUsed.completion / 1_000_000) * 2.00;
-    stats.totalCost += tokenCost;
+      const tokenCost = (result.tokensUsed.prompt / 1_000_000) * 0.25 +
+                        (result.tokensUsed.completion / 1_000_000) * 2.00;
+      stats.totalCost += tokenCost;
 
-    if (result.success && result.instagramHandle) {
-      console.log(`   ✅ Found: @${result.instagramHandle} ($${tokenCost.toFixed(4)})`);
-      
-      if (!options.test) {
-        const { error: updateError } = await supabase
-          .from('chefs')
-          .update({
-            instagram_handle: result.instagramHandle,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', chef.id);
+      if (result.success && result.instagramHandle) {
+        console.log(`   ✅ Found: @${result.instagramHandle} ($${tokenCost.toFixed(4)})`);
+        
+        if (!options.test) {
+          const { error: updateError } = await supabase
+            .from('chefs')
+            .update({
+              instagram_handle: result.instagramHandle,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', chef.id);
 
-        if (updateError) {
-          console.error(`   ❌ Failed to save: ${updateError.message}`);
-          stats.failed++;
+          if (updateError) {
+            console.error(`   ❌ Failed to save: ${updateError.message}`);
+            stats.failed++;
+          } else {
+            stats.success++;
+          }
         } else {
+          console.log(`   🧪 TEST MODE - Would save: @${result.instagramHandle}`);
           stats.success++;
         }
       } else {
-        console.log(`   🧪 TEST MODE - Would save: @${result.instagramHandle}`);
-        stats.success++;
+        console.log(`   ⚠️  Not found ($${tokenCost.toFixed(4)})`);
+        if (result.error) {
+          console.log(`   Error: ${result.error}`);
+        }
+        stats.failed++;
       }
-    } else {
-      console.log(`   ⚠️  Not found ($${tokenCost.toFixed(4)})`);
-      if (result.error) {
-        console.log(`   Error: ${result.error}`);
-      }
-      stats.failed++;
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 500));
+    }));
   }
 
   console.log('\n================================');
