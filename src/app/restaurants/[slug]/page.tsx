@@ -305,10 +305,73 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
             ]}
           />
 
+          {restaurant.lat && restaurant.lng && (
+            <section className="py-12 border-t" style={{ borderColor: 'var(--border-light)' }}>
+              <div className="max-w-6xl mx-auto px-4">
+                <h2 className="font-display text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
+                  Location
+                </h2>
+                <div 
+                  className="h-64 sm:h-80 overflow-hidden"
+                  style={{ border: '2px solid var(--border-light)' }}
+                >
+                  <MiniMapWrapper 
+                    lat={restaurant.lat} 
+                    lng={restaurant.lng} 
+                    name={restaurant.name}
+                  />
+                </div>
+                <div className="mt-4 flex flex-wrap gap-4">
+                  {restaurant.maps_url && (
+                    <a
+                      href={restaurant.maps_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 font-mono text-sm font-semibold px-4 py-2 transition-colors"
+                      style={{ 
+                        background: 'var(--accent-primary)', 
+                        color: 'white'
+                      }}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      GET DIRECTIONS
+                    </a>
+                  )}
+                  {restaurant.website_url && (
+                    <a
+                      href={restaurant.website_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 font-mono text-sm font-semibold px-4 py-2 transition-colors"
+                      style={{ 
+                        background: 'var(--bg-secondary)', 
+                        color: 'var(--text-primary)',
+                        border: '2px solid var(--border-light)'
+                      }}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                      </svg>
+                      VISIT WEBSITE
+                    </a>
+                  )}
+                  <ReportIssueButton 
+                    entityType="restaurant" 
+                    entityId={restaurant.id} 
+                    entityName={restaurant.name}
+                  />
+                </div>
+              </div>
+            </section>
+          )}
+
           {otherRestaurants.length > 0 && (
             <section 
               className="py-12 border-t"
-              style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-light)' }}
+              style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
             >
               <div className="max-w-6xl mx-auto px-4">
                 <div className="flex items-baseline gap-4 mb-8">
@@ -422,69 +485,6 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
                     </Link>
                   </div>
                 )}
-              </div>
-            </section>
-          )}
-
-          {restaurant.lat && restaurant.lng && (
-            <section className="py-12 border-t" style={{ borderColor: 'var(--border-light)' }}>
-              <div className="max-w-6xl mx-auto px-4">
-                <h2 className="font-display text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
-                  Location
-                </h2>
-                <div 
-                  className="h-64 sm:h-80 overflow-hidden"
-                  style={{ border: '2px solid var(--border-light)' }}
-                >
-                  <MiniMapWrapper 
-                    lat={restaurant.lat} 
-                    lng={restaurant.lng} 
-                    name={restaurant.name}
-                  />
-                </div>
-                <div className="mt-4 flex flex-wrap gap-4">
-                  {restaurant.maps_url && (
-                    <a
-                      href={restaurant.maps_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 font-mono text-sm font-semibold px-4 py-2 transition-colors"
-                      style={{ 
-                        background: 'var(--accent-primary)', 
-                        color: 'white'
-                      }}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      GET DIRECTIONS
-                    </a>
-                  )}
-                  {restaurant.website_url && (
-                    <a
-                      href={restaurant.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 font-mono text-sm font-semibold px-4 py-2 transition-colors"
-                      style={{ 
-                        background: 'var(--bg-secondary)', 
-                        color: 'var(--text-primary)',
-                        border: '2px solid var(--border-light)'
-                      }}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                      </svg>
-                      VISIT WEBSITE
-                    </a>
-                  )}
-                  <ReportIssueButton 
-                    entityType="restaurant" 
-                    entityId={restaurant.id} 
-                    entityName={restaurant.name}
-                  />
-                </div>
               </div>
             </section>
           )}
