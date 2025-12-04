@@ -2,12 +2,14 @@ import Image from 'next/image';
 import { Breadcrumbs } from '../seo/Breadcrumbs';
 
 function getInitials(name: string): string {
-  return name
+  const parts = name
     .split(' ')
-    .map(part => part[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+    .filter(part => !part.startsWith('"') && !part.endsWith('"') && part.length > 0);
+  
+  if (parts.length === 0) return '??';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  
+  return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
 interface ChefHeroProps {

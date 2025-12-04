@@ -2,12 +2,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 function getInitials(name: string): string {
-  return name
+  const parts = name
     .split(' ')
-    .map(part => part[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+    .filter(part => !part.startsWith('"') && !part.endsWith('"') && part.length > 0);
+  
+  if (parts.length === 0) return '??';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  
+  return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
 interface RelatedChefsProps {
@@ -52,7 +54,7 @@ export function RelatedChefs({ chefs, title = "Related Chefs", subtitle }: Relat
             <Link
               key={chef.id}
               href={`/chefs/${chef.slug}`}
-              className="group block bg-white overflow-hidden transition-all duration-300 hover:-translate-y-1"
+              className="group relative block bg-white overflow-hidden transition-all duration-300 hover:-translate-y-1"
             >
               <div className="absolute top-0 left-0 w-1 h-full transition-all duration-300 group-hover:w-2" style={{ background: 'var(--accent-primary)' }} />
 

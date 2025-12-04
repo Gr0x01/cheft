@@ -315,7 +315,7 @@ export default async function ChefPage({ params }: ChefPageProps) {
           )}
 
           {/* The Story section - Career Narrative */}
-          {chef.career_narrative && (
+          {false && chef.career_narrative && (
             <section 
               className="py-12 border-b"
               style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
