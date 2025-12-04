@@ -23,9 +23,16 @@ interface PostPreview {
 }
 
 export function InstagramPostSelector({ chef }: InstagramPostSelectorProps) {
+  const initialPostPreviews = chef.featured_instagram_post
+    ? [{
+        url: chef.featured_instagram_post,
+        id: chef.featured_instagram_post.match(/\/(p|reel)\/([A-Za-z0-9_-]+)/)?.[2] || '',
+      }].filter(p => p.id)
+    : [];
+
   const [instagramHandle, setInstagramHandle] = useState(chef.instagram_handle || '');
   const [postUrlInput, setPostUrlInput] = useState('');
-  const [postPreviews, setPostPreviews] = useState<PostPreview[]>([]);
+  const [postPreviews, setPostPreviews] = useState<PostPreview[]>(initialPostPreviews);
   const [selectedPostUrl, setSelectedPostUrl] = useState<string | null>(chef.featured_instagram_post);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');

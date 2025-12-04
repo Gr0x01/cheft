@@ -1,7 +1,5 @@
 import Image from 'next/image';
 import { Breadcrumbs } from '../seo/Breadcrumbs';
-import { InstagramIcon } from '@/components/icons/InstagramIcon';
-import { InstagramEmbed } from './InstagramEmbed';
 
 function getInitials(name: string): string {
   return name
@@ -19,8 +17,6 @@ interface ChefHeroProps {
     photo_url?: string | null;
     mini_bio?: string | null;
     james_beard_status?: 'semifinalist' | 'nominated' | 'winner' | null;
-    instagram_handle?: string | null;
-    featured_instagram_post?: string | null;
     current_position?: string | null;
     social_links?: {
       instagram?: string;
@@ -76,12 +72,7 @@ export function ChefHero({ chef, breadcrumbItems }: ChefHeroProps) {
                 boxShadow: '8px 8px 0 var(--accent-primary)'
               }}
             >
-              {chef.featured_instagram_post ? (
-                <InstagramEmbed 
-                  postUrl={chef.featured_instagram_post}
-                  className="absolute inset-0"
-                />
-              ) : photoUrl ? (
+              {photoUrl ? (
                 <Image
                   src={photoUrl}
                   alt={chef.name}
@@ -90,17 +81,6 @@ export function ChefHero({ chef, breadcrumbItems }: ChefHeroProps) {
                   sizes="256px"
                   priority
                 />
-              ) : chef.instagram_handle ? (
-                <a
-                  href={`https://instagram.com/${chef.instagram_handle}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="absolute inset-0 flex flex-col items-center justify-center gap-3 transition-colors hover:bg-slate-700/50"
-                  style={{ background: 'linear-gradient(135deg, var(--slate-700) 0%, var(--slate-800) 100%)' }}
-                >
-                  <InstagramIcon size={80} className="text-white/40" />
-                  <span className="font-mono text-sm text-white/60">@{chef.instagram_handle}</span>
-                </a>
               ) : (
                 <div 
                   className="absolute inset-0 flex items-center justify-center"

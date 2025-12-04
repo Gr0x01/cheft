@@ -281,10 +281,7 @@ export default async function ChefPage({ params }: ChefPageProps) {
 
         <main>
           <ChefHero 
-            chef={{
-              ...chef,
-              featured_instagram_post: chef.featured_instagram_post,
-            }}
+            chef={chef}
             breadcrumbItems={[
               { label: 'Chefs', href: '/chefs' },
               { label: chef.name },

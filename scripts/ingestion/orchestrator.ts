@@ -440,19 +440,8 @@ async function runEnrichmentPipeline(
   let restaurantsWithPlaceId = 0;
 
   try {
-    console.log(`\n   📸 Enriching chef photos...`);
-    if (!dryRun) {
-      const chefResults = await mediaEnricher.enrichAllChefsWithoutPhotos({ limit, delayMs: 500 });
-      chefsProcessed = chefResults.length;
-      chefsWithPhotos = chefResults.filter(r => r.photoUrl).length;
-      console.log(`     Processed ${chefsProcessed} chefs, found photos for ${chefsWithPhotos}`);
-    } else {
-      const { count } = await supabase
-        .from('chefs')
-        .select('*', { count: 'exact', head: true })
-        .is('photo_url', null);
-      console.log(`     [DRY RUN] Would process up to ${limit} of ${count || 0} chefs without photos`);
-    }
+    console.log(`\n   ⏭️  Skipping chef photo enrichment (Wikipedia photos only, manual upload)`);
+    console.log(`     Chef photos are managed separately via Wikipedia or manual admin upload`);
 
     if (process.env.GOOGLE_PLACES_API_KEY) {
       console.log(`\n   🗺️  Enriching restaurant Google Places data...`);

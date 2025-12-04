@@ -49,14 +49,6 @@ const ChefEnrichmentSchema = z.object({
   restaurants: z.array(RestaurantSchema).optional().default([]),
   jamesBeardStatus: enumWithCitationStrip(['winner', 'nominated', 'semifinalist'] as const),
   notableAwards: z.array(z.string()).nullable().optional(),
-  instagramHandle: z.string().nullable().optional().transform(val => {
-    if (!val) return null;
-    const cleaned = val.replace(/^@/, '').trim();
-    if (!cleaned || !/^[a-zA-Z0-9._]{1,30}$/.test(cleaned)) return null;
-    return cleaned;
-  }),
-  photoUrl: z.string().url().nullable().optional(),
-  photoConfidence: z.number().min(0).max(1).nullable().optional(),
 }).passthrough();
 
 const RestaurantStatusSchema = z.object({
@@ -65,31 +57,6 @@ const RestaurantStatusSchema = z.object({
   reason: z.string(),
 });
 
-const InstagramOnlySchema = z.object({
-  instagramHandle: z.string().nullable().optional().transform(val => {
-    if (!val) return null;
-    const cleaned = val.replace(/^@/, '').trim();
-    if (!cleaned || !/^[a-zA-Z0-9._]{1,30}$/.test(cleaned)) return null;
-    return cleaned;
-  }),
-  isPrivate: z.boolean().optional().default(false),
-});
-
-const InstagramPostSchema = z.object({
-  postUrl: z.string().refine(
-    val => {
-      const trimmed = val.trim();
-      return /^https:\/\/www\.instagram\.com\/(p|reel)\/[A-Za-z0-9_-]{11,}\/?$/.test(trimmed);
-    },
-    { message: 'Invalid Instagram post URL format' }
-  ).transform(val => val.trim()),
-  confidence: z.number().min(0).max(1),
-  reason: z.string(),
-});
-
-const InstagramPostsSchema = z.object({
-  posts: z.array(InstagramPostSchema).max(5).default([]),
-});
 
 export interface ChefEnrichmentResult {
   chefId: string;
@@ -98,10 +65,6 @@ export interface ChefEnrichmentResult {
   restaurants: z.infer<typeof RestaurantSchema>[];
   jamesBeardStatus: string | null;
   notableAwards: string[] | null;
-  instagramHandle: string | null;
-  photoUrl: string | null;
-  photoSource: 'wikipedia' | null;
-  photoConfidence: number;
   tokensUsed: TokenUsage;
   success: boolean;
   error?: string;
@@ -129,33 +92,6 @@ export interface RestaurantOnlyResult {
   error?: string;
 }
 
-export interface InstagramOnlyResult {
-  chefId: string;
-  chefName: string;
-  instagramHandle: string | null;
-  tokensUsed: TokenUsage;
-  success: boolean;
-  error?: string;
-}
-
-export interface InstagramPostResult {
-  chefId: string;
-  chefName: string;
-  instagramHandle: string;
-  posts: Array<{
-    postUrl: string;
-    confidence: number;
-    reason: string;
-  }>;
-  bestPost: {
-    postUrl: string;
-    confidence: number;
-    reason: string;
-  } | null;
-  tokensUsed: TokenUsage;
-  success: boolean;
-  error?: string;
-}
 
 export interface TokenUsage {
   prompt: number;
@@ -175,8 +111,6 @@ Your task: Use web search to find accurate, up-to-date information about the che
 2. Their current restaurants (owned, partner, or executive chef roles)
 3. James Beard Award status if any
 4. Notable awards (e.g., Michelin Guide recognition, World's 50 Best, AAA Five Diamond)
-5. Instagram handle (if available - username only, without @ symbol)
-6. A high-quality professional headshot photo URL (if available with high confidence)
 
 IMPORTANT: After gathering enough information (typically 5-10 searches), YOU MUST return your final JSON response. Do not continue searching indefinitely.
 
@@ -194,11 +128,6 @@ Awards Guidelines:
 - For chefs: Track notable awards beyond James Beard (World's 50 Best Chefs, Michelin Guide recognition, S.Pellegrino awards)
 - Be specific with award names and years if available
 - Only include prestigious, verifiable awards
-
-Photo Guidelines:
-- DO NOT include photo URLs in your response
-- Photos will be sourced separately from Wikipedia/Wikimedia Commons
-- Set photoUrl to null and omit photoConfidence
 
 CRITICAL: You MUST respond with ONLY valid JSON. Do not include any explanatory text, conversational responses, or anything other than the JSON object itself.
 
@@ -222,10 +151,7 @@ Your response must be a single JSON object matching this exact structure:
     }
   ],
   "jamesBeardStatus": null or "winner" or "nominated" or "semifinalist",
-  "notableAwards": ["Award Name (Year)"] or null,
-  "instagramHandle": "username" or null,
-  "photoUrl": "https://..." or null,
-  "photoConfidence": 0.0 to 1.0 or null
+  "notableAwards": ["Award Name (Year)"] or null
 }
 
 Do NOT start your response with "I can..." or any other text. Start immediately with the opening brace {.`;
@@ -291,79 +217,6 @@ Your response must be a single JSON object matching this exact structure:
 }
 
 Do NOT start your response with "I can..." or any other text. Start immediately with the opening brace {.`;
-
-const INSTAGRAM_ONLY_SYSTEM_PROMPT = `You are a social media researcher finding Instagram handles for chefs.
-
-Your task: Use web search to find the official Instagram account for this chef.
-
-Guidelines:
-- Search for "[Chef Name] Instagram"
-- Look for verified accounts or official links from restaurant websites
-- Check if the account is private (requires follow approval to view posts)
-- Return the username only (without @ symbol)
-- Be conservative - only return a handle if you're confident it's the correct chef
-- IMPORTANT: Set isPrivate to true if the account is private/locked
-
-Respect privacy: If the account is private, we will not add it to our database out of respect for the chef's privacy preferences.
-
-CRITICAL: You MUST respond with ONLY valid JSON. Do not include any explanatory text or anything other than the JSON object itself.
-
-Your response must be a single JSON object matching this exact structure:
-{
-  "instagramHandle": "username" or null,
-  "isPrivate": true or false
-}
-
-Do NOT start your response with "I can..." or any other text. Start immediately with the opening brace {.`;
-
-const INSTAGRAM_POST_FINDER_SYSTEM_PROMPT = `You are a social media curator finding the best Instagram posts for chef profiles.
-
-Your task: Find 3-5 recent high-quality Instagram posts from the chef's account that would make great featured images for their professional profile.
-
-Selection Criteria (in order of priority):
-1. **Solo chef portraits** - Professional headshots or portraits showing just the chef (NO group photos)
-2. **Chef cooking/working** - Action shots of them in the kitchen, preparing food, or demonstrating techniques
-3. **Signature dishes** - Beautiful plating of their most famous or representative dishes
-4. **Food close-ups** - High-quality food photography from their restaurants
-
-What to AVOID:
-- Group photos with multiple people (unless chef is clearly the focus)
-- Personal/casual content (family, vacations, selfies with friends)
-- Promotional ads or sponsored content
-- Low-quality images or screenshots
-- Memes or text-heavy posts
-- Posts that are too old (prefer within last 6-12 months if possible)
-
-For each post, provide:
-- The full Instagram post URL (https://www.instagram.com/p/POST_ID/)
-- A confidence score (0.0 to 1.0) based on how well it matches criteria
-- A brief reason explaining why this post is a good choice
-
-Confidence scoring guide:
-- 0.9-1.0: Perfect solo chef portrait or iconic cooking shot
-- 0.7-0.89: Good quality food/cooking content, clearly their work
-- 0.5-0.69: Acceptable but not ideal (e.g., older post, group photo where they're prominent)
-- Below 0.5: Don't include
-
-CRITICAL: You MUST respond with ONLY valid JSON. Do not include any explanatory text or anything other than the JSON object itself.
-
-Your response must be a single JSON object matching this exact structure:
-{
-  "posts": [
-    {
-      "postUrl": "https://www.instagram.com/p/ABC123/",
-      "confidence": 0.95,
-      "reason": "Professional headshot in chef whites, recent post"
-    },
-    {
-      "postUrl": "https://www.instagram.com/p/DEF456/",
-      "confidence": 0.85,
-      "reason": "Chef plating signature dish, high engagement"
-    }
-  ]
-}
-
-Return 3-5 posts ordered by confidence (highest first). Do NOT start your response with "I can..." or any other text. Start immediately with the opening brace {.`;
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
@@ -453,11 +306,6 @@ export function createLLMEnricher(
 
       const restaurants = validated.restaurants.slice(0, maxRestaurants);
 
-      // Photos are handled separately by media-enricher (Wikipedia-only)
-      const photoUrl: string | null = null;
-      const photoSource: 'wikipedia' | null = null;
-      const photoConfidence = 0;
-
       return {
         chefId,
         chefName,
@@ -465,10 +313,6 @@ export function createLLMEnricher(
         restaurants,
         jamesBeardStatus: validated.jamesBeardStatus ?? null,
         notableAwards: validated.notableAwards ?? null,
-        instagramHandle: validated.instagramHandle ?? null,
-        photoUrl,
-        photoSource,
-        photoConfidence,
         tokensUsed,
         success: true,
       };
@@ -483,10 +327,6 @@ export function createLLMEnricher(
         restaurants: [],
         jamesBeardStatus: null,
         notableAwards: null,
-        instagramHandle: null,
-        photoUrl: null,
-        photoSource: null,
-        photoConfidence: 0,
         tokensUsed: { prompt: 0, completion: 0, total: 0 },
         success: false,
         error: msg,
@@ -559,191 +399,6 @@ export function createLLMEnricher(
     }
   }
 
-  async function enrichInstagramOnly(
-    chefId: string,
-    chefName: string
-  ): Promise<InstagramOnlyResult> {
-    const prompt = `Find the Instagram account for chef ${chefName}.
-
-Search for: "chef ${chefName} Instagram"
-
-Look for accounts where the bio mentions "chef" or cooking/culinary credentials. This helps confirm you have the right person if there are multiple people with the same name.
-
-IMPORTANT: Check if the account is private (locked/requires follow approval). Set isPrivate to true if it is.
-
-Return the username if found (or null if not found), and indicate whether the account is private.`;
-
-    try {
-      const result = await withRetry(
-        () => generateText({
-          model: openai.responses(modelName),
-          tools: {
-            web_search_preview: openai.tools.webSearchPreview({
-              searchContextSize: 'medium',
-            }),
-          },
-          system: INSTAGRAM_ONLY_SYSTEM_PROMPT,
-          prompt,
-          maxTokens: 2000,
-          maxSteps: 10,
-        }),
-        `find Instagram handle for ${chefName}`
-      );
-
-      const tokensUsed: TokenUsage = {
-        prompt: result.usage?.promptTokens || 0,
-        completion: result.usage?.completionTokens || 0,
-        total: result.usage?.totalTokens || 0,
-      };
-
-      totalTokensUsed.prompt += tokensUsed.prompt;
-      totalTokensUsed.completion += tokensUsed.completion;
-      totalTokensUsed.total += tokensUsed.total;
-
-      const jsonText = extractJsonFromText(result.text);
-      const parsed = JSON.parse(jsonText);
-      const validated = InstagramOnlySchema.parse(parsed);
-
-      if (validated.isPrivate && validated.instagramHandle) {
-        console.log(`   🔒 Account is private - respecting privacy, not adding handle`);
-        return {
-          chefId,
-          chefName,
-          instagramHandle: null,
-          tokensUsed,
-          success: true,
-        };
-      }
-
-      return {
-        chefId,
-        chefName,
-        instagramHandle: validated.instagramHandle ?? null,
-        tokensUsed,
-        success: true,
-      };
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      console.error(`   ❌ Instagram enrichment error for "${chefName}": ${msg}`);
-      
-      return {
-        chefId,
-        chefName,
-        instagramHandle: null,
-        tokensUsed: { prompt: 0, completion: 0, total: 0 },
-        success: false,
-        error: msg,
-      };
-    }
-  }
-
-  async function findInstagramPosts(
-    chefId: string,
-    chefName: string,
-    instagramHandle: string
-  ): Promise<InstagramPostResult> {
-    const prompt = `Find the best Instagram posts from @${instagramHandle} (chef ${chefName}) for their professional profile.
-
-Search for recent posts from instagram.com/${instagramHandle} and identify 3-5 high-quality posts that would make great featured images.
-
-Prioritize:
-1. Solo chef portraits/headshots
-2. Chef cooking or working in the kitchen
-3. Signature dishes or beautiful food photography
-
-Avoid group photos, personal content, ads, or low-quality images.
-
-For each post, provide the full Instagram URL (https://www.instagram.com/p/POST_ID/), a confidence score (0-1), and a brief reason.`;
-
-    try {
-      const result = await withRetry(
-        () => generateText({
-          model: openai.responses(modelName),
-          tools: {
-            web_search_preview: openai.tools.webSearchPreview({
-              searchContextSize: 'high',
-            }),
-          },
-          system: INSTAGRAM_POST_FINDER_SYSTEM_PROMPT,
-          prompt,
-          maxTokens: 3000,
-          maxSteps: 15,
-        }),
-        `find Instagram posts for ${chefName} (@${instagramHandle})`
-      );
-
-      const tokensUsed: TokenUsage = {
-        prompt: result.usage?.promptTokens || 0,
-        completion: result.usage?.completionTokens || 0,
-        total: result.usage?.totalTokens || 0,
-      };
-
-      totalTokensUsed.prompt += tokensUsed.prompt;
-      totalTokensUsed.completion += tokensUsed.completion;
-      totalTokensUsed.total += tokensUsed.total;
-
-      if (!result.text || result.text.trim() === '') {
-        console.log(`   ℹ️  LLM returned empty response - likely couldn't find suitable posts`);
-        return {
-          chefId,
-          chefName,
-          instagramHandle,
-          posts: [],
-          bestPost: null,
-          tokensUsed,
-          success: true,
-        };
-      }
-
-      const jsonText = extractJsonFromText(result.text);
-      let parsed;
-      try {
-        parsed = JSON.parse(jsonText);
-      } catch (parseError) {
-        console.log(`   ℹ️  Could not parse LLM response - likely couldn't find posts`);
-        return {
-          chefId,
-          chefName,
-          instagramHandle,
-          posts: [],
-          bestPost: null,
-          tokensUsed,
-          success: true,
-        };
-      }
-
-      console.log(`   🔍 DEBUG: LLM returned:`, JSON.stringify(parsed, null, 2));
-
-      const validated = InstagramPostsSchema.parse(parsed);
-
-      const posts = validated.posts.sort((a, b) => b.confidence - a.confidence);
-      const bestPost = posts.length > 0 ? posts[0] : null;
-
-      return {
-        chefId,
-        chefName,
-        instagramHandle,
-        posts,
-        bestPost,
-        tokensUsed,
-        success: true,
-      };
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      console.error(`   ❌ Instagram post finder error for "${chefName}" (@${instagramHandle}): ${msg}`);
-      
-      return {
-        chefId,
-        chefName,
-        instagramHandle,
-        posts: [],
-        bestPost: null,
-        tokensUsed: { prompt: 0, completion: 0, total: 0 },
-        success: false,
-        error: msg,
-      };
-    }
-  }
 
   async function enrichRestaurantsOnly(
     chefId: string,
@@ -955,7 +610,7 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
       return result;
     }
 
-    if (result.miniBio || result.photoUrl || result.notableAwards || result.instagramHandle) {
+    if (result.miniBio || result.notableAwards) {
       const updateData: Record<string, unknown> = {
         updated_at: new Date().toISOString(),
         last_enriched_at: new Date().toISOString(),
@@ -971,15 +626,6 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
 
       if (result.notableAwards && result.notableAwards.length > 0) {
         updateData.notable_awards = result.notableAwards;
-      }
-
-      if (result.instagramHandle) {
-        updateData.instagram_handle = result.instagramHandle;
-      }
-
-      if (result.photoUrl && result.photoSource) {
-        updateData.photo_url = result.photoUrl;
-        updateData.photo_source = result.photoSource;
       }
 
       const { error } = await (supabase
@@ -998,12 +644,9 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
             mini_bio: result.miniBio, 
             james_beard_status: result.jamesBeardStatus,
             notable_awards: result.notableAwards,
-            instagram_handle: result.instagramHandle,
-            photo_url: result.photoUrl,
-            photo_source: result.photoSource,
           },
           source: 'llm_enricher',
-          confidence: result.photoConfidence > 0 ? Math.min(0.85, result.photoConfidence) : 0.85,
+          confidence: 0.85,
         });
       }
     }
@@ -1162,8 +805,6 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
   return {
     enrichChef,
     enrichAndSaveChef,
-    enrichInstagramOnly,
-    findInstagramPosts,
     findAndSaveRestaurants,
     verifyRestaurantStatus,
     verifyAndUpdateStatus,
