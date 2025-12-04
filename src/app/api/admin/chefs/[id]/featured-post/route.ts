@@ -14,7 +14,7 @@ const UpdateFeaturedPostSchema = z.object({
   featuredInstagramPost: z.string().nullable().optional().transform(val => {
     if (!val) return null;
     const trimmed = val.trim();
-    if (!trimmed || !/^https:\/\/www\.instagram\.com\/(p|reel)\/[A-Za-z0-9_-]{11,}\/?$/.test(trimmed)) {
+    if (!trimmed || !/^https:\/\/www\.instagram\.com\/(p|reel)\/[A-Za-z0-9_-]+\/?$/.test(trimmed)) {
       throw new Error('Invalid Instagram post URL format. Expected: https://www.instagram.com/p/POST_ID/');
     }
     return trimmed;

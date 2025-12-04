@@ -38,7 +38,7 @@ export function InstagramPostSelector({ chef }: InstagramPostSelectorProps) {
   }
 
   function validatePostUrl(url: string): boolean {
-    return /^https:\/\/www\.instagram\.com\/(p|reel)\/[A-Za-z0-9_-]{11,}\/?$/.test(url.trim());
+    return /^https:\/\/www\.instagram\.com\/(p|reel)\/[A-Za-z0-9_-]+\/?$/.test(url.trim());
   }
 
   function addPostPreview() {
@@ -218,11 +218,15 @@ export function InstagramPostSelector({ chef }: InstagramPostSelectorProps) {
                     ? 'border-pink-600 ring-2 ring-pink-200'
                     : 'border-slate-200 hover:border-pink-300'
                 }`}
-                onClick={() => setSelectedPostUrl(post.url)}
               >
                 <div className="aspect-square bg-slate-50">
                   <InstagramEmbed postUrl={post.url} className="w-full h-full" />
                 </div>
+                <div 
+                  className="absolute inset-0 cursor-pointer"
+                  onClick={() => setSelectedPostUrl(selectedPostUrl === post.url ? null : post.url)}
+                  title="Click to select/deselect"
+                />
                 {selectedPostUrl === post.url && (
                   <div className="absolute top-2 right-2 bg-pink-600 text-white rounded-full p-2">
                     <Check className="w-4 h-4" />

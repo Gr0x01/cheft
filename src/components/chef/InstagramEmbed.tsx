@@ -6,10 +6,10 @@ interface InstagramEmbedProps {
 }
 
 export function InstagramEmbed({ postUrl, className = '' }: InstagramEmbedProps) {
-  const match = postUrl.match(/^https:\/\/www\.instagram\.com\/(p|reel)\/([A-Za-z0-9_-]{11,})\/?\??.*$/);
+  const match = postUrl.match(/^https:\/\/www\.instagram\.com\/(p|reel)\/([A-Za-z0-9_-]+)\/?\??.*$/);
   const postId = match?.[2];
   
-  if (!postId || postId.length < 11 || !/^[A-Za-z0-9_-]+$/.test(postId)) {
+  if (!postId || !/^[A-Za-z0-9_-]+$/.test(postId)) {
     return null;
   }
 

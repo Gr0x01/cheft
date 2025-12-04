@@ -113,15 +113,22 @@ export function ChefTable({ chefs }: { chefs: Chef[] }) {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {chef.instagram_handle ? (
-                    <a
-                      href={`https://instagram.com/${chef.instagram_handle}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-pink-600 hover:text-pink-800 flex items-center gap-1"
-                    >
-                      <Instagram className="w-4 h-4" />
-                      @{chef.instagram_handle}
-                    </a>
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={`https://instagram.com/${chef.instagram_handle}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-pink-600 hover:text-pink-800 flex items-center gap-1"
+                      >
+                        <Instagram className="w-4 h-4" />
+                        @{chef.instagram_handle}
+                      </a>
+                      {chef.featured_instagram_post ? (
+                        <span className="text-green-600" title="Featured post selected">✓</span>
+                      ) : (
+                        <span className="text-amber-500" title="No featured post">⚠</span>
+                      )}
+                    </div>
                   ) : (
                     <span className="text-sm text-slate-400">No handle</span>
                   )}
@@ -130,8 +137,20 @@ export function ChefTable({ chefs }: { chefs: Chef[] }) {
                   <div className="flex items-center justify-end gap-2">
                     <a
                       href={`/admin/manage/instagram/${chef.id}`}
-                      className="text-purple-600 hover:text-purple-900 p-2 rounded hover:bg-purple-50"
-                      title="Select Instagram post"
+                      className={`p-2 rounded transition-colors ${
+                        chef.featured_instagram_post
+                          ? 'text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100'
+                          : chef.instagram_handle
+                          ? 'text-amber-600 hover:text-amber-900 bg-amber-50 hover:bg-amber-100'
+                          : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                      }`}
+                      title={
+                        chef.featured_instagram_post
+                          ? 'View/change Instagram post'
+                          : chef.instagram_handle
+                          ? 'Select Instagram post (none selected)'
+                          : 'Select Instagram post (no handle)'
+                      }
                     >
                       <Grid className="w-4 h-4" />
                     </a>
