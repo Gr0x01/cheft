@@ -63,6 +63,7 @@ export interface Database {
           name: string;
           slug: string;
           mini_bio: string | null;
+          career_narrative: string | null;
           country: string | null;
           james_beard_status: "semifinalist" | "nominated" | "winner" | null;
           photo_url: string | null;
@@ -78,6 +79,7 @@ export interface Database {
           created_at: string;
           updated_at: string;
           last_verified_at: string | null;
+          narrative_generated_at: string | null;
           enrichment_priority: number | null;
           manual_priority: boolean | null;
         };
@@ -86,6 +88,7 @@ export interface Database {
           name: string;
           slug: string;
           mini_bio?: string | null;
+          career_narrative?: string | null;
           country?: string | null;
           james_beard_status?: "semifinalist" | "nominated" | "winner" | null;
           photo_url?: string | null;
@@ -101,6 +104,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
           last_verified_at?: string | null;
+          narrative_generated_at?: string | null;
           enrichment_priority?: number | null;
           manual_priority?: boolean | null;
         };
@@ -109,6 +113,7 @@ export interface Database {
           name?: string;
           slug?: string;
           mini_bio?: string | null;
+          career_narrative?: string | null;
           country?: string | null;
           james_beard_status?: "semifinalist" | "nominated" | "winner" | null;
           photo_url?: string | null;
@@ -124,6 +129,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
           last_verified_at?: string | null;
+          narrative_generated_at?: string | null;
           enrichment_priority?: number | null;
           manual_priority?: boolean | null;
         };
@@ -138,10 +144,12 @@ export interface Database {
           slug: string;
           restaurant_count: number | null;
           chef_count: number | null;
+          city_narrative: string | null;
           hero_image_url: string | null;
           meta_description: string | null;
           created_at: string;
           updated_at: string;
+          narrative_generated_at: string | null;
         };
         Insert: {
           id?: string;
@@ -151,10 +159,12 @@ export interface Database {
           slug: string;
           restaurant_count?: number | null;
           chef_count?: number | null;
+          city_narrative?: string | null;
           hero_image_url?: string | null;
           meta_description?: string | null;
           created_at?: string;
           updated_at?: string;
+          narrative_generated_at?: string | null;
         };
         Update: {
           id?: string;
@@ -164,10 +174,12 @@ export interface Database {
           slug?: string;
           restaurant_count?: number | null;
           chef_count?: number | null;
+          city_narrative?: string | null;
           hero_image_url?: string | null;
           meta_description?: string | null;
           created_at?: string;
           updated_at?: string;
+          narrative_generated_at?: string | null;
         };
         Relationships: [];
       };
@@ -473,6 +485,7 @@ export interface Database {
           verification_source: string | null;
           is_public: boolean | null;
           description: string | null;
+          restaurant_narrative: string | null;
           google_place_id: string | null;
           google_rating: number | null;
           google_review_count: number | null;
@@ -492,6 +505,7 @@ export interface Database {
           gift_card_url: string | null;
           created_at: string;
           updated_at: string;
+          narrative_generated_at: string | null;
           verification_priority: number | null;
         };
         Insert: {
@@ -521,6 +535,7 @@ export interface Database {
           verification_source?: string | null;
           is_public?: boolean | null;
           description?: string | null;
+          restaurant_narrative?: string | null;
           google_place_id?: string | null;
           google_rating?: number | null;
           google_review_count?: number | null;
@@ -540,6 +555,7 @@ export interface Database {
           gift_card_url?: string | null;
           created_at?: string;
           updated_at?: string;
+          narrative_generated_at?: string | null;
           verification_priority?: number | null;
         };
         Update: {
@@ -569,6 +585,7 @@ export interface Database {
           verification_source?: string | null;
           is_public?: boolean | null;
           description?: string | null;
+          restaurant_narrative?: string | null;
           google_place_id?: string | null;
           google_rating?: number | null;
           google_review_count?: number | null;
@@ -588,6 +605,7 @@ export interface Database {
           gift_card_url?: string | null;
           created_at?: string;
           updated_at?: string;
+          narrative_generated_at?: string | null;
           verification_priority?: number | null;
         };
         Relationships: [

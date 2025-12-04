@@ -6,6 +6,7 @@ import { ItemListSchema } from '@/components/seo/SchemaOrg';
 import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
 import { ChefCard } from '@/components/chef/ChefCard';
 import { PageHero } from '@/components/ui/PageHero';
+import { sanitizeNarrative } from '@/lib/sanitize';
 
 interface CityPageProps {
   params: Promise<{ slug: string }>;
@@ -19,6 +20,7 @@ interface City {
   slug: string;
   restaurant_count: number;
   chef_count: number;
+  city_narrative: string | null;
 }
 
 interface ChefWithRestaurants {
@@ -45,7 +47,7 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
 
   const { data: city } = await supabase
     .from('cities')
-    .select('name, state, restaurant_count')
+    .select('name, state, restaurant_count, city_narrative')
     .eq('slug', slug)
     .single();
 
@@ -193,6 +195,23 @@ export default async function CityPage({ params }: CityPageProps) {
             { label: displayName },
           ]}
         />
+
+        {/* Food Scene intro - Narrative */}
+        {city.city_narrative && (
+          <section 
+            className="py-8 border-b"
+            style={{ borderColor: 'var(--border-light)' }}
+          >
+            <div className="max-w-7xl mx-auto px-4">
+              <p 
+                className="font-ui text-lg leading-relaxed max-w-4xl"
+                style={{ color: 'var(--text-primary)', lineHeight: '1.8' }}
+              >
+                {sanitizeNarrative(city.city_narrative)}
+              </p>
+            </div>
+          </section>
+        )}
 
         {/* Restaurants */}
         <section className="max-w-7xl mx-auto px-4 py-12">

@@ -8,6 +8,7 @@ import { RelatedChefs } from '@/components/chef/RelatedChefs';
 import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
 import { PersonSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 import { ReportIssueButton } from '@/components/feedback/ReportIssueButton';
+import { sanitizeNarrative } from '@/lib/sanitize';
 import { InstagramEmbed } from '@/components/chef/InstagramEmbed';
 
 interface ChefPageProps {
@@ -21,6 +22,7 @@ interface ChefData {
   photo_url: string | null;
   photo_source: 'wikipedia' | 'manual' | null;
   mini_bio: string | null;
+  career_narrative: string | null;
   james_beard_status: 'semifinalist' | 'nominated' | 'winner' | null;
   instagram_handle: string | null;
   featured_instagram_post: string | null;
@@ -53,7 +55,7 @@ async function getChef(slug: string): Promise<ChefData | null> {
   try {
     const supabase = createStaticClient();
 
-    const { data, error } = await supabase
+    const { data, error} = await supabase
       .from('chefs')
       .select(`
         id,
@@ -62,6 +64,7 @@ async function getChef(slug: string): Promise<ChefData | null> {
         photo_url,
         photo_source,
         mini_bio,
+        career_narrative,
         james_beard_status,
         instagram_handle,
         featured_instagram_post,
@@ -309,6 +312,28 @@ export default async function ChefPage({ params }: ChefPageProps) {
                 </p>
               </div>
             </div>
+          )}
+
+          {/* The Story section - Career Narrative */}
+          {chef.career_narrative && (
+            <section 
+              className="py-12 border-b"
+              style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
+            >
+              <div className="max-w-6xl mx-auto px-4">
+                <h2 className="font-display text-3xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
+                  The Story
+                </h2>
+                <div className="prose prose-lg max-w-none">
+                  <p 
+                    className="font-ui text-lg leading-relaxed"
+                    style={{ color: 'var(--text-primary)', lineHeight: '1.8' }}
+                  >
+                    {sanitizeNarrative(chef.career_narrative)}
+                  </p>
+                </div>
+              </div>
+            </section>
           )}
 
           {/* TV Appearances */}

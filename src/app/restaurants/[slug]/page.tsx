@@ -8,6 +8,7 @@ import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
 import { MiniMapWrapper } from '@/components/restaurant/MiniMapWrapper';
 import { RestaurantSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 import { ReportIssueButton } from '@/components/feedback/ReportIssueButton';
+import { sanitizeNarrative } from '@/lib/sanitize';
 
 interface RestaurantPageProps {
   params: Promise<{ slug: string }>;
@@ -32,6 +33,7 @@ interface RestaurantData {
   google_review_count: number | null;
   photo_urls: string[] | null;
   description: string | null;
+  restaurant_narrative: string | null;
   phone: string | null;
   chef: {
     id: string;
@@ -110,6 +112,7 @@ async function getRestaurant(slug: string): Promise<RestaurantData | null> {
       google_review_count,
       photo_urls,
       description,
+      restaurant_narrative,
       phone,
       chef:chefs (
         id,
@@ -304,6 +307,26 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
               { label: restaurant.name },
             ]}
           />
+
+          {/* About This Restaurant - Narrative */}
+          {restaurant.restaurant_narrative && (
+            <section 
+              className="py-12 border-t"
+              style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
+            >
+              <div className="max-w-6xl mx-auto px-4">
+                <h2 className="font-display text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
+                  About This Restaurant
+                </h2>
+                <p 
+                  className="font-ui text-lg leading-relaxed max-w-4xl"
+                  style={{ color: 'var(--text-primary)', lineHeight: '1.8' }}
+                >
+                  {sanitizeNarrative(restaurant.restaurant_narrative)}
+                </p>
+              </div>
+            </section>
+          )}
 
           {restaurant.lat && restaurant.lng && (
             <section className="py-12 border-t" style={{ borderColor: 'var(--border-light)' }}>

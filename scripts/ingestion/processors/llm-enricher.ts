@@ -802,12 +802,239 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
     totalTokensUsed = { prompt: 0, completion: 0, total: 0 };
   }
 
+  async function enrichChefNarrative(
+    chefId: string,
+    chefContext: any
+  ): Promise<{ success: boolean; narrative: string | null; tokensUsed: TokenUsage; error?: string }> {
+    try {
+      const { buildChefNarrativePrompt, CHEF_NARRATIVE_SYSTEM_PROMPT } = await import('../../../src/lib/narratives/prompts');
+      
+      const prompt = buildChefNarrativePrompt(chefContext);
+      
+      const result = await withRetry(
+        () => generateText({
+          model: openai.responses('gpt-4.1-mini'),
+          tools: {
+            web_search_preview: openai.tools.webSearchPreview({
+              searchContextSize: 'medium',
+            }),
+          },
+          system: CHEF_NARRATIVE_SYSTEM_PROMPT,
+          prompt,
+          maxTokens: 8000,
+          maxSteps: 50,
+        }),
+        `generate narrative for chef ${chefContext.name}`
+      );
+
+      const tokensUsed: TokenUsage = {
+        prompt: result.usage?.promptTokens || 0,
+        completion: result.usage?.completionTokens || 0,
+        total: result.usage?.totalTokens || 0,
+      };
+
+      totalTokensUsed.prompt += tokensUsed.prompt;
+      totalTokensUsed.completion += tokensUsed.completion;
+      totalTokensUsed.total += tokensUsed.total;
+
+      if (!result.text || result.text.trim() === '') {
+        throw new Error('LLM returned empty narrative');
+      }
+
+      const narrative = result.text.trim();
+
+      if (narrative.length < 50) {
+        throw new Error(`Generated narrative too short: ${narrative.length} characters`);
+      }
+
+      const { error: updateError } = await (supabase.from('chefs') as ReturnType<typeof supabase.from>)
+        .update({
+          career_narrative: narrative,
+          narrative_generated_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', chefId);
+
+      if (updateError) {
+        throw new Error(`Database update failed: ${updateError.message}`);
+      }
+
+      return {
+        success: true,
+        narrative,
+        tokensUsed,
+      };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`   ❌ Narrative generation error: ${msg}`);
+      
+      return {
+        success: false,
+        narrative: null,
+        tokensUsed: { prompt: 0, completion: 0, total: 0 },
+        error: msg,
+      };
+    }
+  }
+
+  async function enrichRestaurantNarrative(
+    restaurantId: string,
+    restaurantContext: any
+  ): Promise<{ success: boolean; narrative: string | null; tokensUsed: TokenUsage; error?: string }> {
+    try {
+      const { buildRestaurantNarrativePrompt, RESTAURANT_NARRATIVE_SYSTEM_PROMPT } = await import('../../../src/lib/narratives/prompts');
+      
+      const prompt = buildRestaurantNarrativePrompt(restaurantContext);
+      
+      const result = await withRetry(
+        () => generateText({
+          model: openai.responses('gpt-4.1-mini'),
+          tools: {
+            web_search_preview: openai.tools.webSearchPreview({
+              searchContextSize: 'medium',
+            }),
+          },
+          system: RESTAURANT_NARRATIVE_SYSTEM_PROMPT,
+          prompt,
+          maxTokens: 6000,
+          maxSteps: 30,
+        }),
+        `generate narrative for restaurant ${restaurantContext.name}`
+      );
+
+      const tokensUsed: TokenUsage = {
+        prompt: result.usage?.promptTokens || 0,
+        completion: result.usage?.completionTokens || 0,
+        total: result.usage?.totalTokens || 0,
+      };
+
+      totalTokensUsed.prompt += tokensUsed.prompt;
+      totalTokensUsed.completion += tokensUsed.completion;
+      totalTokensUsed.total += tokensUsed.total;
+
+      if (!result.text || result.text.trim() === '') {
+        throw new Error('LLM returned empty narrative');
+      }
+
+      const narrative = result.text.trim();
+
+      if (narrative.length < 50) {
+        throw new Error(`Generated narrative too short: ${narrative.length} characters`);
+      }
+
+      const { error: updateError } = await (supabase.from('restaurants') as ReturnType<typeof supabase.from>)
+        .update({
+          restaurant_narrative: narrative,
+          narrative_generated_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', restaurantId);
+
+      if (updateError) {
+        throw new Error(`Database update failed: ${updateError.message}`);
+      }
+
+      return {
+        success: true,
+        narrative,
+        tokensUsed,
+      };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`   ❌ Restaurant narrative error: ${msg}`);
+      
+      return {
+        success: false,
+        narrative: null,
+        tokensUsed: { prompt: 0, completion: 0, total: 0 },
+        error: msg,
+      };
+    }
+  }
+
+  async function enrichCityNarrative(
+    cityId: string,
+    cityContext: any
+  ): Promise<{ success: boolean; narrative: string | null; tokensUsed: TokenUsage; error?: string }> {
+    try {
+      const { buildCityNarrativePrompt, CITY_NARRATIVE_SYSTEM_PROMPT } = await import('../../../src/lib/narratives/prompts');
+      
+      const prompt = buildCityNarrativePrompt(cityContext);
+      
+      const result = await withRetry(
+        () => generateText({
+          model: openai.responses('gpt-4.1-mini'),
+          tools: {
+            web_search_preview: openai.tools.webSearchPreview({
+              searchContextSize: 'medium',
+            }),
+          },
+          system: CITY_NARRATIVE_SYSTEM_PROMPT,
+          prompt,
+          maxTokens: 8000,
+          maxSteps: 40,
+        }),
+        `generate narrative for city ${cityContext.name}`
+      );
+
+      const tokensUsed: TokenUsage = {
+        prompt: result.usage?.promptTokens || 0,
+        completion: result.usage?.completionTokens || 0,
+        total: result.usage?.totalTokens || 0,
+      };
+
+      totalTokensUsed.prompt += tokensUsed.prompt;
+      totalTokensUsed.completion += tokensUsed.completion;
+      totalTokensUsed.total += tokensUsed.total;
+
+      if (!result.text || result.text.trim() === '') {
+        throw new Error('LLM returned empty narrative');
+      }
+
+      const narrative = result.text.trim();
+
+      if (narrative.length < 50) {
+        throw new Error(`Generated narrative too short: ${narrative.length} characters`);
+      }
+
+      const { error: updateError } = await (supabase.from('cities') as ReturnType<typeof supabase.from>)
+        .update({
+          city_narrative: narrative,
+          narrative_generated_at: new Date().toISOString(),
+        })
+        .eq('id', cityId);
+
+      if (updateError) {
+        throw new Error(`Database update failed: ${updateError.message}`);
+      }
+
+      return {
+        success: true,
+        narrative,
+        tokensUsed,
+      };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`   ❌ City narrative error: ${msg}`);
+      
+      return {
+        success: false,
+        narrative: null,
+        tokensUsed: { prompt: 0, completion: 0, total: 0 },
+        error: msg,
+      };
+    }
+  }
+
   return {
     enrichChef,
     enrichAndSaveChef,
     findAndSaveRestaurants,
     verifyRestaurantStatus,
     verifyAndUpdateStatus,
+    enrichChefNarrative,
+    enrichRestaurantNarrative,
+    enrichCityNarrative,
     getTotalTokensUsed,
     estimateCost,
     resetTokenCounter,
