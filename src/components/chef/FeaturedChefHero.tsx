@@ -65,15 +65,15 @@ export function FeaturedChefHero({ chef }: FeaturedChefHeroProps) {
       }}
     >
       <div className="max-w-7xl mx-auto px-4 py-16 sm:py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start">
           {/* Left: Chef Portrait with Floating Badges */}
-          <div className="lg:col-span-5 relative">
+          <div className="hidden md:block md:col-span-4 lg:col-span-5 relative">
             <div className="relative">
               <div
                 className="relative overflow-hidden mx-auto"
                 style={{
                   width: '100%',
-                  maxWidth: '400px',
+                  maxWidth: '280px',
                   aspectRatio: '3/4',
                   border: '4px solid var(--accent-primary)',
                   borderRadius: 'var(--radius-lg)',
@@ -120,7 +120,7 @@ export function FeaturedChefHero({ chef }: FeaturedChefHeroProps) {
           </div>
 
           {/* Right: Chef Details and Restaurants */}
-          <div className="lg:col-span-7">
+          <div className="md:col-span-8 lg:col-span-7">
             <div className="space-y-6">
               {/* Show/Season + Awards - Single Row */}
               {(primaryShow?.show?.name || isWinner || isJBWinner || isJBNominee || isJBSemifinalist || isFinalist || isJudge) && (
