@@ -1,32 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Crimson_Pro, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { Inter } from "next/font/google";
 import PlausibleProvider from "next-plausible";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  display: "swap",
-});
-
-const crimsonPro = Crimson_Pro({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-
-const jetBrainsMono = JetBrains_Mono({
-  variable: "--font-mono",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-ui",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -67,15 +46,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <PlausibleProvider domain="cheft.app" scriptProps={{ defer: true }} />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <PlausibleProvider domain="cheft.app" />
         <link rel="preconnect" href="https://clktrvyieegouggrpfaj.supabase.co" />
         <link rel="dns-prefetch" href="https://lh3.googleusercontent.com" />
         <link rel="dns-prefetch" href="https://upload.wikimedia.org" />
       </head>
       <body
-        className={`${inter.variable} ${crimsonPro.variable} ${jetBrainsMono.variable} ${spaceGrotesk.variable} antialiased`}
+        className={`${inter.variable} antialiased`}
       >
         {children}
       </body>
