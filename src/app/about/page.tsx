@@ -34,6 +34,7 @@ export default function AboutPage() {
             </h2>
             <p className="font-ui text-lg leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
               A curated map of restaurants from Top Chef, Tournament of Champions, and other shows I like to watch. And probably award winners soon because I want to eat their food too.
+            </p>
           </section>
 
           <section>

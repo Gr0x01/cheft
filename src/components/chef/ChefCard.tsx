@@ -1,7 +1,6 @@
 import Link from 'next/link';
-import Image from 'next/image';
-import { ShowBadgeStrip } from './ShowBadgeStrip';
 import { abbreviateShowName, formatSeasonDisplay } from '@/lib/utils/showBadges';
+import { ShowBadgeCompact } from './ShowBadgeCompact';
 
 interface ChefCardProps {
   chef: {
@@ -24,20 +23,14 @@ interface ChefCardProps {
 }
 
 export function ChefCard({ chef, index = 0 }: ChefCardProps) {
-  const isPriority = index < 4;
   const primaryShow = chef.chef_shows?.find(cs => cs.is_primary) || chef.chef_shows?.[0];
-  const result = primaryShow?.result;
-  const season = primaryShow?.season;
-  const showName = primaryShow?.show?.name;
-  const isWinner = result === 'winner';
-  const isJBWinner = chef.james_beard_status === 'winner';
-  const photoUrl = chef.photo_url;
-  const hasMultipleShows = (chef.chef_shows?.length || 0) > 1;
+  const secondaryShows = chef.chef_shows?.filter(cs => !cs.is_primary && cs.show?.name) || [];
+  
 
   return (
     <Link
       href={`/chefs/${chef.slug}`}
-      className="group relative block bg-white overflow-hidden transition-all duration-300 hover:-translate-y-1"
+      className="group relative block bg-white border border-slate-200 overflow-hidden transition-all duration-500 hover:shadow-xl hover:border-[#B87333] hover:-translate-y-2"
       style={{
         animationDelay: `${index * 50}ms`,
       }}
@@ -45,48 +38,33 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
       {/* Copper accent bar */}
       <div 
         className="absolute top-0 left-0 w-1 h-full transition-all duration-300 group-hover:w-2"
-        style={{ background: 'var(--accent-primary)' }}
+        style={{ background: '#B87333' }}
       />
 
-      {/* Image container with overlay */}
-      <div className="relative aspect-[3/4] overflow-hidden" style={{ background: 'var(--slate-100)' }}>
-        {photoUrl ? (
-          <Image
-            src={photoUrl}
-            alt={chef.name}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            priority={isPriority}
-            quality={60}
-          />
-        ) : (
-          <div className="compact-image-placeholder">
-            <span 
-              className="font-display text-7xl font-bold"
-              style={{ color: 'white' }}
-            >
-              {chef.name.charAt(0)}
-            </span>
-          </div>
-        )}
-
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-        {/* Badges - top right */}
-        <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
-          {isWinner && (
-            <span 
-              className="font-mono text-[10px] font-bold tracking-wider px-2 py-1"
-              style={{ background: 'var(--accent-success)', color: 'white' }}
-            >
-              WINNER
-            </span>
+      {/* Main content */}
+      <div className="p-5 pl-6 pb-4">
+        {/* Show badges + James Beard badge on same line */}
+        <div className="flex flex-wrap items-center gap-2 mb-2 min-h-[20px]">
+          {primaryShow && (
+            <ShowBadgeCompact 
+              show={primaryShow.show}
+              season={primaryShow.season}
+              result={primaryShow.result}
+            />
           )}
-          {isJBWinner && (
+          {secondaryShows.slice(0, 2).map((show, idx) => (
+            <ShowBadgeCompact 
+              key={idx}
+              show={show.show}
+              season={show.season}
+              result={show.result}
+            />
+          ))}
+          
+          {/* James Beard badge */}
+          {chef.james_beard_status === 'winner' && (
             <span 
-              className="font-mono text-[10px] font-bold tracking-wider px-2 py-1 flex items-center gap-1"
+              className="font-mono text-[10px] tracking-wider px-2 py-1 flex items-center gap-1"
               style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', color: '#78350f' }}
             >
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
@@ -95,79 +73,36 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
               JB AWARD
             </span>
           )}
-        </div>
-
-        {/* Name and info - bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-4" style={{ paddingBottom: hasMultipleShows ? '48px' : '16px' }}>
-          <h3 
-            className="font-display text-2xl font-bold leading-tight tracking-tight text-white"
-            style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}
-          >
-            {chef.name}
-          </h3>
-          
-          <div className="mt-2 flex items-center gap-2 flex-wrap">
-            {result && result !== 'contestant' && (
-              <span 
-                className="font-mono text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5"
-                style={{ 
-                  background: result === 'winner' ? 'rgba(16, 185, 129, 0.9)' : 
-                             result === 'finalist' ? 'rgba(245, 158, 11, 0.9)' : 
-                             result === 'judge' ? 'rgba(99, 102, 241, 0.9)' : 'rgba(255,255,255,0.2)',
-                  color: 'white'
-                }}
-              >
-                {result}
-              </span>
-            )}
-            {showName && (
-              <span 
-                className="font-mono text-[10px] tracking-wide px-2 py-0.5 flex items-center gap-1"
-                style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.9)' }}
-              >
-                <span className="font-bold">{abbreviateShowName(showName)}</span>
-                {season && (
-                  <>
-                    <span style={{ opacity: 0.6 }}>•</span>
-                    <span>{formatSeasonDisplay(season)}</span>
-                  </>
-                )}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Secondary shows strip */}
-        {hasMultipleShows && (
-          <ShowBadgeStrip 
-            shows={chef.chef_shows || []} 
-            maxVisible={3}
-            className="hidden sm:flex"
-          />
-        )}
-        {hasMultipleShows && (
-          <ShowBadgeStrip 
-            shows={chef.chef_shows || []} 
-            maxVisible={2}
-            className="flex sm:hidden"
-          />
-        )}
-      </div>
-
-      {/* Footer info */}
-      <div className="p-4 border-t" style={{ borderColor: 'var(--border-light)' }}>
-        <div className="flex items-center justify-between">
-          {typeof chef.restaurant_count === 'number' && chef.restaurant_count > 0 ? (
-            <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
-              {chef.restaurant_count} RESTAURANT{chef.restaurant_count !== 1 ? 'S' : ''}
-            </span>
-          ) : (
-            <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
-              —
+          {chef.james_beard_status === 'nominated' && (
+            <span 
+              className="font-mono text-[10px] tracking-wider px-2 py-1"
+              style={{ background: '#fbbf24', color: '#78350f' }}
+            >
+              JB NOMINEE
             </span>
           )}
+        </div>
+
+        {/* Chef name */}
+        <h3 className="font-display text-2xl font-bold leading-tight tracking-tight text-slate-900 mb-2">
+          {chef.name}
+        </h3>
+
+        {/* Restaurant count */}
+        <div>
+          {typeof chef.restaurant_count === 'number' && chef.restaurant_count > 0 && (
+            <span className="font-mono text-xs tracking-wide font-semibold" style={{ color: 'var(--text-muted)' }}>
+              {chef.restaurant_count} RESTAURANT{chef.restaurant_count !== 1 ? 'S' : ''}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Footer with view indicator */}
+      <div className="px-5 pl-6 py-4 border-t" style={{ borderColor: 'var(--border-light)' }}>
+        <div className="flex items-center justify-end">
           <span 
-            className="font-mono text-xs font-semibold tracking-wide transition-colors duration-200 group-hover:translate-x-1"
+            className="font-mono text-xs font-semibold tracking-wide transition-all duration-300 group-hover:translate-x-1"
             style={{ color: 'var(--accent-primary)' }}
           >
             VIEW →
@@ -175,9 +110,9 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
         </div>
       </div>
 
-      {/* Hover border effect */}
+      {/* Hover effects */}
       <div 
-        className="absolute inset-0 border-2 border-transparent transition-colors duration-300 pointer-events-none group-hover:border-[var(--accent-primary)]"
+        className="absolute inset-0 border-2 border-transparent transition-all duration-300 pointer-events-none group-hover:border-[#B87333] group-hover:shadow-[0_0_0_1px_#B87333]"
       />
     </Link>
   );
