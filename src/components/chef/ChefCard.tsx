@@ -66,9 +66,9 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
           {chef.james_beard_status === 'winner' && (
             <span 
               className="font-mono text-[10px] tracking-wider px-2 py-1 flex items-center gap-1"
-              style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', color: '#78350f' }}
+              style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)', color: '#ffffff' }}
             >
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="#fbbf24">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
               JB AWARD
@@ -77,7 +77,7 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
           {chef.james_beard_status === 'nominated' && (
             <span 
               className="font-mono text-[10px] tracking-wider px-2 py-1"
-              style={{ background: '#fbbf24', color: '#78350f' }}
+              style={{ background: '#1d4ed8', color: '#ffffff' }}
             >
               JB NOMINEE
             </span>

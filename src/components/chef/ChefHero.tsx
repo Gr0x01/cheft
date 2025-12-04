@@ -36,7 +36,6 @@ interface ChefHeroProps {
 export function ChefHero({ chef, breadcrumbItems }: ChefHeroProps) {
   const primaryShow = chef.chef_shows?.find(cs => cs.is_primary) || chef.chef_shows?.[0];
   const isWinner = primaryShow?.result === 'winner';
-  const isJBWinner = chef.james_beard_status === 'winner';
   const photoUrl = chef.photo_url;
 
   return (
@@ -103,15 +102,34 @@ export function ChefHero({ chef, breadcrumbItems }: ChefHeroProps) {
                   WINNER
                 </span>
               )}
-              {isJBWinner && (
+              {chef.james_beard_status === 'winner' && (
                 <span 
                   className="font-mono text-[10px] font-bold tracking-widest px-3 py-1.5 flex items-center gap-1"
-                  style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', color: '#78350f' }}
+                  style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)', color: '#ffffff' }}
                 >
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="#fbbf24">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                   </svg>
                   JAMES BEARD
+                </span>
+              )}
+              {chef.james_beard_status === 'nominated' && (
+                <span 
+                  className="font-mono text-[10px] font-bold tracking-widest px-3 py-1.5 flex items-center gap-1"
+                  style={{ background: '#1d4ed8', color: '#ffffff' }}
+                >
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="#fbbf24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                  JB NOMINEE
+                </span>
+              )}
+              {chef.james_beard_status === 'semifinalist' && (
+                <span 
+                  className="font-mono text-[10px] tracking-widest px-3 py-1.5"
+                  style={{ background: '#dbeafe', color: '#1e3a8a' }}
+                >
+                  JB SEMIFINALIST
                 </span>
               )}
             </div>
@@ -169,25 +187,6 @@ export function ChefHero({ chef, breadcrumbItems }: ChefHeroProps) {
                   style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)' }}
                 >
                   {primaryShow.season}
-                </span>
-              )}
-              {chef.james_beard_status === 'nominated' && (
-                <span 
-                  className="font-mono text-xs font-bold tracking-wider px-3 py-1.5 flex items-center gap-1"
-                  style={{ background: '#fb923c', color: '#7c2d12' }}
-                >
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                  JB NOMINEE
-                </span>
-              )}
-              {chef.james_beard_status === 'semifinalist' && (
-                <span 
-                  className="font-mono text-xs tracking-wider px-3 py-1.5"
-                  style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}
-                >
-                  JB SEMIFINALIST
                 </span>
               )}
             </div>

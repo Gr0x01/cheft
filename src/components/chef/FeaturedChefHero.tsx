@@ -155,12 +155,12 @@ export function FeaturedChefHero({ chef }: FeaturedChefHeroProps) {
                     <span
                       className="font-mono text-xs font-bold tracking-wider px-3 py-1.5 uppercase flex items-center gap-1"
                       style={{
-                        background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                        color: '#78350f',
+                        background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
+                        color: '#ffffff',
                         borderRadius: 'var(--radius-sm)',
                       }}
                     >
-                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="#fbbf24">
                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                       </svg>
                       JAMES BEARD
@@ -170,12 +170,12 @@ export function FeaturedChefHero({ chef }: FeaturedChefHeroProps) {
                     <span
                       className="font-mono text-xs font-bold tracking-wider px-3 py-1.5 uppercase flex items-center gap-1"
                       style={{
-                        background: '#fb923c',
-                        color: '#7c2d12',
+                        background: '#1d4ed8',
+                        color: '#ffffff',
                         borderRadius: 'var(--radius-sm)',
                       }}
                     >
-                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="#fbbf24">
                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                       </svg>
                       JB NOMINEE
@@ -185,9 +185,8 @@ export function FeaturedChefHero({ chef }: FeaturedChefHeroProps) {
                     <span
                       className="font-mono text-xs font-bold tracking-wider px-3 py-1.5 uppercase"
                       style={{
-                        background: 'rgba(255,255,255,0.15)',
-                        color: 'rgba(255,255,255,0.9)',
-                        border: '1px solid rgba(255,255,255,0.3)',
+                        background: '#dbeafe',
+                        color: '#1e3a8a',
                         borderRadius: 'var(--radius-sm)',
                       }}
                     >
