@@ -336,24 +336,6 @@ export default async function ChefPage({ params }: ChefPageProps) {
             </section>
           )}
 
-          {/* Instagram Featured Post */}
-          {chef.featured_instagram_post && (
-            <section 
-              className="py-12 border-b"
-              style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
-            >
-              <div className="max-w-6xl mx-auto px-4">
-                <h2 className="font-display text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
-                  From the Kitchen
-                </h2>
-                <InstagramEmbed 
-                  postUrl={chef.featured_instagram_post} 
-                  className="max-w-xl mx-auto"
-                />
-              </div>
-            </section>
-          )}
-
           {/* Open Restaurants */}
           {openRestaurants.length > 0 && (
             <section className="py-12">
