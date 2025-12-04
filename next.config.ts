@@ -2,6 +2,12 @@ import type { NextConfig } from "next";
 import { withPlausibleProxy } from "next-plausible";
 
 const nextConfig: NextConfig = {
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'react-leaflet'],
+  },
   images: {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60,
