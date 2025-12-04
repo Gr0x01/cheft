@@ -110,8 +110,7 @@ export default async function ChefsPage({
     { name: 'Chefs', url: `${baseUrl}/chefs` },
   ];
 
-  const winnersCount = chefsWithCount.filter(c => c.chef_shows?.some(cs => cs.result === 'winner')).length;
-  const jbCount = chefsWithCount.filter(c => c.james_beard_status).length;
+  const jbWinnersCount = chefsWithCount.filter(c => c.james_beard_status === 'winner').length;
 
   const filterOptions = [
     { href: '/chefs', label: 'ALL', isActive: !params.show && !params.jb },
@@ -147,8 +146,8 @@ export default async function ChefsPage({
           title="Chefs"
           subtitle={`${chefsWithCount.length} competition chefs and their restaurants`}
           stats={[
-            { value: winnersCount, label: 'WINNERS' },
-            { value: jbCount, label: 'JAMES BEARD' },
+            { value: chefsWithCount.length, label: 'CHEFS' },
+            { value: jbWinnersCount, label: 'JB WINNERS' },
           ]}
           breadcrumbItems={[{ label: 'Chefs' }]}
         />
