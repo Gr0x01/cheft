@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Database } from '@/lib/database.types';
-import { Search, Image, FileText, RefreshCw, Upload, Instagram } from 'lucide-react';
+import { Search, Image, FileText, RefreshCw, Upload, Instagram, Grid } from 'lucide-react';
 import { PhotoUpload } from './PhotoUpload';
 import { InstagramHandleModal } from './InstagramHandleModal';
 
@@ -56,23 +56,23 @@ export function ChefTable({ chefs }: { chefs: Chef[] }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-        <table className="min-w-full divide-y divide-slate-200">
+      <div className="bg-white rounded-lg border border-slate-200 overflow-x-auto">
+        <table className="w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-48">
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[240px]">
                 Chef
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-44">
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[180px]">
                 Photo
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-80">
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                 Bio
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-44">
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[180px]">
                 Instagram
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-48">
+              <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-[280px]">
                 Actions
               </th>
             </tr>
@@ -128,6 +128,13 @@ export function ChefTable({ chefs }: { chefs: Chef[] }) {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end gap-2">
+                    <a
+                      href={`/admin/manage/instagram/${chef.id}`}
+                      className="text-purple-600 hover:text-purple-900 p-2 rounded hover:bg-purple-50"
+                      title="Select Instagram post"
+                    >
+                      <Grid className="w-4 h-4" />
+                    </a>
                     <button
                       onClick={() => setSelectedChef(chef)}
                       className="text-slate-600 hover:text-slate-900 p-2 rounded hover:bg-slate-100"

@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { Breadcrumbs } from '../seo/Breadcrumbs';
 import { InstagramIcon } from '@/components/icons/InstagramIcon';
+import { InstagramEmbed } from './InstagramEmbed';
 
 function getInitials(name: string): string {
   return name
@@ -19,6 +20,7 @@ interface ChefHeroProps {
     mini_bio?: string | null;
     james_beard_status?: 'semifinalist' | 'nominated' | 'winner' | null;
     instagram_handle?: string | null;
+    featured_instagram_post?: string | null;
     current_position?: string | null;
     social_links?: {
       instagram?: string;
@@ -74,7 +76,12 @@ export function ChefHero({ chef, breadcrumbItems }: ChefHeroProps) {
                 boxShadow: '8px 8px 0 var(--accent-primary)'
               }}
             >
-              {photoUrl ? (
+              {chef.featured_instagram_post ? (
+                <InstagramEmbed 
+                  postUrl={chef.featured_instagram_post}
+                  className="absolute inset-0"
+                />
+              ) : photoUrl ? (
                 <Image
                   src={photoUrl}
                   alt={chef.name}
