@@ -8,6 +8,7 @@ import { RelatedChefs } from '@/components/chef/RelatedChefs';
 import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
 import { PersonSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 import { ReportIssueButton } from '@/components/feedback/ReportIssueButton';
+import { InstagramEmbed } from '@/components/chef/InstagramEmbed';
 
 interface ChefPageProps {
   params: Promise<{ slug: string }>;
@@ -18,9 +19,11 @@ interface ChefData {
   name: string;
   slug: string;
   photo_url: string | null;
+  photo_source: 'wikipedia' | 'manual' | null;
   mini_bio: string | null;
   james_beard_status: 'semifinalist' | 'nominated' | 'winner' | null;
   instagram_handle: string | null;
+  featured_instagram_post: string | null;
   current_position: string | null;
   social_links: { instagram?: string; twitter?: string; website?: string } | null;
   chef_shows: Array<{
@@ -57,9 +60,11 @@ async function getChef(slug: string): Promise<ChefData | null> {
         name,
         slug,
         photo_url,
+        photo_source,
         mini_bio,
         james_beard_status,
         instagram_handle,
+        featured_instagram_post,
         current_position,
         social_links,
         chef_shows (
@@ -283,6 +288,29 @@ export default async function ChefPage({ params }: ChefPageProps) {
             ]}
           />
 
+          {/* Photo Attribution */}
+          {chef.photo_url && chef.photo_source === 'wikipedia' && (
+            <div 
+              className="border-b py-2"
+              style={{ background: 'var(--bg-tertiary)', borderColor: 'var(--border-light)' }}
+            >
+              <div className="max-w-6xl mx-auto px-4">
+                <p className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Photo:{' '}
+                  <a
+                    href="https://commons.wikimedia.org"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-copper-600 transition-colors"
+                  >
+                    Wikimedia Commons
+                  </a>
+                  {' '}(CC BY-SA)
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* TV Appearances */}
           {chef.chef_shows && chef.chef_shows.length > 0 && (
             <section 
@@ -301,6 +329,24 @@ export default async function ChefPage({ params }: ChefPageProps) {
                   />
                 </div>
                 <TVAppearanceList appearances={chef.chef_shows} />
+              </div>
+            </section>
+          )}
+
+          {/* Instagram Featured Post */}
+          {chef.featured_instagram_post && (
+            <section 
+              className="py-12 border-b"
+              style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
+            >
+              <div className="max-w-6xl mx-auto px-4">
+                <h2 className="font-display text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
+                  From the Kitchen
+                </h2>
+                <InstagramEmbed 
+                  postUrl={chef.featured_instagram_post} 
+                  className="max-w-xl mx-auto"
+                />
               </div>
             </section>
           )}

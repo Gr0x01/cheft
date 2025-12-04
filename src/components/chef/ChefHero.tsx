@@ -1,5 +1,15 @@
 import Image from 'next/image';
 import { Breadcrumbs } from '../seo/Breadcrumbs';
+import { InstagramIcon } from '@/components/icons/InstagramIcon';
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map(part => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
 
 interface ChefHeroProps {
   breadcrumbItems?: Array<{ label: string; href?: string }>;
@@ -73,13 +83,24 @@ export function ChefHero({ chef, breadcrumbItems }: ChefHeroProps) {
                   sizes="256px"
                   priority
                 />
+              ) : chef.instagram_handle ? (
+                <a
+                  href={`https://instagram.com/${chef.instagram_handle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-3 transition-colors hover:bg-slate-700/50"
+                  style={{ background: 'linear-gradient(135deg, var(--slate-700) 0%, var(--slate-800) 100%)' }}
+                >
+                  <InstagramIcon size={80} className="text-white/40" />
+                  <span className="font-mono text-sm text-white/60">@{chef.instagram_handle}</span>
+                </a>
               ) : (
                 <div 
                   className="absolute inset-0 flex items-center justify-center"
                   style={{ background: 'linear-gradient(135deg, var(--slate-700) 0%, var(--slate-800) 100%)' }}
                 >
                   <span className="font-display text-8xl font-bold text-white/20">
-                    {chef.name.charAt(0)}
+                    {getInitials(chef.name)}
                   </span>
                 </div>
               )}

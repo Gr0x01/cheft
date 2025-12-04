@@ -1,6 +1,15 @@
 import Link from 'next/link';
 import Image from 'next/image';
 
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map(part => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
+
 interface RelatedChefsProps {
   chefs: Array<{
     id: string;
@@ -65,7 +74,7 @@ export function RelatedChefs({ chefs, title = "Related Chefs", subtitle }: Relat
                       className="font-display text-5xl font-bold"
                       style={{ color: 'var(--slate-300)' }}
                     >
-                      {chef.name.charAt(0)}
+                      {getInitials(chef.name)}
                     </span>
                   </div>
                 )}

@@ -8,6 +8,7 @@ interface ChefCardProps {
     name: string;
     slug: string;
     photo_url?: string | null;
+    instagram_handle?: string | null;
     mini_bio?: string | null;
     james_beard_status?: 'semifinalist' | 'nominated' | 'winner' | null;
     restaurant_count?: number;

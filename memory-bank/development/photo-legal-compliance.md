@@ -387,25 +387,53 @@ export function InitialsAvatar({
 
 **Result**: Enrichment pipeline now only uses Wikipedia photos (legally safe, CC-BY-SA licensed)
 
-### Phase 3: Re-enrichment (NEXT SESSION)
-- [ ] Trigger photo enrichment for all 239 chefs via admin UI or script
-- [ ] Monitor job queue and success rate
-- [ ] Verify coverage (target: 60-70% = 140-167 chefs)
-- [ ] Document missing photo chefs for manual review
+### Phase 3: Re-enrichment (✅ COMPLETE - Dec 3, 2025)
+- [x] Ran photo enrichment for all 239 chefs via orchestrator script (`--enrich --limit 250`)
+- [x] Fixed Wikipedia validation logic (improved keyword matching, reduced false negatives)
+- [x] Final coverage: **33/239 chefs (14%)** - Much lower than expected
+- [x] Root cause identified: **Most TV chef Wikipedia pages exist but don't have infobox photos**
 
-### Phase 4: Fallback UI (FUTURE - OPTIONAL)
-- [ ] Create `InstagramIcon` component
-- [ ] Create `InitialsAvatar` component  
-- [ ] Update `ChefCard.tsx` with fallback logic
-- [ ] Update `ChefHero.tsx` with fallback logic
-- [ ] Update `FeaturedChefHero.tsx` if needed
-- [ ] Test responsive design across all fallback states
-- [ ] Deploy and verify production
+**Key Findings:**
+- Many chefs have Wikipedia pages with excellent chef/culinary categories
+- Pages often mention "Top Chef", "Food Network", etc. in extracts
+- **Problem**: Pages simply lack an infobox photo (`original` field is null)
+- Examples: Eric Adjepong, Richard Hales, Gerald Sombright, Michael Psilakis, Claudia Sandoval all have pages but no photos
+- Only ~14% of TV chef contestants have Wikipedia pages WITH photos (not the 60-70% predicted)
+
+**Photos Found:** 33 chefs with Wikipedia/Wikimedia Commons photos (CC-BY-SA licensed, legally safe)
+
+### Phase 4: Fallback UI ✅ COMPLETE (Dec 4, 2025)
+- [x] Create `InstagramIcon` component
+- [x] Update `ChefHero.tsx` with fallback logic (Wikipedia → Instagram link → Two initials)
+- [x] Update `FeaturedChefHero.tsx` with fallback logic
+- [x] Update `RelatedChefs.tsx` with fallback logic
+- [x] Add Wikipedia photo attribution to chef detail pages
+- [x] ChefCard.tsx kept as info-only (no photo section)
+- [x] Type-check passes
+
+**Implementation Details**:
+- **Fallback order**: Wikipedia photo → Instagram link (icon + handle) → Two-initial text (e.g., "GR")
+- **No circular avatars**: User feedback - kept original single-letter design, upgraded to two initials
+- **Files modified**: 
+  - `src/components/icons/InstagramIcon.tsx` (NEW - 16 lines)
+  - `src/components/chef/ChefHero.tsx` (added getInitials helper + Instagram link)
+  - `src/components/chef/FeaturedChefHero.tsx` (same pattern)
+  - `src/components/chef/RelatedChefs.tsx` (two-initial fallback)
+  - `src/app/chefs/[slug]/page.tsx` (Wikipedia photo attribution)
+- **Result**: 33 chefs with Wikipedia photos, 206 with two-initial fallback
+
+### Phase 5: Instagram Post Embeds (NEXT PRIORITY)
+- [ ] Populate `instagram_handle` for chefs (enrichment or manual)
+- [ ] Add `featured_instagram_post` column to chefs table
+- [ ] Create `InstagramEmbed` component (oEmbed integration)
+- [ ] Add Instagram embed section to chef detail pages (below bio, lazy-loaded)
+- [ ] Admin UI to set featured Instagram post per chef
+- [ ] Test with sample embeds
+
+**Note**: instagram_handle column exists but is EMPTY (0 chefs populated). Need data before embeds work.
 
 ### Long-term Enhancements (BACKLOG)
-- [ ] Instagram post embeds on individual chef pages (Phase 5)
-- [ ] Manual upload workflow for high-priority chefs
-- [ ] Attribution system for Wikipedia photos (footer or image caption)
+- [ ] Manual upload workflow for high-priority chefs (press kit photos)
 - [ ] Automated email outreach to chefs for press kit photos
 
 ---
@@ -466,17 +494,29 @@ export function InitialsAvatar({
 
 ## Next Steps
 
-**IMMEDIATE (Today)**:
-1. Run photo wipe script
-2. Remove Google Images code
-3. Test enrichment pipeline
+**COMPLETED (Dec 3, 2025)** ✅:
+1. ✅ Ran photo wipe script (cleared all unsafe photos)
+2. ✅ Removed Google Images code  
+3. ✅ Applied database migration 015
+4. ✅ Re-enriched all chefs with Wikipedia-only approach
+5. ✅ **Result: 33 chefs (14%) with Wikipedia photos, 206 chefs (86%) WITHOUT photos**
 
-**THIS WEEK**:
-1. Apply database migration
-2. Re-enrich all chefs with Wikipedia-only
-3. Monitor coverage results
+**COMPLETED: PHASE 4 FALLBACK UI** ✅ (Dec 4, 2025):
+All 206 chefs without Wikipedia photos now have professional fallback UI:
 
-**DECISION NEEDED FROM RB**:
-- Instagram profile photo hack: Implement or skip?
-- Press kit outreach: Manually contact chefs for photos?
-- Placeholder design: Generic icon or Instagram link?
+**Final Implementation**:
+- Wikipedia photo → Instagram link (icon + @handle) → Two-initial text (e.g., "GR")
+- No circular avatars (user preference - kept original text-based design)
+- Instagram link shows icon + handle, clickable to Instagram profile
+- Attribution banner on chef pages when photo_source = 'wikipedia'
+- ChefCard component remains info-only (no photos in grid)
+
+**NEXT: PHASE 5 INSTAGRAM POST EMBEDS**:
+To display actual Instagram posts on individual chef pages:
+
+**Prerequisites**:
+1. Populate `instagram_handle` for chefs (currently EMPTY)
+2. Add `featured_instagram_post` column (stores Instagram post URL)
+3. Build oEmbed integration for legal, safe embedding
+
+**See**: `/memory-bank/development/instagram-embed-plan.md` for detailed implementation plan
