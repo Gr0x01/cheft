@@ -44,9 +44,16 @@ const RestaurantSchema = z.object({
   source: z.string().nullable().optional(),
 }).passthrough();
 
+const TVShowAppearanceSchema = z.object({
+  showName: z.string(),
+  season: z.string().nullable().optional(),
+  result: enumWithCitationStrip(['winner', 'finalist', 'contestant', 'judge'] as const),
+}).passthrough();
+
 const ChefEnrichmentSchema = z.object({
   miniBio: z.string().transform(val => stripCitations(val) || val),
   restaurants: z.array(RestaurantSchema).optional().default([]),
+  tvShows: z.array(TVShowAppearanceSchema).optional().default([]),
   jamesBeardStatus: enumWithCitationStrip(['winner', 'nominated', 'semifinalist'] as const),
   notableAwards: z.array(z.string()).nullable().optional(),
 }).passthrough();
@@ -63,6 +70,7 @@ export interface ChefEnrichmentResult {
   chefName: string;
   miniBio: string | null;
   restaurants: z.infer<typeof RestaurantSchema>[];
+  tvShows: z.infer<typeof TVShowAppearanceSchema>[];
   jamesBeardStatus: string | null;
   notableAwards: string[] | null;
   tokensUsed: TokenUsage;
@@ -109,8 +117,9 @@ const CHEF_ENRICHMENT_SYSTEM_PROMPT = `You are a culinary industry expert helpin
 Your task: Use web search to find accurate, up-to-date information about the chef, including:
 1. A brief bio (2-3 sentences about their career and culinary style)
 2. Their current restaurants (owned, partner, or executive chef roles)
-3. James Beard Award status if any
-4. Notable awards (e.g., Michelin Guide recognition, World's 50 Best, AAA Five Diamond)
+3. ALL TV cooking show appearances (Top Chef, Iron Chef, Tournament of Champions, Beat Bobby Flay, Chopped, Hell's Kitchen, MasterChef, Next Level Chef, etc.)
+4. James Beard Award status if any
+5. Notable awards (e.g., Michelin Guide recognition, World's 50 Best, AAA Five Diamond)
 
 IMPORTANT: After gathering enough information (typically 5-10 searches), YOU MUST return your final JSON response. Do not continue searching indefinitely.
 
@@ -119,6 +128,8 @@ Guidelines:
 - Limit to the chef's 5-10 most notable/current restaurants (don't search for every restaurant)
 - Include closed restaurants but mark them as "closed"
 - Verify restaurant status is current (within last year)
+- For TV shows: Include ALL major cooking competition appearances (winner/finalist/contestant/judge roles)
+- TV show format: Show name exactly as it appears (e.g., "Top Chef", "Iron Chef America", "Tournament of Champions")
 - Be conservative - if unsure about a detail, omit it
 - Cuisine tags should be specific (e.g., "Japanese", "New American", "Southern")
 - Price range: $ (<$15/entree), $$ ($15-30), $$$ ($30-60), $$$$ ($60+)
@@ -148,6 +159,13 @@ Your response must be a single JSON object matching this exact structure:
       "role": "owner" or "executive_chef" or "partner" or "consultant" or null,
       "michelinStars": 0-3 or null,
       "awards": ["Award Name (Year)"] or null
+    }
+  ],
+  "tvShows": [
+    {
+      "showName": "Top Chef" or "Iron Chef America" etc.,
+      "season": "Season 15" or "15" or null,
+      "result": "winner" or "finalist" or "contestant" or "judge" or null
     }
   ],
   "jamesBeardStatus": null or "winner" or "nominated" or "semifinalist",
@@ -311,6 +329,7 @@ export function createLLMEnricher(
         chefName,
         miniBio: validated.miniBio,
         restaurants,
+        tvShows: validated.tvShows ?? [],
         jamesBeardStatus: validated.jamesBeardStatus ?? null,
         notableAwards: validated.notableAwards ?? null,
         tokensUsed,
@@ -325,6 +344,7 @@ export function createLLMEnricher(
         chefName,
         miniBio: null,
         restaurants: [],
+        tvShows: [],
         jamesBeardStatus: null,
         notableAwards: null,
         tokensUsed: { prompt: 0, completion: 0, total: 0 },
@@ -598,6 +618,117 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
     return { success: true, restaurantId: data.id, isNew: true };
   }
 
+  async function findShowByName(showName: string): Promise<string | null> {
+    const normalized = showName.toLowerCase().trim();
+    
+    const showNameMap: Record<string, string> = {
+      'top chef': 'top-chef',
+      'top chef masters': 'top-chef-masters',
+      'top chef: just desserts': 'top-chef-just-desserts',
+      'top chef just desserts': 'top-chef-just-desserts',
+      'top chef junior': 'top-chef-junior',
+      'top chef duels': 'top-chef-duels',
+      'top chef amateurs': 'top-chef-amateurs',
+      'top chef family style': 'top-chef-family-style',
+      'top chef estrellas': 'top-chef-estrellas',
+      'top chef vip': 'top-chef-vip',
+      'top chef canada': 'top-chef-canada',
+      'iron chef': 'iron-chef',
+      'iron chef america': 'iron-chef-america',
+      'tournament of champions': 'tournament-of-champions',
+      'guy\'s tournament of champions': 'tournament-of-champions',
+      'chopped': 'chopped',
+      'chopped champions': 'chopped-champions',
+      'chopped sweets': 'chopped-sweets',
+      'beat bobby flay': 'beat-bobby-flay',
+      'hell\'s kitchen': 'hells-kitchen',
+      'hells kitchen': 'hells-kitchen',
+      'masterchef': 'masterchef',
+      'masterchef us': 'masterchef',
+      'next level chef': 'next-level-chef',
+      'guy\'s grocery games': 'guys-grocery-games',
+      'guys grocery games': 'guys-grocery-games',
+      'cutthroat kitchen': 'cutthroat-kitchen',
+      'worst cooks in america': 'worst-cooks-in-america',
+    };
+
+    const slug = showNameMap[normalized];
+    if (!slug) {
+      console.log(`      ⚠️  Unknown show "${showName}", attempting database lookup`);
+      const sanitized = showName.replace(/['\";\\]/g, '');
+      const { data: show } = await (supabase
+        .from('shows') as ReturnType<typeof supabase.from>)
+        .select('id')
+        .ilike('name', sanitized)
+        .maybeSingle();
+      
+      return show?.id || null;
+    }
+
+    const { data: show } = await (supabase
+      .from('shows') as ReturnType<typeof supabase.from>)
+      .select('id')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    return show?.id || null;
+  }
+
+  async function saveChefShows(
+    chefId: string,
+    tvShows: z.infer<typeof TVShowAppearanceSchema>[]
+  ): Promise<{ saved: number; skipped: number }> {
+    if (!tvShows || tvShows.length === 0) {
+      return { saved: 0, skipped: 0 };
+    }
+
+    let saved = 0;
+    let skipped = 0;
+
+    for (const show of tvShows) {
+      const showId = await findShowByName(show.showName);
+      if (!showId) {
+        console.log(`      ⚠️  Could not find show "${show.showName}" in database, skipping`);
+        skipped++;
+        continue;
+      }
+
+      const { data: existing } = await (supabase
+        .from('chef_shows') as ReturnType<typeof supabase.from>)
+        .select('id')
+        .eq('chef_id', chefId)
+        .eq('show_id', showId)
+        .eq('season', show.season || null)
+        .maybeSingle();
+
+      if (existing) {
+        skipped++;
+        continue;
+      }
+
+      const { error } = await (supabase
+        .from('chef_shows') as ReturnType<typeof supabase.from>)
+        .insert({
+          chef_id: chefId,
+          show_id: showId,
+          season: show.season || null,
+          season_name: show.season ? `${show.showName} ${show.season}` : show.showName,
+          result: show.result || 'contestant',
+          is_primary: false,
+        });
+
+      if (error) {
+        console.error(`      ⚠️  Failed to save show "${show.showName}": ${error.message}`);
+        skipped++;
+      } else {
+        saved++;
+        console.log(`      ✅ Added show: ${show.showName}${show.season ? ' ' + show.season : ''}`);
+      }
+    }
+
+    return { saved, skipped };
+  }
+
   async function enrichAndSaveChef(
     chefId: string,
     chefName: string,
@@ -648,6 +779,13 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
           source: 'llm_enricher',
           confidence: 0.85,
         });
+      }
+    }
+
+    if (result.tvShows && result.tvShows.length > 0) {
+      const { saved, skipped } = await saveChefShows(chefId, result.tvShows);
+      if (saved > 0) {
+        console.log(`      📺 Saved ${saved} TV show appearances (${skipped} already existed or skipped)`);
       }
     }
 
@@ -952,6 +1090,139 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
     }
   }
 
+  async function enrichShowsOnly(
+    chefId: string,
+    chefName: string
+  ): Promise<{ success: boolean; showsSaved: number; showsSkipped: number; tokensUsed: TokenUsage; error?: string }> {
+    try {
+      const prompt = `Find ALL TV cooking show competition appearances for chef "${chefName}".
+
+Search for:
+1. Their Wikipedia page, IMDb, or official website
+2. Food Network, Bravo, Netflix show contestant lists
+3. Social media bios mentioning TV appearances
+4. News articles about their TV career
+
+Include appearances on ANY of these shows:
+- Top Chef (+ all variants: Masters, Just Desserts, Junior, Duels, Amateurs, Family Style, Canada, VIP, Estrellas)
+- Iron Chef / Iron Chef America
+- Tournament of Champions
+- Beat Bobby Flay
+- Chopped (+ variants: Champions, Sweets)
+- Hell's Kitchen
+- MasterChef
+- Next Level Chef
+- Guy's Grocery Games
+- Cutthroat Kitchen
+- Worst Cooks in America
+- Great British Bake Off
+- Baking Championships (Spring, Holiday, Halloween, Kids)
+- Netflix: Final Table, Chef Show, Nailed It!, Is It Cake?
+- Any other cooking competition shows
+
+For EACH show they appeared on, include:
+- Exact show name
+- Season number (if known)
+- Their role: "winner", "finalist", "contestant", or "judge"
+
+Return a JSON array. If NO shows found, return empty array [].
+
+Example output:
+[
+  {"showName": "Top Chef", "season": "15", "result": "finalist"},
+  {"showName": "Tournament of Champions", "season": "3", "result": "contestant"}
+]`;
+
+      const result = await withRetry(
+        () => generateText({
+          model: openai(modelName),
+          tools: {
+            web_search_preview: openai.tools.webSearchPreview({
+              searchContextSize: 'medium',
+            }),
+          },
+          system: `You are a TV cooking show expert. Use web search to find ALL TV show appearances for this chef.
+
+IMPORTANT: After gathering enough information (typically 5-10 searches), YOU MUST return your final JSON response. Do not continue searching indefinitely.
+
+Return ONLY a valid JSON array. Do NOT include any explanatory text or anything other than the JSON array itself.
+
+Start immediately with the opening bracket [.`,
+          prompt,
+          maxTokens: 4000,
+          maxSteps: 40,
+        }),
+        `enrich shows for ${chefName}`
+      );
+
+      const tokensUsed: TokenUsage = {
+        prompt: result.usage?.promptTokens || 0,
+        completion: result.usage?.completionTokens || 0,
+        total: result.usage?.totalTokens || 0,
+      };
+
+      totalTokensUsed.prompt += tokensUsed.prompt;
+      totalTokensUsed.completion += tokensUsed.completion;
+      totalTokensUsed.total += tokensUsed.total;
+
+      if (!result.text || result.text.trim() === '') {
+        console.error(`   ❌ Empty response from LLM for "${chefName}"`);
+        console.error(`   Steps used: ${result.steps?.length || 0}/30`);
+        console.error(`   Finish reason: ${result.finishReason}`);
+        throw new Error('LLM returned empty response - likely hit step limit without final answer');
+      }
+
+      const jsonText = extractJsonFromText(result.text);
+      const parsed = JSON.parse(jsonText);
+      
+      if (!Array.isArray(parsed)) {
+        console.error(`   ❌ LLM returned non-array:`, JSON.stringify(parsed).slice(0, 200));
+        throw new Error('LLM did not return an array');
+      }
+
+      const tvShows = z.array(TVShowAppearanceSchema).parse(parsed);
+
+      console.log(`      📋 LLM found ${tvShows.length} shows for ${chefName}`);
+      if (tvShows.length > 0) {
+        tvShows.forEach(show => {
+          console.log(`         - ${show.showName}${show.season ? ' ' + show.season : ''} (${show.result || 'contestant'})`);
+        });
+      }
+
+      const { saved, skipped } = await saveChefShows(chefId, tvShows);
+
+      const { error: timestampError } = await (supabase
+        .from('chefs') as ReturnType<typeof supabase.from>)
+        .update({
+          last_enriched_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', chefId);
+
+      if (timestampError) {
+        console.error(`      ⚠️  Failed to update last_enriched_at: ${timestampError.message}`);
+      }
+
+      return {
+        success: true,
+        showsSaved: saved,
+        showsSkipped: skipped,
+        tokensUsed,
+      };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`   ❌ Shows enrichment error for "${chefName}": ${msg}`);
+      
+      return {
+        success: false,
+        showsSaved: 0,
+        showsSkipped: 0,
+        tokensUsed: { prompt: 0, completion: 0, total: 0 },
+        error: msg,
+      };
+    }
+  }
+
   async function enrichCityNarrative(
     cityId: string,
     cityContext: any
@@ -1032,6 +1303,7 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
     findAndSaveRestaurants,
     verifyRestaurantStatus,
     verifyAndUpdateStatus,
+    enrichShowsOnly,
     enrichChefNarrative,
     enrichRestaurantNarrative,
     enrichCityNarrative,

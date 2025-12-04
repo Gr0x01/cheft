@@ -1,42 +1,54 @@
 ---
-Last-Updated: 2025-12-03
+Last-Updated: 2025-12-04
 Maintainer: RB
-Status: Phase 3 Complete - Phase 4 Enrichment Admin UI Complete
+Status: Phase 3 Complete - Fixing Multi-Show Data Issues
 ---
 
 # Active Context: Chefs
 
 ## Current Sprint Goals
-- **Sprint**: User Engagement & Community Features
-- **Duration**: 1-2 weeks
-- **Focus**: Add contribution system, data verification, and chef show attribution
+- **Sprint**: Multi-Show Attribution & Duplicate Chef Management
+- **Duration**: 1 week
+- **Focus**: Fix multi-show enrichment, enhance UI display, merge duplicate chef records
 
-### Primary Objectives (Phase 3: Community Engagement)
-1. **Contribution System**:
-   - Add "Suggest a Chef" form on chef directory page
-   - Add "Suggest a Restaurant" form on restaurant pages (linked to chef)
-   - Create admin review queue for community submissions
+### Critical Issues (In Progress)
+1. **Multi-Show Enrichment Gap**:
+   - **Problem**: Current enricher only captures chefs from ONE season/show during initial import
+   - **Impact**: Many chefs appeared on multiple shows (e.g., "Top Chef" + "Iron Chef") but only 1 show is recorded
+   - **Solution**: Created `enrichShowsOnly()` function to re-enrich ALL 182 chefs for TV show appearances
+   - **Status**: Function ready, need to execute `npm run enrich:shows` on all chefs
    
-2. **Data Verification UI**:
-   - Add thumbs up/down buttons on chef pages (triggers verification check)
-   - Add thumbs up/down buttons on restaurant pages (status/info validation)
-   - Create admin dashboard showing items flagged for review
-   
-3. **Show Attribution Badges**:
-   - Add visual badges on chef cards/pages ("Top Chef S4", "Iron Chef", etc.)
-   - Add filter by show/TV personality on chef directory
-   - Enhance Schema.org awards markup for SEO
+2. **Multi-Show UI Display**:
+   - **Problem**: No UI component to display multiple TV show appearances per chef
+   - **Current UI**: Only shows primary show badge on chef cards
+   - **Needed**: Full TV appearance timeline/list on chef detail pages
+   - **Status**: Need to design and implement multi-show display component
 
-### Secondary Objectives
-- Improve mobile responsiveness for new UI elements
-- Add analytics tracking for user engagement
-- Create user feedback loop documentation
+### Secondary Issues
+3. **Duplicate Chef Detection**:
+   - Multiple chef records exist for same person (different show seasons imported separately)
+   - Need merge functionality to consolidate duplicate records
+   - Migration `020_chef_merge_function.sql` created but not yet deployed
 
 ## Current Blockers
 - None
 
 ## In Progress
-- Planning contribution and verification systems
+- Fixing multi-show enrichment and UI display issues
+
+## Recently Completed (Dec 4, 2025) - Shows-Only Enrichment System
+- ✅ **Shows-Only Enrichment Function** - Added `enrichShowsOnly()` to LLM enricher for targeted TV show discovery
+  - **New function**: `enrichShowsOnly(chefId, chefName)` in llm-enricher.ts (110 lines)
+  - **Purpose**: Re-enrich existing chefs ONLY for TV show appearances (no bio/photo/restaurant changes)
+  - **LLM prompt**: Focuses exclusively on finding ALL TV cooking show appearances
+  - **Show mapping**: Uses existing `findShowByName()` and `saveChefShows()` helpers
+  - **Deduplication**: Skips shows already in database, saves only new appearances
+  - **Cost**: Uses gpt-5-mini, ~$0.02-0.05 per chef, 30 max steps
+  - **New script**: `scripts/enrich-all-chef-shows.ts` (77 lines)
+  - **New command**: `npm run enrich:shows` with optional `--limit` and `--offset` flags
+  - **Integration**: Ready to run on all 182 chefs before duplicate detection
+  - **UI**: Already supports displaying all shows (TVAppearanceList component)
+  - **Status**: Ready to execute, documented in DUPLICATE_CHEF_SYSTEM.md
 
 ## Recently Completed (Dec 4, 2025) - Phase 4 Photo Fallback UI
 - ✅ **Photo Fallback UI Complete** - Professional fallback for 206 chefs without Wikipedia photos
@@ -130,21 +142,23 @@ Status: Phase 3 Complete - Phase 4 Enrichment Admin UI Complete
 - ✅ **Phase 2 Complete** (Dec 1-2) - Chef/restaurant/city pages, admin panel, internal linking
 
 ## Next Steps
-1. **Phase 5: Instagram Post Embeds** (Priority):
-   - Populate `instagram_handle` for chefs (currently EMPTY - 0 chefs)
-   - Add `featured_instagram_post` column to database
-   - Create `InstagramEmbed` component (oEmbed integration)
-   - Add embed section to chef detail pages (below bio, lazy-loaded)
-   - Admin UI to set featured post per chef
-   - **See**: `/memory-bank/development/instagram-embed-plan.md`
+1. **Fix Multi-Show Data** (URGENT):
+   - Execute `npm run enrich:shows` on all 182 chefs to capture missing TV appearances
+   - Implement multi-show display UI component on chef detail pages
+   - Test and verify show attribution completeness
 
-2. **Phase 3 Implementation** (Deferred):
-   - Design and implement chef/restaurant suggestion forms
-   - Add thumbs up/down verification UI to pages
-   - Create database schema for user contributions and verification flags
-   - Build admin review workflows for community input
+2. **Duplicate Chef Management**:
+   - Deploy migration `020_chef_merge_function.sql` 
+   - Build admin UI for detecting and merging duplicate chef records
+   - Run duplicate detection and merge duplicates
+
+3. **Phase 3 Community Features** (Deferred):
+   - ✅ Contribution system (suggest chef/restaurant forms)
+   - ✅ Data verification UI (thumbs up/down buttons)
+   - ✅ Show attribution badges
+   - Admin review queue for submissions
    
-3. **Data Quality** (Ongoing):
+4. **Data Quality** (Ongoing):
    - User manually adding chefs via admin interface
    - Run enrichment on newly added chefs as needed
    - Monitor and respond to user verification signals
