@@ -47,18 +47,28 @@ export function PhotoUpload({
 
     setDeleting(true);
 
-    const res = await fetch('/api/admin/delete-photo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, itemId, photoUrl: currentPhotoUrl }),
-    });
+    try {
+      const res = await fetch('/api/admin/delete-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, itemId, photoUrl: currentPhotoUrl }),
+      });
 
-    setDeleting(false);
+      const data = await res.json();
+      console.log('[PhotoUpload] Delete response:', { status: res.status, data });
 
-    if (res.ok) {
-      window.location.reload();
-    } else {
-      alert('Delete failed');
+      setDeleting(false);
+
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        console.error('[PhotoUpload] Delete failed:', data);
+        alert(`Delete failed: ${data.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      setDeleting(false);
+      console.error('[PhotoUpload] Delete error:', error);
+      alert('Delete failed: Network error');
     }
   }
 
