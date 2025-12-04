@@ -70,6 +70,7 @@ export interface Database {
           social_links: Json | null;
           notable_awards: string[] | null;
           instagram_handle: string | null;
+          featured_instagram_post: string | null;
           cookbook_titles: string[] | null;
           youtube_channel: string | null;
           current_role: string | null;
@@ -92,6 +93,7 @@ export interface Database {
           social_links?: Json | null;
           notable_awards?: string[] | null;
           instagram_handle?: string | null;
+          featured_instagram_post?: string | null;
           cookbook_titles?: string[] | null;
           youtube_channel?: string | null;
           current_role?: string | null;
@@ -114,6 +116,7 @@ export interface Database {
           social_links?: Json | null;
           notable_awards?: string[] | null;
           instagram_handle?: string | null;
+          featured_instagram_post?: string | null;
           cookbook_titles?: string[] | null;
           youtube_channel?: string | null;
           current_role?: string | null;

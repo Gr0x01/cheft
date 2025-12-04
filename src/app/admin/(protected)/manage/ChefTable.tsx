@@ -2,14 +2,16 @@
 
 import { useState } from 'react';
 import { Database } from '@/lib/database.types';
-import { Search, Image, FileText, RefreshCw, Upload } from 'lucide-react';
+import { Search, Image, FileText, RefreshCw, Upload, Instagram } from 'lucide-react';
 import { PhotoUpload } from './PhotoUpload';
+import { InstagramHandleModal } from './InstagramHandleModal';
 
 type Chef = Database['public']['Tables']['chefs']['Row'];
 
 export function ChefTable({ chefs }: { chefs: Chef[] }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedChef, setSelectedChef] = useState<Chef | null>(null);
+  const [instagramModalChef, setInstagramModalChef] = useState<Chef | null>(null);
 
   const filteredChefs = chefs.filter((chef) =>
     chef.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -67,6 +69,9 @@ export function ChefTable({ chefs }: { chefs: Chef[] }) {
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                 Bio
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Instagram
+              </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
                 Actions
               </th>
@@ -106,6 +111,21 @@ export function ChefTable({ chefs }: { chefs: Chef[] }) {
                     )}
                   </div>
                 </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {chef.instagram_handle ? (
+                    <a
+                      href={`https://instagram.com/${chef.instagram_handle}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-pink-600 hover:text-pink-800 flex items-center gap-1"
+                    >
+                      <Instagram className="w-4 h-4" />
+                      @{chef.instagram_handle}
+                    </a>
+                  ) : (
+                    <span className="text-sm text-slate-400">No handle</span>
+                  )}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end gap-2">
                     <button
@@ -114,6 +134,13 @@ export function ChefTable({ chefs }: { chefs: Chef[] }) {
                       title="Upload photo"
                     >
                       <Upload className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setInstagramModalChef(chef)}
+                      className="text-pink-600 hover:text-pink-900 p-2 rounded hover:bg-pink-50"
+                      title="Edit Instagram handle"
+                    >
+                      <Instagram className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleReEnrichPhoto(chef.id)}
@@ -144,6 +171,17 @@ export function ChefTable({ chefs }: { chefs: Chef[] }) {
           itemName={selectedChef.name}
           currentPhotoUrl={selectedChef.photo_url}
           onClose={() => setSelectedChef(null)}
+        />
+      )}
+
+      {instagramModalChef && (
+        <InstagramHandleModal
+          chef={instagramModalChef}
+          onClose={() => setInstagramModalChef(null)}
+          onSave={() => {
+            setInstagramModalChef(null);
+            window.location.reload();
+          }}
         />
       )}
     </div>
