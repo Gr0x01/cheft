@@ -30,7 +30,7 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
   return (
     <Link
       href={`/chefs/${chef.slug}`}
-      className="group relative block bg-white border border-slate-200 overflow-hidden transition-all duration-500 hover:shadow-xl hover:border-[#B87333] hover:-translate-y-2"
+      className="group relative flex flex-col bg-white border border-slate-200 overflow-hidden transition-all duration-500 hover:shadow-xl hover:border-[#B87333] hover:-translate-y-2"
       style={{
         animationDelay: `${index * 50}ms`,
       }}
@@ -41,8 +41,8 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
         style={{ background: '#B87333' }}
       />
 
-      {/* Main content */}
-      <div className="p-5 pl-6 pb-4">
+      {/* Main content - flexible */}
+      <div className="p-5 pl-6 flex-1">
         {/* Show badges + James Beard badge on same line */}
         <div className="flex flex-wrap items-center gap-2 mb-2 min-h-[20px]">
           {primaryShow && (
@@ -98,8 +98,8 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
         </div>
       </div>
 
-      {/* Footer with view indicator */}
-      <div className="px-5 pl-6 py-4 border-t" style={{ borderColor: 'var(--border-light)' }}>
+      {/* Footer with view indicator - fixed height */}
+      <div className="px-5 pl-6 py-4 border-t mt-auto" style={{ borderColor: 'var(--border-light)' }}>
         <div className="flex items-center justify-end">
           <span 
             className="font-mono text-xs font-semibold tracking-wide transition-all duration-300 group-hover:translate-x-1"
