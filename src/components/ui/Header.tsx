@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 interface HeaderProps {
-  currentPage?: 'chefs' | 'restaurants' | 'cities' | 'home';
+  currentPage?: 'chefs' | 'restaurants' | 'cities' | 'about' | 'home';
 }
 
 export function Header({ currentPage }: HeaderProps) {
@@ -90,6 +90,21 @@ export function Header({ currentPage }: HeaderProps) {
             }}
           >
             CITIES
+          </Link>
+          <Link 
+            href="/about" 
+            className={`font-mono text-xs tracking-wider transition-colors ${
+              currentPage === 'about' 
+                ? 'font-semibold' 
+                : 'hover:text-[var(--accent-primary)]'
+            }`}
+            style={{ 
+              color: currentPage === 'about' 
+                ? 'var(--accent-primary)' 
+                : 'var(--text-muted)' 
+            }}
+          >
+            ABOUT
           </Link>
         </nav>
       </div>
