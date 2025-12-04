@@ -9,6 +9,7 @@ interface HeaderProps {
 
 export function Header({ currentPage }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,6 +19,17 @@ export function Header({ currentPage }: HeaderProps) {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
 
   return (
     <>
@@ -52,7 +64,9 @@ export function Header({ currentPage }: HeaderProps) {
             Cheft
           </span>
         </Link>
-        <nav className="flex gap-8" aria-label="Main navigation">
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex gap-8" aria-label="Main navigation">
           <Link 
             href="/chefs" 
             className={`font-mono text-xs tracking-wider transition-colors ${
@@ -118,6 +132,97 @@ export function Header({ currentPage }: HeaderProps) {
             ABOUT
           </Link>
         </nav>
+
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="md:hidden p-2"
+          aria-label="Toggle menu"
+          aria-expanded={isMobileMenuOpen}
+        >
+          <svg 
+            className="w-6 h-6" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            {isMobileMenuOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
+        </div>
+
+        {/* Mobile Navigation Menu */}
+        <div 
+          className={`md:hidden border-t overflow-hidden transition-all duration-300 ease-in-out ${
+            isMobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+          }`}
+          style={{ 
+            background: 'var(--bg-secondary)',
+            borderColor: 'var(--border-light)'
+          }}
+        >
+          <nav className="flex flex-col" aria-label="Mobile navigation">
+              <Link 
+                href="/chefs"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`px-4 py-4 font-mono text-sm tracking-wider transition-colors border-b ${
+                  currentPage === 'chefs' ? 'font-semibold' : ''
+                }`}
+                style={{ 
+                  color: currentPage === 'chefs' ? 'var(--accent-primary)' : 'var(--text-muted)',
+                  borderColor: 'var(--border-light)'
+                }}
+                aria-current={currentPage === 'chefs' ? 'page' : undefined}
+              >
+                CHEFS
+              </Link>
+              <Link 
+                href="/restaurants"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`px-4 py-4 font-mono text-sm tracking-wider transition-colors border-b ${
+                  currentPage === 'restaurants' ? 'font-semibold' : ''
+                }`}
+                style={{ 
+                  color: currentPage === 'restaurants' ? 'var(--accent-primary)' : 'var(--text-muted)',
+                  borderColor: 'var(--border-light)'
+                }}
+                aria-current={currentPage === 'restaurants' ? 'page' : undefined}
+              >
+                RESTAURANTS
+              </Link>
+              <Link 
+                href="/cities"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`px-4 py-4 font-mono text-sm tracking-wider transition-colors border-b ${
+                  currentPage === 'cities' ? 'font-semibold' : ''
+                }`}
+                style={{ 
+                  color: currentPage === 'cities' ? 'var(--accent-primary)' : 'var(--text-muted)',
+                  borderColor: 'var(--border-light)'
+                }}
+                aria-current={currentPage === 'cities' ? 'page' : undefined}
+              >
+                CITIES
+              </Link>
+              <Link 
+                href="/about"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`px-4 py-4 font-mono text-sm tracking-wider transition-colors ${
+                  currentPage === 'about' ? 'font-semibold' : ''
+                }`}
+                style={{ 
+                  color: currentPage === 'about' ? 'var(--accent-primary)' : 'var(--text-muted)'
+                }}
+                aria-current={currentPage === 'about' ? 'page' : undefined}
+              >
+                ABOUT
+              </Link>
+            </nav>
         </div>
       </header>
     </>
