@@ -293,6 +293,7 @@ function isChefRelatedPage(
   const categoryText = categories?.map(c => c.title.toLowerCase()).join(' ') || '';
   const combinedText = `${lowerExtract} ${categoryText}`;
 
+  // If validation keywords provided (show names, restaurant names), check for matches
   if (validationKeywords && validationKeywords.length > 0) {
     for (const keyword of validationKeywords) {
       if (keyword.length > 2 && combinedText.includes(keyword.toLowerCase())) {
@@ -301,7 +302,23 @@ function isChefRelatedPage(
     }
   }
 
-  if (combinedText.includes('chef') || combinedText.includes('restaurateur') || combinedText.includes('culinary')) {
+  // Check for chef/culinary-related keywords
+  const chefKeywords = [
+    'chef', 'restaurateur', 'culinary', 'restaurant', 'cook', 
+    'top chef', 'iron chef', 'food network', 'cooking', 'cuisine',
+    'contestant', 'competition', 'winner', 'james beard'
+  ];
+  
+  if (chefKeywords.some(keyword => combinedText.includes(keyword))) {
+    return true;
+  }
+
+  // For pages without clear chef keywords, check if the person's name appears prominently
+  // This catches Wikipedia pages that might not explicitly say "chef" in the intro
+  const nameWords = chefName.toLowerCase().split(' ');
+  if (nameWords.length >= 2 && lowerExtract.length > 100) {
+    // If we have a substantial extract and the person's name is there, accept it
+    // (Wikipedia pages for TV personalities often don't lead with "chef")
     return true;
   }
 
