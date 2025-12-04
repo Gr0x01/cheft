@@ -67,7 +67,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <PlausibleProvider domain="cheft.app" scriptProps={{ defer: true }} />
+        <PlausibleProvider domain="cheft.app" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://clktrvyieegouggrpfaj.supabase.co" />
