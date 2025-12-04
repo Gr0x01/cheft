@@ -7,6 +7,7 @@ import { Breadcrumbs } from '../seo/Breadcrumbs';
 import { getRestaurantStatus, getChefAchievements, sanitizeText, validateImageUrl } from '@/lib/utils/restaurant';
 import { getStorageUrl } from '@/lib/utils/storage';
 import { PhotoGalleryModal } from './PhotoGalleryModal';
+import { GoogleMapsLogo } from '@/components/icons/GoogleMapsLogo';
 
 interface RestaurantHeroProps {
   breadcrumbItems?: Array<{ label: string; href?: string }>;
@@ -223,7 +224,8 @@ export function RestaurantHero({ restaurant, breadcrumbItems }: RestaurantHeroPr
           </div>
 
           {photoCount > 0 && (
-            <div className="flex-shrink-0 w-full lg:w-[420px]">
+            <div className="flex-shrink-0 w-full lg:w-[420px] space-y-3">
+              <div>
               {photoCount === 1 && (
                 <button
                   onClick={() => openGallery(0)}
@@ -318,6 +320,14 @@ export function RestaurantHero({ restaurant, breadcrumbItems }: RestaurantHeroPr
                       </button>
                     ))}
                   </div>
+                </div>
+              )}
+              </div>
+              
+              {restaurant.google_rating && (
+                <div className="flex items-center gap-1 justify-end" style={{ opacity: 0.5 }}>
+                  <GoogleMapsLogo size={12} className="text-white" />
+                  <span className="font-mono text-[10px] text-white">Google Maps</span>
                 </div>
               )}
             </div>

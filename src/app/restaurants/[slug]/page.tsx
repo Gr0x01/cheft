@@ -445,6 +445,22 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
               </div>
             </section>
           )}
+
+          {restaurant.google_rating && (
+            <section 
+              className="py-8 border-t"
+              style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
+            >
+              <div className="max-w-6xl mx-auto px-4">
+                <p 
+                  className="font-mono text-[10px] text-center tracking-wide"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  Ratings and reviews powered by Google Maps
+                </p>
+              </div>
+            </section>
+          )}
         </main>
       </div>
     </>
