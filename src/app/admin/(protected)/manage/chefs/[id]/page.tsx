@@ -2,13 +2,14 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { ChefEditorForm } from './ChefEditorForm';
 
-export default async function ChefEditorPage({ params }: { params: { id: string } }) {
+export default async function ChefEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
+  const { id } = await params;
   
   const { data: chef, error } = await supabase
     .from('chefs')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single();
 
   if (error || !chef) {
