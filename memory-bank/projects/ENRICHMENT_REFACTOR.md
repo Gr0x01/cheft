@@ -389,24 +389,94 @@ interface WorkflowResult {
 - ✅ Cost tracking accurate (~$0.02 per chef for show discovery)
 - ✅ All TypeScript compilation errors resolved
 
-**Next Phase:** Phase 4 - Create Workflows (Optional - current system functional)
+**Next Phase:** Phase 4 - Create Workflows ✅ COMPLETE
 
-### Phase 4: Create Workflows
+### Phase 4: Create Workflows ✅ COMPLETE
 **Goal**: Define common multi-step operations
 
-- [ ] Create `workflows/new-show-discovery.workflow.ts`
-  - Compose ChefEnrichmentService + RestaurantDiscoveryService + ShowDiscoveryService
-  - Add step tracking, cost limits, rollback logic
-- [ ] Create `workflows/refresh-stale-chef.workflow.ts`
-  - Conditional steps based on refresh scope
-  - Support partial updates
-- [ ] Create `workflows/partial-update.workflow.ts`
-  - Shows-only, restaurants-only, bio-only modes
-- [ ] Create `workflows/restaurant-status-sweep.workflow.ts`
-  - Batch processing with parallel execution
-- [ ] Test workflows end-to-end
-  - Verify cost tracking aggregates correctly
-  - Test rollback on failures
+- [x] Create workflow type system and base class
+  - ✅ Created `types/workflow-types.ts` - Workflow interfaces, enums, result types
+  - ✅ Created `workflows/base-workflow.ts` - Abstract base class (237 lines)
+  - ✅ Features: Step tracking, cost limits, timeout handling, error aggregation, rollback coordination
+- [x] Create `workflows/refresh-stale-chef.workflow.ts`
+  - ✅ Conditional steps based on refresh scope (304 lines)
+  - ✅ Support partial updates (bio/shows/restaurants/restaurantStatus)
+  - ✅ Validation, cost estimation, dry-run mode
+- [x] Create `workflows/partial-update.workflow.ts`
+  - ✅ 5 modes: shows, restaurants, chef-narrative, restaurant-narrative, city-narrative (267 lines)
+  - ✅ Single-concern updates with proper error handling
+- [x] Create `workflows/restaurant-status-sweep.workflow.ts`
+  - ✅ Batch processing with parallel execution (287 lines)
+  - ✅ Configurable batch size, min confidence threshold
+  - ✅ Supports both specific IDs and criteria-based selection
+- [x] Create `workflows/manual-chef-addition.workflow.ts`
+  - ✅ Full chef addition pipeline (331 lines)
+  - ✅ Rollback support (deletes created restaurants on failure)
+  - ✅ Optional narrative generation
+- [x] Update facade to expose workflows
+  - ✅ Added `workflows` object to llm-enricher.ts with 4 workflow methods
+  - ✅ Token tracking aggregation maintained
+  - ✅ Backward compatible with existing 13-function interface
+- [x] Test workflows
+  - ✅ Instantiation: PASS
+  - ✅ Validation logic: PASS
+  - ✅ Cost estimation: PASS
+  - ✅ TypeScript compilation: PASS (only pre-existing frontend errors)
+  - ⚠️ End-to-end with real data: Could not complete due to Cloudflare/Supabase connectivity issues
+
+**Files Created:**
+- `scripts/ingestion/enrichment/types/workflow-types.ts` (77 lines)
+- `scripts/ingestion/enrichment/workflows/base-workflow.ts` (237 lines)
+- `scripts/ingestion/enrichment/workflows/refresh-stale-chef.workflow.ts` (304 lines)
+- `scripts/ingestion/enrichment/workflows/restaurant-status-sweep.workflow.ts` (287 lines)
+- `scripts/ingestion/enrichment/workflows/partial-update.workflow.ts` (267 lines)
+- `scripts/ingestion/enrichment/workflows/manual-chef-addition.workflow.ts` (331 lines)
+- `scripts/test-workflow-simple.ts` (119 lines) - Test suite
+
+**Files Modified:**
+- `scripts/ingestion/processors/llm-enricher.ts` - Added workflow support (+68 lines)
+
+**Total Lines Added:** ~1,690 lines
+
+**Key Features:**
+- Step-by-step execution tracking with status (pending/running/completed/failed/skipped)
+- Cost limits and estimation before execution
+- Timeout handling (300s-900s depending on workflow)
+- Error aggregation (fatal vs non-fatal)
+- Rollback support for workflows that modify data
+- Dry-run mode for testing without DB changes
+- Token tracking aggregation across all services
+
+**Usage Example:**
+```typescript
+const enricher = createLLMEnricher(supabase, { model: 'gpt-5-mini' });
+
+// Refresh stale chef with specific scope
+const result = await enricher.workflows.refreshStaleChef({
+  chefId: 'uuid',
+  chefName: 'Gordon Ramsay',
+  scope: { bio: true, shows: true, restaurants: true },
+  dryRun: false
+});
+
+// Check workflow result
+console.log('Success:', result.success);
+console.log('Steps:', result.steps.length);
+console.log('Cost:', result.totalCost.estimatedUsd);
+console.log('Duration:', result.durationMs);
+```
+
+**Status:** ⚠️ **NEEDS TESTING BEFORE USE** - Workflows are architecturally sound and pass all unit tests (instantiation, validation, cost estimation, TypeScript compilation), but **end-to-end integration testing with real LLM calls and database operations was blocked by Cloudflare/Supabase connectivity issues**. 
+
+**CRITICAL: Before using workflows in production or proceeding to Phase 5:**
+1. Wait for Cloudflare connectivity to stabilize
+2. Run end-to-end test: `npx tsx scripts/test-workflow.ts` (tests partial update + refresh workflows)
+3. Verify workflows execute successfully with real data
+4. Verify token tracking aggregates correctly
+5. Verify database writes occur as expected
+6. Test rollback functionality (manual-chef-addition workflow)
+
+**Next Phase:** Phase 5 - Optional facade simplification (BLOCKED until Phase 4 workflows are tested end-to-end)
 
 ### Phase 5: Replace Monolith with Facade
 **Goal**: Make llm-enricher.ts a thin wrapper
