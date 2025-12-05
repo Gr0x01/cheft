@@ -271,22 +271,47 @@ interface WorkflowResult {
 
 **Next Phase:** Phase 2 - Extract Repository Layer
 
-### Phase 2: Extract Repository Layer
+### Phase 2: Extract Repository Layer ✅ COMPLETE
 **Goal**: Separate database operations from LLM logic
 
-- [ ] Create `repositories/chef-repository.ts`
-  - Extract chef update operations
-  - Add `updateBio()`, `updateAwards()`, `setEnrichmentTimestamp()`
-- [ ] Create `repositories/restaurant-repository.ts`
-  - Extract restaurant CRUD operations
-  - Add `createRestaurant()`, `updateStatus()`, `checkDuplicates()`
-- [ ] Create `repositories/show-repository.ts`
-  - Extract `findShowByName()` logic
-  - Extract `saveChefShows()` logic
-  - Add show variant mapping
-- [ ] Replace direct Supabase calls in monolith
-  - Use repository methods instead
-  - Test all save/update paths
+- [x] Create `repositories/chef-repository.ts`
+  - ✅ Extract chef update operations
+  - ✅ Add `updateBio()`, `updateAwards()`, `setEnrichmentTimestamp()`
+  - ✅ Add `updateNarrative()` and combined `updateBioAndAwards()`
+- [x] Create `repositories/restaurant-repository.ts`
+  - ✅ Extract restaurant CRUD operations
+  - ✅ Add `createRestaurant()`, `updateStatus()`, `checkDuplicates()`
+  - ✅ Add `updateNarrative()` for SEO content
+  - ✅ Encapsulated duplicate detection and audit logging
+- [x] Create `repositories/show-repository.ts`
+  - ✅ Extract `findShowByName()` logic
+  - ✅ Extract `saveChefShows()` logic
+  - ✅ Add show variant mapping (28 show variants)
+  - ✅ Add `checkExistingShow()` helper
+- [x] Replace direct Supabase calls in monolith
+  - ✅ All 6 chef update sites replaced with repo methods
+  - ✅ All restaurant creation/update sites replaced
+  - ✅ All show mapping/saving replaced
+  - ✅ TypeScript compilation passes
+  - ✅ Tested with enrichment script (8 chefs processed successfully)
+
+**Files Created:**
+- `scripts/ingestion/enrichment/repositories/chef-repository.ts` (129 lines)
+- `scripts/ingestion/enrichment/repositories/restaurant-repository.ts` (211 lines)
+- `scripts/ingestion/enrichment/repositories/show-repository.ts` (135 lines)
+
+**Files Modified:**
+- `scripts/ingestion/processors/llm-enricher.ts` (reduced from ~1359 → ~1200 lines, -159 lines)
+
+**Type Safety Improvements:**
+- Made nullable fields optional in repository schemas
+- Fixed type compatibility between monolith and repositories
+
+**Known Issues to Fix in Phase 3:**
+- `enrichShowsOnly()` fails when LLM returns single object instead of array (affects chefs with 1 show)
+- Need to normalize LLM responses: `Array.isArray(parsed) ? parsed : [parsed]`
+
+**Next Phase:** Phase 3 - Extract Services
 
 ### Phase 3: Extract Services
 **Goal**: Pull out single-purpose enrichment services
@@ -299,6 +324,8 @@ interface WorkflowResult {
   - Use LLMClient, RestaurantRepository
 - [ ] Create `services/show-discovery-service.ts`
   - Extract `enrichShowsOnly()` logic
+  - **FIX BUG**: LLM returns single object instead of array when only 1 show found
+  - Add array normalization: wrap single objects in array
   - Use LLMClient, ShowRepository
 - [ ] Create `services/status-verification-service.ts`
   - Extract `verifyRestaurantStatus()` logic
@@ -309,6 +336,7 @@ interface WorkflowResult {
 - [ ] Test each service independently
   - Unit tests with mocked dependencies
   - Verify token tracking works
+  - **Test with chefs that have 1 show vs multiple shows**
 
 ### Phase 4: Create Workflows
 **Goal**: Define common multi-step operations

@@ -1,54 +1,62 @@
 ---
 Last-Updated: 2025-12-04
 Maintainer: RB
-Status: Phase 3 Complete - Fixing Multi-Show Data Issues
+Status: Planning Enrichment System Refactor
 ---
 
 # Active Context: Chefs
 
 ## Current Sprint Goals
-- **Sprint**: Multi-Show Attribution & Duplicate Chef Management
-- **Duration**: 1 week
-- **Focus**: Fix multi-show enrichment, enhance UI display, merge duplicate chef records
+- **Sprint**: LLM Enrichment System Refactor
+- **Focus**: Refactor 1337-line enrichment monolith into clean service-based architecture
 
-### Critical Issues (In Progress)
+### Primary Objective
+**Enrichment System Refactor** (Phase 2 Complete):
+- **Problem**: `llm-enricher.ts` is 1337 lines handling too many concerns (chef/restaurant/show enrichment, status verification, narratives, DB ops, token tracking)
+- **Issues**: Single Responsibility Violation, tight coupling, hard to test/extend, inconsistent workflows
+- **Solution**: Refactor into service-based architecture (services, workflows, repositories, shared utilities)
+- **Document**: `/memory-bank/projects/ENRICHMENT_REFACTOR.md` - comprehensive refactor plan with 6 phases
+- **Status**: Phase 2 complete (repositories extracted), ready for Phase 3 (extract services)
+
+### Deferred Issues
 1. **Multi-Show Enrichment Gap**:
-   - **Problem**: Current enricher only captures chefs from ONE season/show during initial import
-   - **Impact**: Many chefs appeared on multiple shows (e.g., "Top Chef" + "Iron Chef") but only 1 show is recorded
-   - **Solution**: Created `enrichShowsOnly()` function to re-enrich ALL 182 chefs for TV show appearances
-   - **Status**: Function ready, need to execute `npm run enrich:shows` on all chefs
-   
-2. **Multi-Show UI Display**:
-   - **Problem**: No UI component to display multiple TV show appearances per chef
-   - **Current UI**: Only shows primary show badge on chef cards
-   - **Needed**: Full TV appearance timeline/list on chef detail pages
-   - **Status**: Need to design and implement multi-show display component
+   - Current enricher only captures ONE show during import
+   - `enrichShowsOnly()` function created to backfill all shows
+   - Will address as part of workflow refactor
 
-### Secondary Issues
+2. **Multi-Show UI Display**:
+   - Need UI component for displaying multiple TV appearances
+   - Deferred until after enrichment refactor
+
 3. **Duplicate Chef Detection**:
-   - Multiple chef records exist for same person (different show seasons imported separately)
-   - Need merge functionality to consolidate duplicate records
-   - Migration `020_chef_merge_function.sql` created but not yet deployed
+   - Migration `020_chef_merge_function.sql` ready but not deployed
+   - Will integrate into workflows during refactor
 
 ## Current Blockers
 - None
 
 ## In Progress
-- Fixing multi-show enrichment and UI display issues
+- Planning enrichment system refactor (architecture design complete)
+
+## Recently Completed (Dec 4, 2025) - Enrichment Refactor Planning
+- ✅ **Enrichment System Architecture Design** - Comprehensive refactor plan created
+  - **Collaborated with**: backend-architect + code-architect subagents
+  - **Document**: `/memory-bank/projects/ENRICHMENT_REFACTOR.md` (comprehensive plan)
+  - **Architecture**: Service-based with clear separation of concerns
+  - **Folder structure**: services/, workflows/, repositories/, shared/, types/
+  - **Migration plan**: 6 phases with checkboxes (utilities → repos → services → workflows → facade → cleanup)
+  - **Key workflows**: NewShowDiscovery, RefreshStaleChef, RestaurantStatusSweep, PartialUpdate
+  - **Testing strategy**: Unit tests per service, integration tests per workflow, E2E with real data
+  - **Backward compatibility**: Facade maintains existing 13-function interface for 7 scripts + 2 API routes
+  - **Status**: Planning complete, ready to begin implementation
 
 ## Recently Completed (Dec 4, 2025) - Shows-Only Enrichment System
 - ✅ **Shows-Only Enrichment Function** - Added `enrichShowsOnly()` to LLM enricher for targeted TV show discovery
   - **New function**: `enrichShowsOnly(chefId, chefName)` in llm-enricher.ts (110 lines)
-  - **Purpose**: Re-enrich existing chefs ONLY for TV show appearances (no bio/photo/restaurant changes)
-  - **LLM prompt**: Focuses exclusively on finding ALL TV cooking show appearances
-  - **Show mapping**: Uses existing `findShowByName()` and `saveChefShows()` helpers
-  - **Deduplication**: Skips shows already in database, saves only new appearances
-  - **Cost**: Uses gpt-5-mini, ~$0.02-0.05 per chef, 30 max steps
   - **New script**: `scripts/enrich-all-chef-shows.ts` (77 lines)
   - **New command**: `npm run enrich:shows` with optional `--limit` and `--offset` flags
-  - **Integration**: Ready to run on all 182 chefs before duplicate detection
-  - **UI**: Already supports displaying all shows (TVAppearanceList component)
-  - **Status**: Ready to execute, documented in DUPLICATE_CHEF_SYSTEM.md
+  - **Cost**: Uses gpt-5-mini, ~$0.02-0.05 per chef, 30 max steps
+  - **Status**: Function ready, will integrate into refactored workflow system
 
 ## Recently Completed (Dec 4, 2025) - Phase 4 Photo Fallback UI
 - ✅ **Photo Fallback UI Complete** - Professional fallback for 206 chefs without Wikipedia photos

@@ -1,12 +1,13 @@
 import { z } from 'zod';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../src/lib/database.types';
-import { logDataChange } from '../queue/audit-log';
-import { checkForDuplicate } from '../../../src/lib/duplicates/detector';
 import { stripCitations, enumWithCitationStrip, extractJsonFromText, parseAndValidate } from '../enrichment/shared/result-parser';
 import { withRetry } from '../enrichment/shared/retry-handler';
 import { LLMClient } from '../enrichment/shared/llm-client';
 import { TokenTracker, TokenUsage } from '../enrichment/shared/token-tracker';
+import { ChefRepository } from '../enrichment/repositories/chef-repository';
+import { RestaurantRepository } from '../enrichment/repositories/restaurant-repository';
+import { ShowRepository } from '../enrichment/repositories/show-repository';
 
 
 const RestaurantSchema = z.object({
@@ -223,6 +224,9 @@ export function createLLMEnricher(
   const maxRestaurants = config.maxRestaurantsPerChef ?? 10;
   
   const llmClient = new LLMClient({ model: modelName });
+  const chefRepo = new ChefRepository(supabase);
+  const restaurantRepo = new RestaurantRepository(supabase);
+  const showRepo = new ShowRepository(supabase);
   
   let totalTokensUsed: TokenUsage = { prompt: 0, completion: 0, total: 0 };
 
@@ -416,229 +420,22 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
     }
   }
 
-  function sanitizeRestaurantName(name: string): string {
-    return name.replace(/\s*\(\[.*?\]\(.*?\)\)/g, '').trim();
-  }
-
-  function generateSlug(name: string, city?: string): string {
-    const cleanName = name.toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
-    
-    if (city) {
-      const cleanCity = city.toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
-      return `${cleanName}-${cleanCity}`;
-    }
-    
-    return cleanName;
-  }
-
   async function saveDiscoveredRestaurant(
     chefId: string,
     restaurant: z.infer<typeof RestaurantSchema>
   ): Promise<{ success: boolean; restaurantId?: string; isNew: boolean }> {
-    const cleanName = sanitizeRestaurantName(restaurant.name);
-    
-    const exactMatch = await (supabase
-      .from('restaurants') as ReturnType<typeof supabase.from>)
-      .select('id, chef_id, name, address')
-      .eq('name', cleanName)
-      .eq('city', restaurant.city || '')
-      .maybeSingle();
-
-    if (exactMatch.data) {
-      if (exactMatch.data.chef_id !== chefId) {
-        console.log(`      ⚠️  Restaurant "${cleanName}" already linked to different chef`);
-      }
-      return { success: true, restaurantId: exactMatch.data.id, isNew: false };
-    }
-
-    const cityMatches = await (supabase
-      .from('restaurants') as ReturnType<typeof supabase.from>)
-      .select('id, chef_id, name, address')
-      .eq('city', restaurant.city || '')
-      .limit(50);
-
-    if (cityMatches.data && cityMatches.data.length > 0) {
-      for (const existing of cityMatches.data) {
-        const dupeCheck = await checkForDuplicate({
-          name1: cleanName,
-          name2: existing.name,
-          city: restaurant.city || '',
-          address1: restaurant.address,
-          address2: existing.address,
-          state: restaurant.state,
-        });
-
-        if (dupeCheck.isDuplicate && dupeCheck.confidence >= 0.85) {
-          console.log(`      🔍 DUPLICATE DETECTED: "${cleanName}" matches existing "${existing.name}"`);
-          console.log(`         Confidence: ${dupeCheck.confidence.toFixed(2)} | Reason: ${dupeCheck.reasoning}`);
-
-          await logDataChange(supabase as any, {
-            table_name: 'restaurants',
-            record_id: existing.id,
-            change_type: 'update',
-            new_data: {
-              duplicate_prevented: true,
-              attempted_name: cleanName,
-              matched_name: existing.name,
-              confidence: dupeCheck.confidence,
-              reasoning: dupeCheck.reasoning,
-            },
-            source: 'llm_enricher_duplicate_prevention',
-            confidence: dupeCheck.confidence,
-          });
-
-          return { success: true, restaurantId: existing.id, isNew: false };
-        }
-      }
-    }
-
-    const slug = generateSlug(cleanName, restaurant.city || undefined);
-    const insertData = {
-      name: cleanName,
-      slug,
-      chef_id: chefId,
-      chef_role: restaurant.role || 'owner',
-      address: restaurant.address,
-      city: restaurant.city,
-      state: restaurant.state,
-      country: restaurant.country || 'US',
-      price_tier: restaurant.priceRange,
-      status: restaurant.status || 'unknown',
-      website_url: restaurant.website,
-      year_opened: restaurant.opened,
-      michelin_stars: restaurant.michelinStars || 0,
-      awards: restaurant.awards || null,
-      source_notes: `Discovered via LLM enrichment from ${restaurant.source || 'chef bio'}`,
-      is_public: true,
-    };
-
-    const { data, error } = await (supabase
-      .from('restaurants') as ReturnType<typeof supabase.from>)
-      .insert(insertData)
-      .select('id')
-      .single();
-
-    if (error) {
-      console.error(`      ❌ Failed to save restaurant "${restaurant.name}": ${error.message}`);
-      return { success: false, isNew: false };
-    }
-
-    return { success: true, restaurantId: data.id, isNew: true };
+    return restaurantRepo.createRestaurant(chefId, restaurant);
   }
 
   async function findShowByName(showName: string): Promise<string | null> {
-    const normalized = showName.toLowerCase().trim();
-    
-    const showNameMap: Record<string, string> = {
-      'top chef': 'top-chef',
-      'top chef masters': 'top-chef-masters',
-      'top chef: just desserts': 'top-chef-just-desserts',
-      'top chef just desserts': 'top-chef-just-desserts',
-      'top chef junior': 'top-chef-junior',
-      'top chef duels': 'top-chef-duels',
-      'top chef amateurs': 'top-chef-amateurs',
-      'top chef family style': 'top-chef-family-style',
-      'top chef estrellas': 'top-chef-estrellas',
-      'top chef vip': 'top-chef-vip',
-      'top chef canada': 'top-chef-canada',
-      'iron chef': 'iron-chef',
-      'iron chef america': 'iron-chef-america',
-      'tournament of champions': 'tournament-of-champions',
-      'guy\'s tournament of champions': 'tournament-of-champions',
-      'chopped': 'chopped',
-      'chopped champions': 'chopped-champions',
-      'chopped sweets': 'chopped-sweets',
-      'beat bobby flay': 'beat-bobby-flay',
-      'hell\'s kitchen': 'hells-kitchen',
-      'hells kitchen': 'hells-kitchen',
-      'masterchef': 'masterchef',
-      'masterchef us': 'masterchef',
-      'next level chef': 'next-level-chef',
-      'guy\'s grocery games': 'guys-grocery-games',
-      'guys grocery games': 'guys-grocery-games',
-      'cutthroat kitchen': 'cutthroat-kitchen',
-      'worst cooks in america': 'worst-cooks-in-america',
-    };
-
-    const slug = showNameMap[normalized];
-    if (!slug) {
-      console.log(`      ⚠️  Unknown show "${showName}", attempting database lookup`);
-      const sanitized = showName.replace(/['\";\\]/g, '');
-      const { data: show } = await (supabase
-        .from('shows') as ReturnType<typeof supabase.from>)
-        .select('id')
-        .ilike('name', sanitized)
-        .maybeSingle();
-      
-      return show?.id || null;
-    }
-
-    const { data: show } = await (supabase
-      .from('shows') as ReturnType<typeof supabase.from>)
-      .select('id')
-      .eq('slug', slug)
-      .maybeSingle();
-
-    return show?.id || null;
+    return showRepo.findShowByName(showName);
   }
 
   async function saveChefShows(
     chefId: string,
     tvShows: z.infer<typeof TVShowAppearanceSchema>[]
   ): Promise<{ saved: number; skipped: number }> {
-    if (!tvShows || tvShows.length === 0) {
-      return { saved: 0, skipped: 0 };
-    }
-
-    let saved = 0;
-    let skipped = 0;
-
-    for (const show of tvShows) {
-      const showId = await findShowByName(show.showName);
-      if (!showId) {
-        console.log(`      ⚠️  Could not find show "${show.showName}" in database, skipping`);
-        skipped++;
-        continue;
-      }
-
-      const { data: existing } = await (supabase
-        .from('chef_shows') as ReturnType<typeof supabase.from>)
-        .select('id')
-        .eq('chef_id', chefId)
-        .eq('show_id', showId)
-        .eq('season', show.season || null)
-        .maybeSingle();
-
-      if (existing) {
-        skipped++;
-        continue;
-      }
-
-      const { error } = await (supabase
-        .from('chef_shows') as ReturnType<typeof supabase.from>)
-        .insert({
-          chef_id: chefId,
-          show_id: showId,
-          season: show.season || null,
-          season_name: show.season ? `${show.showName} ${show.season}` : show.showName,
-          result: show.result || 'contestant',
-          is_primary: false,
-        });
-
-      if (error) {
-        console.error(`      ⚠️  Failed to save show "${show.showName}": ${error.message}`);
-        skipped++;
-      } else {
-        saved++;
-        console.log(`      ✅ Added show: ${show.showName}${show.season ? ' ' + show.season : ''}`);
-      }
-    }
-
-    return { saved, skipped };
+    return showRepo.saveChefShows(chefId, tvShows);
   }
 
   async function enrichAndSaveChef(
@@ -654,43 +451,15 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
     }
 
     if (result.miniBio || result.notableAwards) {
-      const updateData: Record<string, unknown> = {
-        updated_at: new Date().toISOString(),
-        last_enriched_at: new Date().toISOString(),
-      };
+      const updateResult = await chefRepo.updateBioAndAwards(
+        chefId,
+        result.miniBio,
+        result.jamesBeardStatus,
+        result.notableAwards
+      );
 
-      if (result.miniBio) {
-        updateData.mini_bio = result.miniBio;
-      }
-
-      if (result.jamesBeardStatus) {
-        updateData.james_beard_status = result.jamesBeardStatus;
-      }
-
-      if (result.notableAwards && result.notableAwards.length > 0) {
-        updateData.notable_awards = result.notableAwards;
-      }
-
-      const { error } = await (supabase
-        .from('chefs') as ReturnType<typeof supabase.from>)
-        .update(updateData)
-        .eq('id', chefId);
-
-      if (error) {
-        console.error(`   ❌ Failed to save chef data: ${error.message}`);
-      } else {
-        await logDataChange(supabase, {
-          table_name: 'chefs',
-          record_id: chefId,
-          change_type: 'update',
-          new_data: { 
-            mini_bio: result.miniBio, 
-            james_beard_status: result.jamesBeardStatus,
-            notable_awards: result.notableAwards,
-          },
-          source: 'llm_enricher',
-          confidence: 0.85,
-        });
+      if (!updateResult.success) {
+        console.error(`   ❌ Failed to save chef data: ${updateResult.error}`);
       }
     }
 
@@ -747,27 +516,15 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
     }
 
     if (result.confidence >= minConfidence && result.status !== 'unknown') {
-      const { error } = await (supabase
-        .from('restaurants') as ReturnType<typeof supabase.from>)
-        .update({
-          status: result.status,
-          last_verified_at: new Date().toISOString(),
-          verification_source: 'llm_web_search',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', restaurantId);
+      const updateResult = await restaurantRepo.updateStatus(
+        restaurantId,
+        result.status,
+        result.confidence,
+        result.reason
+      );
 
-      if (error) {
-        console.error(`   ❌ Failed to update restaurant status: ${error.message}`);
-      } else {
-        await logDataChange(supabase, {
-          table_name: 'restaurants',
-          record_id: restaurantId,
-          change_type: 'update',
-          new_data: { status: result.status, reason: result.reason },
-          source: 'llm_enricher',
-          confidence: result.confidence,
-        });
+      if (!updateResult.success) {
+        console.error(`   ❌ Failed to update restaurant status: ${updateResult.error}`);
       }
     }
 
@@ -813,16 +570,9 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
       }
     }
 
-    const { error: timestampError } = await (supabase
-      .from('chefs') as ReturnType<typeof supabase.from>)
-      .update({
-        last_enriched_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', chefId);
-
-    if (timestampError) {
-      console.error(`      ⚠️  Failed to update last_enriched_at: ${timestampError.message}`);
+    const timestampResult = await chefRepo.setEnrichmentTimestamp(chefId);
+    if (!timestampResult.success) {
+      console.error(`      ⚠️  Failed to update last_enriched_at: ${timestampResult.error}`);
     }
 
     return {
@@ -887,16 +637,9 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
         throw new Error(`Generated narrative too short: ${narrative.length} characters`);
       }
 
-      const { error: updateError } = await (supabase.from('chefs') as ReturnType<typeof supabase.from>)
-        .update({
-          career_narrative: narrative,
-          narrative_generated_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', chefId);
-
-      if (updateError) {
-        throw new Error(`Database update failed: ${updateError.message}`);
+      const updateResult = await chefRepo.updateNarrative(chefId, narrative);
+      if (!updateResult.success) {
+        throw new Error(`Database update failed: ${updateResult.error}`);
       }
 
       return {
@@ -952,16 +695,9 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
         throw new Error(`Generated narrative too short: ${narrative.length} characters`);
       }
 
-      const { error: updateError } = await (supabase.from('restaurants') as ReturnType<typeof supabase.from>)
-        .update({
-          restaurant_narrative: narrative,
-          narrative_generated_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', restaurantId);
-
-      if (updateError) {
-        throw new Error(`Database update failed: ${updateError.message}`);
+      const updateResult = await restaurantRepo.updateNarrative(restaurantId, narrative);
+      if (!updateResult.success) {
+        throw new Error(`Database update failed: ${updateResult.error}`);
       }
 
       return {
