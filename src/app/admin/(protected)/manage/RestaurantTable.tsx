@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Database } from '@/lib/database.types';
-import { Search, MapPin, Star, RefreshCw, EyeOff, Trash2 } from 'lucide-react';
+import { Search, MapPin, Star, RefreshCw, EyeOff, Trash2, Edit } from 'lucide-react';
+import Link from 'next/link';
 import { ConfirmationModal } from '@/components/admin/ConfirmationModal';
 
 type Restaurant = Database['public']['Tables']['restaurants']['Row'];
@@ -216,6 +217,13 @@ export function RestaurantTable({ restaurants }: { restaurants: Restaurant[] }) 
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end gap-1">
+                    <Link
+                      href={`/admin/manage/restaurants/${restaurant.id}`}
+                      className="text-copper-600 hover:text-copper-900 p-2 rounded hover:bg-copper-50 transition-colors"
+                      title="Edit all fields"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Link>
                     <button
                       onClick={() => handleReEnrichPlace(restaurant.id)}
                       className="text-amber-600 hover:text-amber-900 p-2 rounded hover:bg-amber-50"

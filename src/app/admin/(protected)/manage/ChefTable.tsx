@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Database } from '@/lib/database.types';
-import { Search, Image, FileText, RefreshCw, Upload, Instagram, Grid } from 'lucide-react';
+import { Search, Image, FileText, RefreshCw, Upload, Instagram, Grid, Edit } from 'lucide-react';
+import Link from 'next/link';
 import { PhotoUpload } from './PhotoUpload';
 import { InstagramHandleModal } from './InstagramHandleModal';
 
@@ -135,6 +136,13 @@ export function ChefTable({ chefs }: { chefs: Chef[] }) {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end gap-2">
+                    <Link
+                      href={`/admin/manage/chefs/${chef.id}`}
+                      className="text-copper-600 hover:text-copper-900 p-2 rounded hover:bg-copper-50 transition-colors"
+                      title="Edit all fields"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Link>
                     <a
                       href={`/admin/manage/instagram/${chef.id}`}
                       className={`p-2 rounded transition-colors ${
