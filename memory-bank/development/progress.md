@@ -17,8 +17,9 @@ Status: Production Live - Phase 3 Planning
 ### Phase 2: SEO Pages & Frontend (Nov-Dec 2025)
 ✅ Chef/restaurant/city pages, admin panel, data enrichment, deployed to Vercel production
 
-### Phase 3: User Engagement (Dec 2025)
-⏳ **Planning** - Contribution forms, verification UI, show badges, admin review workflows
+### Phase 3: User Engagement & Admin Tools (Dec 2025)
+✅ **Admin Panel Phase 1** (Dec 5) - Unified entity editors shipped
+⏳ **Planning** - Enhanced data dashboard, contribution forms, verification UI
 
 ## Key Milestones
 
@@ -31,13 +32,13 @@ Status: Production Live - Phase 3 Planning
 | 5 | Production Launch | Dec 3 | ✅ Vercel deployment live |
 | 6 | Community Engagement | Target: Dec | ⏳ Forms, verification, badges |
 
-## Current Status (as of Dec 3, 2025)
+## Current Status (as of Dec 5, 2025)
 
 **Production Site**: Live on Vercel with 652+ SEO-optimized pages
 - 182 chefs (100% bios, 88% photos)
 - 560 restaurants (100% Google Places data, 72% photos)
 - 162 city landing pages
-- Full admin panel with data management tools
+- Full admin panel with unified entity editors (Phase 1 complete)
 
 **Tech Stack**: Next.js 14, Supabase, Tailwind CSS, Leaflet maps, Schema.org SEO
 
