@@ -1,7 +1,7 @@
 ---
-Last-Updated: 2025-12-05
+Last-Updated: 2025-12-05 (evening)
 Maintainer: RB
-Status: Active Development
+Status: Active Development - Blocked on multi-show discovery
 ---
 
 # Active Context: Chefs
@@ -39,10 +39,15 @@ Status: Active Development
    - Will integrate into workflows during refactor
 
 ## Current Blockers
-- None
+- **Multi-Show Discovery Issue** (Dec 5, 2025):
+  - LLM only finds 1 show per chef despite 6+ actual appearances (e.g., Joe Sasto)
+  - Attempted fixes: increased `searchContextSize: 'high'`, added `maxSteps: 20`, improved prompt
+  - Result: 2min runtime, 91k tokens, still only 1 show found
+  - Root cause: LLM stops after finding most prominent show, doesn't continue comprehensive search
+  - Next approach: Need different strategy (structured extraction, multiple targeted queries, or different model)
 
 ## In Progress
-- None
+- Investigating multi-show discovery failure
 
 ## Recently Completed (Dec 5, 2025) - Performance Blurbs Feature ✅
 - ✅ **Competition Performance Blurbs** - Added 1-2 sentence summaries to TV show appearances

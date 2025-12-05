@@ -46,9 +46,11 @@ const supabase = createClient(
 );
 
 const enricher = createLLMEnricher(supabase, { 
-  model: 'gpt-5-mini'  // DO NOT change model names without authorization
+  model: 'gpt-4o-mini'  // Uses hybrid search: gpt-4o-mini + gpt-4o-mini-search-preview
 });
 ```
+
+**Hybrid Search**: The enricher uses `gpt-4o-mini` as orchestrator with a `webSearch` tool that calls `gpt-4o-mini-search-preview`. This is 10x faster and 10x cheaper than the previous `gpt-5-mini` + Responses API approach. See `llm-models.md` for details.
 
 ## Available Methods
 

@@ -1,5 +1,5 @@
 ---
-Last-Updated: 2025-12-03
+Last-Updated: 2025-12-05
 Maintainer: RB
 Status: Active
 ---
@@ -13,15 +13,26 @@ This document serves as the **authoritative source** for OpenAI model configurat
 
 ## Current Models in Use
 
-### Primary Enrichment Model
-- **Model**: `gpt-5-mini`
-- **Use Cases**: Chef bio enrichment, restaurant discovery, award research
-- **Location**: `scripts/ingestion/processors/llm-enricher.ts:272`
-- **Reasoning**: Best balance of cost, quality, and search capability for structured data extraction
+### Hybrid Search Architecture (PRIMARY)
+
+We use a **two-model hybrid approach** for web search enrichment:
+
+| Role | Model | Purpose | Pricing |
+|------|-------|---------|---------|
+| **Orchestrator** | `gpt-4o-mini` | Decides searches, processes results, formats JSON | $0.15/$0.60 per 1M |
+| **Search Specialist** | `gpt-4o-mini-search-preview` | Executes web searches, returns grounded data | $0.15/$0.60 per 1M |
+
+**Why Hybrid?**
+- `gpt-5-mini` + Responses API: Slow (120s), expensive ($0.03/chef), inconsistent results
+- `gpt-4o-mini-search-preview` alone: No function calling, can't structure output
+- **Hybrid**: Fast (15s), cheap ($0.003/chef), consistent results (7-11 shows vs 1-8)
+
+**Location**: `scripts/ingestion/enrichment/shared/llm-client.ts`
 
 ### Fallback/Alternative Models
+- **gpt-5-mini**: Previous primary, still available for non-search tasks
 - **gpt-5-nano**: Ultra-low-cost option for simple status checks
-- **gpt-4.1-mini**: Higher quality fallback if gpt-5-mini underperforms
+- **gpt-4.1-mini**: Higher quality fallback if needed
 
 ## OpenAI Pricing Table (Effective 2025-12-03)
 
