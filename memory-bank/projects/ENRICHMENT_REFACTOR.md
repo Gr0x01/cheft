@@ -224,26 +224,52 @@ interface WorkflowResult {
 
 ## Migration Plan
 
-### Phase 1: Extract Shared Utilities
+### Phase 1: Extract Shared Utilities ✅ COMPLETE
 **Goal**: Pull out reusable components without breaking existing code
 
-- [ ] Create `shared/llm-client.ts`
-  - Extract OpenAI client initialization
-  - Extract `generateText()` wrapper
-  - Add automatic token tracking
-- [ ] Create `shared/token-tracker.ts`
-  - Singleton class with `trackUsage()`, `getTotalUsage()`, `estimateCost()`, `reset()`
-- [ ] Create `shared/result-parser.ts`
-  - Extract `extractJsonFromText()`
-  - Extract Zod schema validation
-  - Extract `stripCitations()` helper
-- [ ] Create `shared/retry-handler.ts`
-  - Extract `withRetry()` function
-  - Add exponential backoff logic
-- [ ] Update monolith to use shared utilities
-  - Replace inline logic with utility imports
-  - Test with existing scripts
-  - Verify token counts match
+- [x] Create `shared/llm-client.ts`
+  - ✅ Extract OpenAI client initialization
+  - ✅ Extract `generateText()` wrapper with web search
+  - ✅ Support both `openai.responses()` and `openai()` models
+  - ✅ Removed automatic token tracking (kept local tracking in enricher)
+- [x] Create `shared/token-tracker.ts`
+  - ✅ Singleton class with `trackUsage()`, `getTotalUsage()`, `estimateCost()`, `reset()`
+  - ℹ️ Not used by LLMClient (will be used in Phase 2 repositories)
+- [x] Create `shared/result-parser.ts`
+  - ✅ Extract `extractJsonFromText()`
+  - ✅ Extract Zod schema validation with `parseAndValidate()`
+  - ✅ Extract `stripCitations()` and `enumWithCitationStrip()` helpers
+  - ✅ Added comprehensive error handling (JSON parse, Zod validation)
+- [x] Create `shared/retry-handler.ts`
+  - ✅ Extract `withRetry()` function
+  - ✅ Add exponential backoff logic (3 retries, base 1000ms)
+  - ✅ Created `withCustomRetry()` for future flexibility
+- [x] Update monolith to use shared utilities
+  - ✅ Replaced all 5 LLM call sites with LLMClient
+  - ✅ Removed ~60 lines of duplicated code
+  - ✅ Fixed search context size consistency ('small' → 'low')
+  - ✅ Removed unnecessary type assertions
+  - ✅ TypeScript compilation passes
+  - ✅ Token tracking verified: 4,082 tokens, $0.0073 cost
+  - ✅ All existing scripts backward compatible
+
+**Files Created:**
+- `scripts/ingestion/enrichment/shared/llm-client.ts` (77 lines)
+- `scripts/ingestion/enrichment/shared/token-tracker.ts` (43 lines)
+- `scripts/ingestion/enrichment/shared/result-parser.ts` (46 lines)
+- `scripts/ingestion/enrichment/shared/retry-handler.ts` (54 lines)
+
+**Files Modified:**
+- `scripts/ingestion/processors/llm-enricher.ts` (refactored, ~1359 lines)
+
+**Code Review Findings Addressed:**
+- ✅ CRITICAL: Token tracking dual system resolved (kept local tracking)
+- ✅ CRITICAL: Type safety issues fixed (removed unnecessary assertions)
+- ✅ CRITICAL: Added error handling to parseAndValidate
+- ⏳ DEFER: Token pricing model-awareness (Phase 2)
+- ⏳ DEFER: Remove unused `withCustomRetry` (Phase 6 cleanup)
+
+**Next Phase:** Phase 2 - Extract Repository Layer
 
 ### Phase 2: Extract Repository Layer
 **Goal**: Separate database operations from LLM logic

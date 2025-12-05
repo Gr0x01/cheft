@@ -1,30 +1,13 @@
-import { generateText } from 'ai';
-import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../src/lib/database.types';
 import { logDataChange } from '../queue/audit-log';
 import { checkForDuplicate } from '../../../src/lib/duplicates/detector';
+import { stripCitations, enumWithCitationStrip, extractJsonFromText, parseAndValidate } from '../enrichment/shared/result-parser';
+import { withRetry } from '../enrichment/shared/retry-handler';
+import { LLMClient } from '../enrichment/shared/llm-client';
+import { TokenTracker, TokenUsage } from '../enrichment/shared/token-tracker';
 
-function stripCitations(value: string | null | undefined): string | null {
-  if (!value) return null;
-  return value
-    .replace(/\s*\(\[.*?\]\(.*?\)\)/g, '')
-    .replace(/\s*\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .trim();
-}
-
-function enumWithCitationStrip<T extends string>(enumValues: readonly [T, ...T[]]) {
-  return z.string().nullable().optional().transform((val): T | null => {
-    if (!val) return null;
-    const cleaned = stripCitations(val);
-    if (!cleaned) return null;
-    if (enumValues.includes(cleaned as T)) {
-      return cleaned as T;
-    }
-    return null;
-  });
-}
 
 const RestaurantSchema = z.object({
   name: z.string(),
@@ -52,8 +35,8 @@ const TVShowAppearanceSchema = z.object({
 
 const ChefEnrichmentSchema = z.object({
   miniBio: z.string().transform(val => stripCitations(val) || val),
-  restaurants: z.array(RestaurantSchema).optional().default([]),
-  tvShows: z.array(TVShowAppearanceSchema).optional().default([]),
+  restaurants: z.array(RestaurantSchema).default([]),
+  tvShows: z.array(TVShowAppearanceSchema).default([]),
   jamesBeardStatus: enumWithCitationStrip(['winner', 'nominated', 'semifinalist'] as const),
   notableAwards: z.array(z.string()).nullable().optional(),
 }).passthrough();
@@ -101,11 +84,6 @@ export interface RestaurantOnlyResult {
 }
 
 
-export interface TokenUsage {
-  prompt: number;
-  completion: number;
-  total: number;
-}
 
 export interface LLMEnricherConfig {
   model?: string;
@@ -236,36 +214,6 @@ Your response must be a single JSON object matching this exact structure:
 
 Do NOT start your response with "I can..." or any other text. Start immediately with the opening brace {.`;
 
-const MAX_RETRIES = 3;
-const BASE_DELAY_MS = 1000;
-
-async function withRetry<T>(fn: () => Promise<T>, context: string): Promise<T> {
-  let lastError: Error | null = null;
-  
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      
-      if (attempt < MAX_RETRIES) {
-        const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1) + Math.random() * 500;
-        console.warn(`   ⚠️ Retry ${attempt}/${MAX_RETRIES} for "${context}" after ${Math.round(delay)}ms: ${lastError.message}`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-  }
-  
-  throw lastError;
-}
-
-function extractJsonFromText(text: string): string {
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
-    return jsonMatch[0];
-  }
-  return text;
-}
 
 export function createLLMEnricher(
   supabase: SupabaseClient<Database>,
@@ -273,7 +221,9 @@ export function createLLMEnricher(
 ) {
   const modelName = config.model ?? 'gpt-5-mini';
   const maxRestaurants = config.maxRestaurantsPerChef ?? 10;
-
+  
+  const llmClient = new LLMClient({ model: modelName });
+  
   let totalTokensUsed: TokenUsage = { prompt: 0, completion: 0, total: 0 };
 
   async function enrichChef(
@@ -286,26 +236,15 @@ export function createLLMEnricher(
 
     try {
       const result = await withRetry(
-        () => generateText({
-          model: openai.responses(modelName),
-          tools: {
-            web_search_preview: openai.tools.webSearchPreview({
-              searchContextSize: 'medium',
-            }),
-          },
-          system: CHEF_ENRICHMENT_SYSTEM_PROMPT,
+        () => llmClient.generateWithWebSearch(
+          CHEF_ENRICHMENT_SYSTEM_PROMPT,
           prompt,
-          maxTokens: 8000,
-          maxSteps: 50,
-        }),
+          { maxTokens: 8000, maxSteps: 50, searchContextSize: 'medium' }
+        ),
         `enrich chef ${chefName}`
       );
 
-      const tokensUsed: TokenUsage = {
-        prompt: result.usage?.promptTokens || 0,
-        completion: result.usage?.completionTokens || 0,
-        total: result.usage?.totalTokens || 0,
-      };
+      const tokensUsed: TokenUsage = result.usage;
 
       totalTokensUsed.prompt += tokensUsed.prompt;
       totalTokensUsed.completion += tokensUsed.completion;
@@ -318,18 +257,16 @@ export function createLLMEnricher(
         throw new Error('LLM returned empty response - likely hit step limit without final answer');
       }
 
-      const jsonText = extractJsonFromText(result.text);
-      const parsed = JSON.parse(jsonText);
-      const validated = ChefEnrichmentSchema.parse(parsed);
+      const validated = parseAndValidate(result.text, ChefEnrichmentSchema);
 
-      const restaurants = validated.restaurants.slice(0, maxRestaurants);
+      const restaurants = (validated.restaurants || []).slice(0, maxRestaurants);
 
       return {
         chefId,
         chefName,
         miniBio: validated.miniBio,
-        restaurants,
-        tvShows: validated.tvShows ?? [],
+        restaurants: restaurants as z.infer<typeof RestaurantSchema>[],
+        tvShows: validated.tvShows as z.infer<typeof TVShowAppearanceSchema>[],
         jamesBeardStatus: validated.jamesBeardStatus ?? null,
         notableAwards: validated.notableAwards ?? null,
         tokensUsed,
@@ -365,33 +302,21 @@ export function createLLMEnricher(
 
     try {
       const result = await withRetry(
-        () => generateText({
-          model: openai.responses(modelName),
-          tools: {
-            web_search_preview: openai.tools.webSearchPreview({
-              searchContextSize: 'low',
-            }),
-          },
-          system: RESTAURANT_STATUS_SYSTEM_PROMPT,
+        () => llmClient.generateWithWebSearch(
+          RESTAURANT_STATUS_SYSTEM_PROMPT,
           prompt,
-          maxTokens: 4000,
-        }),
+          { maxTokens: 4000, searchContextSize: 'low' }
+        ),
         `verify status ${restaurantName}`
       );
 
-      const tokensUsed: TokenUsage = {
-        prompt: result.usage?.promptTokens || 0,
-        completion: result.usage?.completionTokens || 0,
-        total: result.usage?.totalTokens || 0,
-      };
+      const tokensUsed: TokenUsage = result.usage;
 
       totalTokensUsed.prompt += tokensUsed.prompt;
       totalTokensUsed.completion += tokensUsed.completion;
       totalTokensUsed.total += tokensUsed.total;
 
-      const jsonText = extractJsonFromText(result.text);
-      const parsed = JSON.parse(jsonText);
-      const validated = RestaurantStatusSchema.parse(parsed);
+      const validated = parseAndValidate(result.text, RestaurantStatusSchema);
 
       return {
         restaurantId,
@@ -440,26 +365,15 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
 
     try {
       const result = await withRetry(
-        () => generateText({
-          model: openai.responses(modelName),
-          tools: {
-            web_search_preview: openai.tools.webSearchPreview({
-              searchContextSize: 'medium',
-            }),
-          },
-          system: RESTAURANT_ONLY_SYSTEM_PROMPT,
+        () => llmClient.generateWithWebSearch(
+          RESTAURANT_ONLY_SYSTEM_PROMPT,
           prompt,
-          maxTokens: 6000,
-          maxSteps: 20,
-        }),
+          { maxTokens: 6000, maxSteps: 20, searchContextSize: 'medium' }
+        ),
         `find restaurants for ${chefName}`
       );
 
-      const tokensUsed: TokenUsage = {
-        prompt: result.usage?.promptTokens || 0,
-        completion: result.usage?.completionTokens || 0,
-        total: result.usage?.totalTokens || 0,
-      };
+      const tokensUsed: TokenUsage = result.usage;
 
       totalTokensUsed.prompt += tokensUsed.prompt;
       totalTokensUsed.completion += tokensUsed.completion;
@@ -469,19 +383,17 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
         throw new Error('LLM returned empty response');
       }
 
-      const jsonText = extractJsonFromText(result.text);
-      const parsed = JSON.parse(jsonText);
       const RestaurantsOnlySchema = z.object({
         restaurants: z.array(RestaurantSchema).default([]),
       });
-      const validated = RestaurantsOnlySchema.parse(parsed);
+      const validated = parseAndValidate(result.text, RestaurantsOnlySchema);
 
-      const restaurants = validated.restaurants.slice(0, maxRestaurants);
+      const restaurants = (validated.restaurants || []).slice(0, maxRestaurants);
 
       return {
         chefId,
         chefName,
-        restaurants,
+        restaurants: restaurants as z.infer<typeof RestaurantSchema>[],
         newRestaurants: 0,
         existingRestaurants: 0,
         tokensUsed,
@@ -949,27 +861,17 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
       
       const prompt = buildChefNarrativePrompt(chefContext);
       
+      const narrativeClient = new LLMClient({ model: 'gpt-4.1-mini' });
       const result = await withRetry(
-        () => generateText({
-          model: openai.responses('gpt-4.1-mini'),
-          tools: {
-            web_search_preview: openai.tools.webSearchPreview({
-              searchContextSize: 'medium',
-            }),
-          },
-          system: CHEF_NARRATIVE_SYSTEM_PROMPT,
+        () => narrativeClient.generateWithWebSearch(
+          CHEF_NARRATIVE_SYSTEM_PROMPT,
           prompt,
-          maxTokens: 8000,
-          maxSteps: 50,
-        }),
+          { maxTokens: 8000, maxSteps: 50, searchContextSize: 'medium' }
+        ),
         `generate narrative for chef ${chefContext.name}`
       );
 
-      const tokensUsed: TokenUsage = {
-        prompt: result.usage?.promptTokens || 0,
-        completion: result.usage?.completionTokens || 0,
-        total: result.usage?.totalTokens || 0,
-      };
+      const tokensUsed: TokenUsage = result.usage;
 
       totalTokensUsed.prompt += tokensUsed.prompt;
       totalTokensUsed.completion += tokensUsed.completion;
@@ -1024,27 +926,17 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
       
       const prompt = buildRestaurantNarrativePrompt(restaurantContext);
       
+      const narrativeClient = new LLMClient({ model: 'gpt-4.1-mini' });
       const result = await withRetry(
-        () => generateText({
-          model: openai.responses('gpt-4.1-mini'),
-          tools: {
-            web_search_preview: openai.tools.webSearchPreview({
-              searchContextSize: 'medium',
-            }),
-          },
-          system: RESTAURANT_NARRATIVE_SYSTEM_PROMPT,
+        () => narrativeClient.generateWithWebSearch(
+          RESTAURANT_NARRATIVE_SYSTEM_PROMPT,
           prompt,
-          maxTokens: 6000,
-          maxSteps: 30,
-        }),
+          { maxTokens: 6000, maxSteps: 30, searchContextSize: 'medium' }
+        ),
         `generate narrative for restaurant ${restaurantContext.name}`
       );
 
-      const tokensUsed: TokenUsage = {
-        prompt: result.usage?.promptTokens || 0,
-        completion: result.usage?.completionTokens || 0,
-        total: result.usage?.totalTokens || 0,
-      };
+      const tokensUsed: TokenUsage = result.usage;
 
       totalTokensUsed.prompt += tokensUsed.prompt;
       totalTokensUsed.completion += tokensUsed.completion;
@@ -1133,15 +1025,10 @@ Example output:
   {"showName": "Tournament of Champions", "season": "3", "result": "contestant"}
 ]`;
 
+      const showsClient = new LLMClient({ model: modelName });
       const result = await withRetry(
-        () => generateText({
-          model: openai(modelName),
-          tools: {
-            web_search_preview: openai.tools.webSearchPreview({
-              searchContextSize: 'medium',
-            }),
-          },
-          system: `You are a TV cooking show expert. Use web search to find ALL TV show appearances for this chef.
+        () => showsClient.generateWithWebSearch(
+          `You are a TV cooking show expert. Use web search to find ALL TV show appearances for this chef.
 
 IMPORTANT: After gathering enough information (typically 5-10 searches), YOU MUST return your final JSON response. Do not continue searching indefinitely.
 
@@ -1149,17 +1036,12 @@ Return ONLY a valid JSON array. Do NOT include any explanatory text or anything 
 
 Start immediately with the opening bracket [.`,
           prompt,
-          maxTokens: 4000,
-          maxSteps: 40,
-        }),
+          { maxTokens: 4000, maxSteps: 40, searchContextSize: 'medium', useResponseModel: false }
+        ),
         `enrich shows for ${chefName}`
       );
 
-      const tokensUsed: TokenUsage = {
-        prompt: result.usage?.promptTokens || 0,
-        completion: result.usage?.completionTokens || 0,
-        total: result.usage?.totalTokens || 0,
-      };
+      const tokensUsed: TokenUsage = result.usage;
 
       totalTokensUsed.prompt += tokensUsed.prompt;
       totalTokensUsed.completion += tokensUsed.completion;
@@ -1232,27 +1114,17 @@ Start immediately with the opening bracket [.`,
       
       const prompt = buildCityNarrativePrompt(cityContext);
       
+      const narrativeClient = new LLMClient({ model: 'gpt-4.1-mini' });
       const result = await withRetry(
-        () => generateText({
-          model: openai.responses('gpt-4.1-mini'),
-          tools: {
-            web_search_preview: openai.tools.webSearchPreview({
-              searchContextSize: 'medium',
-            }),
-          },
-          system: CITY_NARRATIVE_SYSTEM_PROMPT,
+        () => narrativeClient.generateWithWebSearch(
+          CITY_NARRATIVE_SYSTEM_PROMPT,
           prompt,
-          maxTokens: 8000,
-          maxSteps: 40,
-        }),
+          { maxTokens: 8000, maxSteps: 40, searchContextSize: 'medium' }
+        ),
         `generate narrative for city ${cityContext.name}`
       );
 
-      const tokensUsed: TokenUsage = {
-        prompt: result.usage?.promptTokens || 0,
-        completion: result.usage?.completionTokens || 0,
-        total: result.usage?.totalTokens || 0,
-      };
+      const tokensUsed: TokenUsage = result.usage;
 
       totalTokensUsed.prompt += tokensUsed.prompt;
       totalTokensUsed.completion += tokensUsed.completion;
