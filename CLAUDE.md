@@ -36,6 +36,14 @@ Always adjust the metadata header (`Last-Updated`, `Maintainer`) when you edit a
 
 ## BEHAVIORAL RULES
 
+### Project Context: Solo Developer MVP
+**This is a solo developer project building a safe MVP+, not an enterprise application.**
+- Prioritize working solutions over perfect architecture
+- Avoid over-engineering for theoretical scale problems
+- No big team, no massive user base (yet) - build for current needs
+- Safe and solid beats premature optimization
+- Focus on shipping features that work, not gold-plating
+
 ### Communication & Decision Making
 - Ask before making major feature or architecture changes.
 - Get approval before adding dependencies or altering core workflows.
@@ -46,6 +54,7 @@ Always adjust the metadata header (`Last-Updated`, `Maintainer`) when you edit a
 2. Implement only that minimum.
 3. Stop and check in before layering abstractions, helpers, or advanced error handling.
 4. Follow KISS and YAGNI—do not build for hypothetical futures without explicit direction.
+5. **Solo dev context**: Skip enterprise patterns unless explicitly needed (e.g., simple functions over complex class hierarchies)
 
 ### LLM Model Usage - CRITICAL
 **NEVER change LLM model names or configurations without explicit authorization.**
@@ -83,23 +92,31 @@ Always adjust the metadata header (`Last-Updated`, `Maintainer`) when you edit a
   - Tools: Write, Read, MultiEdit, WebSearch, WebFetch
   - Focus: Component library integration, user experience
 
-### Delegation Triggers
-1. **Automatic Review**: After implementing features or fixes, delegate to `code-reviewer`
-2. **Architecture Review**: Before implementing backend changes, database queries, or auth modifications, consult `backend-architect`
-3. **Frontend Implementation**: For complex UI work, state management, or performance issues, delegate to `frontend-developer`
-4. **UI Design & Systems**: For interface design, visual improvements, or design system work, delegate to `ui-designer`
+### Delegation Triggers (Use Pragmatically for Solo Dev)
+Subagents are helpful but not mandatory for every tiny change. Use judgment:
+
+1. **code-reviewer**: Use for significant features or refactors (not one-line fixes)
+2. **backend-architect**: Use for major architectural decisions or data model changes (not routine CRUD)
+3. **frontend-developer**: Use for complex UI or performance issues (not simple component edits)
+4. **ui-designer**: Use for new design systems or major UI overhauls (not button color tweaks)
 5. **Complex Research**: Use general-purpose subagent for multi-step investigations
 6. **Reference Generation**: Use subagents to create documentation or architectural diagrams
 
-### Integration Workflow
+### Integration Workflow (Solo Dev Adapted)
 - **NEW BACKEND FEATURES**: 
-  1. Consult backend-architect BEFORE coding
-  2. Implement following architectural guidelines
-  3. Measure performance impact
-  4. Delegate to code-reviewer → Address feedback
-- **FRONTEND FEATURES**: Use frontend-developer → Implement → Test → code-reviewer
-- **UI DESIGN**: Use ui-designer → Create mockups/wireframes → frontend-developer → code-reviewer  
-- **ALL CHANGES**: Complete implementation → Run quality checks → Delegate to code-reviewer → Address feedback
+  1. Major changes: Consult backend-architect for design validation
+  2. Simple changes: Just implement following existing patterns
+  3. After finishing: Use appropriate subagent (backend-architect/frontend-developer) + code-reviewer
+- **FRONTEND FEATURES**: Implement → Test → frontend-developer review + code-reviewer (for non-trivial changes)
+- **UI DESIGN**: Major redesigns use ui-designer; iterative improvements just do it
+- **PRAGMATIC RULE**: If it's under 50 lines and follows existing patterns, just ship it with type checking
+
+### Handling Subagent Feedback
+**Subagents suggest; you decide.**
+- **Fix**: Critical and medium-critical issues that affect security, correctness, or maintainability
+- **Consider**: Minor suggestions, but skip if they add unnecessary complexity
+- **Ignore**: Over-engineering, premature optimization, or enterprise patterns for simple MVP features
+- When in doubt about a suggestion's value, ask the user before implementing
 - Document significant subagent recommendations in memory bank
 
 ## SKILLS
