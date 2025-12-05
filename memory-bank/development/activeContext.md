@@ -1,7 +1,7 @@
 ---
-Last-Updated: 2025-12-04
+Last-Updated: 2025-12-05
 Maintainer: RB
-Status: Planning Enrichment System Refactor
+Status: Active Development
 ---
 
 # Active Context: Chefs
@@ -36,7 +36,39 @@ Status: Planning Enrichment System Refactor
 - None
 
 ## In Progress
-- Enrichment system refactor (Phase 3 complete - services extracted)
+- None
+
+## Recently Completed (Dec 5, 2025) - Performance Blurbs Feature ✅
+- ✅ **Competition Performance Blurbs** - Added 1-2 sentence summaries to TV show appearances
+  - **Problem**: Chef pages only showed basic show info (name, season, result badge) without competition context
+  - **Solution**: Enhanced LLM enrichment to generate performance narratives for each TV appearance
+  - **Database Changes**:
+    - Migration `021_add_performance_blurb_to_chef_shows.sql`
+    - Added `performance_blurb TEXT` column with CHECK constraint (10-500 chars)
+    - Added index `idx_chef_shows_performance_missing` for backfill queries
+  - **LLM Enrichment**:
+    - Updated `show-discovery-service.ts` prompt to request performance summaries
+    - Example: "Won Season 15 after dominating Restaurant Wars, winning 4 elimination challenges"
+    - Cost: ~$0.03 per chef (91k tokens)
+  - **UI Improvements**:
+    - Display performance blurbs below show name in `TVAppearanceBadge.tsx`
+    - Re-enabled career narrative section with paragraph formatting
+    - Added sanitization via `sanitizeNarrative()` for XSS protection
+    - Added error handling for narrative processing
+    - Added ARIA labels for accessibility
+  - **Scripts**:
+    - `backfill-performance-blurbs.ts` - Backfill existing 182 chefs
+    - `test-performance-blurbs.ts` - End-to-end testing script
+    - New command: `npm run enrich:performance-blurbs`
+  - **Code Quality**:
+    - Fixed all TypeScript type safety violations in repository layer
+    - Removed unsafe `as any` type casts
+    - Added proper null handling for season queries
+    - Added database CHECK constraints
+  - **Testing**: Live test passed with Justin Devillier (found 2 shows, 1 with blurb)
+  - **Status**: Ready for deployment - migration + backfill script ready
+  - **Files Modified**: 9 files, +315 lines, -27 lines
+  - **Commit**: `d33213d feat: Add performance blurbs to TV show appearances`
 
 ## Recently Completed (Dec 5, 2025) - Enrichment Refactor Phase 3 COMPLETE ✅
 - ✅ **Enrichment Services Extracted & Web Search Fixed** - Refactored monolith + fixed critical OpenAI API issues
@@ -175,23 +207,28 @@ Status: Planning Enrichment System Refactor
 - ✅ **Phase 2 Complete** (Dec 1-2) - Chef/restaurant/city pages, admin panel, internal linking
 
 ## Next Steps
-1. **Fix Multi-Show Data** (URGENT):
+1. **Deploy Performance Blurbs** (IMMEDIATE):
+   - Deploy migration `021_add_performance_blurb_to_chef_shows.sql`
+   - Run backfill: `npm run enrich:performance-blurbs -- --prioritize=winners`
+   - Verify UI displays correctly on chef pages
+   - Expected cost: ~$3.64 for all 182 chefs
+
+2. **Fix Multi-Show Data**:
    - Execute `npm run enrich:shows` on all 182 chefs to capture missing TV appearances
-   - Implement multi-show display UI component on chef detail pages
    - Test and verify show attribution completeness
 
-2. **Duplicate Chef Management**:
+3. **Duplicate Chef Management**:
    - Deploy migration `020_chef_merge_function.sql` 
    - Build admin UI for detecting and merging duplicate chef records
    - Run duplicate detection and merge duplicates
 
-3. **Phase 3 Community Features** (Deferred):
+4. **Phase 3 Community Features** (Deferred):
    - ✅ Contribution system (suggest chef/restaurant forms)
    - ✅ Data verification UI (thumbs up/down buttons)
    - ✅ Show attribution badges
    - Admin review queue for submissions
    
-4. **Data Quality** (Ongoing):
+5. **Data Quality** (Ongoing):
    - User manually adding chefs via admin interface
    - Run enrichment on newly added chefs as needed
    - Monitor and respond to user verification signals
