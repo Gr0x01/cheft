@@ -50,7 +50,7 @@ export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput
     super({
       workflowName: 'refresh-stale-chef',
       maxCostUsd: 10,
-      timeoutMs: 600000,
+      timeoutMs: 900000,
       allowRollback: false,
     });
 

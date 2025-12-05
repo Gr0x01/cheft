@@ -50,7 +50,7 @@ export class ManualChefAdditionWorkflow extends BaseWorkflow<ManualChefAdditionI
     super({
       workflowName: 'manual-chef-addition',
       maxCostUsd: 15,
-      timeoutMs: 900000,
+      timeoutMs: 1200000,
       allowRollback: true,
     });
 

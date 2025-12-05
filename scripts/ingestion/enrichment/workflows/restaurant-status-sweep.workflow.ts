@@ -56,7 +56,7 @@ export class RestaurantStatusSweepWorkflow extends BaseWorkflow<RestaurantStatus
     super({
       workflowName: 'restaurant-status-sweep',
       maxCostUsd: 5,
-      timeoutMs: 600000,
+      timeoutMs: 900000,
       allowRollback: false,
     });
 

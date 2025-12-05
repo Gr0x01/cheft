@@ -47,7 +47,7 @@ export class PartialUpdateWorkflow extends BaseWorkflow<PartialUpdateInput, Part
     super({
       workflowName: 'partial-update',
       maxCostUsd: 2,
-      timeoutMs: 300000,
+      timeoutMs: 600000,
       allowRollback: false,
     });
 
