@@ -51,7 +51,6 @@ ehthumbs.db
 Thumbs.db
 
 # Temporary files
-tmp/
 temp/
 .tmp/
 
