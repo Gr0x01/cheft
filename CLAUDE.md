@@ -22,6 +22,10 @@ archive/        → historical narrative and deprecated guidance
 
 Read additional docs only if needed (`architecture/patterns.md`, `development/daily-log/`, etc.). Long-form history now lives under `memory-bank/archive/` and is optional.
 
+**Enrichment System Reference:**
+- `/memory-bank/architecture/enrichment-reference.md` – Quick reference for LLM enrichment operations (read when working with chef/restaurant data)
+- `/memory-bank/architecture/enrichment-system.md` – Detailed guide for extending the enrichment system
+
 ### Documentation Updates
 Update the memory bank when:
 - You finish a feature or change operational flow.
@@ -125,11 +129,40 @@ Always adjust the metadata header (`Last-Updated`, `Maintainer`) when you edit a
 - Maintain consistent file organization and naming conventions
 - Keep configuration centralized and environment-specific
 
+### Enrichment System
+The enrichment system uses LLMs to discover and enhance chef/restaurant data from web sources. It's a 19-file service-based architecture with clear separation of concerns.
+
+**Key Components:**
+- **Services** (5) - Single-purpose business logic (chef enrichment, restaurant discovery, show discovery, status verification, narrative generation)
+- **Repositories** (4) - Data access layer (chef, restaurant, show, city)
+- **Workflows** (4) - Multi-step orchestration (refresh stale chef, status sweep, partial update, manual addition)
+- **Shared Utilities** (4) - LLM client, token tracker, result parser, retry handler
+
+**When to Use:**
+- Adding new chefs: Use `workflows.manualChefAddition`
+- Refreshing old data: Use `workflows.refreshStaleChef`
+- Checking restaurant status: Use `workflows.restaurantStatusSweep`
+- Backfilling TV shows: Use `enrichShowsOnly` or `workflows.partialUpdate` with mode 'shows'
+
+**Entry Point:** `scripts/ingestion/processors/llm-enricher.ts` (facade pattern)
+
+**Reference:** See `architecture/enrichment-reference.md` for API and common operations. See `architecture/enrichment-system.md` for detailed architecture and extension guide.
+
 ### Component Development
 - Build reusable, composable components
 - Follow existing component patterns and conventions
 - Maintain clear separation of concerns
 - Document component APIs and usage patterns
+
+### Design Patterns
+- **Repository Pattern** - Abstract all database access through repository classes
+- **Service Layer** - Business logic in single-purpose services
+- **Workflow Orchestration** - Multi-step operations with cost tracking and rollback
+- **Facade Pattern** - Simplified interface to complex subsystems
+- **Result Type** - Explicit success/failure handling without exceptions
+- **Schema Validation** - Runtime type validation with Zod for external data
+
+See `architecture/patterns.md` for implementation examples and anti-patterns to avoid.
 
 ### Quality & Performance
 - Write clean, maintainable code
