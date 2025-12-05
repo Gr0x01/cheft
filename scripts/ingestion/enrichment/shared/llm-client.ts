@@ -37,13 +37,14 @@ export class LLMClient {
     } = {}
   ): Promise<LLMResponse> {
     const maxTokens = options.maxTokens ?? 8000;
-    const maxSteps = options.maxSteps ?? 50;
     const searchContextSize = options.searchContextSize ?? 'medium';
     const useResponseModel = options.useResponseModel ?? true;
 
     const modelProvider = useResponseModel 
       ? openai.responses(this.model) 
       : openai(this.model);
+    
+    const combinedPrompt = `${system}\n\n${prompt}`;
 
     const result = await generateText({
       model: modelProvider,
@@ -52,10 +53,8 @@ export class LLMClient {
           searchContextSize,
         }),
       },
-      system,
-      prompt,
+      prompt: combinedPrompt,
       maxTokens,
-      maxSteps,
     });
 
     return {

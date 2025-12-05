@@ -25,10 +25,13 @@ export class ShowRepository {
     'top chef estrellas': 'top-chef-estrellas',
     'top chef vip': 'top-chef-vip',
     'top chef canada': 'top-chef-canada',
+    'top chef: all-stars l.a.': 'top-chef',
+    'top chef all-stars l.a.': 'top-chef',
     'iron chef': 'iron-chef',
     'iron chef america': 'iron-chef-america',
     'tournament of champions': 'tournament-of-champions',
     'guy\'s tournament of champions': 'tournament-of-champions',
+    'guy fieri\'s tournament of champions': 'tournament-of-champions',
     'chopped': 'chopped',
     'chopped champions': 'chopped-champions',
     'chopped sweets': 'chopped-sweets',
@@ -42,6 +45,10 @@ export class ShowRepository {
     'guys grocery games': 'guys-grocery-games',
     'cutthroat kitchen': 'cutthroat-kitchen',
     'worst cooks in america': 'worst-cooks-in-america',
+    'the great food truck race': 'the-great-food-truck-race',
+    'great food truck race': 'the-great-food-truck-race',
+    'outchef\'d': 'outchef-d',
+    'outchefed': 'outchef-d',
   };
 
   async findShowByName(showName: string): Promise<string | null> {

@@ -21,10 +21,16 @@ export function enumWithCitationStrip<T extends string>(enumValues: readonly [T,
 }
 
 export function extractJsonFromText(text: string): string {
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
-    return jsonMatch[0];
+  const arrayMatch = text.match(/\[[\s\S]*\]/);
+  if (arrayMatch) {
+    return arrayMatch[0];
   }
+  
+  const objectMatch = text.match(/\{[\s\S]*\}/);
+  if (objectMatch) {
+    return objectMatch[0];
+  }
+  
   return text;
 }
 

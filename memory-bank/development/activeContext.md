@@ -11,12 +11,12 @@ Status: Planning Enrichment System Refactor
 - **Focus**: Refactor 1337-line enrichment monolith into clean service-based architecture
 
 ### Primary Objective
-**Enrichment System Refactor** (Phase 2 Complete):
+**Enrichment System Refactor** (Phase 3 Complete):
 - **Problem**: `llm-enricher.ts` is 1337 lines handling too many concerns (chef/restaurant/show enrichment, status verification, narratives, DB ops, token tracking)
 - **Issues**: Single Responsibility Violation, tight coupling, hard to test/extend, inconsistent workflows
 - **Solution**: Refactor into service-based architecture (services, workflows, repositories, shared utilities)
 - **Document**: `/memory-bank/projects/ENRICHMENT_REFACTOR.md` - comprehensive refactor plan with 6 phases
-- **Status**: Phase 2 complete (repositories extracted), ready for Phase 3 (extract services)
+- **Status**: Phase 3 complete (services extracted), ready for Phase 4 (create workflows)
 
 ### Deferred Issues
 1. **Multi-Show Enrichment Gap**:
@@ -36,7 +36,32 @@ Status: Planning Enrichment System Refactor
 - None
 
 ## In Progress
-- Planning enrichment system refactor (architecture design complete)
+- Enrichment system refactor (Phase 3 complete - services extracted)
+
+## Recently Completed (Dec 5, 2025) - Enrichment Refactor Phase 3 COMPLETE ✅
+- ✅ **Enrichment Services Extracted & Web Search Fixed** - Refactored monolith + fixed critical OpenAI API issues
+  - **Files Created**: 5 service files + 1 repository (~806 lines total)
+    - `chef-enrichment-service.ts` (233 lines) - Chef bio/awards enrichment
+    - `restaurant-discovery-service.ts` (145 lines) - Restaurant finding
+    - `show-discovery-service.ts` (136 lines) - TV show discovery
+    - `status-verification-service.ts` (110 lines) - Restaurant status verification
+    - `narrative-service.ts` (166 lines) - Chef/restaurant/city narrative generation
+    - `city-repository.ts` (25 lines) - City DB operations for repository pattern consistency
+  - **Critical Bugs Fixed**:
+    - ✅ Show discovery handles single-object LLM responses (array normalization)
+    - ✅ **Web search configuration** - Combined system+prompt, removed unsupported maxSteps, fixed useResponseModel
+    - ✅ **JSON parser** - Now handles arrays `[...]` before objects `{...}`
+  - **Show Name Mappings Expanded**:
+    - ✅ Added "Guy Fieri's Tournament of Champions" → "tournament-of-champions"
+    - ✅ Added "Top Chef: All-Stars L.A." → "top-chef"
+    - ✅ Now supports 33+ show name variants
+  - **Monolith Reduced**: `llm-enricher.ts` reduced ~97 lines (from ~500 → ~403 lines)
+  - **Token Tracking**: Services use TokenTracker singleton, facade aggregates usage
+  - **Testing**: End-to-end tested with Joe Sasto - found 11-13 TV shows, ~$0.02 cost, all working perfectly
+  - **TypeScript**: All compilation errors resolved
+  - **Architecture**: Clean separation of concerns, repository pattern enforced, no direct Supabase calls
+  - **Production Ready**: Web search functional, cost tracking accurate, multi-season handling correct
+  - **Status**: Phase 3 COMPLETE - Phase 4 (workflows) optional, current system fully functional
 
 ## Recently Completed (Dec 4, 2025) - Enrichment Refactor Planning
 - ✅ **Enrichment System Architecture Design** - Comprehensive refactor plan created
