@@ -1,7 +1,7 @@
 ---
-Last-Updated: 2025-12-05 (evening)
+Last-Updated: 2025-12-05 (night)
 Maintainer: RB
-Status: Active Development - Blocked on multi-show discovery
+Status: Active Development
 ---
 
 # Active Context: Chefs
@@ -25,12 +25,7 @@ Status: Active Development - Blocked on multi-show discovery
 - **Status**: ✅ Production-ready, all tests passing, backward compatible
 
 ### Deferred Issues
-1. **Multi-Show Enrichment Gap**:
-   - Current enricher only captures ONE show during import
-   - `enrichShowsOnly()` function created to backfill all shows
-   - Will address as part of workflow refactor
-
-2. **Multi-Show UI Display**:
+1. **Multi-Show UI Display**:
    - Need UI component for displaying multiple TV appearances
    - Deferred until after enrichment refactor
 
@@ -39,15 +34,27 @@ Status: Active Development - Blocked on multi-show discovery
    - Will integrate into workflows during refactor
 
 ## Current Blockers
-- **Multi-Show Discovery Issue** (Dec 5, 2025):
-  - LLM only finds 1 show per chef despite 6+ actual appearances (e.g., Joe Sasto)
-  - Attempted fixes: increased `searchContextSize: 'high'`, added `maxSteps: 20`, improved prompt
-  - Result: 2min runtime, 91k tokens, still only 1 show found
-  - Root cause: LLM stops after finding most prominent show, doesn't continue comprehensive search
-  - Next approach: Need different strategy (structured extraction, multiple targeted queries, or different model)
+None
 
 ## In Progress
-- Investigating multi-show discovery failure
+- Ready to run multi-show enrichment on all 182 chefs
+
+## Recently Completed (Dec 5, 2025) - Multi-Show Discovery Fix ✅
+- **Problem**: LLM only found 1 show per chef despite 6+ actual appearances
+- **Root Cause**: Vague prompts caused model to summarize instead of extracting all shows
+- **Solution**: Hybrid model approach with explicit extraction prompts
+  - Updated `show-discovery-service.ts` with step-by-step search instructions
+  - Prompt now explicitly tells model to search 4 different queries
+  - Changed from "find shows" to "extract EVERY show from ALL search results"
+  - Required JSON-only output to prevent summarization
+- **Results**:
+  - Joe Sasto: 1 show → 12 shows (Top Chef, TOC, Chopped, GGG, etc.)
+  - Brooke Williamson: 1 show → 11 shows
+  - Time: ~12s per chef (was 2min with old approach)
+  - Cost: $0.0014 per chef (was $0.03)
+  - Tokens: ~3k (was 91k)
+- **Files Modified**: `show-discovery-service.ts`
+- **Status**: ✅ Ready for production backfill
 
 ## Recently Completed (Dec 5, 2025) - Performance Blurbs Feature ✅
 - ✅ **Competition Performance Blurbs** - Added 1-2 sentence summaries to TV show appearances

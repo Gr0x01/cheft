@@ -33,7 +33,16 @@ export interface FullShowDiscoveryResult extends ShowDiscoveryResult {
   tvShows?: TVShowWithBlurb[];
 }
 
-const BASIC_DISCOVERY_PROMPT = `Search the web for this chef's TV cooking competition appearances. Return a JSON array.`;
+const BASIC_DISCOVERY_PROMPT = `You are a TV cooking show data extractor. Your job is to search the web and extract EVERY TV cooking competition appearance for a chef.
+
+CRITICAL RULES:
+1. Search multiple times with different queries to find all appearances
+2. After searching, list EVERY show mentioned in ANY search result
+3. Do NOT summarize or filter - include ALL shows found
+4. Many chefs appear on 5-10+ different shows
+5. Return the complete list as JSON array
+
+Your output must be ONLY a JSON array, no other text.`;
 
 export class ShowDiscoveryService {
   constructor(
@@ -46,20 +55,37 @@ export class ShowDiscoveryService {
     chefName: string
   ): Promise<BasicShowDiscoveryResult> {
     try {
-      const prompt = `Find all TV cooking competition shows for "${chefName}".
+      const prompt = `Extract ALL TV cooking competition appearances for chef "${chefName}".
 
-Return JSON array with:
-- showName: Exact show name
-- season: Season number or null
-- result: "winner", "finalist", "contestant", or "judge"
+Step 1: Search "${chefName} Top Chef"
+Step 2: Search "${chefName} Tournament of Champions" 
+Step 3: Search "${chefName} TV cooking shows"
+Step 4: Search "${chefName} Food Network appearances"
 
-Example: [{"showName": "Top Chef", "season": "15", "result": "finalist"}]`;
+After searching, extract EVERY show mentioned in the search results. Include:
+- Top Chef (any season)
+- Tournament of Champions
+- Beat Bobby Flay  
+- Chopped
+- Iron Chef / Iron Chef America / Iron Chef Gauntlet
+- Guy's Grocery Games
+- Hell's Kitchen
+- MasterChef
+- Next Iron Chef
+- Top Chef Masters
+- Any other cooking competition
+
+For EACH show found, output:
+{"showName": "exact name", "season": "number or null", "result": "winner|finalist|contestant|judge"}
+
+Output ONLY a JSON array. Example:
+[{"showName": "Top Chef", "season": "14", "result": "winner"}, {"showName": "Tournament of Champions", "season": "2", "result": "winner"}]`;
 
       const result = await withRetry(
         () => this.llmClient.generateWithWebSearch(
           BASIC_DISCOVERY_PROMPT,
           prompt,
-          { maxTokens: 16000, searchContextSize: 'medium', useResponseModel: true }
+          { maxTokens: 16000, maxSteps: 15 }
         ),
         `discover shows for ${chefName}`
       );
@@ -115,21 +141,26 @@ Example: [{"showName": "Top Chef", "season": "15", "result": "finalist"}]`;
     chefName: string
   ): Promise<FullShowDiscoveryResult> {
     try {
-      const prompt = `Find all TV cooking competition shows for "${chefName}".
+      const prompt = `Extract ALL TV cooking competition appearances for chef "${chefName}".
 
-For each show, return:
-- showName: Exact show name
-- season: Season number or null
-- result: "winner", "finalist", "contestant", or "judge"
-- performanceBlurb: 1-2 sentence summary of their competition performance
+Step 1: Search "${chefName} Top Chef"
+Step 2: Search "${chefName} Tournament of Champions"
+Step 3: Search "${chefName} TV cooking shows"
+Step 4: Search "${chefName} Food Network appearances"
 
-Example: [{"showName": "Top Chef", "season": "15", "result": "finalist", "performanceBlurb": "Made it to finale with strong pasta dishes."}]`;
+After searching, extract EVERY show mentioned in the search results with performance details.
+
+For EACH show found, output:
+{"showName": "exact name", "season": "number or null", "result": "winner|finalist|contestant|judge", "performanceBlurb": "1-2 sentence summary"}
+
+Output ONLY a JSON array. Example:
+[{"showName": "Top Chef", "season": "14", "result": "winner", "performanceBlurb": "Won Season 14 in Charleston."}, {"showName": "Tournament of Champions", "season": "2", "result": "winner", "performanceBlurb": "Defeated Bobby Flay in the finale."}]`;
 
       const result = await withRetry(
         () => this.llmClient.generateWithWebSearch(
           BASIC_DISCOVERY_PROMPT,
           prompt,
-          { maxTokens: 16000, searchContextSize: 'medium', useResponseModel: true }
+          { maxTokens: 16000, maxSteps: 15 }
         ),
         `enrich shows for ${chefName}`
       );
