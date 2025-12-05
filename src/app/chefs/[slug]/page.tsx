@@ -226,12 +226,13 @@ export async function generateStaticParams() {
 
 export default async function ChefPage({ params }: ChefPageProps) {
   const { slug } = await params;
-  const chef = await getChef(slug);
+  const chefData = await getChef(slug);
 
-  if (!chef) {
+  if (!chefData) {
     notFound();
   }
 
+  const chef = chefData;
   const relatedChefs = await getRelatedChefs(chef);
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://cheft.app';
