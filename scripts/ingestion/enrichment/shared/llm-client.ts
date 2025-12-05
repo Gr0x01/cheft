@@ -1,5 +1,6 @@
-import { generateText } from 'ai';
+import { generateText, tool } from 'ai';
 import { openai } from '@ai-sdk/openai';
+import { z } from 'zod';
 
 export interface LLMClientConfig {
   model?: string;
@@ -19,11 +20,22 @@ export interface LLMResponse {
   steps?: unknown[];
 }
 
+async function webSearch(query: string): Promise<string> {
+  const result = await generateText({
+    model: openai('gpt-4o-mini-search-preview'),
+    messages: [
+      { role: 'user', content: query },
+    ],
+    maxTokens: 4000,
+  });
+  return result.text;
+}
+
 export class LLMClient {
   private model: string;
 
   constructor(config: LLMClientConfig = {}) {
-    this.model = config.model ?? 'gpt-5-mini';
+    this.model = config.model ?? 'gpt-4o-mini';
   }
 
   async generateWithWebSearch(
@@ -37,25 +49,32 @@ export class LLMClient {
     } = {}
   ): Promise<LLMResponse> {
     const maxTokens = options.maxTokens ?? 8000;
-    const searchContextSize = options.searchContextSize ?? 'medium';
-    const useResponseModel = options.useResponseModel ?? true;
-
-    const modelProvider = useResponseModel 
-      ? openai.responses(this.model) 
-      : openai(this.model);
-    
-    const combinedPrompt = `${system}\n\n${prompt}`;
+    const maxSteps = options.maxSteps ?? 10;
 
     const result = await generateText({
-      model: modelProvider,
+      model: openai(this.model),
+      system,
+      prompt,
       tools: {
-        web_search_preview: openai.tools.webSearchPreview({
-          searchContextSize,
+        webSearch: tool({
+          description: 'Search the web for current information. Use this to find TV show appearances, chef information, restaurant details, etc.',
+          parameters: z.object({
+            query: z.string().describe('The search query'),
+          }),
+          execute: async ({ query }) => {
+            console.log(`      🔍 Searching: "${query}"`);
+            return await webSearch(query);
+          },
         }),
       },
-      prompt: combinedPrompt,
+      maxSteps,
       maxTokens,
     });
+
+    const searchCount = result.steps?.filter((s: any) => s.toolCalls?.length > 0).length || 0;
+    if (searchCount > 0) {
+      console.log(`      🔍 Performed ${searchCount} web searches`);
+    }
 
     return {
       text: result.text,

@@ -7,9 +7,10 @@ import { ChefRepository } from '../enrichment/repositories/chef-repository';
 import { RestaurantRepository } from '../enrichment/repositories/restaurant-repository';
 import { ShowRepository } from '../enrichment/repositories/show-repository';
 import { CityRepository } from '../enrichment/repositories/city-repository';
-import { ChefEnrichmentService, ChefEnrichmentResult } from '../enrichment/services/chef-enrichment-service';
+import { ChefBioService, ChefBioResult } from '../enrichment/services/chef-bio-service';
 import { RestaurantDiscoveryService, RestaurantOnlyResult } from '../enrichment/services/restaurant-discovery-service';
-import { ShowDiscoveryService } from '../enrichment/services/show-discovery-service';
+import { ShowDiscoveryService, TVShowBasic } from '../enrichment/services/show-discovery-service';
+import { BlurbEnrichmentService } from '../enrichment/services/blurb-enrichment-service';
 import { StatusVerificationService, RestaurantStatusResult } from '../enrichment/services/status-verification-service';
 import { NarrativeService } from '../enrichment/services/narrative-service';
 import { RefreshStaleChefWorkflow } from '../enrichment/workflows/refresh-stale-chef.workflow';
@@ -18,7 +19,7 @@ import { PartialUpdateWorkflow } from '../enrichment/workflows/partial-update.wo
 import { ManualChefAdditionWorkflow } from '../enrichment/workflows/manual-chef-addition.workflow';
 import type { WorkflowResult } from '../enrichment/types/workflow-types';
 
-export type { ChefEnrichmentResult, RestaurantStatusResult, RestaurantOnlyResult };
+export type { ChefBioResult, RestaurantStatusResult, RestaurantOnlyResult };
 export type { WorkflowResult };
 
 
@@ -42,21 +43,22 @@ export function createLLMEnricher(
   const showRepo = new ShowRepository(supabase);
   const cityRepo = new CityRepository(supabase);
   
-  const chefEnrichmentService = new ChefEnrichmentService(llmClient, tokenTracker, maxRestaurants);
+  const chefBioService = new ChefBioService(llmClient, tokenTracker);
   const restaurantDiscoveryService = new RestaurantDiscoveryService(llmClient, tokenTracker, maxRestaurants);
   const showDiscoveryService = new ShowDiscoveryService(llmClient, tokenTracker);
+  const blurbEnrichmentService = new BlurbEnrichmentService(llmClient, tokenTracker);
   const statusVerificationService = new StatusVerificationService(llmClient, tokenTracker);
   const narrativeService = new NarrativeService(tokenTracker);
   
   let totalTokensUsed: TokenUsage = { prompt: 0, completion: 0, total: 0 };
 
-  async function enrichChef(
+  async function enrichChefBioOnly(
     chefId: string,
     chefName: string,
     showName: string,
     options: { season?: string; result?: string } = {}
-  ): Promise<ChefEnrichmentResult> {
-    const result = await chefEnrichmentService.enrichChef(chefId, chefName, showName, options);
+  ): Promise<ChefBioResult> {
+    const result = await chefBioService.enrichBio(chefId, chefName, showName, options);
     
     totalTokensUsed.prompt += result.tokensUsed.prompt;
     totalTokensUsed.completion += result.tokensUsed.completion;
@@ -112,68 +114,6 @@ export function createLLMEnricher(
     tvShows: any[]
   ): Promise<{ saved: number; skipped: number }> {
     return showRepo.saveChefShows(chefId, tvShows);
-  }
-
-  async function enrichAndSaveChef(
-    chefId: string,
-    chefName: string,
-    showName: string,
-    options: { season?: string; result?: string; dryRun?: boolean } = {}
-  ): Promise<ChefEnrichmentResult> {
-    const result = await enrichChef(chefId, chefName, showName, options);
-
-    if (!result.success || options.dryRun) {
-      return result;
-    }
-
-    if (result.miniBio || result.notableAwards) {
-      const updateResult = await chefRepo.updateBioAndAwards(
-        chefId,
-        result.miniBio,
-        result.jamesBeardStatus,
-        result.notableAwards
-      );
-
-      if (!updateResult.success) {
-        console.error(`   ❌ Failed to save chef data: ${updateResult.error}`);
-      }
-    }
-
-    if (result.tvShows && result.tvShows.length > 0) {
-      const { saved, skipped } = await saveChefShows(chefId, result.tvShows);
-      if (saved > 0) {
-        console.log(`      📺 Saved ${saved} TV show appearances (${skipped} already existed or skipped)`);
-      }
-    }
-
-    if (result.restaurants && result.restaurants.length > 0) {
-      let newRestaurants = 0;
-      let existingRestaurants = 0;
-
-      for (const restaurant of result.restaurants) {
-        if (!restaurant.name || !restaurant.city) {
-          console.log(`      ⚠️  Skipping restaurant with missing name or city`);
-          continue;
-        }
-
-        const saveResult = await saveDiscoveredRestaurant(chefId, restaurant);
-
-        if (saveResult.success) {
-          if (saveResult.isNew) {
-            newRestaurants++;
-            console.log(`      ➕ Added: ${restaurant.name} (${restaurant.city})`);
-          } else {
-            existingRestaurants++;
-          }
-        }
-      }
-
-      if (newRestaurants > 0) {
-        console.log(`      📍 Saved ${newRestaurants} new restaurants (${existingRestaurants} already existed)`);
-      }
-    }
-
-    return result;
   }
 
   async function verifyAndUpdateStatus(
@@ -328,38 +268,102 @@ export function createLLMEnricher(
     return result;
   }
 
-  async function enrichShowsOnly(
+  async function discoverShowsBasic(
     chefId: string,
     chefName: string
-  ): Promise<{ success: boolean; showsSaved: number; showsSkipped: number; tokensUsed: TokenUsage; error?: string }> {
-    const result = await showDiscoveryService.findAllShows(chefId, chefName);
+  ): Promise<{ success: boolean; shows: TVShowBasic[]; tokensUsed: TokenUsage; error?: string }> {
+    const result = await showDiscoveryService.findShowsBasic(chefId, chefName);
     
     totalTokensUsed.prompt += result.tokensUsed.prompt;
     totalTokensUsed.completion += result.tokensUsed.completion;
     totalTokensUsed.total += result.tokensUsed.total;
 
-    if (result.success && result.tvShows) {
-      const { saved, skipped } = await saveChefShows(chefId, result.tvShows);
-
-      const timestampResult = await chefRepo.setEnrichmentTimestamp(chefId);
-      if (!timestampResult.success) {
-        console.error(`      ⚠️  Failed to update last_enriched_at: ${timestampResult.error}`);
-      }
-
-      return {
-        success: true,
-        showsSaved: saved,
-        showsSkipped: skipped,
-        tokensUsed: result.tokensUsed,
-      };
-    }
-    
     return {
       success: result.success,
-      showsSaved: 0,
-      showsSkipped: 0,
+      shows: result.tvShows || [],
       tokensUsed: result.tokensUsed,
       error: result.error,
+    };
+  }
+
+  async function enrichBlurbsOnly(
+    chefName: string,
+    shows: TVShowBasic[]
+  ): Promise<{ success: boolean; blurbs: any[]; tokensUsed: TokenUsage; error?: string }> {
+    const result = await blurbEnrichmentService.generateBlurbs(chefName, shows);
+    
+    totalTokensUsed.prompt += result.tokensUsed.prompt;
+    totalTokensUsed.completion += result.tokensUsed.completion;
+    totalTokensUsed.total += result.tokensUsed.total;
+
+    return {
+      success: result.success,
+      blurbs: result.blurbs,
+      tokensUsed: result.tokensUsed,
+      error: result.error,
+    };
+  }
+
+  async function enrichShowsOnly(
+    chefId: string,
+    chefName: string,
+    options: { includeBlurbs?: boolean } = {}
+  ): Promise<{ success: boolean; showsSaved: number; showsSkipped: number; tokensUsed: TokenUsage; error?: string }> {
+    const includeBlurbs = options.includeBlurbs ?? true;
+    
+    const discoveryResult = await showDiscoveryService.findShowsBasic(chefId, chefName);
+    
+    totalTokensUsed.prompt += discoveryResult.tokensUsed.prompt;
+    totalTokensUsed.completion += discoveryResult.tokensUsed.completion;
+    totalTokensUsed.total += discoveryResult.tokensUsed.total;
+
+    if (!discoveryResult.success || !discoveryResult.tvShows) {
+      return {
+        success: discoveryResult.success,
+        showsSaved: 0,
+        showsSkipped: 0,
+        tokensUsed: discoveryResult.tokensUsed,
+        error: discoveryResult.error,
+      };
+    }
+
+    let showsToSave = discoveryResult.tvShows;
+    let totalTokens = { ...discoveryResult.tokensUsed };
+
+    if (includeBlurbs && showsToSave.length > 0) {
+      const blurbResult = await blurbEnrichmentService.generateBlurbs(chefName, showsToSave);
+      
+      totalTokensUsed.prompt += blurbResult.tokensUsed.prompt;
+      totalTokensUsed.completion += blurbResult.tokensUsed.completion;
+      totalTokensUsed.total += blurbResult.tokensUsed.total;
+      
+      totalTokens.prompt += blurbResult.tokensUsed.prompt;
+      totalTokens.completion += blurbResult.tokensUsed.completion;
+      totalTokens.total += blurbResult.tokensUsed.total;
+
+      if (blurbResult.success && blurbResult.blurbs.length > 0) {
+        showsToSave = showsToSave.map(show => {
+          const blurb = blurbResult.blurbs.find(
+            b => b.showName === show.showName && 
+                 (b.season === show.season || (!b.season && !show.season))
+          );
+          return blurb ? { ...show, performanceBlurb: blurb.performanceBlurb } : show;
+        });
+      }
+    }
+
+    const { saved, skipped } = await saveChefShows(chefId, showsToSave);
+
+    const timestampResult = await chefRepo.setEnrichmentTimestamp(chefId);
+    if (!timestampResult.success) {
+      console.error(`      ⚠️  Failed to update last_enriched_at: ${timestampResult.error}`);
+    }
+
+    return {
+      success: true,
+      showsSaved: saved,
+      showsSkipped: skipped,
+      tokensUsed: totalTokens,
     };
   }
 
@@ -459,11 +463,12 @@ export function createLLMEnricher(
   }
 
   return {
-    enrichChef,
-    enrichAndSaveChef,
+    enrichChefBioOnly,
     findAndSaveRestaurants,
     verifyRestaurantStatus,
     verifyAndUpdateStatus,
+    discoverShowsBasic,
+    enrichBlurbsOnly,
     enrichShowsOnly,
     enrichChefNarrative,
     enrichRestaurantNarrative,

@@ -107,7 +107,7 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
         () => this.llmClient.generateWithWebSearch(
           RESTAURANT_ONLY_SYSTEM_PROMPT,
           prompt,
-          { maxTokens: 6000, maxSteps: 20, searchContextSize: 'medium' }
+          { maxTokens: 6000, searchContextSize: 'medium', useResponseModel: true }
         ),
         `find restaurants for ${chefName}`
       );

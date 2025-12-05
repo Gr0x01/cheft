@@ -1,5 +1,5 @@
 ---
-Last-Updated: 2025-12-05
+Last-Updated: 2025-12-05 (evening)
 Maintainer: RB
 Status: Active
 ---
@@ -30,11 +30,13 @@ The enrichment system is a service-based architecture for automated chef/restaur
 ```
 scripts/ingestion/enrichment/
 ├── services/                           # Core single-purpose services
-│   ├── chef-enrichment-service.ts     # Chef bio/awards enrichment (233 lines)
-│   ├── restaurant-discovery-service.ts # Restaurant finding (145 lines)
-│   ├── show-discovery-service.ts      # TV show discovery (136 lines)
-│   ├── status-verification-service.ts # Restaurant status checks (110 lines)
-│   └── narrative-service.ts           # SEO narratives (166 lines)
+│   ├── chef-bio-service.ts            # Bio + awards ONLY (~110 lines) NEW
+│   ├── chef-enrichment-service.ts     # Orchestrator: bio + shows + restaurants (~120 lines)
+│   ├── restaurant-discovery-service.ts # Restaurant finding (~150 lines)
+│   ├── show-discovery-service.ts      # TV show discovery (~180 lines)
+│   ├── blurb-enrichment-service.ts    # Performance blurbs ONLY (~150 lines) NEW
+│   ├── status-verification-service.ts # Restaurant status checks (~110 lines)
+│   └── narrative-service.ts           # SEO narratives (~165 lines)
 │
 ├── shared/                            # Reusable utilities
 │   ├── llm-client.ts                  # OpenAI client wrapper (77 lines)
@@ -62,39 +64,73 @@ scripts/ingestion/enrichment/
     └── llm-enricher.ts                # Facade (485 lines)
 ```
 
-**Total:** 19 files, ~2,900 lines (down from 1,337-line monolith)
+**Total:** 21 files, ~3,100 lines (down from 1,337-line monolith)
 
 ## Services
 
 Services are single-purpose classes that perform one enrichment operation using LLMs.
 
-### ChefEnrichmentService
+### ChefBioService (NEW)
 
-**File:** `services/chef-enrichment-service.ts`
+**File:** `services/chef-bio-service.ts`
 
-**Purpose:** Extract biographical information and awards for a chef.
+**Purpose:** Extract ONLY biographical information and awards for a chef. Single-purpose, fast.
 
-**Interface (Conceptual - Read source file for current signature):**
+**Interface:**
 ```typescript
-class ChefEnrichmentService {
-  constructor(llmClient: LLMClient, tokenTracker: TokenTracker, maxRestaurants: number)
+class ChefBioService {
+  constructor(llmClient: LLMClient, tokenTracker: TokenTracker)
   
-  async enrichChef(
+  async enrichBio(
     chefId: string,
     chefName: string,
     showName: string,
     options?: { season?: string; result?: string }
-  ): Promise<ChefEnrichmentResult>
+  ): Promise<ChefBioResult>
+}
+
+interface ChefBioResult {
+  chefId: string;
+  chefName: string;
+  miniBio: string | null;           // 2-3 sentences
+  jamesBeardStatus: string | null;   // winner | nominated | semifinalist
+  notableAwards: string[] | null;    // Other culinary awards
+  tokensUsed: TokenUsage;
+  success: boolean;
+  error?: string;
+}
+```
+
+**Cost:** ~$0.01 per chef (low search context)
+
+### ChefEnrichmentService (Orchestrator)
+
+**File:** `services/chef-enrichment-service.ts`
+
+**Purpose:** Orchestrates bio + shows + restaurants in separate LLM calls.
+
+**Internal Pipeline:**
+1. `ChefBioService.enrichBio()` → bio, awards
+2. `ShowDiscoveryService.findShowsBasic()` → TV shows  
+3. `RestaurantDiscoveryService.findRestaurants()` → restaurants
+
+**Interface:**
+```typescript
+class ChefEnrichmentService {
+  constructor(llmClient: LLMClient, tokenTracker: TokenTracker, maxRestaurants: number)
+  
+  async enrichChef(...): Promise<ChefEnrichmentResult>  // Full pipeline
+  async enrichBioOnly(...): Promise<ChefBioResult>      // Bio only
 }
 
 interface ChefEnrichmentResult {
   chefId: string;
   chefName: string;
-  miniBio: string | null;           // 2-3 sentences
-  restaurants: Restaurant[];         // Found restaurants
-  tvShows: TVShowAppearance[];       // TV appearances
-  jamesBeardStatus: string | null;   // winner | nominated | semifinalist
-  notableAwards: string[] | null;    // Other culinary awards
+  miniBio: string | null;
+  restaurants: Restaurant[];
+  tvShows: TVShowBasic[];
+  jamesBeardStatus: string | null;
+  notableAwards: string[] | null;
   tokensUsed: TokenUsage;
   success: boolean;
   error?: string;
@@ -155,45 +191,87 @@ const result = await service.findRestaurants('uuid', 'Alice Waters', 'Top Chef')
 
 **File:** `services/show-discovery-service.ts`
 
-**Purpose:** Find ALL TV show appearances for a chef.
+**Purpose:** Find ALL TV show appearances for a chef. Two modes: basic (shows only) and with blurbs.
 
 **Interface:**
 ```typescript
 class ShowDiscoveryService {
   constructor(llmClient: LLMClient, tokenTracker: TokenTracker)
   
-  async findShows(
-    chefId: string,
-    chefName: string
-  ): Promise<ShowDiscoveryResult>
+  async findShowsBasic(chefId: string, chefName: string): Promise<BasicShowDiscoveryResult>
+  async findShowsWithBlurbs(chefId: string, chefName: string): Promise<FullShowDiscoveryResult>
+  async findAllShows(chefId: string, chefName: string): Promise<FullShowDiscoveryResult>  // alias
 }
 
-interface ShowDiscoveryResult {
-  chefId: string;
-  chefName: string;
-  shows: Array<{
-    showName: string;
-    season: string | null;
-    result: 'winner' | 'finalist' | 'contestant' | 'judge';
-    performanceBlurb?: string;  // 1-2 sentence competition summary
-  }>;
-  tokensUsed: TokenUsage;
+interface TVShowBasic {
+  showName: string;
+  season: string | null;
+  result: 'winner' | 'finalist' | 'contestant' | 'judge';
+}
+
+interface BasicShowDiscoveryResult {
   success: boolean;
+  tvShows?: TVShowBasic[];
+  tokensUsed: TokenUsage;
   error?: string;
 }
 ```
 
 **Features:**
-- Show name mapping (33 show variants → database slugs)
+- `findShowsBasic()` - Shows only, no blurbs (~$0.02)
+- `findShowsWithBlurbs()` - Shows + performance narratives (~$0.03)
 - Array normalization (handles single-object LLM responses)
-- Deduplication
-- Performance blurb generation (competition narratives)
 
 **Usage:**
 ```typescript
 const service = new ShowDiscoveryService(llmClient, tokenTracker);
-const result = await service.findShows('uuid', 'Gordon Ramsay');
-// Returns 10-15 TV show appearances
+const result = await service.findShowsBasic('uuid', 'Gordon Ramsay');
+// Returns shows without blurbs - use BlurbEnrichmentService separately
+```
+
+### BlurbEnrichmentService (NEW)
+
+**File:** `services/blurb-enrichment-service.ts`
+
+**Purpose:** Generate performance blurbs for shows discovered separately. Enables retry of just blurb generation.
+
+**Interface:**
+```typescript
+class BlurbEnrichmentService {
+  constructor(llmClient: LLMClient, tokenTracker: TokenTracker)
+  
+  async generateBlurbs(chefName: string, shows: TVShowBasic[]): Promise<BlurbEnrichmentResult>
+  async generateBlurbsInBatches(chefName: string, shows: TVShowBasic[], batchSize?: number): Promise<BlurbEnrichmentResult>
+}
+
+interface BlurbEnrichmentResult {
+  success: boolean;
+  blurbs: Array<{ showName: string; season: string | null; performanceBlurb: string }>;
+  tokensUsed: TokenUsage;
+  error?: string;
+}
+```
+
+**Features:**
+- Takes pre-discovered shows, adds blurbs only
+- Batch processing for large lists (default batch: 5)
+- Matches blurbs to shows by name + season
+
+**Cost:** ~$0.01 per chef (low search context)
+
+**Usage:**
+```typescript
+// Step 1: Discover shows
+const shows = await showService.findShowsBasic(chefId, chefName);
+
+// Step 2: Generate blurbs (can retry independently)
+const blurbs = await blurbService.generateBlurbs(chefName, shows.tvShows);
+
+// Step 3: Merge and save
+const merged = shows.tvShows.map(show => {
+  const blurb = blurbs.blurbs.find(b => b.showName === show.showName);
+  return blurb ? { ...show, performanceBlurb: blurb.performanceBlurb } : show;
+});
 ```
 
 ### StatusVerificationService
@@ -360,30 +438,83 @@ class CityRepository {
 
 **File:** `shared/llm-client.ts`
 
-**Purpose:** Centralized OpenAI API interaction with web search support.
+**Purpose:** Centralized OpenAI API interaction with **hybrid web search** support.
 
 **Interface:**
 ```typescript
 class LLMClient {
-  constructor(config: { model: string })
+  constructor(config: { model: string })  // Default: 'gpt-4o-mini'
   
-  async generateText(prompt: string, options?: {
-    useResponseModel?: boolean;
-    searchContext?: 'low' | 'medium' | 'high';
-  }): Promise<string>
+  async generateWithWebSearch(
+    system: string,
+    prompt: string,
+    options?: { maxTokens?: number; maxSteps?: number }
+  ): Promise<LLMResponse>
 }
 ```
 
-**Features:**
-- Web search via OpenAI Responses API
-- Automatic retry handling
-- Supports both chat and response models
-- Search context control (low/medium/high)
+#### Hybrid Search Architecture (IMPORTANT)
 
-**Web Search Configuration:**
-- Must use `useResponseModel: true` for web search
-- Single combined prompt (system + user merged)
-- No `maxSteps` parameter (not supported by API)
+The LLMClient uses a **two-model hybrid approach** for web search:
+
+```
+┌─────────────────┐     webSearch tool      ┌──────────────────────────┐
+│  gpt-4o-mini    │ ───────────────────────▶│ gpt-4o-mini-search-preview│
+│  (orchestrator) │                         │ (search specialist)       │
+│  - Decides what │ ◀─────────────────────  │ - Executes web searches   │
+│    to search    │     search results      │ - Returns grounded data   │
+│  - Processes    │                         │ - Fast & cheap            │
+│    results      │                         └──────────────────────────┘
+│  - Formats JSON │
+└─────────────────┘
+```
+
+**Why Hybrid?**
+- `gpt-5-mini` with Responses API web search: Slow (120s), expensive ($0.03), inconsistent (1-8 results)
+- `gpt-4o-mini-search-preview` alone: No function calling, can't structure output
+- **Hybrid approach**: Fast (10-40s), cheap ($0.003), consistent (7-11 results)
+
+**How It Works:**
+1. `gpt-4o-mini` receives the prompt and has access to a `webSearch` tool
+2. It decides what to search and calls the tool with a query
+3. The tool internally calls `gpt-4o-mini-search-preview` which has built-in web search
+4. Search results return to `gpt-4o-mini` which formats the final JSON response
+
+**Implementation:**
+```typescript
+// Internal webSearch tool (simplified)
+async function webSearch(query: string): Promise<string> {
+  const result = await generateText({
+    model: openai('gpt-4o-mini-search-preview'),
+    messages: [{ role: 'user', content: query }],
+    maxTokens: 4000,
+  });
+  return result.text;
+}
+
+// Used as a tool by the orchestrator
+tools: {
+  webSearch: tool({
+    description: 'Search the web for current information',
+    parameters: z.object({ query: z.string() }),
+    execute: async ({ query }) => webSearch(query),
+  }),
+}
+```
+
+**Cost Comparison (per chef enrichment):**
+
+| Approach | Time | Tokens | Cost | Results |
+|----------|------|--------|------|---------|
+| gpt-5-mini + Responses API | 120s | 60-80k | $0.03 | 1-8 (inconsistent) |
+| **Hybrid (gpt-4o-mini + search)** | 15s | 1-6k | $0.003 | 7-11 (consistent) |
+
+**Extending to Other Services:**
+This pattern can be applied to any service that needs web search:
+- Restaurant discovery
+- Chef bio enrichment  
+- Status verification
+- Any service using `LLMClient.generateWithWebSearch()`
 
 ### TokenTracker
 
@@ -409,15 +540,20 @@ interface TokenUsage {
 }
 ```
 
-**Pricing (gpt-5-mini):**
-- Input: $0.25 per 1M tokens
-- Output: $2.00 per 1M tokens
+**Pricing (gpt-4o-mini - PRIMARY):**
+- Input: $0.15 per 1M tokens
+- Output: $0.60 per 1M tokens
+
+**Pricing (gpt-4o-mini-search-preview - for web search):**
+- Input: $0.15 per 1M tokens
+- Output: $0.60 per 1M tokens
+- Plus: per-search-call fee (see OpenAI pricing)
 
 **Usage:**
 ```typescript
 const tracker = TokenTracker.getInstance();
 tracker.trackUsage({ prompt: 1000, completion: 500, total: 1500 });
-console.log('Cost:', tracker.estimateCost()); // $0.0015
+console.log('Cost:', tracker.estimateCost());
 tracker.reset(); // Reset for next run
 ```
 
@@ -1036,7 +1172,7 @@ describe('ChefEnrichmentService', () => {
 
 ### Integration Tests (Workflows)
 
-Use real Supabase (test database) with mocked LLM responses:
+Use real Supabase with mocked LLM responses:
 
 ```typescript
 describe('RefreshStaleChefWorkflow', () => {

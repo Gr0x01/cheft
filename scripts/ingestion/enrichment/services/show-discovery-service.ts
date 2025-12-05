@@ -4,12 +4,18 @@ import { TokenTracker, TokenUsage } from '../shared/token-tracker';
 import { enumWithCitationStrip, extractJsonFromText } from '../shared/result-parser';
 import { withRetry } from '../shared/retry-handler';
 
-const TVShowAppearanceSchema = z.object({
+const TVShowBasicSchema = z.object({
   showName: z.string(),
   season: z.string().nullable().optional(),
   result: enumWithCitationStrip(['winner', 'finalist', 'contestant', 'judge'] as const),
-  performanceBlurb: z.string().optional(),
 }).passthrough();
+
+const TVShowWithBlurbSchema = TVShowBasicSchema.extend({
+  performanceBlurb: z.string().optional(),
+});
+
+export type TVShowBasic = z.infer<typeof TVShowBasicSchema>;
+export type TVShowWithBlurb = z.infer<typeof TVShowWithBlurbSchema>;
 
 export interface ShowDiscoveryResult {
   success: boolean;
@@ -19,19 +25,15 @@ export interface ShowDiscoveryResult {
   error?: string;
 }
 
-const SHOW_DISCOVERY_SYSTEM_PROMPT = `You are a TV cooking show expert with access to web search.
+export interface BasicShowDiscoveryResult extends ShowDiscoveryResult {
+  tvShows?: TVShowBasic[];
+}
 
-YOU MUST use the web_search_preview tool to research the chef's TV appearances. DO NOT return a response without searching first.
+export interface FullShowDiscoveryResult extends ShowDiscoveryResult {
+  tvShows?: TVShowWithBlurb[];
+}
 
-REQUIRED PROCESS:
-1. Search for the chef's Wikipedia page, IMDb profile, or official website
-2. Search for their name + specific show names (Top Chef, Tournament of Champions, etc.)
-3. Search for news articles about their TV career
-4. After gathering information (typically 5-10 searches), return your final JSON response
-
-Return ONLY a valid JSON array. Do NOT include any explanatory text or anything other than the JSON array itself.
-
-Start immediately with the opening bracket [.`;
+const BASIC_DISCOVERY_PROMPT = `Search the web for this chef's TV cooking competition appearances. Return a JSON array.`;
 
 export class ShowDiscoveryService {
   constructor(
@@ -39,18 +41,95 @@ export class ShowDiscoveryService {
     private tokenTracker: TokenTracker
   ) {}
 
-  async findAllShows(
+  async findShowsBasic(
     chefId: string,
     chefName: string
-  ): Promise<ShowDiscoveryResult & { tvShows?: z.infer<typeof TVShowAppearanceSchema>[] }> {
+  ): Promise<BasicShowDiscoveryResult> {
     try {
-      const prompt = this.buildShowDiscoveryPrompt(chefName);
+      const prompt = `Find all TV cooking competition shows for "${chefName}".
+
+Return JSON array with:
+- showName: Exact show name
+- season: Season number or null
+- result: "winner", "finalist", "contestant", or "judge"
+
+Example: [{"showName": "Top Chef", "season": "15", "result": "finalist"}]`;
 
       const result = await withRetry(
         () => this.llmClient.generateWithWebSearch(
-          SHOW_DISCOVERY_SYSTEM_PROMPT,
+          BASIC_DISCOVERY_PROMPT,
           prompt,
-          { maxTokens: 8000, searchContextSize: 'medium', useResponseModel: true }
+          { maxTokens: 16000, searchContextSize: 'medium', useResponseModel: true }
+        ),
+        `discover shows for ${chefName}`
+      );
+
+      const tokensUsed: TokenUsage = result.usage;
+      this.tokenTracker.trackUsage(tokensUsed);
+
+      if (!result.text || result.text.trim() === '') {
+        console.error(`   ❌ Empty response from LLM for "${chefName}"`);
+        throw new Error('LLM returned empty response');
+      }
+
+      const jsonText = extractJsonFromText(result.text);
+      const parsed = JSON.parse(jsonText);
+      const normalized = Array.isArray(parsed) ? parsed : [parsed];
+      const tvShows = z.array(TVShowBasicSchema).parse(normalized);
+
+      console.log(`      📋 Found ${tvShows.length} shows for ${chefName}`);
+      tvShows.forEach(show => {
+        console.log(`         - ${show.showName}${show.season ? ' S' + show.season : ''} (${show.result || 'contestant'})`);
+      });
+
+      return {
+        success: true,
+        showsSaved: 0,
+        showsSkipped: 0,
+        tokensUsed,
+        tvShows,
+      };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`   ❌ Show discovery error for "${chefName}": ${msg}`);
+      
+      return {
+        success: false,
+        showsSaved: 0,
+        showsSkipped: 0,
+        tokensUsed: { prompt: 0, completion: 0, total: 0 },
+        error: msg,
+      };
+    }
+  }
+
+  async findAllShows(
+    chefId: string,
+    chefName: string
+  ): Promise<FullShowDiscoveryResult> {
+    return this.findShowsWithBlurbs(chefId, chefName);
+  }
+
+  async findShowsWithBlurbs(
+    chefId: string,
+    chefName: string
+  ): Promise<FullShowDiscoveryResult> {
+    try {
+      const prompt = `Find all TV cooking competition shows for "${chefName}".
+
+For each show, return:
+- showName: Exact show name
+- season: Season number or null
+- result: "winner", "finalist", "contestant", or "judge"
+- performanceBlurb: 1-2 sentence summary of their competition performance
+
+Example: [{"showName": "Top Chef", "season": "15", "result": "finalist", "performanceBlurb": "Made it to finale with strong pasta dishes."}]`;
+
+      const result = await withRetry(
+        () => this.llmClient.generateWithWebSearch(
+          BASIC_DISCOVERY_PROMPT,
+          prompt,
+          { maxTokens: 16000, searchContextSize: 'medium', useResponseModel: true }
         ),
         `enrich shows for ${chefName}`
       );
@@ -65,17 +144,13 @@ export class ShowDiscoveryService {
 
       const jsonText = extractJsonFromText(result.text);
       const parsed = JSON.parse(jsonText);
-      
       const normalized = Array.isArray(parsed) ? parsed : [parsed];
+      const tvShows = z.array(TVShowWithBlurbSchema).parse(normalized);
 
-      const tvShows = z.array(TVShowAppearanceSchema).parse(normalized);
-
-      console.log(`      📋 LLM found ${tvShows.length} shows for ${chefName}`);
-      if (tvShows.length > 0) {
-        tvShows.forEach(show => {
-          console.log(`         - ${show.showName}${show.season ? ' ' + show.season : ''} (${show.result || 'contestant'})`);
-        });
-      }
+      console.log(`      📋 Found ${tvShows.length} shows for ${chefName}`);
+      tvShows.forEach(show => {
+        console.log(`         - ${show.showName}${show.season ? ' S' + show.season : ''} (${show.result || 'contestant'})`);
+      });
 
       return {
         success: true,
@@ -96,46 +171,5 @@ export class ShowDiscoveryService {
         error: msg,
       };
     }
-  }
-
-  private buildShowDiscoveryPrompt(chefName: string): string {
-    return `Find ALL TV cooking show competition appearances for chef "${chefName}".
-
-Search for:
-1. Their Wikipedia page, IMDb, or official website
-2. Food Network, Bravo, Netflix show contestant lists
-3. Social media bios mentioning TV appearances
-4. News articles about their TV career
-
-Include appearances on ANY of these shows:
-- Top Chef (+ all variants: Masters, Just Desserts, Junior, Duels, Amateurs, Family Style, Canada, VIP, Estrellas)
-- Iron Chef / Iron Chef America
-- Tournament of Champions
-- Beat Bobby Flay
-- Chopped (+ variants: Champions, Sweets)
-- Hell's Kitchen
-- MasterChef
-- Next Level Chef
-- Guy's Grocery Games
-- Cutthroat Kitchen
-- Worst Cooks in America
-- Great British Bake Off
-- Baking Championships (Spring, Holiday, Halloween, Kids)
-- Netflix: Final Table, Chef Show, Nailed It!, Is It Cake?
-- Any other cooking competition shows
-
-For EACH show they appeared on, include:
-- Exact show name
-- Season number (if known)
-- Their role: "winner", "finalist", "contestant", or "judge"
-- performanceBlurb: A 1-2 sentence summary of their performance (e.g., "Won Season 15 after dominating Restaurant Wars, winning 4 elimination challenges." or "Placed as finalist after strong seafood dishes throughout the competition.")
-
-Return a JSON array. If NO shows found, return empty array [].
-
-Example output:
-[
-  {"showName": "Top Chef", "season": "15", "result": "finalist", "performanceBlurb": "Placed as finalist after consistently strong performances, winning 3 elimination challenges with modern Italian cuisine."},
-  {"showName": "Tournament of Champions", "season": "3", "result": "contestant", "performanceBlurb": "Competed in bracket-style tournament, eliminated in round 2 after close match against James Beard winner."}
-]`;
   }
 }

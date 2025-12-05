@@ -2,7 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../../src/lib/database.types';
 import { BaseWorkflow } from './base-workflow';
 import { CostEstimate, ValidationResult } from '../types/workflow-types';
-import { ChefEnrichmentService } from '../services/chef-enrichment-service';
+import { ChefBioService } from '../services/chef-bio-service';
 import { RestaurantDiscoveryService } from '../services/restaurant-discovery-service';
 import { ShowDiscoveryService } from '../services/show-discovery-service';
 import { NarrativeService } from '../services/narrative-service';
@@ -34,7 +34,7 @@ export interface ManualChefAdditionOutput {
 
 export class ManualChefAdditionWorkflow extends BaseWorkflow<ManualChefAdditionInput, ManualChefAdditionOutput> {
   private supabase: SupabaseClient<Database>;
-  private chefEnrichmentService: ChefEnrichmentService;
+  private chefBioService: ChefBioService;
   private restaurantDiscoveryService: RestaurantDiscoveryService;
   private showDiscoveryService: ShowDiscoveryService;
   private narrativeService: NarrativeService;
@@ -59,7 +59,7 @@ export class ManualChefAdditionWorkflow extends BaseWorkflow<ManualChefAdditionI
     const tokenTracker = TokenTracker.getInstance();
     const maxRestaurants = options.maxRestaurants || 10;
 
-    this.chefEnrichmentService = new ChefEnrichmentService(llmClient, tokenTracker, maxRestaurants);
+    this.chefBioService = new ChefBioService(llmClient, tokenTracker);
     this.restaurantDiscoveryService = new RestaurantDiscoveryService(llmClient, tokenTracker, maxRestaurants);
     this.showDiscoveryService = new ShowDiscoveryService(llmClient, tokenTracker);
     this.narrativeService = new NarrativeService(tokenTracker);
@@ -153,7 +153,7 @@ export class ManualChefAdditionWorkflow extends BaseWorkflow<ManualChefAdditionI
 
     const bioStep = this.startStep('Enrich chef bio and awards');
     try {
-      const result = await this.chefEnrichmentService.enrichChef(
+      const result = await this.chefBioService.enrichBio(
         input.chefId,
         input.chefName,
         input.initialShowName,
@@ -167,7 +167,7 @@ export class ManualChefAdditionWorkflow extends BaseWorkflow<ManualChefAdditionI
         throw new Error(result.error || 'Bio enrichment failed');
       }
 
-      if (!input.dryRun && (result.miniBio || result.notableAwards)) {
+      if (!input.dryRun && result.miniBio) {
         const updateResult = await this.chefRepo.updateBioAndAwards(
           input.chefId,
           result.miniBio,

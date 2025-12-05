@@ -188,14 +188,17 @@ async function main() {
 
         console.log(`🔄 Enriching ${chef.name}...`);
 
-        const enrichResult = await llmEnricher.enrichAndSaveChef(
-          job.chef_id,
-          chef.name,
-          showName,
-          { season, result, dryRun: false }
-        );
+        const workflowResult = await llmEnricher.workflows.manualChefAddition({
+          chefId: job.chef_id,
+          chefName: chef.name,
+          initialShowName: showName,
+          initialShowSeason: season,
+          initialShowResult: result,
+          skipNarrative: true,
+          dryRun: false,
+        });
 
-        if (enrichResult.success && enrichResult.miniBio) {
+        if (workflowResult.success) {
           await supabase
             .from('enrichment_jobs')
             .update({
@@ -205,11 +208,12 @@ async function main() {
             .eq('id', job.id);
 
           results.enrichmentJobsCompleted++;
+          const output = workflowResult.output as { bioCreated?: boolean; totalRestaurants?: number };
           console.log(
-            `✅ ${chef.name}: Bio (${enrichResult.miniBio.length} chars) + ${enrichResult.restaurants.length} restaurants`
+            `✅ ${chef.name}: Bio (${output.bioCreated ? 'created' : 'skipped'}) + ${output.totalRestaurants || 0} restaurants`
           );
         } else {
-          throw new Error(enrichResult.error || 'Enrichment failed');
+          throw new Error(workflowResult.errors?.map(e => e.message).join('; ') || 'Enrichment failed');
         }
 
         processed++;

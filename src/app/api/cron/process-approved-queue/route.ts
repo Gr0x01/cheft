@@ -227,22 +227,25 @@ export async function GET(request: NextRequest) {
 
           console.log(`[Cron] Enriching ${chef.name}...`);
 
-          const enrichResult = await llmEnricher.enrichAndSaveChef(
-            job.chef_id,
-            chef.name,
-            showName,
-            { season: season ?? undefined, result: result ?? undefined, dryRun: false }
-          );
+          const workflowResult = await llmEnricher.workflows.manualChefAddition({
+            chefId: job.chef_id,
+            chefName: chef.name,
+            initialShowName: showName,
+            initialShowSeason: season ?? undefined,
+            initialShowResult: result ?? undefined,
+            skipNarrative: true,
+            dryRun: false,
+          });
 
-          if (enrichResult.success && enrichResult.miniBio) {
-            const costUsd = estimateCostFromTokens(enrichResult.tokensUsed, DEFAULT_MODEL);
+          if (workflowResult.success) {
+            const costUsd = workflowResult.totalCost.estimatedUsd;
             
             await supabase
               .from('enrichment_jobs')
               .update({
                 status: 'completed',
                 completed_at: new Date().toISOString(),
-                tokens_used: JSON.parse(JSON.stringify(enrichResult.tokensUsed)),
+                tokens_used: JSON.parse(JSON.stringify(workflowResult.totalCost.tokens)),
                 cost_usd: costUsd,
               })
               .eq('id', job.id);
@@ -250,9 +253,10 @@ export async function GET(request: NextRequest) {
             await incrementBudgetSpend(supabase, costUsd, false);
 
             results.enrichmentJobsCompleted++;
-            console.log(`[Cron] ✅ Enriched ${chef.name}: Bio + ${enrichResult.restaurants.length} restaurants (cost: $${costUsd.toFixed(4)})`);
+            const output = workflowResult.output as { totalRestaurants?: number };
+            console.log(`[Cron] ✅ Enriched ${chef.name}: Bio + ${output.totalRestaurants || 0} restaurants (cost: $${costUsd.toFixed(4)})`);
           } else {
-            throw new Error(enrichResult.error || 'Enrichment failed');
+            throw new Error(workflowResult.errors?.map(e => e.message).join('; ') || 'Enrichment failed');
           }
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : String(error);
