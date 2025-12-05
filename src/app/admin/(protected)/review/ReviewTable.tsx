@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { clsx } from 'clsx';
 import type { Tables } from '@/lib/database.types';
-import { UserPlus, Store, RefreshCw, ToggleRight, ExternalLink, Check, X, Loader2 } from 'lucide-react';
+import { UserPlus, Store, RefreshCw, ToggleRight, Eye, Check, X, Loader2 } from 'lucide-react';
+import { ReviewSlideOver } from './ReviewSlideOver';
 
 type ReviewQueueRow = Tables<'review_queue'>;
 
@@ -23,6 +23,7 @@ const typeIcons: Record<string, typeof UserPlus> = {
 
 export function ReviewTable({ items }: ReviewTableProps) {
   const [processing, setProcessing] = useState<Set<string>>(new Set());
+  const [selectedItem, setSelectedItem] = useState<ReviewQueueRow | null>(null);
   const router = useRouter();
 
   const handleAction = async (id: string, action: 'approve' | 'reject') => {
@@ -136,9 +137,9 @@ export function ReviewTable({ items }: ReviewTableProps) {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <Link
-                      href={`/admin/review/${item.id}`}
-                      className="group inline-flex items-center gap-2 hover:text-copper-600 transition-colors"
+                    <button
+                      onClick={() => setSelectedItem(item)}
+                      className="group inline-flex items-center gap-2 hover:text-copper-600 transition-colors text-left"
                     >
                       <span className={clsx(
                         'font-medium',
@@ -146,8 +147,8 @@ export function ReviewTable({ items }: ReviewTableProps) {
                       )}>
                         {dataSummary}
                       </span>
-                      <ExternalLink className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </Link>
+                      <Eye className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
                   </td>
                   <td className="px-6 py-4">
                     <span className="font-ui text-sm text-slate-600">{item.source || 'Unknown'}</span>
@@ -214,6 +215,11 @@ export function ReviewTable({ items }: ReviewTableProps) {
           </tbody>
         </table>
       </div>
+
+      <ReviewSlideOver 
+        item={selectedItem} 
+        onClose={() => setSelectedItem(null)} 
+      />
     </div>
   );
 }
