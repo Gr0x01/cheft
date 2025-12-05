@@ -27,7 +27,8 @@
     "test:e2e:report": "npx playwright show-report",
     "find-duplicates": "tsx scripts/find-duplicates.ts",
     "merge-duplicate-chefs": "tsx scripts/detect-and-merge-duplicate-chefs.ts",
-    "enrich:shows": "tsx scripts/enrich-all-chef-shows.ts"
+    "enrich:shows": "tsx scripts/enrich-all-chef-shows.ts",
+    "enrich:performance-blurbs": "tsx scripts/backfill-performance-blurbs.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.3.24",

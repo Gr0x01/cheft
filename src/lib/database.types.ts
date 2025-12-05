@@ -18,6 +18,7 @@ export interface Database {
           season_name: string | null;
           result: "winner" | "finalist" | "contestant" | "judge" | null;
           is_primary: boolean | null;
+          performance_blurb: string | null;
           created_at: string;
         };
         Insert: {
@@ -28,6 +29,7 @@ export interface Database {
           season_name?: string | null;
           result?: "winner" | "finalist" | "contestant" | "judge" | null;
           is_primary?: boolean | null;
+          performance_blurb?: string | null;
           created_at?: string;
         };
         Update: {
@@ -38,6 +40,7 @@ export interface Database {
           season_name?: string | null;
           result?: "winner" | "finalist" | "contestant" | "judge" | null;
           is_primary?: boolean | null;
+          performance_blurb?: string | null;
           created_at?: string;
         };
         Relationships: [

@@ -8,6 +8,7 @@ const TVShowAppearanceSchema = z.object({
   showName: z.string(),
   season: z.string().nullable().optional(),
   result: enumWithCitationStrip(['winner', 'finalist', 'contestant', 'judge'] as const),
+  performanceBlurb: z.string().optional(),
 }).passthrough();
 
 export interface ShowDiscoveryResult {
@@ -127,13 +128,14 @@ For EACH show they appeared on, include:
 - Exact show name
 - Season number (if known)
 - Their role: "winner", "finalist", "contestant", or "judge"
+- performanceBlurb: A 1-2 sentence summary of their performance (e.g., "Won Season 15 after dominating Restaurant Wars, winning 4 elimination challenges." or "Placed as finalist after strong seafood dishes throughout the competition.")
 
 Return a JSON array. If NO shows found, return empty array [].
 
 Example output:
 [
-  {"showName": "Top Chef", "season": "15", "result": "finalist"},
-  {"showName": "Tournament of Champions", "season": "3", "result": "contestant"}
+  {"showName": "Top Chef", "season": "15", "result": "finalist", "performanceBlurb": "Placed as finalist after consistently strong performances, winning 3 elimination challenges with modern Italian cuisine."},
+  {"showName": "Tournament of Champions", "season": "3", "result": "contestant", "performanceBlurb": "Competed in bracket-style tournament, eliminated in round 2 after close match against James Beard winner."}
 ]`;
   }
 }

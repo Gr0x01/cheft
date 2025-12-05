@@ -34,6 +34,7 @@ interface ChefData {
     result: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
     is_primary: boolean;
     show_id: string;
+    performance_blurb: string | null;
     show: { name: string; slug: string } | null;
   }>;
   restaurants: Array<{
@@ -76,6 +77,7 @@ async function getChef(slug: string): Promise<ChefData | null> {
           result,
           is_primary,
           show_id,
+          performance_blurb,
           show:shows (name, slug)
         ),
         restaurants!restaurants_chef_id_fkey (
@@ -316,7 +318,7 @@ export default async function ChefPage({ params }: ChefPageProps) {
           )}
 
           {/* The Story section - Career Narrative */}
-          {false && chef.career_narrative && (
+          {chef.career_narrative && (
             <section 
               className="py-12 border-b"
               style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
@@ -326,12 +328,36 @@ export default async function ChefPage({ params }: ChefPageProps) {
                   The Story
                 </h2>
                 <div className="prose prose-lg max-w-none">
-                  <p 
-                    className="font-ui text-lg leading-relaxed"
-                    style={{ color: 'var(--text-primary)', lineHeight: '1.8' }}
-                  >
-                    {sanitizeNarrative(chef.career_narrative)}
-                  </p>
+                  {(() => {
+                    try {
+                      const sanitized = sanitizeNarrative(chef.career_narrative);
+                      const paragraphs = sanitized.split('\n\n').filter(p => p.trim());
+                      
+                      if (paragraphs.length === 0) {
+                        return null;
+                      }
+                      
+                      return paragraphs.map((paragraph, index) => (
+                        <p 
+                          key={index}
+                          className="font-ui text-lg leading-relaxed mb-4 last:mb-0"
+                          style={{ color: 'var(--text-primary)', lineHeight: '1.8' }}
+                        >
+                          {paragraph}
+                        </p>
+                      ));
+                    } catch (error) {
+                      console.error('Error processing career narrative:', error);
+                      return (
+                        <p 
+                          className="font-ui text-base"
+                          style={{ color: 'var(--text-muted)' }}
+                        >
+                          Unable to display career narrative.
+                        </p>
+                      );
+                    }
+                  })()}
                 </div>
               </div>
             </section>

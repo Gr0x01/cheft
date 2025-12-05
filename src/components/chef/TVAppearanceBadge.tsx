@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { sanitizeNarrative } from '@/lib/sanitize';
 
 interface TVAppearanceBadgeProps {
   show: {
@@ -8,6 +9,7 @@ interface TVAppearanceBadgeProps {
   season?: string | null;
   result?: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
   isPrimary?: boolean;
+  performanceBlurb?: string | null;
   size?: 'sm' | 'md' | 'lg';
 }
 
@@ -16,6 +18,7 @@ export function TVAppearanceBadge({
   season,
   result,
   isPrimary,
+  performanceBlurb,
 }: TVAppearanceBadgeProps) {
   const resultStyles = {
     winner: { bg: 'var(--accent-success)', color: 'white' },
@@ -52,7 +55,7 @@ export function TVAppearanceBadge({
       )}
 
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p 
             className={`font-display text-lg font-bold ${showUrl ? 'group-hover:text-[var(--accent-primary)] transition-colors' : ''}`}
             style={{ color: 'var(--text-primary)' }}
@@ -65,6 +68,15 @@ export function TVAppearanceBadge({
               style={{ color: 'var(--text-muted)' }}
             >
               {season}
+            </p>
+          )}
+          {performanceBlurb && (
+            <p 
+              className="font-ui text-sm leading-relaxed mt-2"
+              style={{ color: 'var(--text-secondary)' }}
+              aria-label={`Performance summary for ${show.name}`}
+            >
+              {sanitizeNarrative(performanceBlurb)}
             </p>
           )}
         </div>
@@ -110,6 +122,7 @@ interface TVAppearanceListProps {
     season?: string | null;
     result?: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
     is_primary?: boolean;
+    performance_blurb?: string | null;
   }>;
   className?: string;
 }
@@ -137,6 +150,7 @@ export function TVAppearanceList({ appearances, className }: TVAppearanceListPro
           season={appearance.season}
           result={appearance.result}
           isPrimary={appearance.is_primary}
+          performanceBlurb={appearance.performance_blurb}
         />
       ))}
     </div>

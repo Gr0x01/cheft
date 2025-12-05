@@ -6,6 +6,7 @@ const TVShowAppearanceSchema = z.object({
   showName: z.string(),
   season: z.string().nullable().optional(),
   result: z.enum(['winner', 'finalist', 'contestant', 'judge']).nullable().optional(),
+  performanceBlurb: z.string().optional(),
 });
 
 export type TVShowAppearance = z.infer<typeof TVShowAppearanceSchema>;
@@ -59,8 +60,8 @@ export class ShowRepository {
       console.log(`      ⚠️  Unknown show "${showName}", attempting database lookup`);
       const sanitized = showName.replace(/[^\w\s\-\'&:.]/g, '').trim();
 
-      const { data: show } = await (this.supabase
-        .from('shows') as ReturnType<typeof this.supabase.from>)
+      const { data: show } = await this.supabase
+        .from('shows')
         .select('id')
         .ilike('name', sanitized)
         .maybeSingle();
@@ -68,8 +69,8 @@ export class ShowRepository {
       return show?.id || null;
     }
 
-    const { data: show } = await (this.supabase
-      .from('shows') as ReturnType<typeof this.supabase.from>)
+    const { data: show } = await this.supabase
+      .from('shows')
       .select('id')
       .eq('slug', slug)
       .maybeSingle();
@@ -96,21 +97,39 @@ export class ShowRepository {
         continue;
       }
 
-      const { data: existing } = await (this.supabase
-        .from('chef_shows') as ReturnType<typeof this.supabase.from>)
+      const seasonValue = show.season ?? null;
+      let query = this.supabase
+        .from('chef_shows')
         .select('id')
         .eq('chef_id', chefId)
-        .eq('show_id', showId)
-        .eq('season', show.season || null)
-        .maybeSingle();
+        .eq('show_id', showId);
+      
+      if (seasonValue === null) {
+        query = query.is('season', null);
+      } else {
+        query = query.eq('season', seasonValue);
+      }
+      
+      const { data: existing } = await query.maybeSingle();
 
       if (existing) {
+        if (show.performanceBlurb) {
+          const { error: updateError } = await this.supabase
+            .from('chef_shows')
+            .update({ performance_blurb: show.performanceBlurb })
+            .eq('id', existing.id);
+
+          if (!updateError) {
+            console.log(`      ✅ Updated performance blurb for: ${show.showName}${show.season ? ' ' + show.season : ''}`);
+            saved++;
+          }
+        }
         skipped++;
         continue;
       }
 
-      const { error } = await (this.supabase
-        .from('chef_shows') as ReturnType<typeof this.supabase.from>)
+      const { error } = await this.supabase
+        .from('chef_shows')
         .insert({
           chef_id: chefId,
           show_id: showId,
@@ -118,6 +137,7 @@ export class ShowRepository {
           season_name: show.season ? `${show.showName} ${show.season}` : show.showName,
           result: show.result || 'contestant',
           is_primary: false,
+          performance_blurb: show.performanceBlurb || null,
         });
 
       if (error) {
@@ -137,13 +157,20 @@ export class ShowRepository {
     showId: string,
     season: string | null
   ): Promise<boolean> {
-    const { data } = await (this.supabase
-      .from('chef_shows') as ReturnType<typeof this.supabase.from>)
+    const seasonValue = season ?? null;
+    let query = this.supabase
+      .from('chef_shows')
       .select('id')
       .eq('chef_id', chefId)
-      .eq('show_id', showId)
-      .eq('season', season || null)
-      .maybeSingle();
+      .eq('show_id', showId);
+    
+    if (seasonValue === null) {
+      query = query.is('season', null);
+    } else {
+      query = query.eq('season', seasonValue);
+    }
+    
+    const { data } = await query.maybeSingle();
 
     return !!data;
   }
