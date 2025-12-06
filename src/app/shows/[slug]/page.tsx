@@ -3,16 +3,14 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/supabase';
 import { createStaticClient } from '@/lib/supabase/static';
-import { ChefCard } from '@/components/chef/ChefCard';
 import { Header } from '@/components/ui/Header';
 import { PageHero } from '@/components/ui/PageHero';
+import { ShowPageClient } from './ShowPageClient';
 
 export const revalidate = 604800;
 
 interface ShowPageProps {
-  params: Promise<{
-    slug: string;
-  }>;
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: ShowPageProps): Promise<Metadata> {
@@ -31,9 +29,7 @@ export async function generateMetadata({ params }: ShowPageProps): Promise<Metad
       },
     };
   } catch {
-    return {
-      title: 'Show Not Found',
-    };
+    return { title: 'Show Not Found' };
   }
 }
 
@@ -60,11 +56,25 @@ export default async function ShowPage({ params }: ShowPageProps) {
   }
 
   const seasons: Array<{ season: string; season_name: string | null }> = await db.getShowSeasons(slug);
-  const winners = show.chef_shows?.filter((cs: any) => cs.result === 'winner') || [];
-  const finalists = show.chef_shows?.filter((cs: any) => cs.result === 'finalist') || [];
   const allChefs = show.chef_shows?.filter((cs: any) => cs.chef.restaurant_count > 0) || [];
-
   const totalRestaurants = allChefs.reduce((sum: number, cs: any) => sum + (cs.chef.restaurant_count || 0), 0);
+
+  const chefData = allChefs.map((cs: any) => ({
+    id: cs.chef.id,
+    name: cs.chef.name,
+    slug: cs.chef.slug,
+    photo_url: cs.chef.photo_url,
+    mini_bio: cs.chef.mini_bio,
+    james_beard_status: cs.chef.james_beard_status,
+    restaurant_count: cs.chef.restaurant_count || 0,
+    has_michelin: false,
+    chef_shows: [{
+      show: { name: show.name, slug: show.slug },
+      season: cs.season,
+      result: cs.result,
+      is_primary: cs.is_primary,
+    }],
+  }));
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
@@ -82,14 +92,11 @@ export default async function ShowPage({ params }: ShowPageProps) {
           ...(seasons.length > 0 ? [{ value: seasons.length, label: 'SEASONS' }] : []),
         ]}
       />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
-        {seasons.length > 0 && (
-          <div className="mb-12">
-            <h2
-              className="font-display text-2xl font-bold mb-6"
-              style={{ color: 'var(--text-primary)' }}
-            >
+      {seasons.length > 0 && (
+        <section className="border-b" style={{ borderColor: 'var(--border-light)' }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h2 className="font-display text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
               Browse by Season
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -110,29 +117,15 @@ export default async function ShowPage({ params }: ShowPageProps) {
                   >
                     {season.season_name || `Season ${season.season}`}
                   </div>
-                  <div
-                    className="absolute inset-0 border-2 border-transparent transition-colors duration-300 pointer-events-none group-hover:border-[var(--accent-primary)]"
-                  />
+                  <div className="absolute inset-0 border-2 border-transparent transition-colors duration-300 pointer-events-none group-hover:border-[var(--accent-primary)]" />
                 </Link>
               ))}
             </div>
           </div>
-        )}
+        </section>
+      )}
 
-        <div className="mb-12">
-          <h2
-            className="font-display text-2xl font-bold mb-6"
-            style={{ color: 'var(--text-primary)' }}
-          >
-            All Chefs
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {allChefs.map((cs: any, index: number) => (
-              <ChefCard key={cs.chef.id} chef={cs.chef} index={index} />
-            ))}
-          </div>
-        </div>
-      </div>
+      <ShowPageClient chefs={chefData} />
     </div>
   );
 }

@@ -19,15 +19,16 @@ interface Show {
 }
 
 interface ChefFiltersProps {
-  shows: Show[];
+  shows?: Show[];
   chefs: ChefData[];
   totalChefs: number;
   onFilteredChefsChange: (chefs: ChefData[]) => void;
+  hideShowDropdown?: boolean;
 }
 
 const CHIP = "font-mono text-[11px] tracking-wider font-medium px-3 py-1.5 transition-all border flex items-center gap-1.5";
 
-export function ChefFilters({ shows, chefs, totalChefs, onFilteredChefsChange }: ChefFiltersProps) {
+export function ChefFilters({ shows = [], chefs, totalChefs, onFilteredChefsChange, hideShowDropdown = false }: ChefFiltersProps) {
   const { filters, setFilters, clearFilters, toggleShow, toggleResult, hasActiveFilters } = useChefFilters();
   const [showDropdownOpen, setShowDropdownOpen] = useState(false);
   const [filteredChefs, setFilteredChefs] = useState<ChefData[]>(chefs);
@@ -110,59 +111,63 @@ export function ChefFilters({ shows, chefs, totalChefs, onFilteredChefsChange }:
             </form>
 
             {/* Show dropdown */}
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setShowDropdownOpen(!showDropdownOpen)}
-                className={CHIP}
-                style={{
-                  background: filters.shows.length > 0 ? 'var(--accent-primary)' : 'transparent',
-                  color: filters.shows.length > 0 ? 'white' : 'var(--text-secondary)',
-                  borderColor: filters.shows.length > 0 ? 'var(--accent-primary)' : 'var(--border-light)',
-                }}
-              >
-                {filters.shows.length > 0 
-                  ? (selectedShowNames.length === 1 ? selectedShowNames[0] : `${filters.shows.length} Shows`)
-                  : 'All Shows'
-                }
-                <ChevronDown className="w-3 h-3" />
-              </button>
-
-              {showDropdownOpen && (
-                <div 
-                  className="absolute top-full left-0 mt-1 w-56 border shadow-lg z-50 max-h-72 overflow-y-auto"
-                  style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-light)' }}
-                >
+            {!hideShowDropdown && shows.length > 0 && (
+              <>
+                <div className="relative" ref={dropdownRef}>
                   <button
-                    onClick={() => { setFilters({ shows: [] }); setShowDropdownOpen(false); }}
-                    className="w-full px-3 py-2 text-left font-mono text-[11px] tracking-wider hover:bg-slate-50 transition-colors flex items-center justify-between"
-                    style={{ color: filters.shows.length === 0 ? 'var(--accent-primary)' : 'var(--text-secondary)' }}
+                    onClick={() => setShowDropdownOpen(!showDropdownOpen)}
+                    className={CHIP}
+                    style={{
+                      background: filters.shows.length > 0 ? 'var(--accent-primary)' : 'transparent',
+                      color: filters.shows.length > 0 ? 'white' : 'var(--text-secondary)',
+                      borderColor: filters.shows.length > 0 ? 'var(--accent-primary)' : 'var(--border-light)',
+                    }}
                   >
-                    All Shows
-                    {filters.shows.length === 0 && <Check className="w-3.5 h-3.5" />}
+                    {filters.shows.length > 0 
+                      ? (selectedShowNames.length === 1 ? selectedShowNames[0] : `${filters.shows.length} Shows`)
+                      : 'All Shows'
+                    }
+                    <ChevronDown className="w-3 h-3" />
                   </button>
-                  <div className="border-t" style={{ borderColor: 'var(--border-light)' }} />
-                  {shows.map(show => (
-                    <button
-                      key={show.id}
-                      onClick={() => toggleShow(show.slug)}
-                      className="w-full px-3 py-2 text-left font-mono text-[11px] tracking-wider hover:bg-slate-50 transition-colors flex items-center justify-between"
-                      style={{ 
-                        color: filters.shows.includes(show.slug) ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                        fontWeight: filters.shows.includes(show.slug) ? 600 : 400,
-                      }}
-                    >
-                      <span>{show.name}</span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="text-slate-400 text-[10px]">{show.chef_count}</span>
-                        {filters.shows.includes(show.slug) && <Check className="w-3.5 h-3.5" />}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            <div className="h-4 w-px bg-slate-200" />
+                  {showDropdownOpen && (
+                    <div 
+                      className="absolute top-full left-0 mt-1 w-56 border shadow-lg z-50 max-h-72 overflow-y-auto"
+                      style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-light)' }}
+                    >
+                      <button
+                        onClick={() => { setFilters({ shows: [] }); setShowDropdownOpen(false); }}
+                        className="w-full px-3 py-2 text-left font-mono text-[11px] tracking-wider hover:bg-slate-50 transition-colors flex items-center justify-between"
+                        style={{ color: filters.shows.length === 0 ? 'var(--accent-primary)' : 'var(--text-secondary)' }}
+                      >
+                        All Shows
+                        {filters.shows.length === 0 && <Check className="w-3.5 h-3.5" />}
+                      </button>
+                      <div className="border-t" style={{ borderColor: 'var(--border-light)' }} />
+                      {shows.map(show => (
+                        <button
+                          key={show.id}
+                          onClick={() => toggleShow(show.slug)}
+                          className="w-full px-3 py-2 text-left font-mono text-[11px] tracking-wider hover:bg-slate-50 transition-colors flex items-center justify-between"
+                          style={{ 
+                            color: filters.shows.includes(show.slug) ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                            fontWeight: filters.shows.includes(show.slug) ? 600 : 400,
+                          }}
+                        >
+                          <span>{show.name}</span>
+                          <span className="flex items-center gap-1.5">
+                            <span className="text-slate-400 text-[10px]">{show.chef_count}</span>
+                            {filters.shows.includes(show.slug) && <Check className="w-3.5 h-3.5" />}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="h-4 w-px bg-slate-200" />
+              </>
+            )}
 
             {/* Filter chips */}
             {filterOptions.map(opt => (

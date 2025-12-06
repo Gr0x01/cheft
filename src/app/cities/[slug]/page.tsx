@@ -3,24 +3,13 @@ import { notFound } from 'next/navigation';
 import { createStaticClient } from '@/lib/supabase/static';
 import { Header } from '@/components/ui/Header';
 import { ItemListSchema } from '@/components/seo/SchemaOrg';
-import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
 import { ChefCard } from '@/components/chef/ChefCard';
 import { PageHero } from '@/components/ui/PageHero';
 import { sanitizeNarrative } from '@/lib/sanitize';
+import { CityPageClient } from './CityPageClient';
 
 interface CityPageProps {
   params: Promise<{ slug: string }>;
-}
-
-interface City {
-  id: string;
-  name: string;
-  state: string | null;
-  country: string;
-  slug: string;
-  restaurant_count: number;
-  chef_count: number;
-  city_narrative: string | null;
 }
 
 interface ChefWithRestaurants {
@@ -34,7 +23,7 @@ interface ChefWithRestaurants {
     id: string;
     season: string | null;
     result: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
-    is_primary: boolean | null;
+    is_primary?: boolean;
     show: { name: string };
   }>;
   restaurants: Array<{ id: string; city: string }>;
@@ -52,9 +41,7 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
     .single();
 
   if (!city) {
-    return {
-      title: 'City Not Found',
-    };
+    return { title: 'City Not Found' };
   }
 
   const title = `TV Chef Restaurants in ${city.name}${city.state ? `, ${city.state}` : ''} (${city.restaurant_count} Locations) | Cheft`;
@@ -63,11 +50,7 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
   return {
     title,
     description,
-    openGraph: {
-      title,
-      description,
-      type: 'website',
-    },
+    openGraph: { title, description, type: 'website' },
   };
 }
 
@@ -81,9 +64,7 @@ export async function generateStaticParams() {
     .order('restaurant_count', { ascending: false })
     .limit(100);
 
-  return cities?.map((city) => ({
-    slug: city.slug,
-  })) ?? [];
+  return cities?.map((city) => ({ slug: city.slug })) ?? [];
 }
 
 export const dynamicParams = true;
@@ -113,15 +94,19 @@ export default async function CityPage({ params }: CityPageProps) {
       price_tier,
       cuisine_tags,
       status,
-      website_url,
       google_rating,
       google_review_count,
       photo_urls,
+      michelin_stars,
       chef:chefs!restaurants_chef_id_fkey (
         id,
         name,
         slug,
-        photo_url
+        james_beard_status,
+        chef_shows (
+          result,
+          is_primary
+        )
       )
     `)
     .eq('city', city.name)
@@ -158,10 +143,30 @@ export default async function CityPage({ params }: CityPageProps) {
       acc.push({
         ...chef,
         restaurant_count: restaurantCount,
+        chef_shows: chef.chef_shows.map(cs => ({
+          ...cs,
+          is_primary: cs.is_primary ?? undefined,
+        })),
       });
     }
     return acc;
   }, [] as ChefWithRestaurants[]);
+
+  const restaurantData = (restaurants || []).map(r => ({
+    id: r.id,
+    name: r.name,
+    slug: r.slug,
+    city: r.city,
+    state: r.state,
+    price_tier: r.price_tier as '$' | '$$' | '$$$' | '$$$$' | null,
+    cuisine_tags: r.cuisine_tags,
+    status: r.status as 'open' | 'closed' | 'unknown',
+    google_rating: r.google_rating,
+    google_review_count: r.google_review_count,
+    photo_urls: r.photo_urls,
+    michelin_stars: r.michelin_stars,
+    chef: r.chef,
+  }));
 
   const displayName = `${city.name}${city.state ? `, ${city.state}` : ''}`;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://cheft.app';
@@ -196,65 +201,32 @@ export default async function CityPage({ params }: CityPageProps) {
           ]}
         />
 
-        {/* Food Scene intro - Narrative */}
         {city.city_narrative && (
-          <section 
-            className="py-8 border-b"
-            style={{ borderColor: 'var(--border-light)' }}
-          >
+          <section className="py-8 border-b" style={{ borderColor: 'var(--border-light)' }}>
             <div className="max-w-7xl mx-auto px-4">
-              <p 
-                className="font-ui text-lg leading-relaxed max-w-4xl"
-                style={{ color: 'var(--text-primary)', lineHeight: '1.8' }}
-              >
+              <p className="font-ui text-lg leading-relaxed max-w-4xl" style={{ color: 'var(--text-primary)', lineHeight: '1.8' }}>
                 {sanitizeNarrative(city.city_narrative)}
               </p>
             </div>
           </section>
         )}
 
-        {/* Restaurants */}
-        <section className="max-w-7xl mx-auto px-4 py-12">
-        <div className="mb-8">
-          <h2
-            className="font-display text-3xl font-bold"
-            style={{ color: 'var(--text-primary)' }}
-          >
-            Restaurants
-          </h2>
-          <p className="mt-2 font-ui" style={{ color: 'var(--text-muted)' }}>
-            {city.restaurant_count} locations by Top Chef winners and contestants
-          </p>
-        </div>
+        <CityPageClient restaurants={restaurantData} />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {restaurants?.map((restaurant: any) => (
-            <RestaurantCard key={restaurant.id} restaurant={restaurant} />
-          ))}
-          </div>
-        </section>
-
-        {/* Chefs */}
         {uniqueChefs && uniqueChefs.length > 0 && (
-          <section
-          className="max-w-7xl mx-auto px-4 py-12 border-t"
-          style={{ borderColor: 'var(--border-light)' }}
-        >
-          <div className="mb-8">
-            <h2
-              className="font-display text-3xl font-bold"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              Chefs in {city.name}
-            </h2>
-            <p className="mt-2 font-ui" style={{ color: 'var(--text-muted)' }}>
-              Meet the TV chefs behind these restaurants
-            </p>
-          </div>
+          <section className="max-w-7xl mx-auto px-4 py-12 border-t" style={{ borderColor: 'var(--border-light)' }}>
+            <div className="mb-8">
+              <h2 className="font-display text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                Chefs in {city.name}
+              </h2>
+              <p className="mt-2 font-ui" style={{ color: 'var(--text-muted)' }}>
+                Meet the TV chefs behind these restaurants
+              </p>
+            </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {uniqueChefs.map((chef: any) => (
-              <ChefCard key={chef.id} chef={chef} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {uniqueChefs.map((chef: ChefWithRestaurants) => (
+                <ChefCard key={chef.id} chef={chef} />
               ))}
             </div>
           </section>

@@ -17,15 +17,16 @@ interface City {
 }
 
 interface RestaurantFiltersProps {
-  cities: City[];
+  cities?: City[];
   restaurants: RestaurantData[];
   totalRestaurants: number;
   onFilteredRestaurantsChange: (restaurants: RestaurantData[]) => void;
+  hideCityDropdown?: boolean;
 }
 
 const CHIP = "font-mono text-[11px] tracking-wider font-medium px-3 py-1.5 transition-all border flex items-center gap-1.5";
 
-export function RestaurantFilters({ cities, restaurants, totalRestaurants, onFilteredRestaurantsChange }: RestaurantFiltersProps) {
+export function RestaurantFilters({ cities = [], restaurants, totalRestaurants, onFilteredRestaurantsChange, hideCityDropdown = false }: RestaurantFiltersProps) {
   const { filters, setFilters, clearFilters, hasActiveFilters } = useRestaurantFilters();
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
   const [filteredRestaurants, setFilteredRestaurants] = useState<RestaurantData[]>(restaurants);
@@ -86,57 +87,61 @@ export function RestaurantFilters({ cities, restaurants, totalRestaurants, onFil
             </form>
 
             {/* City dropdown */}
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
-                className={CHIP}
-                style={{
-                  background: filters.city ? 'var(--accent-primary)' : 'transparent',
-                  color: filters.city ? 'white' : 'var(--text-secondary)',
-                  borderColor: filters.city ? 'var(--accent-primary)' : 'var(--border-light)',
-                }}
-              >
-                <MapPin className="w-3 h-3" />
-                {selectedCity ? `${selectedCity.name}${selectedCity.state ? `, ${selectedCity.state}` : ''}` : 'All Cities'}
-                <ChevronDown className="w-3 h-3" />
-              </button>
-
-              {cityDropdownOpen && (
-                <div 
-                  className="absolute top-full left-0 mt-1 w-64 border shadow-lg z-50 max-h-72 overflow-y-auto"
-                  style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-light)' }}
-                >
+            {!hideCityDropdown && cities.length > 0 && (
+              <>
+                <div className="relative" ref={dropdownRef}>
                   <button
-                    onClick={() => { setFilters({ city: null }); setCityDropdownOpen(false); }}
-                    className="w-full px-3 py-2 text-left font-mono text-[11px] tracking-wider hover:bg-slate-50 transition-colors flex items-center justify-between"
-                    style={{ color: !filters.city ? 'var(--accent-primary)' : 'var(--text-secondary)' }}
+                    onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
+                    className={CHIP}
+                    style={{
+                      background: filters.city ? 'var(--accent-primary)' : 'transparent',
+                      color: filters.city ? 'white' : 'var(--text-secondary)',
+                      borderColor: filters.city ? 'var(--accent-primary)' : 'var(--border-light)',
+                    }}
                   >
-                    All Cities
-                    {!filters.city && <Check className="w-3.5 h-3.5" />}
+                    <MapPin className="w-3 h-3" />
+                    {selectedCity ? `${selectedCity.name}${selectedCity.state ? `, ${selectedCity.state}` : ''}` : 'All Cities'}
+                    <ChevronDown className="w-3 h-3" />
                   </button>
-                  <div className="border-t" style={{ borderColor: 'var(--border-light)' }} />
-                  {cities.map(city => (
-                    <button
-                      key={`${city.name}-${city.state}`}
-                      onClick={() => { setFilters({ city: city.name }); setCityDropdownOpen(false); }}
-                      className="w-full px-3 py-2 text-left font-mono text-[11px] tracking-wider hover:bg-slate-50 transition-colors flex items-center justify-between"
-                      style={{ 
-                        color: filters.city === city.name ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                        fontWeight: filters.city === city.name ? 600 : 400,
-                      }}
-                    >
-                      <span>{city.name}{city.state ? `, ${city.state}` : ''}</span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="text-slate-400 text-[10px]">{city.count}</span>
-                        {filters.city === city.name && <Check className="w-3.5 h-3.5" />}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            <div className="h-4 w-px bg-slate-200" />
+                  {cityDropdownOpen && (
+                    <div 
+                      className="absolute top-full left-0 mt-1 w-64 border shadow-lg z-50 max-h-72 overflow-y-auto"
+                      style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-light)' }}
+                    >
+                      <button
+                        onClick={() => { setFilters({ city: null }); setCityDropdownOpen(false); }}
+                        className="w-full px-3 py-2 text-left font-mono text-[11px] tracking-wider hover:bg-slate-50 transition-colors flex items-center justify-between"
+                        style={{ color: !filters.city ? 'var(--accent-primary)' : 'var(--text-secondary)' }}
+                      >
+                        All Cities
+                        {!filters.city && <Check className="w-3.5 h-3.5" />}
+                      </button>
+                      <div className="border-t" style={{ borderColor: 'var(--border-light)' }} />
+                      {cities.map(city => (
+                        <button
+                          key={`${city.name}-${city.state}`}
+                          onClick={() => { setFilters({ city: city.name }); setCityDropdownOpen(false); }}
+                          className="w-full px-3 py-2 text-left font-mono text-[11px] tracking-wider hover:bg-slate-50 transition-colors flex items-center justify-between"
+                          style={{ 
+                            color: filters.city === city.name ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                            fontWeight: filters.city === city.name ? 600 : 400,
+                          }}
+                        >
+                          <span>{city.name}{city.state ? `, ${city.state}` : ''}</span>
+                          <span className="flex items-center gap-1.5">
+                            <span className="text-slate-400 text-[10px]">{city.count}</span>
+                            {filters.city === city.name && <Check className="w-3.5 h-3.5" />}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="h-4 w-px bg-slate-200" />
+              </>
+            )}
 
             {/* Open only toggle */}
             <button
