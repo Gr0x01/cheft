@@ -30,8 +30,8 @@ export class TokenTracker {
   }
 
   estimateCost(): number {
-    const inputCostPer1M = 0.25;
-    const outputCostPer1M = 2.00;
+    const inputCostPer1M = 0.15;
+    const outputCostPer1M = 0.60;
     
     const inputCost = (this.totalUsage.prompt / 1_000_000) * inputCostPer1M;
     const outputCost = (this.totalUsage.completion / 1_000_000) * outputCostPer1M;

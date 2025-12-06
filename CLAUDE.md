@@ -13,6 +13,7 @@ archive/        → historical narrative and deprecated guidance
 ```
 
 ### Core Files (Read In Order)
+YOU MUST READ THESE FILES BEFORE ANYTHING ELSE.
 1. `/memory-bank/core/quickstart.md` – one-page situational awareness + commands
 2. `/memory-bank/core/projectbrief.md` – enduring product promise and scope
 3. `/memory-bank/development/activeContext.md` – current sprint goals + blockers
@@ -61,7 +62,6 @@ Always adjust the metadata header (`Last-Updated`, `Maintainer`) when you edit a
 
 - The project has a model reference with correct pricing and model names in `/memory-bank/architecture/techStack.md`
 - Current OpenAI models in use: `gpt-5-mini`, `gpt-5-nano`, etc.
-- **DO NOT** "fix" model names to `gpt-4o-mini` or other models you think are correct
 - **DO NOT** change model configurations based on assumed errors
 - If you believe there's an error in model naming, ASK FIRST before changing anything
 - The pricing and model names in the memory bank are authoritative - use them as reference

@@ -1,34 +1,36 @@
 ---
 Last-Updated: 2025-12-06
 Maintainer: RB
-Status: Ready for Production Re-enrichment
+Status: SEO Auto-Enrichment Implementation In Progress
 ---
 
 # Active Context: Chefs
 
 ## Current Sprint Goals
-- **Sprint**: Data Quality & Re-enrichment
-- **Focus**: Clean restaurant data, full chef re-enrichment with hybrid search
+- **Sprint**: SEO Content & Auto-Enrichment
+- **Focus**: Automated SEO description generation for show/season pages
 
-### READY TO EXECUTE: Re-enrichment System (Dec 6, 2025) ✅
-**Re-enrichment Tools Complete** - Ready for production data refresh:
-- ✅ **Parallel Batch Processing**: Process 5-20 chefs simultaneously (20x faster)
-- ✅ **Backup & Wipe System**: Safe restaurant reset with JSON/CSV backups
-- ✅ **CLI Delete Tool**: Quick deletion of incorrect restaurants
-- ✅ **Statistics Dashboard**: Real-time cost/time estimates
-- ✅ **Comprehensive Guide**: `RE-ENRICHMENT-GUIDE.md` with examples
-- **Test Results**: 5 chefs enriched successfully in parallel (19 shows, 3 restaurants saved)
-- **Current State**: 238 chefs, 710 restaurants backed up
-- **Ready to Execute**:
-  1. Wipe restaurants: `npx tsx scripts/backup-and-wipe-restaurants.ts --wipe`
-  2. Re-enrich: `npx tsx scripts/re-enrich-all-chefs.ts --batch=20`
-  3. Expected: $7.14, ~4 minutes
+### COMPLETED: Full Production Re-enrichment (Dec 6, 2025) ✅
+**All 238 chefs successfully re-enriched with clean data**:
+- ✅ **Production Run**: 238/238 chefs enriched successfully (0 failures)
+- ✅ **Cost**: $39.43 (includes SEO description generation)
+- ✅ **Time**: 24 minutes with batch=50 parallel processing
+- ✅ **Data Quality**: Fresh bios, complete TV show history, current restaurants
+- ✅ **Duplicates Resolved**: Nuclear reset of chef_shows + unique constraint prevents future duplicates
+- ✅ **Schema Fixes**: performanceBlurb now accepts null values
+- ✅ **Pricing Fix**: Corrected token costs from $0.25/$2.00 to $0.15/$0.60 per 1M tokens
+
+**Bug Fixes Applied**:
+- Added unique constraint to `chef_shows(chef_id, show_id, season)` via migration `022_add_chef_shows_unique_constraint.sql`
+- Fixed schema validation: `performanceBlurb: z.string().nullable().optional()` in both repositories
+- Corrected pricing in `token-tracker.ts` to match gpt-4o-mini rates ($0.15 input, $0.60 output per 1M tokens)
 
 **Scripts Created**:
-- `scripts/re-enrich-all-chefs.ts` - Main re-enrichment with parallel batching
-- `scripts/check-chef-stats.ts` - Database statistics  
-- `scripts/backup-and-wipe-restaurants.ts` - Safe restaurant reset
-- `scripts/delete-restaurant.ts` - CLI delete tool
+- `scripts/re-enrich-all-chefs.ts` - Main re-enrichment with parallel batching (tested at batch=50)
+- `scripts/nuke-chef-shows.ts` - Nuclear option: delete all chef_shows for clean slate
+- `scripts/cleanup-duplicate-chef-shows.ts` - Identify and remove duplicates
+- `scripts/apply-chef-shows-fix.ts` - Apply deduplication fixes
+- Migration: `022_add_chef_shows_unique_constraint.sql` - Database-level duplicate prevention
 
 ### Recently Completed: LLM Enrichment System Refactor ✅
 **Enrichment System Refactor** (ALL PHASES COMPLETE - Dec 5, 2025):
@@ -56,8 +58,63 @@ Status: Ready for Production Re-enrichment
 ## Current Blockers
 None
 
-## In Progress
-- Ready to run multi-show enrichment on all 182 chefs
+## In Progress (Dec 6, 2025) - SEO Auto-Enrichment System
+### Automated SEO Description Generation (CORE COMPLETE - Dec 6)
+**Goal**: Generate unique SEO descriptions for all show/season pages automatically to avoid Google thin content penalties
+
+**Implementation Status**:
+- ✅ **Database Schema** - Migration 026 adds description columns to shows table
+  - `description TEXT` - 2-3 sentence show overview
+  - `season_descriptions JSONB` - Season-specific descriptions keyed by season
+  - `seo_generated_at TIMESTAMPTZ` - Generation timestamp
+  - Index `idx_shows_seo_missing` for backfill queries
+- ✅ **ShowDescriptionService** - New service following existing enrichment patterns
+  - Model: `gpt-4.1-mini` with web search (low context)
+  - `ensureShowDescription()` - Checks if exists, generates if missing
+  - `ensureSeasonDescription()` - Same for season descriptions
+  - Token tracking and error handling
+  - File: `scripts/ingestion/enrichment/services/show-description-service.ts` (175 lines)
+- ✅ **System Prompts** - SEO-optimized prompts added to `src/lib/narratives/prompts.ts`
+  - `SHOW_DESCRIPTION_SYSTEM_PROMPT` - 2-3 sentence show descriptions
+  - `SEASON_DESCRIPTION_SYSTEM_PROMPT` - 1-2 sentence season highlights
+  - `buildShowDescriptionPrompt()` and `buildSeasonDescriptionPrompt()` helpers
+- ✅ **ShowRepository Enhanced** - Description CRUD + new combination detection
+  - Modified `saveChefShows()` to detect first-time show/season combinations
+  - Checks if description exists (not if any chef exists) to avoid race condition
+  - Added 4 new methods: `getShowDescription()`, `saveShowDescription()`, `getSeasonDescription()`, `saveSeasonDescription()`
+  - Database validation ensures show exists before saving descriptions
+- ✅ **Auto-Enrichment Hooks** - Integrated into all 3 chef enrichment workflows
+  - When new show/season combo discovered → auto-generates description
+  - Fetches show metadata, winner info, builds context
+  - Integrated in: `refresh-stale-chef.workflow.ts`, `manual-chef-addition.workflow.ts`, `partial-update.workflow.ts`
+  - Logs cost estimates (hardcoded ~$0.02 per description)
+- ✅ **LLM Enricher Facade** - Exposed service via facade pattern
+  - `generateShowDescription()` and `generateSeasonDescription()` methods
+  - Token tracking integrated
+  - File: `scripts/ingestion/processors/llm-enricher.ts`
+- ✅ **Code Review** - All critical issues fixed
+  - Fixed race condition in newCombinations detection (check description exists, not chef count)
+  - Added database validation for show existence before updates
+  - Type safety verified, compilation passing
+
+**Architecture**:
+- Service Layer: ShowDescriptionService (LLM generation logic)
+- Repository Layer: ShowRepository (database CRUD)
+- Workflow Integration: Auto-enrichment hooks in 3 workflows
+- Facade: llm-enricher.ts exposes service methods
+
+**Next Steps** (DEFERRED):
+- Create backfill script `enrich-all-seo-descriptions.ts` (~$4-5 one-time cost for ~220 pages)
+- Update `src/app/shows/[slug]/page.tsx` metadata to use show.description
+- Update `src/app/shows/[slug]/[season]/page.tsx` metadata to use season_descriptions
+- Test auto-enrichment with new chef addition
+- Run backfill script on production
+
+**Files Modified**: 8 files (+~600 lines)
+- Created: `026_add_show_seo_descriptions.sql`, `show-description-service.ts`
+- Modified: `prompts.ts`, `show-repository.ts`, 3 workflow files, `llm-enricher.ts`, `database.types.ts`
+
+**Testing**: Type-check passing, critical issues fixed, ready for backfill script creation
 
 ## Recently Completed (Dec 5, 2025) - Multi-Show Discovery Fix ✅
 - **Problem**: LLM only found 1 show per chef despite 6+ actual appearances

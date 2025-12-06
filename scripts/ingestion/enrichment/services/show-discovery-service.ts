@@ -11,7 +11,7 @@ const TVShowBasicSchema = z.object({
 }).passthrough();
 
 const TVShowWithBlurbSchema = TVShowBasicSchema.extend({
-  performanceBlurb: z.string().optional(),
+  performanceBlurb: z.string().nullable().optional(),
 });
 
 export type TVShowBasic = z.infer<typeof TVShowBasicSchema>;
