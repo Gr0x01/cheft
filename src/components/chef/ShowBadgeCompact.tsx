@@ -4,14 +4,15 @@ interface ShowBadgeCompactProps {
   show?: { name: string } | null;
   season?: string | null;
   result?: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
+  hideSeason?: boolean;
 }
 
-export function ShowBadgeCompact({ show, season, result }: ShowBadgeCompactProps) {
+export function ShowBadgeCompact({ show, season, result, hideSeason = false }: ShowBadgeCompactProps) {
   if (!show) return null;
 
   const showType = getShowType(show.name, result);
   const abbreviatedName = abbreviateShowName(show.name);
-  const seasonDisplay = formatSeasonDisplay(season);
+  const seasonDisplay = hideSeason ? null : formatSeasonDisplay(season);
 
   const getBackgroundColor = () => {
     if (result === 'winner') return 'var(--accent-success)';

@@ -25,8 +25,10 @@ interface ChefCardProps {
 
 export function ChefCard({ chef, index = 0 }: ChefCardProps) {
   const primaryShow = chef.chef_shows?.find(cs => cs.is_primary) || chef.chef_shows?.[0];
-  const secondaryShows = chef.chef_shows?.filter(cs => !cs.is_primary && cs.show?.name) || [];
+  const totalShows = chef.chef_shows?.length || 0;
+  const additionalShowCount = totalShows > 1 ? totalShows - 1 : 0;
   
+  const hasJamesBeard = chef.james_beard_status === 'winner' || chef.james_beard_status === 'nominated';
 
   return (
     <Link
@@ -43,60 +45,65 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
       />
 
       {/* Main content - flexible */}
-      <div className="p-5 pl-6 flex-1">
-        {/* Show badges + James Beard badge on same line */}
-        <div className="flex flex-wrap items-center gap-2 mb-2 min-h-[20px]">
-          {primaryShow && (
-            <ShowBadgeCompact 
-              show={primaryShow.show}
-              season={primaryShow.season}
-              result={primaryShow.result}
-            />
-          )}
-          {secondaryShows.slice(0, 2).map((show, idx) => (
-            <ShowBadgeCompact 
-              key={idx}
-              show={show.show}
-              season={show.season}
-              result={show.result}
-            />
-          ))}
-          
-          {/* James Beard badge */}
-          {chef.james_beard_status === 'winner' && (
-            <span 
-              className="font-mono text-[10px] tracking-wider px-2 py-1 flex items-center gap-1"
-              style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)', color: '#ffffff' }}
-            >
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="#fbbf24">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-              </svg>
-              JB AWARD
-            </span>
-          )}
-          {chef.james_beard_status === 'nominated' && (
-            <span 
-              className="font-mono text-[10px] tracking-wider px-2 py-1"
-              style={{ background: '#1d4ed8', color: '#ffffff' }}
-            >
-              JB NOMINEE
-            </span>
-          )}
-        </div>
+      <div className="p-5 pl-6 flex-1 relative">
+        {/* Top-right: James Beard badge (floated) */}
+        {hasJamesBeard && (
+          <div className="absolute top-0 right-0">
+            {chef.james_beard_status === 'winner' && (
+              <span 
+                className="font-mono text-[10px] tracking-wider px-2 py-1 flex items-center gap-1"
+                style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)', color: '#ffffff' }}
+              >
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="#fbbf24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+                JB AWARD
+              </span>
+            )}
+            {chef.james_beard_status === 'nominated' && (
+              <span 
+                className="font-mono text-[10px] tracking-wider px-2 py-1"
+                style={{ background: '#1d4ed8', color: '#ffffff' }}
+              >
+                JB NOMINEE
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Chef name */}
-        <h3 className="font-display text-2xl font-bold leading-tight tracking-tight text-slate-900 mb-2">
+        <h3 className="font-display text-2xl font-bold leading-tight tracking-tight text-slate-900 mb-2 pr-24">
           {chef.name}
         </h3>
 
         {/* Restaurant count */}
-        <div>
+        <div className="mb-3">
           {typeof chef.restaurant_count === 'number' && chef.restaurant_count > 0 && (
             <span className="font-mono text-xs tracking-wide font-semibold" style={{ color: 'var(--text-muted)' }}>
               {chef.restaurant_count} RESTAURANT{chef.restaurant_count !== 1 ? 'S' : ''}
             </span>
           )}
         </div>
+
+        {/* Show indicator (primary show + count) */}
+        {primaryShow && (
+          <div className="flex items-center gap-2">
+            <ShowBadgeCompact 
+              show={primaryShow.show}
+              season={null}
+              result={primaryShow.result}
+              hideSeason
+            />
+            {additionalShowCount > 0 && (
+              <span 
+                className="font-mono text-[9px] tracking-wider font-medium uppercase"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                + {additionalShowCount} MORE SHOW{additionalShowCount !== 1 ? 'S' : ''}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Footer with view indicator - fixed height */}
