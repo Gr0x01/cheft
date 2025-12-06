@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import type { Marker as LeafletMarker } from 'leaflet';
 import { LatLngTuple, DivIcon } from 'leaflet';
 import type { RestaurantWithDetails } from '@/lib/types';
 import RestaurantPopup from './RestaurantPopup';
@@ -17,12 +18,16 @@ interface RestaurantMapProps {
 
 function MapController({ selectedRestaurant }: { selectedRestaurant?: RestaurantWithDetails | null }) {
   const map = useMap();
+  const prevSelectedIdRef = useRef<string | null>(null);
   
   useEffect(() => {
     if (selectedRestaurant && selectedRestaurant.lat && selectedRestaurant.lng) {
-      map.flyTo([selectedRestaurant.lat, selectedRestaurant.lng], 12, {
-        duration: 0.8
-      });
+      if (prevSelectedIdRef.current !== selectedRestaurant.id) {
+        prevSelectedIdRef.current = selectedRestaurant.id;
+        map.flyTo([selectedRestaurant.lat, selectedRestaurant.lng], 12, {
+          duration: 0.8
+        });
+      }
     }
   }, [selectedRestaurant, map]);
   
@@ -41,10 +46,21 @@ function RestaurantMarker({
   onSelect: (restaurant: RestaurantWithDetails) => void;
 }) {
   const [isMounted, setIsMounted] = useState(false);
+  const markerRef = useRef<LeafletMarker>(null);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (markerRef.current) {
+      if (isSelected) {
+        markerRef.current.openPopup();
+      } else {
+        markerRef.current.closePopup();
+      }
+    }
+  }, [isSelected]);
 
   const isClosed = restaurant.status === 'closed';
 
@@ -70,13 +86,14 @@ function RestaurantMarker({
 
   return (
     <Marker 
+      ref={markerRef}
       position={[restaurant.lat, restaurant.lng] as LatLngTuple}
       icon={markerIcon}
       eventHandlers={{
         click: () => onSelect(restaurant)
       }}
     >
-      <Popup className="restaurant-popup-enhanced">
+      <Popup className="restaurant-popup-enhanced" closeButton={false}>
         <RestaurantPopup restaurant={restaurant} />
       </Popup>
     </Marker>
