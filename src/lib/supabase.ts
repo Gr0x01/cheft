@@ -243,6 +243,7 @@ export const db = {
         photo_url,
         mini_bio,
         james_beard_status,
+        instagram_handle,
         chef_shows(
           id,
           result,
@@ -263,7 +264,6 @@ export const db = {
           status
         )
       `)
-      .not('photo_url', 'is', null)
       .not('mini_bio', 'is', null)
       .eq('restaurants.is_public', true)
       .limit(100);
@@ -290,7 +290,7 @@ export const db = {
       };
     });
     
-    const eligibleChefs = chefsWithData.filter(chef => chef.open_restaurant_count >= 1);
+    const eligibleChefs = chefsWithData.filter(chef => chef.open_restaurant_count >= 3);
     
     if (eligibleChefs.length === 0) return null;
     

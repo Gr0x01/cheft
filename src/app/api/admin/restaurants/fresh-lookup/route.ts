@@ -48,18 +48,27 @@ export async function POST(request: NextRequest) {
   );
 
   try {
-    const { placeId, confidence, matchedName } = await placesService.findPlaceId(
-      restaurant.name,
-      restaurant.address || '',
-      restaurant.city || '',
-      restaurant.state || undefined
-    );
+    let placeId = restaurant.google_place_id;
+    let confidence = 1.0;
+    let matchedName = restaurant.name;
 
     if (!placeId) {
-      return NextResponse.json(
-        { error: 'Could not find a matching place on Google Maps' },
-        { status: 404 }
+      const searchResult = await placesService.findPlaceId(
+        restaurant.name,
+        restaurant.address || '',
+        restaurant.city || '',
+        restaurant.state || undefined
       );
+      placeId = searchResult.placeId;
+      confidence = searchResult.confidence;
+      matchedName = searchResult.matchedName || restaurant.name;
+
+      if (!placeId) {
+        return NextResponse.json(
+          { error: 'Could not find a matching place on Google Maps' },
+          { status: 404 }
+        );
+      }
     }
 
     const details = await placesService.getPlaceDetails(placeId, {

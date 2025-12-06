@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { RestaurantPreviewCard } from '../restaurant/RestaurantPreviewCard';
-import { abbreviateShowName, formatSeasonDisplay } from '@/lib/utils/showBadges';
+import { ShowBadgeCompact } from './ShowBadgeCompact';
+import { AwardBadge } from './AwardBadge';
+import { sortShowsByImportance } from '@/lib/utils/showBadges';
 import { InstagramIcon } from '@/components/icons/InstagramIcon';
 
 function getInitials(name: string): string {
@@ -46,17 +48,25 @@ interface FeaturedChefHeroProps {
 }
 
 export function FeaturedChefHero({ chef }: FeaturedChefHeroProps) {
-  const primaryShow = chef.chef_shows?.find(cs => cs.is_primary) || chef.chef_shows?.[0];
+  const allShows = chef.chef_shows || [];
+  const sortedShows = sortShowsByImportance(allShows);
+  const primaryShow = sortedShows[0];
+  const secondaryShows = sortedShows.slice(1, 4);
+  const totalShows = allShows.length;
+  const overflowCount = Math.max(0, totalShows - 4);
+  
   const isWinner = primaryShow?.result === 'winner';
   const isJBWinner = chef.james_beard_status === 'winner';
   const isJBNominee = chef.james_beard_status === 'nominated';
   const isJBSemifinalist = chef.james_beard_status === 'semifinalist';
   const isFinalist = primaryShow?.result === 'finalist';
   const isJudge = primaryShow?.result === 'judge';
+  const hasAnyAward = isWinner || isJBWinner || isJBNominee || isJBSemifinalist || isFinalist || isJudge;
   const photoUrl = chef.photo_url;
   const restaurants = chef.restaurants || [];
   const openRestaurants = restaurants.filter(r => r.status === 'open');
-  const displayRestaurants = openRestaurants.slice(0, 4);
+  const hasPhoto = !!photoUrl;
+  const displayRestaurants = hasPhoto ? openRestaurants.slice(0, 4) : openRestaurants.slice(0, 6);
 
   return (
     <section 
@@ -67,8 +77,9 @@ export function FeaturedChefHero({ chef }: FeaturedChefHeroProps) {
       }}
     >
       <div className="max-w-7xl mx-auto px-4 py-16 sm:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start">
-          {/* Left: Chef Portrait with Floating Badges */}
+        <div className={hasPhoto ? "grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start" : "space-y-8"}>
+          {/* Left: Chef Portrait with Floating Badges (only if photo exists) */}
+          {hasPhoto && (
           <div className="hidden md:block md:col-span-4 lg:col-span-5 relative">
             <div className="relative">
               <div
@@ -120,105 +131,59 @@ export function FeaturedChefHero({ chef }: FeaturedChefHeroProps) {
 
             </div>
           </div>
+          )}
 
           {/* Right: Chef Details and Restaurants */}
-          <div className="md:col-span-8 lg:col-span-7">
+          <div className={hasPhoto ? "md:col-span-8 lg:col-span-7" : ""}>
             <div className="space-y-6">
-              {/* Show/Season + Awards - Single Row */}
-              {(primaryShow?.show?.name || isWinner || isJBWinner || isJBNominee || isJBSemifinalist || isFinalist || isJudge) && (
-                <div className="flex flex-wrap items-center gap-4">
-                  {/* Show/Season */}
+              {/* Multi-Show Badge Display - Horizontal Flow */}
+              {allShows.length > 0 && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-6">
+                  {/* Primary Show - Large */}
                   {primaryShow?.show?.name && (
-                    <span className="font-display text-2xl sm:text-3xl font-bold text-white">
-                      {primaryShow.show.name}
-                      {primaryShow.season && (
-                        <>
-                          <span className="mx-2" style={{ color: 'var(--accent-primary)' }}>•</span>
-                          {primaryShow.season}
-                        </>
-                      )}
-                    </span>
+                    <>
+                      <span className="font-display text-xl sm:text-2xl font-bold text-white whitespace-nowrap">
+                        {primaryShow.show.name}
+                        {primaryShow.season && (
+                          <>
+                            <span className="mx-2" style={{ color: 'var(--accent-primary)' }}>•</span>
+                            {primaryShow.season}
+                          </>
+                        )}
+                      </span>
+                    </>
                   )}
                   
-                  {/* Award Badges */}
-                  {isWinner && (
-                    <span
-                      className="font-mono text-xs font-bold tracking-wider px-3 py-1.5 uppercase"
-                      style={{
-                        background: 'var(--accent-success)',
-                        color: 'white',
-                        borderRadius: 'var(--radius-sm)',
-                      }}
-                    >
-                      WINNER
-                    </span>
+                  {/* Secondary Shows Strip */}
+                  {secondaryShows.length > 0 && (
+                    <>
+                      {secondaryShows.map((show, index) => (
+                        <ShowBadgeCompact
+                          key={index}
+                          show={show.show}
+                          season={show.season}
+                          result={show.result}
+                          hideSeason={true}
+                        />
+                      ))}
+                      {overflowCount > 0 && (
+                        <span
+                          className="font-mono text-[9px] font-medium tracking-wide uppercase px-2 py-1"
+                          style={{
+                            background: 'rgba(255,255,255,0.1)',
+                            color: 'var(--accent-primary)',
+                            height: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          +{overflowCount} MORE
+                        </span>
+                      )}
+                    </>
                   )}
-                  {isJBWinner && (
-                    <span
-                      className="font-mono text-xs font-bold tracking-wider px-3 py-1.5 uppercase flex items-center gap-1"
-                      style={{
-                        background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
-                        color: '#ffffff',
-                        borderRadius: 'var(--radius-sm)',
-                      }}
-                    >
-                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="#fbbf24">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                      </svg>
-                      JAMES BEARD
-                    </span>
-                  )}
-                  {isJBNominee && (
-                    <span
-                      className="font-mono text-xs font-bold tracking-wider px-3 py-1.5 uppercase flex items-center gap-1"
-                      style={{
-                        background: '#1d4ed8',
-                        color: '#ffffff',
-                        borderRadius: 'var(--radius-sm)',
-                      }}
-                    >
-                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="#fbbf24">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                      </svg>
-                      JB NOMINEE
-                    </span>
-                  )}
-                  {isJBSemifinalist && (
-                    <span
-                      className="font-mono text-xs font-bold tracking-wider px-3 py-1.5 uppercase"
-                      style={{
-                        background: '#dbeafe',
-                        color: '#1e3a8a',
-                        borderRadius: 'var(--radius-sm)',
-                      }}
-                    >
-                      JB SEMIFINALIST
-                    </span>
-                  )}
-                  {isFinalist && !isWinner && (
-                    <span
-                      className="font-mono text-xs font-bold tracking-wider px-3 py-1.5 uppercase"
-                      style={{
-                        background: '#f59e0b',
-                        color: 'white',
-                        borderRadius: 'var(--radius-sm)',
-                      }}
-                    >
-                      FINALIST
-                    </span>
-                  )}
-                  {isJudge && !isWinner && !isFinalist && (
-                    <span
-                      className="font-mono text-xs font-bold tracking-wider px-3 py-1.5 uppercase"
-                      style={{
-                        background: '#6366f1',
-                        color: 'white',
-                        borderRadius: 'var(--radius-sm)',
-                      }}
-                    >
-                      JUDGE
-                    </span>
-                  )}
+                  
                 </div>
               )}
 
@@ -229,10 +194,21 @@ export function FeaturedChefHero({ chef }: FeaturedChefHeroProps) {
                 {chef.name}
               </h2>
 
+              {/* Result Badges (Winner, James Beard, Finalist) */}
+              {(isWinner || isJBWinner || isJBNominee || isJBSemifinalist || isFinalist) && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {isWinner && <AwardBadge type="winner" />}
+                  {isJBWinner && <AwardBadge type="james_beard_winner" />}
+                  {isJBNominee && <AwardBadge type="james_beard_nominee" />}
+                  {isJBSemifinalist && <AwardBadge type="james_beard_semifinalist" />}
+                  {isFinalist && !isWinner && <AwardBadge type="finalist" />}
+                </div>
+              )}
+
               {/* Bio */}
               {chef.mini_bio && (
                 <p
-                  className="font-ui text-lg leading-relaxed max-w-2xl"
+                  className="font-ui text-lg leading-relaxed max-w-3xl"
                   style={{ color: 'rgba(255,255,255,0.75)' }}
                 >
                   {chef.mini_bio.replace(/<[^>]*>/g, '')}
@@ -241,41 +217,12 @@ export function FeaturedChefHero({ chef }: FeaturedChefHeroProps) {
 
               {/* Restaurants Preview */}
               {displayRestaurants.length > 0 && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {displayRestaurants.map((restaurant, index) => (
                       <RestaurantPreviewCard key={restaurant.id} restaurant={restaurant} index={index} />
                     ))}
                   </div>
-                  <Link
-                    href={`/chefs/${chef.slug}`}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 font-mono text-sm font-bold tracking-wider uppercase transition-all duration-200 group"
-                    style={{
-                      background: 'var(--accent-primary)',
-                      color: 'white',
-                      borderRadius: 'var(--radius-md)',
-                      border: '2px solid var(--accent-primary)',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color = 'var(--accent-primary)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'var(--accent-primary)';
-                      e.currentTarget.style.color = 'white';
-                    }}
-                  >
-                    View Full Profile
-                    <svg
-                      className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      strokeWidth={2.5}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
                 </div>
               )}
             </div>

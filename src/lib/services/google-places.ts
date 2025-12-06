@@ -16,6 +16,8 @@ export interface PlaceDetails {
   priceLevel?: string;
   websiteUri?: string;
   googleMapsUri?: string;
+  lat?: number;
+  lng?: number;
   reviews?: PlaceReview[];
   photos?: PlacePhoto[];
   businessStatus?: string;
@@ -171,6 +173,7 @@ export function createGooglePlacesService(config: GooglePlacesConfig) {
       'id',
       'displayName',
       'formattedAddress',
+      'location',
       'rating',
       'userRatingCount',
       'priceLevel',
@@ -227,6 +230,8 @@ export function createGooglePlacesService(config: GooglePlacesConfig) {
       placeId: response.id,
       name: response.displayName?.text || '',
       formattedAddress: response.formattedAddress,
+      lat: response.location?.latitude,
+      lng: response.location?.longitude,
       rating: response.rating,
       userRatingsTotal: response.userRatingCount,
       priceLevel: response.priceLevel,

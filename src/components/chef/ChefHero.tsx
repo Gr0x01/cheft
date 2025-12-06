@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { Breadcrumbs } from '../seo/Breadcrumbs';
 import { ReportIssueButton } from '../feedback/ReportIssueButton';
+import { AwardBadge } from './AwardBadge';
 
 function getInitials(name: string): string {
   const parts = name
@@ -113,44 +114,10 @@ export function ChefHero({ chef, breadcrumbItems, chefId, chefName }: ChefHeroPr
 
             {/* Achievement badges stacked */}
             <div className="absolute -bottom-3 -right-3 flex flex-col gap-1">
-              {isWinner && (
-                <span 
-                  className="font-mono text-[10px] font-bold tracking-widest px-3 py-1.5"
-                  style={{ background: 'var(--accent-success)', color: 'white' }}
-                >
-                  WINNER
-                </span>
-              )}
-              {chef.james_beard_status === 'winner' && (
-                <span 
-                  className="font-mono text-[10px] font-bold tracking-widest px-3 py-1.5 flex items-center gap-1"
-                  style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)', color: '#ffffff' }}
-                >
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="#fbbf24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                  JAMES BEARD
-                </span>
-              )}
-              {chef.james_beard_status === 'nominated' && (
-                <span 
-                  className="font-mono text-[10px] font-bold tracking-widest px-3 py-1.5 flex items-center gap-1"
-                  style={{ background: '#1d4ed8', color: '#ffffff' }}
-                >
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="#fbbf24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                  JB NOMINEE
-                </span>
-              )}
-              {chef.james_beard_status === 'semifinalist' && (
-                <span 
-                  className="font-mono text-[10px] tracking-widest px-3 py-1.5"
-                  style={{ background: '#dbeafe', color: '#1e3a8a' }}
-                >
-                  JB SEMIFINALIST
-                </span>
-              )}
+              {isWinner && <AwardBadge type="winner" size="sm" />}
+              {chef.james_beard_status === 'winner' && <AwardBadge type="james_beard_winner" size="sm" />}
+              {chef.james_beard_status === 'nominated' && <AwardBadge type="james_beard_nominee" size="sm" />}
+              {chef.james_beard_status === 'semifinalist' && <AwardBadge type="james_beard_semifinalist" size="sm" />}
             </div>
           </div>
 
