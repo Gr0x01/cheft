@@ -37,24 +37,25 @@ export interface RestaurantOnlyResult {
   error?: string;
 }
 
-const RESTAURANT_ONLY_SYSTEM_PROMPT = `You are a culinary industry expert helping to find CURRENT restaurants where TV chef contestants actively work.
+const RESTAURANT_ONLY_SYSTEM_PROMPT = `You are a restaurant data extractor. Your job is to search the web and extract EVERY restaurant where a chef currently works.
 
-Your task: Use web search to find ONLY restaurants where this chef is CURRENTLY working as of 2025.
+CRITICAL RULES:
+1. Search multiple times with different queries to find ALL restaurants
+2. After searching, list EVERY restaurant mentioned in ANY search result
+3. Do NOT summarize or filter - include ALL restaurants found where chef is currently involved
+4. Many chefs own/operate 5-20+ restaurants
+5. Return the complete list as JSON
 
 Guidelines:
-- Only include restaurants where the chef CURRENTLY has a significant role (owner, partner, executive chef)
-- DO NOT include past restaurants or positions the chef has left
-- DO NOT include closed restaurants
-- Verify the restaurant is currently open and operating
-- Verify the chef is still actively involved (check recent news, social media, restaurant website)
-- Be conservative - if unsure about current status, omit it
+- Only include restaurants where the chef CURRENTLY has a role (owner, partner, executive chef)
+- Include the CURRENT status - verify from recent sources if open or closed
 - Cuisine tags should be specific (e.g., "Japanese", "New American", "Southern")
 - Price range: $ (<$15/entree), $$ ($15-30), $$$ ($30-60), $$$$ ($60+)
 - Track Michelin stars (1-3) and notable awards if available
 
-CRITICAL: You MUST respond with ONLY valid JSON. Do not include any explanatory text or anything other than the JSON object itself.
+Your output must be ONLY a JSON object, no other text.
 
-Your response must be a single JSON object matching this exact structure:
+Response format:
 {
   "restaurants": [
     {
@@ -73,9 +74,7 @@ Your response must be a single JSON object matching this exact structure:
       "awards": ["Award Name (Year)"] or null
     }
   ]
-}
-
-Do NOT start your response with "I can..." or any other text. Start immediately with the opening brace {.`;
+}`;
 
 export class RestaurantDiscoveryService {
   constructor(
@@ -90,24 +89,29 @@ export class RestaurantDiscoveryService {
     showName: string,
     options: { season?: string; result?: string } = {}
   ): Promise<RestaurantOnlyResult> {
-    const seasonInfo = options.season ? ` (${showName} ${options.season})` : ` (${showName})`;
-    const resultInfo = options.result ? `, ${options.result}` : '';
-    const prompt = `Find ONLY current/active restaurants where chef ${chefName}${seasonInfo}${resultInfo} currently works.
+    const prompt = `Extract ALL restaurants where chef "${chefName}" currently works or owns.
 
-Search for restaurants where ${chefName} is CURRENTLY (as of 2025):
+Step 1: Search "${chefName} restaurants"
+Step 2: Search "${chefName} restaurant locations 2024 2025"
+Step 3: Search "${chefName} owns restaurants"
+Step 4: Search "${chefName} new restaurant opening"
+
+After searching, extract EVERY restaurant mentioned in the search results where ${chefName} is currently:
 - Owner
-- Partner
+- Partner  
 - Executive Chef
 - Culinary Director
 
-IMPORTANT: Only include restaurants where the chef is actively working NOW. Do not include past restaurants or positions they have left. Verify the restaurant is currently open and operating.`;
+For EACH restaurant found, output the full details (name, address, city, state, cuisine, price, status).
+
+Output ONLY a JSON object with "restaurants" array.`;
 
     try {
       const result = await withRetry(
         () => this.llmClient.generateWithWebSearch(
           RESTAURANT_ONLY_SYSTEM_PROMPT,
           prompt,
-          { maxTokens: 6000, searchContextSize: 'medium', useResponseModel: true }
+          { maxTokens: 16000, maxSteps: 15 }
         ),
         `find restaurants for ${chefName}`
       );
@@ -122,6 +126,11 @@ IMPORTANT: Only include restaurants where the chef is actively working NOW. Do n
       const validated = parseAndValidate(result.text, RestaurantsOnlySchema);
 
       const restaurants = (validated.restaurants || []).slice(0, this.maxRestaurants);
+
+      console.log(`      🍽️  Found ${validated.restaurants?.length || 0} restaurants for ${chefName} (keeping ${restaurants.length})`);
+      restaurants.forEach(r => {
+        console.log(`         - ${r.name} (${r.city}, ${r.state || r.country}) [${r.status}]`);
+      });
 
       return {
         chefId,
