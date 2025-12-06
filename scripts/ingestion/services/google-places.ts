@@ -23,6 +23,8 @@ export interface PlaceDetails {
   reviews?: PlaceReview[];
   photos?: PlacePhoto[];
   businessStatus?: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface PlaceReview {
@@ -182,6 +184,7 @@ export function createGooglePlacesService(config: GooglePlacesConfig) {
       'websiteUri',
       'googleMapsUri',
       'businessStatus',
+      'location',
     ];
 
     if (options.includeReviews) {
@@ -239,11 +242,13 @@ export function createGooglePlacesService(config: GooglePlacesConfig) {
       name: response.displayName?.text || '',
       formattedAddress: response.formattedAddress,
       rating: response.rating,
-      userRatingsTotal: response.userRatingCount,
+      userRatingsTotal: response.userRatingsTotal,
       priceLevel: response.priceLevel,
       websiteUri: response.websiteUri,
       googleMapsUri: response.googleMapsUri,
       businessStatus: response.businessStatus,
+      lat: response.location?.latitude,
+      lng: response.location?.longitude,
       reviews,
       photos,
     };

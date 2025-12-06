@@ -235,6 +235,8 @@ export function createMediaEnricher(
           google_price_level: priceLevel,
           photo_urls: uploadedPhotoUrls.length > 0 ? uploadedPhotoUrls : null,
           status: status,
+          lat: details.lat ?? null,
+          lng: details.lng ?? null,
           last_enriched_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
