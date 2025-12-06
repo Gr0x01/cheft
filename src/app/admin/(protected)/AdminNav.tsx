@@ -4,17 +4,17 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
-import { ClipboardList, Users, ChevronDown, Activity, RefreshCw, Database } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
 const primaryNav = [
-  { href: '/admin/review', label: 'Review', icon: ClipboardList },
-  { href: '/admin/entities', label: 'Entities', icon: Users },
+  { href: '/admin/review', label: 'Review' },
+  { href: '/admin/entities', label: 'Entities' },
 ];
 
 const monitoringNav = [
-  { href: '/admin/enrichment-jobs', label: 'Enrichment Jobs', icon: RefreshCw },
-  { href: '/admin/activity', label: 'Activity Log', icon: Activity },
-  { href: '/admin/data', label: 'Data Stats', icon: Database },
+  { href: '/admin/enrichment-jobs', label: 'Enrichment' },
+  { href: '/admin/activity', label: 'Activity' },
+  { href: '/admin/data', label: 'Data' },
 ];
 
 export function AdminNav() {
@@ -37,22 +37,20 @@ export function AdminNav() {
   }, []);
 
   return (
-    <div className="ml-8 flex items-center gap-1">
+    <div className="ml-10 flex items-center gap-6">
       {primaryNav.map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-        const Icon = item.icon;
         return (
           <Link
             key={item.href}
             href={item.href}
             className={clsx(
-              'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all font-ui',
+              'font-mono text-xs uppercase tracking-[0.15em] py-1 border-b-2 transition-all',
               isActive
-                ? 'bg-slate-900 text-white'
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                ? 'text-stone-900 border-copper-600'
+                : 'text-stone-400 border-transparent hover:text-stone-600'
             )}
           >
-            <Icon className="w-4 h-4" />
             {item.label}
           </Link>
         );
@@ -62,34 +60,32 @@ export function AdminNav() {
         <button
           onClick={() => setMonitoringOpen(!monitoringOpen)}
           className={clsx(
-            'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all font-ui',
+            'font-mono text-xs uppercase tracking-[0.15em] py-1 border-b-2 transition-all flex items-center gap-1.5',
             isMonitoringActive
-              ? 'bg-slate-900 text-white'
-              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+              ? 'text-stone-900 border-copper-600'
+              : 'text-stone-400 border-transparent hover:text-stone-600'
           )}
         >
           Monitoring
-          <ChevronDown className={clsx('w-4 h-4 transition-transform', monitoringOpen && 'rotate-180')} />
+          <ChevronDown className={clsx('w-3 h-3 transition-transform', monitoringOpen && 'rotate-180')} />
         </button>
 
         {monitoringOpen && (
-          <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50">
+          <div className="absolute top-full left-0 mt-3 w-44 bg-white border-2 border-stone-900 py-1 z-50">
             {monitoringNav.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-              const Icon = item.icon;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setMonitoringOpen(false)}
                   className={clsx(
-                    'flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors font-ui',
+                    'block px-4 py-2 font-mono text-xs uppercase tracking-wider transition-colors',
                     isActive
-                      ? 'bg-slate-100 text-slate-900'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      ? 'bg-stone-900 text-white'
+                      : 'text-stone-600 hover:bg-stone-100'
                   )}
                 >
-                  <Icon className="w-4 h-4" />
                   {item.label}
                 </Link>
               );

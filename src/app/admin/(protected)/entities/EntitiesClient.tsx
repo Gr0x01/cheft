@@ -5,7 +5,7 @@ import { Database } from '@/lib/database.types';
 import { EntityList } from './EntityList';
 import { ChefEditorPanel } from './ChefEditorPanel';
 import { RestaurantEditorPanel } from './RestaurantEditorPanel';
-import { Users, Store, Search, Filter, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 type Chef = Database['public']['Tables']['chefs']['Row'];
 type Restaurant = Database['public']['Tables']['restaurants']['Row'];
@@ -179,64 +179,55 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
   const showingEditor = selectedChef || selectedRestaurant;
 
   return (
-    <div className="h-[calc(100vh-8rem)]">
-      <div className="flex h-full gap-6">
-        <div className={`flex flex-col bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80 overflow-hidden transition-all ${showingEditor ? 'w-[400px] flex-shrink-0' : 'flex-1'}`}>
-          <div className="p-4 border-b border-slate-200 space-y-4">
-            <div className="flex gap-2">
+    <div className="h-[calc(100vh-7rem)] max-w-7xl mx-auto">
+      <div className="flex h-full gap-0">
+        <div className={`flex flex-col bg-white border-2 border-stone-900 overflow-hidden transition-all ${showingEditor ? 'w-[420px] flex-shrink-0' : 'flex-1 max-w-2xl'}`}>
+          <div className="p-5 border-b-2 border-stone-900 space-y-5">
+            <div className="flex">
               <button
                 onClick={() => { setActiveTab('chefs'); setFilter('all'); }}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-ui font-medium transition-all ${
+                className={`flex-1 py-3 font-mono text-xs uppercase tracking-[0.15em] transition-all border-b-2 -mb-[2px] ${
                   activeTab === 'chefs'
-                    ? 'bg-slate-900 text-white'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'text-stone-900 border-copper-600 bg-stone-50'
+                    : 'text-stone-400 border-transparent hover:text-stone-600'
                 }`}
               >
-                <Users className="w-4 h-4" />
                 Chefs
-                <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === 'chefs' ? 'bg-white/20' : 'bg-slate-200'}`}>
-                  {filteredChefs.length}
-                </span>
+                <span className="ml-2 font-mono font-bold">{filteredChefs.length}</span>
               </button>
               <button
                 onClick={() => { setActiveTab('restaurants'); setFilter('all'); }}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-ui font-medium transition-all ${
+                className={`flex-1 py-3 font-mono text-xs uppercase tracking-[0.15em] transition-all border-b-2 -mb-[2px] ${
                   activeTab === 'restaurants'
-                    ? 'bg-slate-900 text-white'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'text-stone-900 border-copper-600 bg-stone-50'
+                    : 'text-stone-400 border-transparent hover:text-stone-600'
                 }`}
               >
-                <Store className="w-4 h-4" />
                 Restaurants
-                <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === 'restaurants' ? 'bg-white/20' : 'bg-slate-200'}`}>
-                  {filteredRestaurants.length}
-                </span>
+                <span className="ml-2 font-mono font-bold">{filteredRestaurants.length}</span>
               </button>
             </div>
 
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
               <input
                 type="text"
                 placeholder={`Search ${activeTab}...`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 bg-stone-50 border-2 border-stone-200 font-ui text-sm focus:outline-none focus:border-copper-600 transition-colors"
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-slate-400" />
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value as FilterType)}
-                className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-ui focus:outline-none focus:ring-2 focus:ring-slate-900"
-              >
-                {filterOptions.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value as FilterType)}
+              className="w-full px-3 py-2 bg-stone-50 border-2 border-stone-200 font-mono text-xs uppercase tracking-wider text-stone-600 focus:outline-none focus:border-copper-600 transition-colors"
+            >
+              {filterOptions.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
           </div>
 
           <div className="flex-1 overflow-y-auto">
@@ -280,14 +271,14 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
         </div>
 
         {showingEditor && (
-          <div className="flex-1 bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80 overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
-              <h2 className="font-display text-lg font-semibold text-slate-900">
+          <div className="flex-1 bg-white border-2 border-l-0 border-stone-900 overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b-2 border-stone-900 bg-stone-50">
+              <h2 className="font-display text-xl font-bold text-stone-900">
                 {selectedChef ? 'Edit Chef' : 'Edit Restaurant'}
               </h2>
               <button
                 onClick={handleCloseEditor}
-                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
+                className="p-2 text-stone-400 hover:text-stone-900 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -314,24 +305,24 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
       </div>
 
       {showDiscardDialog && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 p-6 max-w-sm mx-4">
-            <h3 className="font-display text-lg font-semibold text-slate-900 mb-2">
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+          <div className="bg-white border-2 border-stone-900 p-6 max-w-sm mx-4">
+            <h3 className="font-display text-xl font-bold text-stone-900 mb-2">
               Unsaved Changes
             </h3>
-            <p className="font-ui text-sm text-slate-600 mb-4">
+            <p className="font-ui text-sm text-stone-600 mb-6">
               You have unsaved changes. Discard them?
             </p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={handleCancelDiscard}
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                className="px-4 py-2 font-mono text-xs uppercase tracking-wider text-stone-600 hover:text-stone-900 transition-colors"
               >
                 Keep Editing
               </button>
               <button
                 onClick={handleConfirmDiscard}
-                className="px-4 py-2 text-sm font-medium bg-red-500 text-white hover:bg-red-600 rounded-lg transition-colors"
+                className="px-4 py-2 font-mono text-xs uppercase tracking-wider bg-red-600 text-white hover:bg-red-700 transition-colors"
               >
                 Discard
               </button>
