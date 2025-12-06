@@ -37,21 +37,31 @@ export interface RestaurantOnlyResult {
   error?: string;
 }
 
-const RESTAURANT_ONLY_SYSTEM_PROMPT = `You are a restaurant data extractor. Your job is to search the web and extract EVERY restaurant where a chef currently works.
+const RESTAURANT_ONLY_SYSTEM_PROMPT = `You are a restaurant ownership researcher. Your job is to find restaurants that a chef OWNS or has an ownership stake in.
 
 CRITICAL RULES:
-1. Search multiple times with different queries to find ALL restaurants
-2. After searching, list EVERY restaurant mentioned in ANY search result
-3. Do NOT summarize or filter - include ALL restaurants found where chef is currently involved
-4. Many chefs own/operate 5-20+ restaurants
+1. ONLY include restaurants where the chef is an OWNER or PARTNER (has equity/ownership)
+2. DO NOT include restaurants where they merely worked as an employee
+3. DO NOT include past employers or places they trained at
+4. Search multiple times to find all owned restaurants
 5. Return the complete list as JSON
 
+OWNERSHIP means:
+- They founded/opened the restaurant
+- They are a partner or co-owner
+- They have an equity stake in the business
+
+NOT ownership:
+- Working as executive chef for someone else's restaurant
+- Guest chef appearances
+- Consulting without equity
+- Training or early career positions
+
 Guidelines:
-- Only include restaurants where the chef CURRENTLY has a role (owner, partner, executive chef)
-- Include the CURRENT status - verify from recent sources if open or closed
-- Cuisine tags should be specific (e.g., "Japanese", "New American", "Southern")
-- Price range: $ (<$15/entree), $$ ($15-30), $$$ ($30-60), $$$$ ($60+)
-- Track Michelin stars (1-3) and notable awards if available
+- Include CURRENT status - verify if open or closed
+- Cuisine tags should be specific (e.g., "Japanese", "New American")
+- Price range: $ (<$15), $$ ($15-30), $$$ ($30-60), $$$$ ($60+)
+- Track Michelin stars and awards if available
 
 Your output must be ONLY a JSON object, no other text.
 
@@ -68,7 +78,7 @@ Response format:
       "priceRange": "$$" or null,
       "status": "open" or "closed" or "unknown",
       "website": "https://..." or null,
-      "role": "owner" or "executive_chef" or "partner" or "consultant" or null,
+      "role": "owner" or "partner" or null,
       "opened": 2020 or null,
       "michelinStars": 0-3 or null,
       "awards": ["Award Name (Year)"] or null
@@ -89,20 +99,22 @@ export class RestaurantDiscoveryService {
     showName: string,
     options: { season?: string; result?: string } = {}
   ): Promise<RestaurantOnlyResult> {
-    const prompt = `Extract ALL restaurants where chef "${chefName}" currently works or owns.
+    const prompt = `Find restaurants that chef "${chefName}" OWNS, opened, or is a PARTNER in.
 
-Step 1: Search "${chefName} restaurants"
-Step 2: Search "${chefName} restaurant locations 2024 2025"
-Step 3: Search "${chefName} owns restaurants"
-Step 4: Search "${chefName} new restaurant opening"
+Step 1: Search "${chefName} restaurant"
+Step 2: Search "${chefName} owns restaurant"
+Step 3: Search "${chefName} opened restaurant"  
+Step 4: Search "${chefName} chef owner"
 
-After searching, extract EVERY restaurant mentioned in the search results where ${chefName} is currently:
-- Owner
-- Partner  
-- Executive Chef
-- Culinary Director
+After searching, include ONLY restaurants where ${chefName}:
+- Founded or opened the restaurant
+- Is an owner or partner (has equity)
+- Is the chef-owner running their own place
 
-For EACH restaurant found, output the full details (name, address, city, state, cuisine, price, status).
+DO NOT include restaurants where they:
+- Just worked as an employee for someone else
+- Trained early in their career (e.g., worked at Quince before opening their own place)
+- Made guest appearances
 
 Output ONLY a JSON object with "restaurants" array.`;
 

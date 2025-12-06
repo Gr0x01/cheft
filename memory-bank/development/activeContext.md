@@ -1,14 +1,34 @@
 ---
-Last-Updated: 2025-12-05 (night)
+Last-Updated: 2025-12-06
 Maintainer: RB
-Status: Active Development
+Status: Ready for Production Re-enrichment
 ---
 
 # Active Context: Chefs
 
 ## Current Sprint Goals
-- **Sprint**: Data Quality & User Engagement
-- **Focus**: Deploy performance blurbs, multi-show enrichment, community features
+- **Sprint**: Data Quality & Re-enrichment
+- **Focus**: Clean restaurant data, full chef re-enrichment with hybrid search
+
+### READY TO EXECUTE: Re-enrichment System (Dec 6, 2025) ✅
+**Re-enrichment Tools Complete** - Ready for production data refresh:
+- ✅ **Parallel Batch Processing**: Process 5-20 chefs simultaneously (20x faster)
+- ✅ **Backup & Wipe System**: Safe restaurant reset with JSON/CSV backups
+- ✅ **CLI Delete Tool**: Quick deletion of incorrect restaurants
+- ✅ **Statistics Dashboard**: Real-time cost/time estimates
+- ✅ **Comprehensive Guide**: `RE-ENRICHMENT-GUIDE.md` with examples
+- **Test Results**: 5 chefs enriched successfully in parallel (19 shows, 3 restaurants saved)
+- **Current State**: 238 chefs, 710 restaurants backed up
+- **Ready to Execute**:
+  1. Wipe restaurants: `npx tsx scripts/backup-and-wipe-restaurants.ts --wipe`
+  2. Re-enrich: `npx tsx scripts/re-enrich-all-chefs.ts --batch=20`
+  3. Expected: $7.14, ~4 minutes
+
+**Scripts Created**:
+- `scripts/re-enrich-all-chefs.ts` - Main re-enrichment with parallel batching
+- `scripts/check-chef-stats.ts` - Database statistics  
+- `scripts/backup-and-wipe-restaurants.ts` - Safe restaurant reset
+- `scripts/delete-restaurant.ts` - CLI delete tool
 
 ### Recently Completed: LLM Enrichment System Refactor ✅
 **Enrichment System Refactor** (ALL PHASES COMPLETE - Dec 5, 2025):
