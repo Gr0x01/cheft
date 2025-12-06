@@ -6,6 +6,7 @@ import { EntityList } from './EntityList';
 import { ChefEditorPanel } from './ChefEditorPanel';
 import { RestaurantEditorPanel, RestaurantEditorHandle } from './RestaurantEditorPanel';
 import { Search, X, Loader2 } from 'lucide-react';
+import { Toaster } from 'sonner';
 
 type Chef = Database['public']['Tables']['chefs']['Row'];
 type Restaurant = Database['public']['Tables']['restaurants']['Row'];
@@ -355,6 +356,7 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
                   restaurant={selectedRestaurant} 
                   chefs={chefs.map(c => ({ id: c.id, name: c.name, slug: c.slug }))}
                   onDirtyChange={setHasUnsavedChanges}
+                  onClose={handleCloseEditor}
                 />
               )}
             </div>
@@ -388,6 +390,7 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
           </div>
         </div>
       )}
+      <Toaster position="bottom-right" />
     </div>
   );
 }

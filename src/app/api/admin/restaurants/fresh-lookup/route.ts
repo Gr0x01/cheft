@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { createGooglePlacesService, PlacePhoto } from '@/lib/services/google-places';
 
@@ -41,6 +42,11 @@ export async function POST(request: NextRequest) {
 
   const placesService = createGooglePlacesService({ apiKey });
 
+  const adminClient = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   try {
     const { placeId, confidence, matchedName } = await placesService.findPlaceId(
       restaurant.name,
@@ -74,7 +80,7 @@ export async function POST(request: NextRequest) {
       photoUrls = photos.filter((url: string | null): url is string => url !== null);
     }
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await adminClient
       .from('restaurants')
       .update({
         google_place_id: placeId,

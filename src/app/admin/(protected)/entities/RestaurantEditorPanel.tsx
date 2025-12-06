@@ -8,6 +8,7 @@ import { TextField } from '@/components/admin/forms/TextField';
 import { SelectField } from '@/components/admin/forms/SelectField';
 import { MultiInput } from '@/components/admin/forms/MultiInput';
 import { extractPlaceIdFromUrl } from '@/lib/utils/extract-place-id';
+import { toast } from 'sonner';
 import { 
   Store, 
   MapPin, 
@@ -24,6 +25,7 @@ interface RestaurantEditorPanelProps {
   restaurant: Restaurant;
   chefs: { id: string; name: string; slug: string }[];
   onDirtyChange?: (dirty: boolean) => void;
+  onClose?: () => void;
 }
 
 export interface RestaurantEditorHandle {
@@ -33,7 +35,7 @@ export interface RestaurantEditorHandle {
   isSaving: boolean;
 }
 
-export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, RestaurantEditorPanelProps>(function RestaurantEditorPanel({ restaurant, chefs, onDirtyChange }, ref) {
+export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, RestaurantEditorPanelProps>(function RestaurantEditorPanel({ restaurant, chefs, onDirtyChange, onClose }, ref) {
   const router = useRouter();
   const [formData, setFormData] = useState<Restaurant>(restaurant);
   const [saving, setSaving] = useState(false);
@@ -75,7 +77,13 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
     setRefreshing(true);
     setShowConfirmDialog(false);
 
+    const loadingToast = toast.loading('Refreshing restaurant data from Google Places...');
+
     try {
+      if (hasChanges) {
+        await handleSave();
+      }
+
       const response = await fetch('/api/admin/restaurants/fresh-lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -87,9 +95,19 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
         throw new Error(errorData.error || 'Failed to trigger lookup');
       }
 
+      const data = await response.json();
+      
       router.refresh();
+      
+      toast.success(data.message || 'Successfully refreshed restaurant data', {
+        id: loadingToast,
+      });
+      
+      onClose?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to refresh enrichment');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to refresh enrichment';
+      toast.error(errorMessage, { id: loadingToast });
+      setError(errorMessage);
     } finally {
       setRefreshing(false);
     }
