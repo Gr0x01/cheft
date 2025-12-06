@@ -71,28 +71,28 @@ export function MultiInput({
     <div className="space-y-1.5">
       <label
         htmlFor={name}
-        className="flex items-center gap-2 font-ui text-sm font-medium text-slate-700"
+        className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.1em] font-medium text-stone-500"
       >
         {label}
         {required && <span className="text-red-500">*</span>}
       </label>
 
       {values.length > 0 && (
-        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+        <div className="flex flex-wrap gap-2 p-3 bg-stone-50 border-2 border-stone-200">
           {values.map((value, index) => (
             <div
               key={index}
-              className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-mono text-sm text-slate-900"
+              className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border-2 border-stone-300 font-mono text-sm text-stone-900"
             >
               <span>{value}</span>
               <button
                 type="button"
                 onClick={() => removeItem(index)}
                 disabled={disabled}
-                className="p-0.5 hover:bg-slate-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-0.5 hover:bg-stone-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label={`Remove ${value}`}
               >
-                <X className="w-3.5 h-3.5 text-slate-500" />
+                <X className="w-3.5 h-3.5 text-stone-500" />
               </button>
             </div>
           ))}
@@ -110,17 +110,17 @@ export function MultiInput({
             placeholder={placeholder}
             disabled={disabled || !canAddMore}
             className={`
-              w-full px-4 py-2.5 font-mono text-sm
-              bg-white border rounded-lg
-              transition-all duration-200
-              placeholder:text-slate-400
-              disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed
+              w-full px-3 py-2 font-ui text-sm
+              bg-white border-2
+              transition-colors
+              placeholder:text-stone-300
+              disabled:bg-stone-100 disabled:text-stone-400 disabled:cursor-not-allowed
               ${
                 hasError
-                  ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
-                  : 'border-slate-300 focus:border-copper-500 focus:ring-2 focus:ring-copper-500/20'
+                  ? 'border-red-400 focus:border-red-500'
+                  : 'border-stone-200 focus:border-copper-600'
               }
-              hover:border-slate-400
+              hover:border-stone-300
               focus:outline-none
             `}
           />
@@ -135,7 +135,7 @@ export function MultiInput({
           type="button"
           onClick={addItem}
           disabled={disabled || !inputValue.trim() || !canAddMore}
-          className="px-4 py-2.5 bg-copper-500 hover:bg-copper-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-ui font-medium"
+          className="px-4 py-2 bg-copper-600 hover:bg-copper-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider"
         >
           <Plus className="w-4 h-4" />
           Add
@@ -143,18 +143,18 @@ export function MultiInput({
       </div>
 
       {hasError && (
-        <p className="font-ui text-sm text-red-600 flex items-center gap-1.5">
+        <p className="font-mono text-[10px] text-red-600 uppercase tracking-wider">
           {error}
         </p>
       )}
 
       {helperText && !hasError && (
-        <p className="font-ui text-xs text-slate-500">
+        <p className="font-ui text-xs text-stone-400">
           {helperText}
         </p>
       )}
 
-      <div className="flex items-center justify-between font-mono text-xs text-slate-400">
+      <div className="flex items-center justify-between font-mono text-[10px] text-stone-400">
         <span>{values.length} {values.length === 1 ? 'item' : 'items'}</span>
         {maxItems && <span>{maxItems - values.length} remaining</span>}
         {minItems && values.length < minItems && (
