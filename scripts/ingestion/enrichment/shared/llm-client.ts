@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 export interface LLMClientConfig {
   model?: string;
+  searchModel?: string;
   maxTokens?: number;
   maxSteps?: number;
   searchContextSize?: 'low' | 'medium' | 'high';
@@ -20,22 +21,33 @@ export interface LLMResponse {
   steps?: unknown[];
 }
 
-async function webSearch(query: string): Promise<string> {
-  const result = await generateText({
-    model: openai('gpt-4o-mini-search-preview'),
-    messages: [
-      { role: 'user', content: query },
-    ],
-    maxTokens: 4000,
-  });
-  return result.text;
-}
-
 export class LLMClient {
   private model: string;
+  private searchModel: string;
+  private searchTokens: { prompt: number; completion: number; total: number };
 
   constructor(config: LLMClientConfig = {}) {
-    this.model = config.model ?? 'gpt-4o-mini';
+    this.model = config.model ?? 'gpt-4.1';
+    this.searchModel = config.searchModel ?? 'gpt-4o-search-preview';
+    this.searchTokens = { prompt: 0, completion: 0, total: 0 };
+  }
+
+  private async webSearch(query: string): Promise<string> {
+    const result = await generateText({
+      model: openai(this.searchModel),
+      messages: [
+        { role: 'user', content: query },
+      ],
+      maxTokens: 4000,
+    });
+    this.searchTokens.prompt += result.usage?.promptTokens || 0;
+    this.searchTokens.completion += result.usage?.completionTokens || 0;
+    this.searchTokens.total += result.usage?.totalTokens || 0;
+    return result.text;
+  }
+
+  resetSearchTokens(): void {
+    this.searchTokens = { prompt: 0, completion: 0, total: 0 };
   }
 
   async generateWithWebSearch(
@@ -63,7 +75,7 @@ export class LLMClient {
           }),
           execute: async ({ query }) => {
             console.log(`      🔍 Searching: "${query}"`);
-            return await webSearch(query);
+            return await this.webSearch(query);
           },
         }),
       },
@@ -76,13 +88,23 @@ export class LLMClient {
       console.log(`      🔍 Performed ${searchCount} web searches`);
     }
 
+    const orchestratorTokens = {
+      prompt: result.usage?.promptTokens || 0,
+      completion: result.usage?.completionTokens || 0,
+      total: result.usage?.totalTokens || 0,
+    };
+
+    const combinedUsage = {
+      prompt: orchestratorTokens.prompt + this.searchTokens.prompt,
+      completion: orchestratorTokens.completion + this.searchTokens.completion,
+      total: orchestratorTokens.total + this.searchTokens.total,
+    };
+
+    this.resetSearchTokens();
+
     return {
       text: result.text,
-      usage: {
-        prompt: result.usage?.promptTokens || 0,
-        completion: result.usage?.completionTokens || 0,
-        total: result.usage?.totalTokens || 0,
-      },
+      usage: combinedUsage,
       finishReason: result.finishReason,
       steps: result.steps,
     };
@@ -90,5 +112,9 @@ export class LLMClient {
 
   getModel(): string {
     return this.model;
+  }
+
+  getSearchModel(): string {
+    return this.searchModel;
   }
 }

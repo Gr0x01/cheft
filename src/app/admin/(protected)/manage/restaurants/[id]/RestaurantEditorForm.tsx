@@ -18,9 +18,10 @@ import {
   ExternalLink,
   Loader2,
   ArrowLeft,
+  Shield,
 } from 'lucide-react';
 
-type Restaurant = Database['public']['Tables']['restaurants']['Row'];
+type Restaurant = Database['public']['Tables']['restaurants']['Row'] & { protected?: boolean };
 
 interface RestaurantEditorFormProps {
   restaurant: Restaurant;
@@ -69,6 +70,7 @@ export function RestaurantEditorForm({ restaurant, chefs }: RestaurantEditorForm
           google_review_count: formData.google_review_count,
           maps_url: formData.maps_url,
           michelin_stars: formData.michelin_stars,
+          protected: formData.protected,
         })
         .eq('id', restaurant.id);
 
@@ -303,6 +305,36 @@ export function RestaurantEditorForm({ restaurant, chefs }: RestaurantEditorForm
             ]}
             allowEmpty={false}
           />
+        </FieldSection>
+
+        <FieldSection
+          title="Protection"
+          description="Prevent automatic deletion during re-enrichment"
+          icon={Shield}
+        >
+          <div className="flex items-center justify-between py-3 px-4 bg-slate-50 rounded-lg border border-slate-200">
+            <div>
+              <p className="font-ui text-sm font-medium text-slate-900">Protected from enrichment</p>
+              <p className="font-ui text-xs text-slate-500 mt-0.5">
+                When enabled, this restaurant won&apos;t be deleted if the LLM doesn&apos;t find it during chef re-enrichment
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => updateField('protected', !(formData.protected ?? false))}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-copper-500 focus:ring-offset-2 ${
+                (formData.protected ?? false) ? 'bg-copper-500' : 'bg-slate-300'
+              }`}
+              role="switch"
+              aria-checked={formData.protected ?? false}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  (formData.protected ?? false) ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
         </FieldSection>
 
         <FieldSection

@@ -33,6 +33,7 @@ export interface RefreshStaleChefOutput {
   bioUpdated: boolean;
   showsUpdated: number;
   restaurantsUpdated: number;
+  restaurantsDeleted: number;
   statusesVerified: number;
   narrativeCreated: boolean;
 }
@@ -156,6 +157,7 @@ export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput
       bioUpdated: false,
       showsUpdated: 0,
       restaurantsUpdated: 0,
+      restaurantsDeleted: 0,
       statusesVerified: 0,
       narrativeCreated: false,
     };
@@ -250,18 +252,37 @@ export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput
 
         if (result.success && result.restaurants && !input.dryRun) {
           let newRestaurants = 0;
+          const foundRestaurantIds: string[] = [];
+          
           for (const restaurant of result.restaurants) {
             if (!restaurant.name || !restaurant.city) continue;
             
             const saveResult = await this.restaurantRepo.createRestaurant(input.chefId, restaurant);
-            if (saveResult.success && saveResult.isNew) {
-              newRestaurants++;
+            if (saveResult.success) {
+              if (saveResult.restaurantId) {
+                foundRestaurantIds.push(saveResult.restaurantId);
+              }
+              if (saveResult.isNew) {
+                newRestaurants++;
+              }
             }
           }
           output.restaurantsUpdated = newRestaurants;
+
+          try {
+            const staleResult = await this.restaurantRepo.deleteStaleRestaurants(input.chefId, foundRestaurantIds);
+            output.restaurantsDeleted = staleResult.deleted;
+          } catch (cleanupError) {
+            const cleanupMsg = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+            console.error(`   ⚠️  Stale cleanup failed (non-fatal): ${cleanupMsg}`);
+            this.addError('stale_cleanup_failed', cleanupMsg, false);
+          }
         }
 
-        this.completeStep(stepNum, result.tokensUsed, { restaurantsAdded: output.restaurantsUpdated });
+        this.completeStep(stepNum, result.tokensUsed, { 
+          restaurantsAdded: output.restaurantsUpdated,
+          restaurantsDeleted: output.restaurantsDeleted,
+        });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         this.failStep(stepNum, errorMessage);

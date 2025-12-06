@@ -208,4 +208,70 @@ export class RestaurantRepository {
 
     return { success: true };
   }
+
+  async getChefRestaurants(chefId: string): Promise<{ id: string; name: string; protected: boolean }[]> {
+    const { data, error } = await (this.supabase
+      .from('restaurants') as ReturnType<typeof this.supabase.from>)
+      .select('id, name, protected')
+      .eq('chef_id', chefId);
+
+    if (error) {
+      console.error(`Failed to fetch restaurants for chef ${chefId}: ${error.message}`);
+      return [];
+    }
+
+    return (data || []).map((r: { id: string; name: string; protected: boolean | null }) => ({
+      id: r.id,
+      name: r.name,
+      protected: r.protected ?? false,
+    }));
+  }
+
+  async deleteStaleRestaurants(
+    chefId: string,
+    keepIds: string[]
+  ): Promise<{ deleted: number; protected: number; deletedNames: string[] }> {
+    const existing = await this.getChefRestaurants(chefId);
+    
+    const toDelete = existing.filter(r => !keepIds.includes(r.id) && !r.protected);
+    const protectedCount = existing.filter(r => !keepIds.includes(r.id) && r.protected).length;
+
+    if (toDelete.length === 0) {
+      return { deleted: 0, protected: protectedCount, deletedNames: [] };
+    }
+
+    for (const restaurant of toDelete) {
+      const { data: fullRecord } = await (this.supabase
+        .from('restaurants') as ReturnType<typeof this.supabase.from>)
+        .select('*')
+        .eq('id', restaurant.id)
+        .single();
+
+      if (fullRecord) {
+        const auditEntry: AuditLogEntry = {
+          table_name: 'restaurants',
+          record_id: restaurant.id,
+          change_type: 'delete',
+          old_data: fullRecord,
+          new_data: undefined,
+          source: 'llm_enricher_stale_cleanup',
+          confidence: 1.0,
+        };
+        await logDataChange(this.supabase, auditEntry);
+      }
+
+      await (this.supabase
+        .from('restaurants') as ReturnType<typeof this.supabase.from>)
+        .delete()
+        .eq('id', restaurant.id);
+    }
+
+    const deletedNames = toDelete.map(r => r.name);
+    console.log(`      🗑️  Deleted ${toDelete.length} stale restaurants: ${deletedNames.join(', ')}`);
+    if (protectedCount > 0) {
+      console.log(`      🔒 Kept ${protectedCount} protected restaurants`);
+    }
+
+    return { deleted: toDelete.length, protected: protectedCount, deletedNames };
+  }
 }
