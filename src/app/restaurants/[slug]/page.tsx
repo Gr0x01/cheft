@@ -5,6 +5,7 @@ import { createStaticClient } from '@/lib/supabase/static';
 import { Header } from '@/components/ui/Header';
 import { RestaurantHero } from '@/components/restaurant/RestaurantHero';
 import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
+import { RestaurantMiniCard } from '@/components/restaurant/RestaurantMiniCard';
 import { MiniMapWrapper } from '@/components/restaurant/MiniMapWrapper';
 import { RestaurantSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 import { ReportIssueButton } from '@/components/feedback/ReportIssueButton';
@@ -405,61 +406,7 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {otherRestaurants.map(r => (
-                    <Link
-                      key={r.id}
-                      href={`/restaurants/${r.slug}`}
-                      className="group relative block bg-white overflow-hidden transition-all duration-300 hover:-translate-y-1"
-                    >
-                      <div 
-                        className="absolute top-0 left-0 w-1 h-full transition-all duration-300 group-hover:w-2"
-                        style={{ background: r.status === 'closed' ? 'var(--text-muted)' : 'var(--accent-primary)' }}
-                      />
-                      
-                      <div className={`p-4 pl-5 ${r.status === 'closed' ? 'opacity-60' : ''}`}>
-                        <div className="flex justify-between items-start gap-3">
-                          <div className="min-w-0">
-                            <h3 
-                              className={`font-display text-lg font-bold truncate transition-colors group-hover:text-[var(--accent-primary)] ${r.status === 'closed' ? 'line-through' : ''}`}
-                              style={{ color: 'var(--text-primary)' }}
-                            >
-                              {r.name}
-                            </h3>
-                            <p className="font-mono text-xs tracking-wide mt-1" style={{ color: 'var(--text-muted)' }}>
-                              {r.city}{r.state ? `, ${r.state}` : ''}
-                            </p>
-                          </div>
-                          {r.price_tier && (
-                            <span 
-                              className="font-mono text-sm font-bold flex-shrink-0"
-                              style={{ color: 'var(--accent-primary)' }}
-                            >
-                              {r.price_tier}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-between">
-                          {r.google_rating ? (
-                            <div className="flex items-center gap-1" style={{ color: '#f59e0b' }}>
-                              <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                              </svg>
-                              <span className="font-mono text-sm font-bold">{r.google_rating}</span>
-                            </div>
-                          ) : (
-                            <span />
-                          )}
-                          <span 
-                            className="font-mono text-xs font-semibold tracking-wide transition-transform group-hover:translate-x-1"
-                            style={{ color: 'var(--accent-primary)' }}
-                          >
-                            VIEW →
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="absolute inset-0 border-2 border-transparent transition-colors duration-300 pointer-events-none group-hover:border-[var(--accent-primary)]" />
-                    </Link>
+                    <RestaurantMiniCard key={r.id} restaurant={r} bordered />
                   ))}
                 </div>
               </div>
