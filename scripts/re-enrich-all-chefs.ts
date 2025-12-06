@@ -10,7 +10,7 @@
  * Options:
  *   --limit=N          Process only N chefs (default: all)
  *   --offset=N         Skip first N chefs (default: 0)
- *   --scope=TYPE       What to enrich: full, bio, shows, restaurants, status (default: full)
+ *   --scope=TYPE       What to enrich: full, bio, shows, restaurants, status, narrative (default: full)
  *   --batch=N          Process N chefs in parallel (default: 1, recommended: 5-10)
  *   --dry-run          Preview what would happen without making changes
  * 
@@ -53,7 +53,7 @@ async function main() {
   const dryRun = args.includes('--dry-run');
 
   console.log('🔄 Re-enriching all chefs...\n');
-  console.log(`   Scope: ${scope} (bio, shows, restaurants)`);
+  console.log(`   Scope: ${scope} (bio, shows, restaurants, narrative)`);
   console.log(`   Limit: ${limit === 999999 ? 'all' : limit}`);
   console.log(`   Offset: ${offset}`);
   console.log(`   Batch size: ${batchSize} (parallel processing)`);
@@ -89,19 +89,21 @@ async function main() {
 
   const enricher = createLLMEnricher(supabase, {
     model: 'gpt-4o-mini',
+    maxRestaurantsPerChef: 999,
   });
 
   let totalSuccess = 0;
   let totalFailed = 0;
   let totalShowsSaved = 0;
   let totalRestaurantsSaved = 0;
+  let totalNarrativesCreated = 0;
 
   async function processChef(chef: { id: string; name: string }, index: number) {
     console.log(`\n[${index + 1}/${chefs.length}] Re-enriching: ${chef.name}`);
 
     if (dryRun) {
       console.log(`   🔍 Would enrich ${scope} data for ${chef.name}`);
-      return { success: true, showsSaved: 0, restaurantsSaved: 0 };
+      return { success: true, showsSaved: 0, restaurantsSaved: 0, narrativesCreated: 0 };
     }
 
     try {
@@ -110,6 +112,7 @@ async function main() {
         shows: scope === 'full' || scope === 'shows',
         restaurants: scope === 'full' || scope === 'restaurants',
         restaurantStatus: scope === 'status',
+        narrative: scope === 'full' || scope === 'narrative',
       };
 
       const result = await enricher.workflows.refreshStaleChef({
@@ -122,6 +125,7 @@ async function main() {
       if (result.success) {
         const showsSaved = result.output?.showsUpdated || 0;
         const restaurantsSaved = result.output?.restaurantsUpdated || 0;
+        const narrativesCreated = result.output?.narrativeCreated ? 1 : 0;
         
         if (result.output) {
           console.log(`   ✅ Success:`);
@@ -129,18 +133,19 @@ async function main() {
           if (result.output.showsUpdated) console.log(`      - Shows: ${result.output.showsUpdated} updated`);
           if (result.output.restaurantsUpdated) console.log(`      - Restaurants: ${result.output.restaurantsUpdated} updated`);
           if (result.output.statusesVerified) console.log(`      - Statuses: ${result.output.statusesVerified} verified`);
+          if (result.output.narrativeCreated) console.log(`      - Narrative created`);
         }
         console.log(`   📊 Cost: $${result.totalCost.estimatedUsd.toFixed(4)} (${result.totalCost.tokens.total.toLocaleString()} tokens)`);
         console.log(`   ⏱️  Duration: ${(result.durationMs / 1000).toFixed(1)}s`);
         
-        return { success: true, showsSaved, restaurantsSaved };
+        return { success: true, showsSaved, restaurantsSaved, narrativesCreated };
       } else {
         console.log(`   ❌ Failed: ${result.errors?.[0] || 'Unknown error'}`);
-        return { success: false, showsSaved: 0, restaurantsSaved: 0 };
+        return { success: false, showsSaved: 0, restaurantsSaved: 0, narrativesCreated: 0 };
       }
     } catch (error) {
       console.log(`   ❌ Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      return { success: false, showsSaved: 0, restaurantsSaved: 0 };
+      return { success: false, showsSaved: 0, restaurantsSaved: 0, narrativesCreated: 0 };
     }
   }
 
@@ -160,6 +165,7 @@ async function main() {
         totalSuccess++;
         totalShowsSaved += result.showsSaved;
         totalRestaurantsSaved += result.restaurantsSaved;
+        totalNarrativesCreated += result.narrativesCreated;
       } else {
         totalFailed++;
       }
@@ -181,6 +187,7 @@ async function main() {
   console.log(`Failed: ${totalFailed}`);
   console.log(`Total shows saved: ${totalShowsSaved}`);
   console.log(`Total restaurants saved: ${totalRestaurantsSaved}`);
+  console.log(`Total narratives created: ${totalNarrativesCreated}`);
   console.log(`\nTokens used: ${tokens.total.toLocaleString()}`);
   console.log(`Actual cost: $${cost.toFixed(2)}`);
   console.log(`Model: ${enricher.getModelName()}`);
