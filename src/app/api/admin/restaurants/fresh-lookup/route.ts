@@ -90,6 +90,8 @@ export async function POST(request: NextRequest) {
         maps_url: details.googleMapsUri || null,
         photo_urls: photoUrls.length > 0 ? photoUrls : restaurant.photo_urls,
         address: details.formattedAddress || restaurant.address,
+        lat: details.lat || restaurant.lat,
+        lng: details.lng || restaurant.lng,
         last_verified_at: new Date().toISOString(),
       })
       .eq('id', restaurantId);
