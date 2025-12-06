@@ -28,9 +28,10 @@ interface RestaurantCardCompactProps {
     } | null;
   };
   index?: number;
+  asButton?: boolean;
 }
 
-export function RestaurantCardCompact({ restaurant, index = 0 }: RestaurantCardCompactProps) {
+export function RestaurantCardCompact({ restaurant, index = 0, asButton = false }: RestaurantCardCompactProps) {
   const status = getRestaurantStatus(restaurant.status);
   const chefAchievements = restaurant.chef ? getChefAchievements(restaurant.chef) : { isShowWinner: false, isJBWinner: false, isJBNominee: false, isJBSemifinalist: false };
   
@@ -40,12 +41,8 @@ export function RestaurantCardCompact({ restaurant, index = 0 }: RestaurantCardC
   const sanitizedChefName = restaurant.chef ? sanitizeText(restaurant.chef.name) : '';
   const photoUrl = getStorageUrl('restaurant-photos', restaurant.photo_urls?.[0]);
 
-  return (
-    <Link
-      href={`/restaurants/${restaurant.slug}`}
-      className="compact-card group"
-      style={{ animationDelay: `${index * 50}ms` }}
-    >
+  const content = (
+    <>
       <div className="compact-image-wrapper" data-closed={status.isClosed ? "true" : undefined}>
         {photoUrl ? (
           <Image
@@ -122,6 +119,27 @@ export function RestaurantCardCompact({ restaurant, index = 0 }: RestaurantCardC
           </div>
         )}
       </div>
+    </>
+  );
+
+  if (asButton) {
+    return (
+      <div 
+        className="compact-card group"
+        style={{ animationDelay: `${index * 50}ms` }}
+      >
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={`/restaurants/${restaurant.slug}`}
+      className="compact-card group"
+      style={{ animationDelay: `${index * 50}ms` }}
+    >
+      {content}
     </Link>
   );
 }

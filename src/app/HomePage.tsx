@@ -174,7 +174,7 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef }: Home
                 tabIndex={0}
                 aria-label={`View ${restaurant.name} in ${restaurant.city}`}
               >
-                <RestaurantCardCompact restaurant={restaurant} index={index} />
+                <RestaurantCardCompact restaurant={restaurant} index={index} asButton={true} />
               </div>
             ))}
             {visibleCount < filteredRestaurants.length && (
