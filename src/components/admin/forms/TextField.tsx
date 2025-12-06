@@ -40,7 +40,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
       <div className="space-y-1.5">
         <label
           htmlFor={name}
-          className="flex items-center gap-2 font-ui text-sm font-medium text-slate-700"
+          className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.1em] font-medium text-stone-500"
         >
           {label}
           {required && <span className="text-red-500">*</span>}
@@ -58,42 +58,42 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
             disabled={disabled}
             maxLength={maxLength}
             className={`
-              w-full px-4 py-2.5 font-mono text-sm
-              bg-white border rounded-lg
-              transition-all duration-200
-              placeholder:text-slate-400
-              disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed
+              w-full px-3 py-2 font-ui text-sm
+              bg-white border-2
+              transition-colors
+              placeholder:text-stone-300
+              disabled:bg-stone-100 disabled:text-stone-400 disabled:cursor-not-allowed
               ${
                 hasError
-                  ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
-                  : 'border-slate-300 focus:border-copper-500 focus:ring-2 focus:ring-copper-500/20'
+                  ? 'border-red-400 focus:border-red-500'
+                  : 'border-stone-200 focus:border-copper-600'
               }
-              hover:border-slate-400
+              hover:border-stone-300
               focus:outline-none
             `}
           />
           
           {hasError && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <AlertCircle className="w-5 h-5 text-red-500" />
+              <AlertCircle className="w-4 h-4 text-red-500" />
             </div>
           )}
         </div>
 
         {hasError && (
-          <p className="font-ui text-sm text-red-600 flex items-center gap-1.5">
+          <p className="font-mono text-[10px] text-red-600 uppercase tracking-wider">
             {error}
           </p>
         )}
 
         {helperText && !hasError && (
-          <p className="font-ui text-xs text-slate-500">
+          <p className="font-ui text-xs text-stone-400">
             {helperText}
           </p>
         )}
 
         {maxLength && !hasError && (
-          <p className="font-mono text-xs text-slate-400 text-right">
+          <p className="font-mono text-[10px] text-stone-400 text-right">
             {value?.toString().length || 0} / {maxLength}
           </p>
         )}

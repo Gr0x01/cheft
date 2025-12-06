@@ -14,7 +14,6 @@ import {
   DollarSign, 
   Star,
   Save,
-  X,
   ExternalLink,
   Loader2,
 } from 'lucide-react';
@@ -90,42 +89,41 @@ export function RestaurantEditorPanel({ restaurant, chefs, onDirtyChange }: Rest
 
   return (
     <div className="flex flex-col h-full">
-      <div className="sticky top-0 z-10 bg-white border-b border-slate-200 px-6 py-3">
+      <div className="sticky top-0 z-10 bg-white border-b-2 border-stone-200 px-5 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             {restaurant.slug && (
               <a
                 href={`/restaurants/${restaurant.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-copper-600 transition-colors"
+                className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-stone-400 hover:text-copper-600 transition-colors"
               >
-                <ExternalLink className="w-4 h-4" />
+                <ExternalLink className="w-3 h-3" />
                 View Live
               </a>
             )}
             {hasChanges && (
-              <span className="text-sm text-amber-600 font-medium">• Unsaved</span>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-amber-600">Unsaved</span>
             )}
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handleDiscard}
               disabled={saving || !hasChanges}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="font-mono text-[10px] uppercase tracking-wider px-3 py-1.5 text-stone-500 hover:text-stone-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <X className="w-4 h-4" />
               Discard
             </button>
             <button
               onClick={handleSave}
               disabled={saving || !hasChanges}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 text-sm bg-copper-500 hover:bg-copper-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider px-4 py-1.5 bg-copper-600 hover:bg-copper-700 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-3 h-3 animate-spin" />
               ) : (
-                <Save className="w-4 h-4" />
+                <Save className="w-3 h-3" />
               )}
               Save
             </button>
@@ -134,8 +132,8 @@ export function RestaurantEditorPanel({ restaurant, chefs, onDirtyChange }: Rest
       </div>
 
       {error && (
-        <div className="mx-6 mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
-          <p className="font-ui text-sm text-red-800">{error}</p>
+        <div className="mx-5 mt-4 bg-red-50 border-2 border-red-200 p-3">
+          <p className="font-mono text-xs text-red-700">{error}</p>
         </div>
       )}
 
