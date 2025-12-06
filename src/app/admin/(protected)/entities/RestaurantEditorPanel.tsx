@@ -97,6 +97,8 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
 
       const data = await response.json();
       
+      setFormData(restaurant);
+      
       router.refresh();
       
       toast.success(data.message || 'Successfully refreshed restaurant data', {
