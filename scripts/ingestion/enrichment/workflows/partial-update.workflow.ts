@@ -3,6 +3,7 @@ import { Database } from '../../../../src/lib/database.types';
 import { BaseWorkflow } from './base-workflow';
 import { CostEstimate, ValidationResult } from '../types/workflow-types';
 import { ShowDiscoveryService } from '../services/show-discovery-service';
+import { ShowDescriptionService } from '../services/show-description-service';
 import { RestaurantDiscoveryService } from '../services/restaurant-discovery-service';
 import { NarrativeService } from '../services/narrative-service';
 import { ChefRepository } from '../repositories/chef-repository';
@@ -33,6 +34,7 @@ export interface PartialUpdateOutput {
 export class PartialUpdateWorkflow extends BaseWorkflow<PartialUpdateInput, PartialUpdateOutput> {
   private supabase: SupabaseClient<Database>;
   private showDiscoveryService: ShowDiscoveryService;
+  private showDescriptionService: ShowDescriptionService;
   private restaurantDiscoveryService: RestaurantDiscoveryService;
   private narrativeService: NarrativeService;
   private chefRepo: ChefRepository;
@@ -56,13 +58,15 @@ export class PartialUpdateWorkflow extends BaseWorkflow<PartialUpdateInput, Part
     const tokenTracker = TokenTracker.getInstance();
     const maxRestaurants = options.maxRestaurants || 10;
 
-    this.showDiscoveryService = new ShowDiscoveryService(llmClient, tokenTracker);
-    this.restaurantDiscoveryService = new RestaurantDiscoveryService(llmClient, tokenTracker, maxRestaurants);
-    this.narrativeService = new NarrativeService(tokenTracker);
     this.chefRepo = new ChefRepository(supabase);
     this.restaurantRepo = new RestaurantRepository(supabase);
     this.showRepo = new ShowRepository(supabase);
     this.cityRepo = new CityRepository(supabase);
+    
+    this.showDiscoveryService = new ShowDiscoveryService(llmClient, tokenTracker);
+    this.showDescriptionService = new ShowDescriptionService(tokenTracker, this.showRepo);
+    this.restaurantDiscoveryService = new RestaurantDiscoveryService(llmClient, tokenTracker, maxRestaurants);
+    this.narrativeService = new NarrativeService(tokenTracker);
   }
 
   validate(input: PartialUpdateInput): ValidationResult {
@@ -162,8 +166,38 @@ export class PartialUpdateWorkflow extends BaseWorkflow<PartialUpdateInput, Part
       const result = await this.showDiscoveryService.findAllShows(input.targetId, input.targetName);
 
       if (result.success && result.tvShows && !input.dryRun) {
-        const { saved, skipped } = await this.showRepo.saveChefShows(input.targetId, result.tvShows);
+        const { saved, skipped, newCombinations } = await this.showRepo.saveChefShows(input.targetId, result.tvShows);
         output.itemsUpdated = saved;
+        
+        if (newCombinations.length > 0 && !input.dryRun) {
+          console.log(`   🔄 Generating SEO descriptions for ${newCombinations.length} new show/season pages...`);
+          for (const { showId, season } of newCombinations) {
+            const show = await this.supabase.from('shows').select('name, network').eq('id', showId).single();
+            if (show.data && season) {
+              const { data: seasonData } = await this.supabase
+                .from('chef_shows')
+                .select('chef:chefs(id, name), result')
+                .eq('show_id', showId)
+                .eq('season', season)
+                .eq('result', 'winner')
+                .maybeSingle();
+              
+              const context = {
+                showName: show.data.name,
+                season,
+                network: show.data.network,
+                winner: seasonData?.chef ? { name: (seasonData.chef as any).name, chefId: (seasonData.chef as any).id } : null,
+                chefCount: 1,
+                restaurantCount: 0,
+              };
+              await this.showDescriptionService.ensureSeasonDescription(showId, season, context);
+            } else if (show.data && !season) {
+              await this.showDescriptionService.ensureShowDescription(showId, show.data.name, show.data.network);
+            }
+          }
+          const cost = newCombinations.length * 0.02;
+          console.log(`   💰 SEO generation cost: $${cost.toFixed(2)}`);
+        }
         
         await this.chefRepo.setEnrichmentTimestamp(input.targetId);
       }

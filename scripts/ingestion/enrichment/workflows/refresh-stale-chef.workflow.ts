@@ -6,6 +6,7 @@ import { ChefBioService } from '../services/chef-bio-service';
 import { RestaurantDiscoveryService } from '../services/restaurant-discovery-service';
 import { ShowDiscoveryService } from '../services/show-discovery-service';
 import { StatusVerificationService } from '../services/status-verification-service';
+import { ShowDescriptionService } from '../services/show-description-service';
 import { ChefRepository } from '../repositories/chef-repository';
 import { RestaurantRepository } from '../repositories/restaurant-repository';
 import { ShowRepository } from '../repositories/show-repository';
@@ -39,6 +40,7 @@ export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput
   private restaurantDiscoveryService: RestaurantDiscoveryService;
   private showDiscoveryService: ShowDiscoveryService;
   private statusVerificationService: StatusVerificationService;
+  private showDescriptionService: ShowDescriptionService;
   private chefRepo: ChefRepository;
   private restaurantRepo: RestaurantRepository;
   private showRepo: ShowRepository;
@@ -59,13 +61,15 @@ export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput
     const tokenTracker = TokenTracker.getInstance();
     const maxRestaurants = options.maxRestaurants || 10;
 
+    this.chefRepo = new ChefRepository(supabase);
+    this.restaurantRepo = new RestaurantRepository(supabase);
+    this.showRepo = new ShowRepository(supabase);
+    
     this.chefBioService = new ChefBioService(llmClient, tokenTracker);
     this.restaurantDiscoveryService = new RestaurantDiscoveryService(llmClient, tokenTracker, maxRestaurants);
     this.showDiscoveryService = new ShowDiscoveryService(llmClient, tokenTracker);
     this.statusVerificationService = new StatusVerificationService(llmClient, tokenTracker);
-    this.chefRepo = new ChefRepository(supabase);
-    this.restaurantRepo = new RestaurantRepository(supabase);
-    this.showRepo = new ShowRepository(supabase);
+    this.showDescriptionService = new ShowDescriptionService(tokenTracker, this.showRepo);
   }
 
   validate(input: RefreshStaleChefInput): ValidationResult {
@@ -180,8 +184,38 @@ export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput
         const result = await this.showDiscoveryService.findAllShows(input.chefId, input.chefName);
 
         if (result.success && result.tvShows && !input.dryRun) {
-          const { saved, skipped } = await this.showRepo.saveChefShows(input.chefId, result.tvShows);
+          const { saved, skipped, newCombinations } = await this.showRepo.saveChefShows(input.chefId, result.tvShows);
           output.showsUpdated = saved;
+          
+          if (newCombinations.length > 0) {
+            console.log(`   🔄 Generating SEO descriptions for ${newCombinations.length} new show/season pages...`);
+            for (const { showId, season } of newCombinations) {
+              const show = await this.supabase.from('shows').select('name, network').eq('id', showId).single();
+              if (show.data && season) {
+                const { data: seasonData } = await this.supabase
+                  .from('chef_shows')
+                  .select('chef:chefs(id, name), result')
+                  .eq('show_id', showId)
+                  .eq('season', season)
+                  .eq('result', 'winner')
+                  .maybeSingle();
+                
+                const context = {
+                  showName: show.data.name,
+                  season,
+                  network: show.data.network,
+                  winner: seasonData?.chef ? { name: (seasonData.chef as any).name, chefId: (seasonData.chef as any).id } : null,
+                  chefCount: 1,
+                  restaurantCount: 0,
+                };
+                await this.showDescriptionService.ensureSeasonDescription(showId, season, context);
+              } else if (show.data && !season) {
+                await this.showDescriptionService.ensureShowDescription(showId, show.data.name, show.data.network);
+              }
+            }
+            const cost = newCombinations.length * 0.02;
+            console.log(`   💰 SEO generation cost: $${cost.toFixed(2)}`);
+          }
         }
 
         this.completeStep(stepNum, result.tokensUsed, { showsSaved: output.showsUpdated });

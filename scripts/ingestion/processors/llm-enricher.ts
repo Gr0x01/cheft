@@ -12,6 +12,7 @@ import { RestaurantDiscoveryService, RestaurantOnlyResult } from '../enrichment/
 import { ShowDiscoveryService, TVShowBasic } from '../enrichment/services/show-discovery-service';
 import { BlurbEnrichmentService } from '../enrichment/services/blurb-enrichment-service';
 import { StatusVerificationService, RestaurantStatusResult } from '../enrichment/services/status-verification-service';
+import { ShowDescriptionService, ShowDescriptionResult } from '../enrichment/services/show-description-service';
 import { NarrativeService } from '../enrichment/services/narrative-service';
 import { RefreshStaleChefWorkflow } from '../enrichment/workflows/refresh-stale-chef.workflow';
 import { RestaurantStatusSweepWorkflow } from '../enrichment/workflows/restaurant-status-sweep.workflow';
@@ -19,7 +20,7 @@ import { PartialUpdateWorkflow } from '../enrichment/workflows/partial-update.wo
 import { ManualChefAdditionWorkflow } from '../enrichment/workflows/manual-chef-addition.workflow';
 import type { WorkflowResult } from '../enrichment/types/workflow-types';
 
-export type { ChefBioResult, RestaurantStatusResult, RestaurantOnlyResult };
+export type { ChefBioResult, RestaurantStatusResult, RestaurantOnlyResult, ShowDescriptionResult };
 export type { WorkflowResult };
 
 
@@ -48,6 +49,7 @@ export function createLLMEnricher(
   const showDiscoveryService = new ShowDiscoveryService(llmClient, tokenTracker);
   const blurbEnrichmentService = new BlurbEnrichmentService(llmClient, tokenTracker);
   const statusVerificationService = new StatusVerificationService(llmClient, tokenTracker);
+  const showDescriptionService = new ShowDescriptionService(tokenTracker, showRepo);
   const narrativeService = new NarrativeService(tokenTracker);
   
   let totalTokensUsed: TokenUsage = { prompt: 0, completion: 0, total: 0 };
@@ -462,6 +464,41 @@ export function createLLMEnricher(
     return result;
   }
 
+  async function generateShowDescription(
+    showId: string,
+    showName: string,
+    network: string | null
+  ): Promise<ShowDescriptionResult> {
+    const result = await showDescriptionService.generateShowDescription(showId, showName, network);
+    
+    totalTokensUsed.prompt += result.tokensUsed.prompt;
+    totalTokensUsed.completion += result.tokensUsed.completion;
+    totalTokensUsed.total += result.tokensUsed.total;
+    
+    return result;
+  }
+
+  async function generateSeasonDescription(
+    showId: string,
+    season: string,
+    context: {
+      showName: string;
+      season: string;
+      network: string | null;
+      winner: { name: string; chefId: string } | null;
+      chefCount: number;
+      restaurantCount: number;
+    }
+  ): Promise<ShowDescriptionResult> {
+    const result = await showDescriptionService.generateSeasonDescription(showId, season, context);
+    
+    totalTokensUsed.prompt += result.tokensUsed.prompt;
+    totalTokensUsed.completion += result.tokensUsed.completion;
+    totalTokensUsed.total += result.tokensUsed.total;
+    
+    return result;
+  }
+
   return {
     enrichChefBioOnly,
     findAndSaveRestaurants,
@@ -473,6 +510,8 @@ export function createLLMEnricher(
     enrichChefNarrative,
     enrichRestaurantNarrative,
     enrichCityNarrative,
+    generateShowDescription,
+    generateSeasonDescription,
     getTotalTokensUsed,
     estimateCost,
     resetTokenCounter,

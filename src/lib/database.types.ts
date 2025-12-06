@@ -670,6 +670,9 @@ export interface Database {
           slug: string;
           network: string | null;
           wikipedia_source: string | null;
+          description: string | null;
+          season_descriptions: Json | null;
+          seo_generated_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -678,6 +681,9 @@ export interface Database {
           slug: string;
           network?: string | null;
           wikipedia_source?: string | null;
+          description?: string | null;
+          season_descriptions?: Json | null;
+          seo_generated_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -686,6 +692,9 @@ export interface Database {
           slug?: string;
           network?: string | null;
           wikipedia_source?: string | null;
+          description?: string | null;
+          season_descriptions?: Json | null;
+          seo_generated_at?: string | null;
           created_at?: string;
         };
         Relationships: [];

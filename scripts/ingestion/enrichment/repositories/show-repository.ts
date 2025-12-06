@@ -6,7 +6,7 @@ const TVShowAppearanceSchema = z.object({
   showName: z.string(),
   season: z.string().nullable().optional(),
   result: z.enum(['winner', 'finalist', 'contestant', 'judge']).nullable().optional(),
-  performanceBlurb: z.string().optional(),
+  performanceBlurb: z.string().nullable().optional(),
 });
 
 export type TVShowAppearance = z.infer<typeof TVShowAppearanceSchema>;
@@ -81,13 +81,14 @@ export class ShowRepository {
   async saveChefShows(
     chefId: string,
     tvShows: TVShowAppearance[]
-  ): Promise<{ saved: number; skipped: number }> {
+  ): Promise<{ saved: number; skipped: number; newCombinations: Array<{ showId: string; season: string | null }> }> {
     if (!tvShows || tvShows.length === 0) {
-      return { saved: 0, skipped: 0 };
+      return { saved: 0, skipped: 0, newCombinations: [] };
     }
 
     let saved = 0;
     let skipped = 0;
+    const newCombinations: Array<{ showId: string; season: string | null }> = [];
 
     for (const show of tvShows) {
       const showId = await this.findShowByName(show.showName);
@@ -98,6 +99,28 @@ export class ShowRepository {
       }
 
       const seasonValue = show.season ?? null;
+      
+      let isFirstTimeCombo = false;
+      
+      if (seasonValue === null) {
+        const { data: showData } = await this.supabase
+          .from('shows')
+          .select('description')
+          .eq('id', showId)
+          .maybeSingle();
+        
+        isFirstTimeCombo = !showData?.description;
+      } else {
+        const { data: showData } = await this.supabase
+          .from('shows')
+          .select('season_descriptions')
+          .eq('id', showId)
+          .maybeSingle();
+        
+        const seasonDescriptions = (showData?.season_descriptions as Record<string, string>) || {};
+        isFirstTimeCombo = !seasonDescriptions[seasonValue];
+      }
+      
       let query = this.supabase
         .from('chef_shows')
         .select('id')
@@ -146,10 +169,14 @@ export class ShowRepository {
       } else {
         saved++;
         console.log(`      ✅ Added show: ${show.showName}${show.season ? ' ' + show.season : ''}`);
+        
+        if (isFirstTimeCombo) {
+          newCombinations.push({ showId, season: seasonValue });
+        }
       }
     }
 
-    return { saved, skipped };
+    return { saved, skipped, newCombinations };
   }
 
   async checkExistingShow(
@@ -173,5 +200,84 @@ export class ShowRepository {
     const { data } = await query.maybeSingle();
 
     return !!data;
+  }
+
+  async getShowDescription(showId: string): Promise<string | null> {
+    const { data } = await this.supabase
+      .from('shows')
+      .select('description')
+      .eq('id', showId)
+      .maybeSingle();
+
+    return data?.description || null;
+  }
+
+  async saveShowDescription(showId: string, description: string): Promise<void> {
+    const { data: existingShow, error: showError } = await this.supabase
+      .from('shows')
+      .select('id')
+      .eq('id', showId)
+      .maybeSingle();
+
+    if (showError || !existingShow) {
+      throw new Error(`Show with ID ${showId} not found`);
+    }
+
+    const { error } = await this.supabase
+      .from('shows')
+      .update({
+        description,
+        seo_generated_at: new Date().toISOString(),
+      })
+      .eq('id', showId);
+
+    if (error) {
+      throw new Error(`Failed to save show description: ${error.message}`);
+    }
+  }
+
+  async getSeasonDescription(showId: string, season: string): Promise<string | null> {
+    const { data } = await this.supabase
+      .from('shows')
+      .select('season_descriptions')
+      .eq('id', showId)
+      .maybeSingle();
+
+    if (!data?.season_descriptions) {
+      return null;
+    }
+
+    const descriptions = data.season_descriptions as Record<string, string>;
+    return descriptions[season] || null;
+  }
+
+  async saveSeasonDescription(showId: string, season: string, description: string): Promise<void> {
+    const { data: existingData, error: showError } = await this.supabase
+      .from('shows')
+      .select('season_descriptions')
+      .eq('id', showId)
+      .maybeSingle();
+
+    if (showError || !existingData) {
+      throw new Error(`Show with ID ${showId} not found`);
+    }
+
+    const existingDescriptions = (existingData.season_descriptions as Record<string, string>) || {};
+    const updatedDescriptions = {
+      ...existingDescriptions,
+      [season]: description,
+    };
+
+    const { error } = await this.supabase
+      .from('shows')
+      .update({
+        season_descriptions: updatedDescriptions,
+        seo_generated_at: new Date().toISOString(),
+      })
+      .eq('id', showId);
+
+    if (error) {
+      throw new Error(`Failed to save season description: ${error.message}`);
+    }
   }
 }
