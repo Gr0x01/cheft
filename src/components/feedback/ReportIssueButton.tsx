@@ -7,6 +7,7 @@ interface ReportIssueButtonProps {
   entityType: 'chef' | 'restaurant';
   entityId: string;
   entityName: string;
+  variant?: 'default' | 'header';
 }
 
 type IssueType = 'closed' | 'incorrect_info' | 'wrong_photo' | 'other';
@@ -18,7 +19,7 @@ const issueOptions: { value: IssueType; label: string; forType?: 'restaurant' | 
   { value: 'other', label: 'Other Issue' },
 ];
 
-export function ReportIssueButton({ entityType, entityId, entityName }: ReportIssueButtonProps) {
+export function ReportIssueButton({ entityType, entityId, entityName, variant = 'default' }: ReportIssueButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<IssueType | null>(null);
   const [message, setMessage] = useState('');
@@ -66,20 +67,34 @@ export function ReportIssueButton({ entityType, entityId, entityName }: ReportIs
     }
   };
 
+  const isHeader = variant === 'header';
+
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center gap-2 font-mono text-sm font-semibold px-4 py-2 transition-all hover:brightness-95"
-        style={{
+        className={`inline-flex items-center gap-2 font-mono text-sm font-semibold transition-all ${
+          isHeader 
+            ? 'p-2 sm:px-4 sm:py-2 hover:bg-white/10 hover:border-white/40'
+            : 'px-4 py-2 hover:brightness-95'
+        }`}
+        style={isHeader ? {
+          background: 'rgba(255,255,255,0.05)',
+          color: 'rgba(255,255,255,0.6)',
+          border: '1px solid rgba(255,255,255,0.15)',
+        } : {
           background: 'var(--bg-secondary)',
           color: 'var(--text-primary)',
           border: '2px solid var(--border-light)',
         }}
+        aria-label="Report an issue with this page"
+        title="Report an issue with this page"
       >
         <Flag className="w-4 h-4" />
-        REPORT ISSUE
-        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <span className={isHeader ? 'hidden sm:inline' : ''}>
+          REPORT ISSUE
+        </span>
+        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''} ${isHeader ? 'hidden sm:block' : ''}`} />
       </button>
 
       {isOpen && (

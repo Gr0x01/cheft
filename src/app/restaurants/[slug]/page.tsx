@@ -306,6 +306,8 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
               { label: 'Restaurants', href: '/restaurants' },
               { label: restaurant.name },
             ]}
+            restaurantId={restaurant.id}
+            restaurantName={restaurant.name}
           />
 
           {/* About This Restaurant - Narrative */}
@@ -381,11 +383,6 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
                       VISIT WEBSITE
                     </a>
                   )}
-                  <ReportIssueButton 
-                    entityType="restaurant" 
-                    entityId={restaurant.id} 
-                    entityName={restaurant.name}
-                  />
                 </div>
               </div>
             </section>

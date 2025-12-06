@@ -292,6 +292,8 @@ export default async function ChefPage({ params }: ChefPageProps) {
               { label: 'Chefs', href: '/chefs' },
               { label: chef.name },
             ]}
+            chefId={chef.id}
+            chefName={chef.name}
           />
 
           {/* Photo Attribution */}
@@ -370,16 +372,9 @@ export default async function ChefPage({ params }: ChefPageProps) {
               style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
             >
               <div className="max-w-6xl mx-auto px-4">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                    TV Appearances
-                  </h2>
-                  <ReportIssueButton 
-                    entityType="chef" 
-                    entityId={chef.id} 
-                    entityName={chef.name}
-                  />
-                </div>
+                <h2 className="font-display text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
+                  TV Appearances
+                </h2>
                 <TVAppearanceList appearances={chef.chef_shows} />
               </div>
             </section>

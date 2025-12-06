@@ -8,9 +8,12 @@ import { getRestaurantStatus, getChefAchievements, sanitizeText, validateImageUr
 import { getStorageUrl } from '@/lib/utils/storage';
 import { PhotoGalleryModal } from './PhotoGalleryModal';
 import { GoogleMapsLogo } from '@/components/icons/GoogleMapsLogo';
+import { ReportIssueButton } from '../feedback/ReportIssueButton';
 
 interface RestaurantHeroProps {
   breadcrumbItems?: Array<{ label: string; href?: string }>;
+  restaurantId?: string;
+  restaurantName?: string;
   restaurant: {
     name: string;
     address?: string | null;
@@ -41,7 +44,7 @@ interface RestaurantHeroProps {
   };
 }
 
-export function RestaurantHero({ restaurant, breadcrumbItems }: RestaurantHeroProps) {
+export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, restaurantName }: RestaurantHeroProps) {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   
@@ -82,12 +85,26 @@ export function RestaurantHero({ restaurant, breadcrumbItems }: RestaurantHeroPr
       />
 
       <div className="relative max-w-6xl mx-auto px-4 py-12 sm:py-16">
-        {breadcrumbItems && (
-          <Breadcrumbs
-            items={breadcrumbItems}
-            className="mb-8 [&_a]:text-white/50 [&_a:hover]:text-white [&_span]:text-white [&_svg]:text-white/30"
-          />
-        )}
+        <div className="flex items-start justify-between gap-4 mb-8">
+          <div className="flex-1 min-w-0">
+            {breadcrumbItems && (
+              <Breadcrumbs
+                items={breadcrumbItems}
+                className="[&_a]:text-white/50 [&_a:hover]:text-white [&_span]:text-white [&_svg]:text-white/30"
+              />
+            )}
+          </div>
+          {restaurantId && restaurantName && (
+            <div className="flex-shrink-0">
+              <ReportIssueButton
+                entityType="restaurant"
+                entityId={restaurantId}
+                entityName={restaurantName}
+                variant="header"
+              />
+            </div>
+          )}
+        </div>
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
           <div className="flex-1 min-w-0">
             <span 

@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { Breadcrumbs } from '../seo/Breadcrumbs';
+import { ReportIssueButton } from '../feedback/ReportIssueButton';
 
 function getInitials(name: string): string {
   const parts = name
@@ -14,6 +15,8 @@ function getInitials(name: string): string {
 
 interface ChefHeroProps {
   breadcrumbItems?: Array<{ label: string; href?: string }>;
+  chefId?: string;
+  chefName?: string;
   chef: {
     name: string;
     photo_url?: string | null;
@@ -35,7 +38,7 @@ interface ChefHeroProps {
   className?: string;
 }
 
-export function ChefHero({ chef, breadcrumbItems }: ChefHeroProps) {
+export function ChefHero({ chef, breadcrumbItems, chefId, chefName }: ChefHeroProps) {
   const primaryShow = chef.chef_shows?.find(cs => cs.is_primary) || chef.chef_shows?.[0];
   const isWinner = primaryShow?.result === 'winner';
   const photoUrl = chef.photo_url;
@@ -57,12 +60,26 @@ export function ChefHero({ chef, breadcrumbItems }: ChefHeroProps) {
       />
 
       <div className="relative max-w-6xl mx-auto px-4 py-12 sm:py-16">
-        {breadcrumbItems && (
-          <Breadcrumbs
-            items={breadcrumbItems}
-            className="mb-8 [&_a]:text-white/50 [&_a:hover]:text-white [&_span]:text-white [&_svg]:text-white/30"
-          />
-        )}
+        <div className="flex items-start justify-between gap-4 mb-8">
+          <div className="flex-1 min-w-0">
+            {breadcrumbItems && (
+              <Breadcrumbs
+                items={breadcrumbItems}
+                className="[&_a]:text-white/50 [&_a:hover]:text-white [&_span]:text-white [&_svg]:text-white/30"
+              />
+            )}
+          </div>
+          {chefId && chefName && (
+            <div className="flex-shrink-0">
+              <ReportIssueButton
+                entityType="chef"
+                entityId={chefId}
+                entityName={chefName}
+                variant="header"
+              />
+            </div>
+          )}
+        </div>
         <div className="flex flex-col md:flex-row gap-8 md:gap-12">
           {/* Photo */}
           <div className="flex-shrink-0 relative md:mt-3">
