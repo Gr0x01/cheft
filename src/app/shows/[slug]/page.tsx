@@ -119,38 +119,6 @@ export default async function ShowPage({ params }: ShowPageProps) {
           </div>
         )}
 
-        {winners.length > 0 && (
-          <div className="mb-12">
-            <h2
-              className="font-display text-2xl font-bold mb-6"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              Winners
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {winners.map((cs: any, index: number) => (
-                <ChefCard key={cs.chef.id} chef={cs.chef} index={index} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {finalists.length > 0 && (
-          <div className="mb-12">
-            <h2
-              className="font-display text-2xl font-bold mb-6"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              Finalists
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {finalists.map((cs: any, index: number) => (
-                <ChefCard key={cs.chef.id} chef={cs.chef} index={index} />
-              ))}
-            </div>
-          </div>
-        )}
-
         <div className="mb-12">
           <h2
             className="font-display text-2xl font-bold mb-6"

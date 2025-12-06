@@ -7,6 +7,7 @@ import { RestaurantDiscoveryService } from '../services/restaurant-discovery-ser
 import { ShowDiscoveryService } from '../services/show-discovery-service';
 import { StatusVerificationService } from '../services/status-verification-service';
 import { ShowDescriptionService } from '../services/show-description-service';
+import { NarrativeService } from '../services/narrative-service';
 import { ChefRepository } from '../repositories/chef-repository';
 import { RestaurantRepository } from '../repositories/restaurant-repository';
 import { ShowRepository } from '../repositories/show-repository';
@@ -21,6 +22,7 @@ export interface RefreshStaleChefInput {
     shows?: boolean;
     restaurants?: boolean;
     restaurantStatus?: boolean;
+    narrative?: boolean;
   };
   dryRun?: boolean;
 }
@@ -32,6 +34,7 @@ export interface RefreshStaleChefOutput {
   showsUpdated: number;
   restaurantsUpdated: number;
   statusesVerified: number;
+  narrativeCreated: boolean;
 }
 
 export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput, RefreshStaleChefOutput> {
@@ -41,6 +44,7 @@ export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput
   private showDiscoveryService: ShowDiscoveryService;
   private statusVerificationService: StatusVerificationService;
   private showDescriptionService: ShowDescriptionService;
+  private narrativeService: NarrativeService;
   private chefRepo: ChefRepository;
   private restaurantRepo: RestaurantRepository;
   private showRepo: ShowRepository;
@@ -70,6 +74,7 @@ export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput
     this.showDiscoveryService = new ShowDiscoveryService(llmClient, tokenTracker);
     this.statusVerificationService = new StatusVerificationService(llmClient, tokenTracker);
     this.showDescriptionService = new ShowDescriptionService(tokenTracker, this.showRepo);
+    this.narrativeService = new NarrativeService(tokenTracker);
   }
 
   validate(input: RefreshStaleChefInput): ValidationResult {
@@ -84,7 +89,8 @@ export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput
     }
 
     const hasScope = input.scope.bio || input.scope.shows || 
-                      input.scope.restaurants || input.scope.restaurantStatus;
+                      input.scope.restaurants || input.scope.restaurantStatus ||
+                      input.scope.narrative;
     if (!hasScope) {
       errors.push('At least one scope flag must be enabled');
     }
@@ -126,6 +132,11 @@ export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput
       maxTokens += restaurantCount * 1000;
     }
 
+    if (input.scope.narrative) {
+      estimatedTokens += 3000;
+      maxTokens += 6000;
+    }
+
     const inputCostPer1M = 0.25;
     const outputCostPer1M = 2.00;
     const avgCostPer1M = (inputCostPer1M + outputCostPer1M) / 2;
@@ -146,6 +157,7 @@ export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput
       showsUpdated: 0,
       restaurantsUpdated: 0,
       statusesVerified: 0,
+      narrativeCreated: false,
     };
 
     if (input.scope.bio) {
@@ -299,6 +311,79 @@ export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput
         const errorMessage = error instanceof Error ? error.message : String(error);
         this.failStep(stepNum, errorMessage);
         this.addError('status_verification_failed', errorMessage, false);
+      }
+    }
+
+    if (input.scope.narrative && !input.dryRun) {
+      const narrativeStep = this.startStep('Generate chef narrative');
+      try {
+        const { data: contextData } = await this.supabase
+          .from('chefs')
+          .select(`
+            name,
+            mini_bio,
+            james_beard_status,
+            chef_shows (
+              season,
+              result,
+              is_primary,
+              show:shows (name)
+            ),
+            restaurants!restaurants_chef_id_fkey (
+              name,
+              city,
+              state,
+              cuisine_tags,
+              status
+            )
+          `)
+          .eq('id', input.chefId)
+          .single();
+
+        if (contextData) {
+          const shows = ((contextData as any).chef_shows || []).map((cs: any) => ({
+            show_name: cs.show?.name || '',
+            season: cs.season,
+            result: cs.result,
+            is_primary: cs.is_primary,
+          }));
+
+          const restaurants = ((contextData as any).restaurants || []).map((r: any) => ({
+            name: r.name,
+            city: r.city,
+            state: r.state,
+            cuisine_tags: r.cuisine_tags,
+            status: r.status,
+          }));
+
+          const cities = [...new Set(restaurants.map((r: any) => `${r.city}${r.state ? `, ${r.state}` : ''}`))] as string[];
+
+          const context = {
+            name: (contextData as any).name,
+            mini_bio: (contextData as any).mini_bio,
+            james_beard_status: (contextData as any).james_beard_status,
+            current_position: null,
+            shows,
+            restaurants,
+            restaurant_count: restaurants.length,
+            cities,
+          };
+
+          const result = await this.narrativeService.generateChefNarrative(input.chefId, context);
+
+          if (result.success && result.narrative) {
+            const updateResult = await this.chefRepo.updateNarrative(input.chefId, result.narrative);
+            output.narrativeCreated = updateResult.success;
+          }
+
+          this.completeStep(narrativeStep, result.tokensUsed, { narrativeCreated: output.narrativeCreated });
+        } else {
+          this.skipStep(narrativeStep, 'No context data available');
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.failStep(narrativeStep, errorMessage);
+        this.addError('narrative_generation_failed', errorMessage, false);
       }
     }
 

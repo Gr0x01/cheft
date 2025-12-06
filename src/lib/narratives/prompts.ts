@@ -37,7 +37,10 @@ STYLE GUIDELINES:
 - Target length: 250-300 words (strict)
 
 OUTPUT FORMAT:
-- Return ONLY the narrative text as a single continuous paragraph
+- Return EXACTLY 3 paragraphs separated by double newlines (\n\n)
+- Paragraph 1: Before the show (background and early career)
+- Paragraph 2: During the show (TV performance and highlights)
+- Paragraph 3: After the show (post-TV success and current status)
 - No headings, bullet points, or section markers
 - No citations, brackets, or metadata
 - No introductory phrases like "Here is..." or "This chef..."

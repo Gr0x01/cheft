@@ -8,6 +8,40 @@ import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCom
 import { Header } from '@/components/ui/Header';
 import { PageHero } from '@/components/ui/PageHero';
 
+interface Restaurant {
+  id: string;
+  name: string;
+  slug: string;
+  city: string;
+  state: string | null;
+  status: string;
+  photo_urls?: string[];
+  price_tier?: string;
+  cuisine_tags?: string[];
+  google_rating?: number;
+  google_review_count?: number;
+}
+
+interface Chef {
+  id: string;
+  name: string;
+  slug: string;
+  photo_url?: string;
+  mini_bio?: string;
+  restaurants?: Restaurant[];
+}
+
+interface ChefShow {
+  id: string;
+  chef_id: string;
+  show_id: string;
+  season: string;
+  season_name: string | null;
+  result: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
+  is_primary: boolean;
+  chef: Chef;
+}
+
 export const revalidate = 604800;
 
 interface SeasonPageProps {
@@ -48,12 +82,22 @@ export async function generateMetadata({ params }: SeasonPageProps): Promise<Met
 export async function generateStaticParams() {
   const supabase = createStaticClient();
   
-  const { data: allSeasons } = await (supabase as any).rpc('get_all_show_seasons_for_sitemap');
+  try {
+    const { data: allSeasons, error } = await (supabase as any).rpc('get_all_show_seasons_for_sitemap');
+    
+    if (error) {
+      console.error('Error fetching show seasons for static params:', error);
+      return [];
+    }
 
-  return ((allSeasons || []) as Array<{ show_slug: string; season: string }>).map(season => ({
-    slug: season.show_slug,
-    season: season.season,
-  }));
+    return ((allSeasons || []) as Array<{ show_slug: string; season: string }>).map(season => ({
+      slug: season.show_slug,
+      season: season.season,
+    }));
+  } catch (error) {
+    console.error('Failed to generate static params for show seasons:', error);
+    return [];
+  }
 }
 
 export default async function SeasonPage({ params }: SeasonPageProps) {
@@ -68,10 +112,11 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
   }
 
   const seasonName = seasonData.season_name || `Season ${season}`;
-  const winner = seasonData.chef_shows?.find((cs: any) => cs.result === 'winner');
-  const finalists = seasonData.chef_shows?.filter((cs: any) => cs.result === 'finalist') || [];
-  const contestants = seasonData.chef_shows?.filter((cs: any) => cs.result === 'contestant') || [];
-  const allRestaurants = seasonData.chef_shows?.flatMap((cs: any) => 
+  const winner = seasonData.chef_shows?.find((cs: ChefShow) => cs.result === 'winner');
+  const finalists = seasonData.chef_shows?.filter((cs: ChefShow) => cs.result === 'finalist') || [];
+  const contestants = seasonData.chef_shows?.filter((cs: ChefShow) => cs.result === 'contestant') || [];
+  const judges = seasonData.chef_shows?.filter((cs: ChefShow) => cs.result === 'judge') || [];
+  const allRestaurants = seasonData.chef_shows?.flatMap((cs: ChefShow) => 
     (cs.chef.restaurants || []).map((r: any) => ({
       ...r,
       chef: cs.chef
@@ -155,6 +200,22 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {contestants.map((cs: any, index: number) => (
+                <ChefCard key={cs.chef.id} chef={cs.chef} index={index} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {judges.length > 0 && (
+          <div className="mb-12">
+            <h2
+              className="font-display text-2xl font-bold mb-6"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              Judges
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {judges.map((cs: any, index: number) => (
                 <ChefCard key={cs.chef.id} chef={cs.chef} index={index} />
               ))}
             </div>
