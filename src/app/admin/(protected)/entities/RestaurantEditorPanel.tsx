@@ -1,21 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Database } from '@/lib/database.types';
-import { createClient } from '@/lib/supabase/client';
 import { FieldSection } from '@/components/admin/forms/FieldSection';
 import { TextField } from '@/components/admin/forms/TextField';
 import { SelectField } from '@/components/admin/forms/SelectField';
 import { MultiInput } from '@/components/admin/forms/MultiInput';
+import { extractPlaceIdFromUrl } from '@/lib/utils/extract-place-id';
 import { 
   Store, 
   MapPin, 
   DollarSign, 
   Star,
-  Save,
-  ExternalLink,
-  Loader2,
+  RefreshCw,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 type Restaurant = Database['public']['Tables']['restaurants']['Row'];
@@ -26,12 +26,23 @@ interface RestaurantEditorPanelProps {
   onDirtyChange?: (dirty: boolean) => void;
 }
 
-export function RestaurantEditorPanel({ restaurant, chefs, onDirtyChange }: RestaurantEditorPanelProps) {
+export interface RestaurantEditorHandle {
+  save: () => Promise<void>;
+  discard: () => void;
+  hasChanges: boolean;
+  isSaving: boolean;
+}
+
+export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, RestaurantEditorPanelProps>(function RestaurantEditorPanel({ restaurant, chefs, onDirtyChange }, ref) {
   const router = useRouter();
-  const supabase = createClient();
   const [formData, setFormData] = useState<Restaurant>(restaurant);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mapsUrl, setMapsUrl] = useState('');
+  const [extractedPlaceId, setExtractedPlaceId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const updateField = <K extends keyof Restaurant>(field: K, value: Restaurant[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -43,40 +54,100 @@ export function RestaurantEditorPanel({ restaurant, chefs, onDirtyChange }: Rest
     onDirtyChange?.(hasChanges);
   }, [hasChanges, onDirtyChange]);
 
+  useEffect(() => {
+    if (mapsUrl) {
+      const placeId = extractPlaceIdFromUrl(mapsUrl);
+      setExtractedPlaceId(placeId);
+    } else {
+      setExtractedPlaceId(null);
+    }
+  }, [mapsUrl]);
+
+  const handleCopyPlaceId = async () => {
+    if (extractedPlaceId) {
+      await navigator.clipboard.writeText(extractedPlaceId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleRefreshEnrichment = async () => {
+    setRefreshing(true);
+    setShowConfirmDialog(false);
+
+    try {
+      const response = await fetch('/api/admin/restaurants/fresh-lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId: restaurant.id }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to trigger lookup');
+      }
+
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to refresh enrichment');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const handleSave = async () => {
+    console.log('[RestaurantEditorPanel] handleSave called');
     setSaving(true);
     setError(null);
 
     try {
-      const { error: updateError } = await supabase
-        .from('restaurants')
-        .update({
-          name: formData.name,
-          slug: formData.slug,
-          chef_id: formData.chef_id,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          country: formData.country,
-          lat: formData.lat,
-          lng: formData.lng,
-          cuisine_tags: formData.cuisine_tags,
-          price_tier: formData.price_tier,
-          status: formData.status,
-          is_public: formData.is_public,
-          google_place_id: formData.google_place_id,
-          google_rating: formData.google_rating,
-          google_review_count: formData.google_review_count,
-          maps_url: formData.maps_url,
-          michelin_stars: formData.michelin_stars,
-        })
-        .eq('id', restaurant.id);
+      console.log('[RestaurantEditorPanel] Updating restaurant:', restaurant.id);
+      
+      const updatePayload = {
+        name: formData.name,
+        slug: formData.slug,
+        chef_id: formData.chef_id,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        country: formData.country,
+        lat: formData.lat,
+        lng: formData.lng,
+        cuisine_tags: formData.cuisine_tags,
+        price_tier: formData.price_tier,
+        status: formData.status,
+        is_public: formData.is_public,
+        google_place_id: formData.google_place_id,
+        google_rating: formData.google_rating,
+        google_review_count: formData.google_review_count,
+        maps_url: formData.maps_url,
+        michelin_stars: formData.michelin_stars,
+      };
+      
+      console.log('[RestaurantEditorPanel] Update payload:', updatePayload);
+      
+      const response = await fetch('/api/admin/restaurants/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          restaurantId: restaurant.id,
+          updates: updatePayload,
+        }),
+      });
 
-      if (updateError) throw updateError;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update restaurant');
+      }
+      
+      console.log('[RestaurantEditorPanel] Update successful');
+      
+      Object.assign(restaurant, formData);
+      
       router.refresh();
     } catch (err) {
-      console.error('Save error:', err);
-      setError('Failed to save changes.');
+      console.error('[RestaurantEditorPanel] Save error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save changes.');
     } finally {
       setSaving(false);
     }
@@ -87,57 +158,22 @@ export function RestaurantEditorPanel({ restaurant, chefs, onDirtyChange }: Rest
     setError(null);
   };
 
-  return (
-    <div className="flex flex-col h-full">
-      <div className="sticky top-0 z-10 bg-white border-b-2 border-stone-200 px-5 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {restaurant.slug && (
-              <a
-                href={`/restaurants/${restaurant.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-stone-400 hover:text-copper-600 transition-colors"
-              >
-                <ExternalLink className="w-3 h-3" />
-                View Live
-              </a>
-            )}
-            {hasChanges && (
-              <span className="font-mono text-[10px] uppercase tracking-wider text-amber-600">Unsaved</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleDiscard}
-              disabled={saving || !hasChanges}
-              className="font-mono text-[10px] uppercase tracking-wider px-3 py-1.5 text-stone-500 hover:text-stone-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Discard
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving || !hasChanges}
-              className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider px-4 py-1.5 bg-copper-600 hover:bg-copper-700 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {saving ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                <Save className="w-3 h-3" />
-              )}
-              Save
-            </button>
-          </div>
-        </div>
-      </div>
+  useImperativeHandle(ref, () => ({
+    save: handleSave,
+    discard: handleDiscard,
+    hasChanges,
+    isSaving: saving,
+  }), [handleSave, handleDiscard, hasChanges, saving]);
 
+  return (
+    <div className="h-full overflow-y-auto">
       {error && (
-        <div className="mx-5 mt-4 bg-red-50 border-2 border-red-200 p-3">
+        <div className="mx-6 mt-6 bg-red-50 border-2 border-red-200 p-3">
           <p className="font-mono text-xs text-red-700">{error}</p>
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div className="p-6 space-y-6">
         <FieldSection title="Identity" description="Basic info" icon={Store} defaultOpen>
           <TextField
             label="Name"
@@ -256,19 +292,31 @@ export function RestaurantEditorPanel({ restaurant, chefs, onDirtyChange }: Rest
         </FieldSection>
 
         <FieldSection title="Google Places" description="Business info from Google" icon={Star}>
-          <TextField
-            label="Place ID"
-            name="google_place_id"
-            value={formData.google_place_id || ''}
-            onChange={(e) => updateField('google_place_id', e.target.value || null)}
-          />
-          <TextField
-            label="Maps URL"
-            name="maps_url"
-            type="url"
-            value={formData.maps_url || ''}
-            onChange={(e) => updateField('maps_url', e.target.value || null)}
-          />
+          <div>
+            <label className="block font-mono text-[10px] uppercase tracking-wider text-stone-600 mb-1.5">
+              Place ID
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                name="google_place_id"
+                value={formData.google_place_id || ''}
+                onChange={(e) => updateField('google_place_id', e.target.value || null)}
+                placeholder="Place ID"
+                className="flex-1 px-3 py-2 bg-white border-2 border-stone-200 font-mono text-xs focus:outline-none focus:border-stone-900 transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmDialog(true)}
+                disabled={!formData.google_place_id || refreshing}
+                className="inline-flex items-center gap-1.5 px-3 py-2 border-2 border-stone-900 font-mono text-[10px] uppercase tracking-wider text-stone-900 hover:bg-stone-900 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Trigger fresh Google Places lookup"
+              >
+                <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
+                {refreshing ? 'Refreshing' : 'Refresh'}
+              </button>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <TextField
               label="Rating"
@@ -292,8 +340,75 @@ export function RestaurantEditorPanel({ restaurant, chefs, onDirtyChange }: Rest
             value={formData.michelin_stars?.toString() || ''}
             onChange={(e) => updateField('michelin_stars', e.target.value ? Number(e.target.value) : null)}
           />
+
+          <div className="border-t-2 border-stone-200 pt-4 mt-4">
+            <h4 className="font-mono text-[10px] uppercase tracking-wider text-stone-600 mb-3">
+              Place ID Extraction Helper
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-mono text-[10px] uppercase tracking-wider text-stone-600 mb-1.5">
+                  Maps URL
+                </label>
+                <input
+                  type="text"
+                  value={mapsUrl}
+                  onChange={(e) => setMapsUrl(e.target.value)}
+                  placeholder="Paste Google Maps URL..."
+                  className="w-full px-3 py-2 bg-white border-2 border-stone-200 font-mono text-xs focus:outline-none focus:border-stone-900 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block font-mono text-[10px] uppercase tracking-wider text-stone-600 mb-1.5">
+                  Extracted Place ID
+                </label>
+                <input
+                  type="text"
+                  value={extractedPlaceId || ''}
+                  readOnly
+                  onClick={handleCopyPlaceId}
+                  placeholder="Place ID will appear here..."
+                  className="w-full px-3 py-2 bg-stone-100 border-2 border-stone-200 font-mono text-xs cursor-pointer hover:bg-stone-200 transition-colors"
+                  title="Click to copy"
+                />
+                {copied && (
+                  <div className="flex items-center gap-1 mt-1 text-green-600">
+                    <Check className="w-3 h-3" />
+                    <span className="font-mono text-[10px]">Copied!</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </FieldSection>
       </div>
+
+      {showConfirmDialog && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+          <div className="bg-white border-2 border-stone-900 p-6 max-w-sm mx-4">
+            <h3 className="font-display text-lg font-bold text-stone-900 mb-2">
+              Trigger Fresh Lookup?
+            </h3>
+            <p className="font-mono text-xs text-stone-600 mb-6">
+              This will search Google Places and update all restaurant data including place ID, rating, photos, website, and address.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowConfirmDialog(false)}
+                className="px-4 py-2 font-mono text-xs uppercase tracking-wider text-stone-600 hover:text-stone-900 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRefreshEnrichment}
+                className="px-4 py-2 bg-stone-900 text-white font-mono text-xs uppercase tracking-wider hover:bg-stone-800 transition-colors"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+});
