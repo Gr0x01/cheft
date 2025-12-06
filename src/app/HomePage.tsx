@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { RestaurantWithDetails } from '@/lib/types';
 import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCompact';
@@ -9,7 +9,6 @@ import { Header } from '@/components/ui/Header';
 import { FeaturedChefHero } from '@/components/chef/FeaturedChefHero';
 
 interface HomePageProps {
-  initialRestaurants: RestaurantWithDetails[];
   initialFeaturedChefs: any[];
   stats: { restaurants: number; chefs: number; cities: number };
   featuredChef: any | null;
@@ -25,7 +24,7 @@ const RestaurantMap = dynamic(() => import('@/components/RestaurantMap'), {
   )
 });
 
-export default function Home({ initialRestaurants, initialFeaturedChefs, stats, featuredChef }: HomePageProps) {
+export default function Home({ initialFeaturedChefs, stats, featuredChef }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [selectedShow, setSelectedShow] = useState<string>('all');
@@ -34,10 +33,26 @@ export default function Home({ initialRestaurants, initialFeaturedChefs, stats, 
   const [hoveredRestaurant, setHoveredRestaurant] = useState<string | null>(null);
   const [showMobileMap, setShowMobileMap] = useState(false);
   const [visibleCount, setVisibleCount] = useState(20);
+  const [restaurants, setRestaurants] = useState<RestaurantWithDetails[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  const restaurants = initialRestaurants;
   const featuredChefs = initialFeaturedChefs;
-  const isLoading = false;
+
+  useEffect(() => {
+    async function fetchRestaurants() {
+      try {
+        const response = await fetch('/api/restaurants');
+        if (!response.ok) throw new Error('Failed to fetch restaurants');
+        const data = await response.json();
+        setRestaurants(data);
+      } catch (error) {
+        console.error('Error loading restaurants:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchRestaurants();
+  }, []);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);

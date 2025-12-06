@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import { db } from '@/lib/supabase';
 import HomePage from './HomePage';
-import { RestaurantWithDetails } from '@/lib/types';
 
 export const revalidate = 3600;
 
@@ -28,8 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page() {
-  const [restaurantsData, stats, featuredChef] = await Promise.all([
-    db.getRestaurants(),
+  const [stats, featuredChef] = await Promise.all([
     db.getStats(),
     db.getFeaturedChef()
   ]);
@@ -38,7 +36,6 @@ export default async function Page() {
 
   return (
     <HomePage 
-      initialRestaurants={restaurantsData as RestaurantWithDetails[]}
       initialFeaturedChefs={chefsData}
       stats={stats}
       featuredChef={featuredChef}
