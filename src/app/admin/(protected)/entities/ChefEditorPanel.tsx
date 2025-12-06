@@ -73,6 +73,11 @@ export function ChefEditorPanel({ chef, onDirtyChange }: ChefEditorPanelProps) {
         .eq('id', chef.id);
 
       if (updateError) throw updateError;
+      
+      Object.assign(chef, formData);
+      setFormData({ ...chef });
+      onDirtyChange?.(false);
+      
       router.refresh();
     } catch (err) {
       console.error('Save error:', err);

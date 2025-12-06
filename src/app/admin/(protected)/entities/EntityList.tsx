@@ -1,6 +1,6 @@
 'use client';
 
-import { User, Store } from 'lucide-react';
+import { User, Store, Shield } from 'lucide-react';
 
 interface EntityListItem {
   id: string;
@@ -9,6 +9,7 @@ interface EntityListItem {
   imageUrl?: string;
   completeness: number;
   missingFields: string[];
+  protected?: boolean;
 }
 
 interface EntityListProps {
@@ -58,8 +59,8 @@ export function EntityList({ type, items, selectedId, onSelect, compact }: Entit
                   <span className={`font-display text-base font-semibold truncate ${isSelected ? 'text-copper-900' : 'text-stone-900'}`}>
                     {item.name}
                   </span>
-                  {isComplete && (
-                    <span className="w-2 h-2 bg-emerald-500 rounded-full flex-shrink-0" />
+                  {item.protected && (
+                    <Shield className="w-3 h-3 text-copper-600 fill-copper-600 flex-shrink-0" />
                   )}
                 </div>
                 {item.subtitle && !compact && (

@@ -17,9 +17,10 @@ import {
   RefreshCw,
   Copy,
   Check,
+  Shield,
 } from 'lucide-react';
 
-type Restaurant = Database['public']['Tables']['restaurants']['Row'];
+type Restaurant = Database['public']['Tables']['restaurants']['Row'] & { protected?: boolean };
 
 interface RestaurantEditorPanelProps {
   restaurant: Restaurant;
@@ -141,6 +142,7 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
         google_review_count: formData.google_review_count,
         maps_url: formData.maps_url,
         michelin_stars: formData.michelin_stars,
+        protected: formData.protected,
       };
       
       console.log('[RestaurantEditorPanel] Update payload:', updatePayload);
@@ -163,6 +165,7 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
       
       Object.assign(restaurant, formData);
       setFormData({ ...restaurant });
+      onDirtyChange?.(false);
       
       router.refresh();
     } catch (err) {

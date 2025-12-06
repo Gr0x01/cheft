@@ -5,11 +5,11 @@ import { Database } from '@/lib/database.types';
 import { EntityList } from './EntityList';
 import { ChefEditorPanel } from './ChefEditorPanel';
 import { RestaurantEditorPanel, RestaurantEditorHandle } from './RestaurantEditorPanel';
-import { Search, X, Loader2 } from 'lucide-react';
+import { Search, X, Loader2, Shield } from 'lucide-react';
 import { Toaster } from 'sonner';
 
 type Chef = Database['public']['Tables']['chefs']['Row'];
-type Restaurant = Database['public']['Tables']['restaurants']['Row'];
+type Restaurant = Database['public']['Tables']['restaurants']['Row'] & { protected?: boolean };
 
 type EntityTab = 'chefs' | 'restaurants';
 type FilterType = 'all' | 'missing-bio' | 'missing-places' | 'complete';
@@ -285,6 +285,7 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
                     subtitle: `${restaurant.city}${restaurant.state ? `, ${restaurant.state}` : ''}`,
                     completeness: score,
                     missingFields: missing,
+                    protected: restaurant.protected ?? false,
                   };
                 })}
                 selectedId={selectedRestaurantId}
@@ -298,9 +299,29 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
         {showingEditor && (
           <div className="flex-1 bg-white border-2 border-l-0 border-stone-900 overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b-2 border-stone-900 bg-stone-50">
-              <h2 className="font-display text-xl font-bold text-stone-900">
-                {selectedChef ? 'Edit Chef' : 'Edit Restaurant'}
-              </h2>
+              <div className="flex items-center gap-3">
+                <h2 className="font-display text-xl font-bold text-stone-900">
+                  {selectedChef ? 'Edit Chef' : 'Edit Restaurant'}
+                </h2>
+                {selectedRestaurant && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newVal = !(selectedRestaurant.protected ?? false);
+                      selectedRestaurant.protected = newVal;
+                      restaurantEditorRef.current?.save();
+                    }}
+                    className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${
+                      (selectedRestaurant.protected ?? false)
+                        ? 'bg-copper-100 text-copper-700'
+                        : 'bg-stone-100 text-stone-400 hover:bg-stone-200 hover:text-stone-600'
+                    }`}
+                    title={selectedRestaurant.protected ? 'Protected from auto-deletion' : 'Not protected - click to protect'}
+                  >
+                    <Shield className={`w-3.5 h-3.5 ${(selectedRestaurant.protected ?? false) ? 'fill-current' : ''}`} />
+                  </button>
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 {hasUnsavedChanges && (
                   <span className="font-mono text-[10px] uppercase tracking-wider text-amber-600">Unsaved</span>
