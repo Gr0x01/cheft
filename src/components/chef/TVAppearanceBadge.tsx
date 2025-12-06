@@ -21,8 +21,8 @@ export function TVAppearanceBadge({
   performanceBlurb,
 }: TVAppearanceBadgeProps) {
   const resultStyles = {
-    winner: { bg: 'var(--accent-success)', color: 'white' },
-    finalist: { bg: '#f59e0b', color: 'white' },
+    winner: { bg: '#f59e0b', color: 'white' },
+    finalist: { bg: '#94a3b8', color: 'white' },
     contestant: { bg: 'var(--bg-tertiary)', color: 'var(--text-secondary)' },
     judge: { bg: '#6366f1', color: 'white' },
   };
@@ -38,19 +38,12 @@ export function TVAppearanceBadge({
       className="relative p-4 transition-all duration-200 group"
       style={{ 
         background: 'var(--bg-secondary)',
-        border: isPrimary ? '2px solid var(--accent-primary)' : '1px solid var(--border-light)',
+        border: '1px solid var(--border-light)',
       }}
     >
       {showUrl && (
         <div 
           className="absolute inset-0 border-2 border-transparent transition-colors duration-300 pointer-events-none group-hover:border-[var(--accent-primary)]"
-        />
-      )}
-
-      {isPrimary && (
-        <div 
-          className="absolute top-0 left-0 w-1 h-full transition-all duration-300 group-hover:w-2"
-          style={{ background: 'var(--accent-primary)' }}
         />
       )}
 
@@ -92,15 +85,6 @@ export function TVAppearanceBadge({
           </span>
         )}
       </div>
-
-      {isPrimary && (
-        <span 
-          className="inline-block mt-3 font-mono text-[10px] tracking-widest"
-          style={{ color: 'var(--accent-primary)' }}
-        >
-          PRIMARY
-        </span>
-      )}
     </div>
   );
 

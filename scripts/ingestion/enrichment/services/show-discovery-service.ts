@@ -76,10 +76,17 @@ After searching, extract EVERY show mentioned in the search results. Include:
 - Any other cooking competition
 
 For EACH show found, output:
-{"showName": "exact name", "season": "number or null", "result": "winner|finalist|contestant|judge"}
+{"showName": "exact name", "season": "Season X, Episode Y, or year", "result": "winner|finalist|contestant|judge"}
+
+SEASON FORMATTING:
+- If season number exists, use "Season X" (e.g., "Season 15")
+- If episode number exists, use "Episode X" (e.g., "Episode 28")
+- If only year is known, use the year (e.g., "2024")
+- If multiple appearances, use "various (YYYY-YYYY)" (e.g., "various (2016-2022)")
+- If unknown, use null
 
 Output ONLY a JSON array. Example:
-[{"showName": "Top Chef", "season": "14", "result": "winner"}, {"showName": "Tournament of Champions", "season": "2", "result": "winner"}]`;
+[{"showName": "Top Chef", "season": "Season 14", "result": "winner"}, {"showName": "Chopped", "season": "Episode 28", "result": "winner"}, {"showName": "Beat Bobby Flay", "season": "2024", "result": "contestant"}]`;
 
       const result = await withRetry(
         () => this.llmClient.generateWithWebSearch(
@@ -151,10 +158,17 @@ Step 4: Search "${chefName} Food Network appearances"
 After searching, extract EVERY show mentioned in the search results with performance details.
 
 For EACH show found, output:
-{"showName": "exact name", "season": "number or null", "result": "winner|finalist|contestant|judge", "performanceBlurb": "1-2 sentence summary"}
+{"showName": "exact name", "season": "Season X, Episode Y, or year", "result": "winner|finalist|contestant|judge", "performanceBlurb": "1-2 sentence summary"}
+
+SEASON FORMATTING:
+- If season number exists, use "Season X" (e.g., "Season 15")
+- If episode number exists, use "Episode X" (e.g., "Episode 28")
+- If only year is known, use the year (e.g., "2024")
+- If multiple appearances, use "various (YYYY-YYYY)" (e.g., "various (2016-2022)")
+- If unknown, use null
 
 Output ONLY a JSON array. Example:
-[{"showName": "Top Chef", "season": "14", "result": "winner", "performanceBlurb": "Won Season 14 in Charleston."}, {"showName": "Tournament of Champions", "season": "2", "result": "winner", "performanceBlurb": "Defeated Bobby Flay in the finale."}]`;
+[{"showName": "Top Chef", "season": "Season 14", "result": "winner", "performanceBlurb": "Won Season 14 in Charleston."}, {"showName": "Chopped", "season": "Episode 28", "result": "winner", "performanceBlurb": "Dominated with creative dessert in finale."}, {"showName": "Beat Bobby Flay", "season": "2024", "result": "contestant", "performanceBlurb": "Competed in seafood challenge."}]`;
 
       const result = await withRetry(
         () => this.llmClient.generateWithWebSearch(
