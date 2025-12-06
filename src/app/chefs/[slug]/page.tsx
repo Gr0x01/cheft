@@ -439,159 +439,6 @@ export default async function ChefPage({ params }: ChefPageProps) {
             </div>
           )}
 
-          {/* Two-Column Story + Sidebar */}
-          {chef.career_narrative && (
-            <section className="py-16" style={{ background: 'var(--bg-primary)' }}>
-              <div className="max-w-6xl mx-auto px-4">
-                <div className="grid lg:grid-cols-3 gap-12">
-                  {/* Main Story Column */}
-                  <div className="lg:col-span-2">
-                    <div className="prose prose-lg max-w-none">
-                      {(() => {
-                        try {
-                          const sanitized = sanitizeNarrative(chef.career_narrative!);
-                          const paragraphs = sanitized.split('\n\n').filter(p => p.trim());
-                          if (paragraphs.length === 0) return null;
-                          return paragraphs.map((paragraph, index) => (
-                            <p 
-                              key={index}
-                              className="font-ui text-lg leading-relaxed mb-6 last:mb-0"
-                              style={{ color: 'var(--text-primary)', lineHeight: '1.9' }}
-                            >
-                              {paragraph}
-                            </p>
-                          ));
-                        } catch {
-                          return null;
-                        }
-                      })()}
-                    </div>
-                  </div>
-
-                  {/* Sidebar */}
-                  <aside className="lg:col-span-1">
-                    <div 
-                      className="sticky top-24 space-y-6 p-6"
-                      style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-light)' }}
-                    >
-                      {/* Photo - Only if available */}
-                      {chef.photo_url && (
-                        <div className="relative w-full aspect-square overflow-hidden mb-4" style={{ border: '2px solid var(--border-light)' }}>
-                          <Image
-                            src={chef.photo_url}
-                            alt={chef.name}
-                            fill
-                            className="object-cover"
-                            sizes="300px"
-                          />
-                          {chef.photo_source === 'wikipedia' && (
-                            <div className="absolute bottom-0 left-0 right-0 py-1 px-2" style={{ background: 'rgba(0,0,0,0.7)' }}>
-                              <p className="font-mono text-[9px] text-white/70">
-                                Photo: Wikimedia Commons (CC BY-SA)
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      <div>
-                        <h3 className="font-mono text-[10px] tracking-widest mb-3" style={{ color: 'var(--text-muted)' }}>
-                          QUICK FACTS
-                        </h3>
-                        <dl className="space-y-3">
-                          {chef.current_position && (
-                            <div>
-                              <dt className="font-mono text-[10px] tracking-wide" style={{ color: 'var(--text-muted)' }}>ROLE</dt>
-                              <dd className="font-ui text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{chef.current_position}</dd>
-                            </div>
-                          )}
-                          {cuisineTags.length > 0 && (
-                            <div>
-                              <dt className="font-mono text-[10px] tracking-wide" style={{ color: 'var(--text-muted)' }}>CUISINE</dt>
-                              <dd className="font-ui text-sm" style={{ color: 'var(--text-primary)' }}>{cuisineTags.join(', ')}</dd>
-                            </div>
-                          )}
-                          {openRestaurants.length > 0 && (
-                            <div>
-                              <dt className="font-mono text-[10px] tracking-wide" style={{ color: 'var(--text-muted)' }}>RESTAURANTS</dt>
-                              <dd className="font-ui text-sm" style={{ color: 'var(--text-primary)' }}>{openRestaurants.length} active</dd>
-                            </div>
-                          )}
-                        </dl>
-                      </div>
-
-                      {(chef.james_beard_status || primaryShow?.result === 'winner') && (
-                        <div className="pt-4 border-t" style={{ borderColor: 'var(--border-light)' }}>
-                          <h3 className="font-mono text-[10px] tracking-widest mb-3" style={{ color: 'var(--text-muted)' }}>
-                            ACCOLADES
-                          </h3>
-                          <ul className="space-y-2">
-                            {primaryShow?.result === 'winner' && primaryShow.show?.name && (
-                              <li className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full" style={{ background: 'var(--accent-success)' }} />
-                                <span className="font-ui text-sm" style={{ color: 'var(--text-primary)' }}>{primaryShow.show.name} Winner</span>
-                              </li>
-                            )}
-                            {chef.james_beard_status === 'winner' && (
-                              <li className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full" style={{ background: '#fbbf24' }} />
-                                <span className="font-ui text-sm" style={{ color: 'var(--text-primary)' }}>James Beard Award</span>
-                              </li>
-                            )}
-                            {chef.james_beard_status === 'nominated' && (
-                              <li className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full" style={{ background: '#3b82f6' }} />
-                                <span className="font-ui text-sm" style={{ color: 'var(--text-primary)' }}>James Beard Nominee</span>
-                              </li>
-                            )}
-                            {chef.james_beard_status === 'semifinalist' && (
-                              <li className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full" style={{ background: '#93c5fd' }} />
-                                <span className="font-ui text-sm" style={{ color: 'var(--text-primary)' }}>JB Semifinalist</span>
-                              </li>
-                            )}
-                          </ul>
-                        </div>
-                      )}
-
-                      {chef.instagram_handle && (
-                        <div className="pt-4 border-t" style={{ borderColor: 'var(--border-light)' }}>
-                          <a 
-                            href={`https://instagram.com/${chef.instagram_handle}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 font-mono text-sm hover:opacity-70 transition-opacity"
-                            style={{ color: 'var(--accent-primary)' }}
-                          >
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                            </svg>
-                            @{chef.instagram_handle}
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  </aside>
-                </div>
-              </div>
-            </section>
-          )}
-
-          {/* Instagram Feature */}
-          {chef.featured_instagram_post && (
-            <section 
-              className="py-12 border-y"
-              style={{ background: 'var(--bg-tertiary)', borderColor: 'var(--border-light)' }}
-            >
-              <div className="max-w-xl mx-auto px-4">
-                <h3 className="font-mono text-[10px] tracking-widest text-center mb-6" style={{ color: 'var(--text-muted)' }}>
-                  FROM INSTAGRAM
-                </h3>
-                <InstagramEmbed postUrl={chef.featured_instagram_post} />
-              </div>
-            </section>
-          )}
-
           {/* Featured Restaurant - Hero Treatment */}
           {featuredRestaurant && (
             <section className="py-16" style={{ background: 'var(--bg-primary)' }}>
@@ -791,6 +638,227 @@ export default async function ChefPage({ params }: ChefPageProps) {
                     })}
                   </div>
                 )}
+              </div>
+            </section>
+          )}
+
+          {/* Two-Column Story + Sidebar */}
+          {chef.career_narrative && (
+            <section className="py-16" style={{ background: 'var(--bg-secondary)' }}>
+              <div className="max-w-6xl mx-auto px-4">
+                <div className="grid lg:grid-cols-3 gap-12">
+                  {/* Main Story Column */}
+                  <div className="lg:col-span-2">
+                    <div className="prose prose-lg max-w-none">
+                      {(() => {
+                        try {
+                          const sanitized = sanitizeNarrative(chef.career_narrative!);
+                          const paragraphs = sanitized.split('\n\n').filter(p => p.trim());
+                          if (paragraphs.length === 0) return null;
+                          return paragraphs.map((paragraph, index) => (
+                            <p 
+                              key={index}
+                              className="font-ui text-lg leading-relaxed mb-6 last:mb-0"
+                              style={{ color: 'var(--text-primary)', lineHeight: '1.9' }}
+                            >
+                              {paragraph}
+                            </p>
+                          ));
+                        } catch {
+                          return null;
+                        }
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Sidebar */}
+                  <aside className="lg:col-span-1">
+                    <div 
+                      className="sticky top-24 space-y-6 p-6"
+                      style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-light)' }}
+                    >
+                      {/* Photo - Only if available */}
+                      {chef.photo_url && (
+                        <div className="relative w-full aspect-square overflow-hidden mb-4" style={{ border: '2px solid var(--border-light)' }}>
+                          <Image
+                            src={chef.photo_url}
+                            alt={chef.name}
+                            fill
+                            className="object-cover"
+                            sizes="300px"
+                          />
+                          {chef.photo_source === 'wikipedia' && (
+                            <div className="absolute bottom-0 left-0 right-0 py-1 px-2" style={{ background: 'rgba(0,0,0,0.7)' }}>
+                              <p className="font-mono text-[9px] text-white/70">
+                                Photo: Wikimedia Commons (CC BY-SA)
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      <div>
+                        <h3 className="font-mono text-[10px] tracking-widest mb-3" style={{ color: 'var(--text-muted)' }}>
+                          QUICK FACTS
+                        </h3>
+                        <dl className="space-y-3">
+                          {chef.current_position && (
+                            <div>
+                              <dt className="font-mono text-[10px] tracking-wide" style={{ color: 'var(--text-muted)' }}>ROLE</dt>
+                              <dd className="font-ui text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{chef.current_position}</dd>
+                            </div>
+                          )}
+                          {cuisineTags.length > 0 && (
+                            <div>
+                              <dt className="font-mono text-[10px] tracking-wide" style={{ color: 'var(--text-muted)' }}>CUISINE</dt>
+                              <dd className="font-ui text-sm" style={{ color: 'var(--text-primary)' }}>{cuisineTags.join(', ')}</dd>
+                            </div>
+                          )}
+                          {openRestaurants.length > 0 && (
+                            <div>
+                              <dt className="font-mono text-[10px] tracking-wide" style={{ color: 'var(--text-muted)' }}>RESTAURANTS</dt>
+                              <dd className="font-ui text-sm" style={{ color: 'var(--text-primary)' }}>{openRestaurants.length} active</dd>
+                            </div>
+                          )}
+                        </dl>
+                      </div>
+
+                      {(chef.james_beard_status || primaryShow?.result === 'winner') && (
+                        <div className="pt-4 border-t" style={{ borderColor: 'var(--border-light)' }}>
+                          <h3 className="font-mono text-[10px] tracking-widest mb-3" style={{ color: 'var(--text-muted)' }}>
+                            ACCOLADES
+                          </h3>
+                          <ul className="space-y-2">
+                            {primaryShow?.result === 'winner' && primaryShow.show?.name && (
+                              <li className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full" style={{ background: 'var(--accent-success)' }} />
+                                <span className="font-ui text-sm" style={{ color: 'var(--text-primary)' }}>{primaryShow.show.name} Winner</span>
+                              </li>
+                            )}
+                            {chef.james_beard_status === 'winner' && (
+                              <li className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full" style={{ background: '#fbbf24' }} />
+                                <span className="font-ui text-sm" style={{ color: 'var(--text-primary)' }}>James Beard Award</span>
+                              </li>
+                            )}
+                            {chef.james_beard_status === 'nominated' && (
+                              <li className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full" style={{ background: '#3b82f6' }} />
+                                <span className="font-ui text-sm" style={{ color: 'var(--text-primary)' }}>James Beard Nominee</span>
+                              </li>
+                            )}
+                            {chef.james_beard_status === 'semifinalist' && (
+                              <li className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full" style={{ background: '#93c5fd' }} />
+                                <span className="font-ui text-sm" style={{ color: 'var(--text-primary)' }}>JB Semifinalist</span>
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+
+                      {chef.instagram_handle && (
+                        <div className="pt-4 border-t" style={{ borderColor: 'var(--border-light)' }}>
+                          <a 
+                            href={`https://instagram.com/${chef.instagram_handle}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 font-mono text-sm hover:opacity-70 transition-opacity"
+                            style={{ color: 'var(--accent-primary)' }}
+                          >
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                            </svg>
+                            @{chef.instagram_handle}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </aside>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Cooking Shows Section */}
+          {sortedShows.some(s => s.performance_blurb) && (
+            <section className="py-16 border-t" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}>
+              <div className="max-w-6xl mx-auto px-4">
+                <div className="flex items-baseline gap-4 mb-8">
+                  <h2 className="font-display text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                    Cooking Shows
+                  </h2>
+                  <span className="font-mono text-sm" style={{ color: 'var(--text-muted)' }}>
+                    {sortedShows.length} APPEARANCE{sortedShows.length !== 1 ? 'S' : ''}
+                  </span>
+                </div>
+                <div className="grid gap-6 md:grid-cols-2">
+                  {sortedShows.filter(s => s.performance_blurb).map((appearance, idx) => (
+                    <article 
+                      key={appearance.id || idx}
+                      className="relative bg-white p-6"
+                      style={{ border: '1px solid var(--border-light)' }}
+                    >
+                      <div 
+                        className="absolute top-0 left-0 w-1 h-full"
+                        style={{ 
+                          background: appearance.result === 'winner' ? 'var(--accent-success)' : 
+                                     appearance.result === 'finalist' ? '#f59e0b' : 
+                                     appearance.result === 'judge' ? '#6366f1' : 'var(--accent-primary)'
+                        }}
+                      />
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <div>
+                          <Link
+                            href={appearance.show?.slug ? `/shows/${appearance.show.slug}` : '#'}
+                            className="font-display text-xl font-bold hover:text-[var(--accent-primary)] transition-colors"
+                            style={{ color: 'var(--text-primary)' }}
+                          >
+                            {appearance.show?.name || 'Unknown Show'}
+                          </Link>
+                          {appearance.season && (
+                            <span className="font-mono text-sm ml-2" style={{ color: 'var(--text-muted)' }}>
+                              {appearance.season}
+                            </span>
+                          )}
+                        </div>
+                        {appearance.result && appearance.result !== 'contestant' && (
+                          <span 
+                            className="font-mono text-[10px] font-bold tracking-wider px-2 py-1 uppercase flex-shrink-0"
+                            style={{ 
+                              background: appearance.result === 'winner' ? 'var(--accent-success)' : 
+                                         appearance.result === 'finalist' ? '#f59e0b' : '#6366f1',
+                              color: 'white'
+                            }}
+                          >
+                            {appearance.result}
+                          </span>
+                        )}
+                      </div>
+                      <p 
+                        className="font-ui text-sm leading-relaxed"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        {appearance.performance_blurb}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Instagram Feature */}
+          {chef.featured_instagram_post && (
+            <section 
+              className="py-12 border-y"
+              style={{ background: 'var(--bg-tertiary)', borderColor: 'var(--border-light)' }}
+            >
+              <div className="max-w-xl mx-auto px-4">
+                <h3 className="font-mono text-[10px] tracking-widest text-center mb-6" style={{ color: 'var(--text-muted)' }}>
+                  FROM INSTAGRAM
+                </h3>
+                <InstagramEmbed postUrl={chef.featured_instagram_post} />
               </div>
             </section>
           )}
