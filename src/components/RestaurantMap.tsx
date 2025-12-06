@@ -57,7 +57,7 @@ function RestaurantMarker({
           <div class="marker-dot">
             <div class="marker-inner"></div>
           </div>
-          ${(isSelected || isHovered) ? `<div class="marker-label">${restaurant.name}</div>` : ''}
+          ${''}
         </div>
       `,
       iconSize: [12, 12],
