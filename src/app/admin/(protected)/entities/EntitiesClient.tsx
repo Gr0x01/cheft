@@ -33,8 +33,7 @@ function getRestaurantCompleteness(restaurant: Restaurant): { score: number; mis
   if (!restaurant.google_place_id) missing.push('places');
   if (!restaurant.google_rating) missing.push('rating');
   if (!restaurant.address) missing.push('address');
-  if (!restaurant.cuisine_tags?.length) missing.push('cuisine');
-  const total = 4;
+  const total = 3;
   return { score: (total - missing.length) / total, missing };
 }
 

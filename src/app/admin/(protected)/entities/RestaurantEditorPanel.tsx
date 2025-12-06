@@ -82,6 +82,7 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
     try {
       if (hasChanges) {
         await handleSave();
+        setFormData(restaurant);
       }
 
       const response = await fetch('/api/admin/restaurants/fresh-lookup', {
@@ -96,8 +97,6 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
       }
 
       const data = await response.json();
-      
-      setFormData(restaurant);
       
       router.refresh();
       
@@ -163,11 +162,13 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
       console.log('[RestaurantEditorPanel] Update successful');
       
       Object.assign(restaurant, formData);
+      setFormData({ ...restaurant });
       
       router.refresh();
     } catch (err) {
       console.error('[RestaurantEditorPanel] Save error:', err);
       setError(err instanceof Error ? err.message : 'Failed to save changes.');
+      throw err;
     } finally {
       setSaving(false);
     }
@@ -216,98 +217,6 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
             onChange={(e) => updateField('chef_id', e.target.value)}
             options={chefs.map(chef => ({ value: chef.id, label: chef.name }))}
             placeholder="Select chef"
-          />
-        </FieldSection>
-
-        <FieldSection title="Location" description="Address and coordinates" icon={MapPin}>
-          <TextField
-            label="Address"
-            name="address"
-            value={formData.address || ''}
-            onChange={(e) => updateField('address', e.target.value || null)}
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <TextField
-              label="City"
-              name="city"
-              value={formData.city}
-              onChange={(e) => updateField('city', e.target.value)}
-              required
-            />
-            <TextField
-              label="State"
-              name="state"
-              value={formData.state || ''}
-              onChange={(e) => updateField('state', e.target.value || null)}
-            />
-          </div>
-          <TextField
-            label="Country"
-            name="country"
-            value={formData.country || ''}
-            onChange={(e) => updateField('country', e.target.value || null)}
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <TextField
-              label="Latitude"
-              name="lat"
-              type="number"
-              value={formData.lat?.toString() || ''}
-              onChange={(e) => updateField('lat', e.target.value ? Number(e.target.value) : null)}
-            />
-            <TextField
-              label="Longitude"
-              name="lng"
-              type="number"
-              value={formData.lng?.toString() || ''}
-              onChange={(e) => updateField('lng', e.target.value ? Number(e.target.value) : null)}
-            />
-          </div>
-        </FieldSection>
-
-        <FieldSection title="Details" description="Cuisine and pricing" icon={DollarSign}>
-          <MultiInput
-            label="Cuisine Tags"
-            name="cuisine_tags"
-            values={formData.cuisine_tags || []}
-            onChange={(values) => updateField('cuisine_tags', values.length > 0 ? values : null)}
-            placeholder="Add cuisine"
-          />
-          <SelectField
-            label="Price Tier"
-            name="price_tier"
-            value={formData.price_tier || ''}
-            onChange={(e) => updateField('price_tier', (e.target.value || null) as Restaurant['price_tier'])}
-            options={[
-              { value: '$', label: '$ - Budget' },
-              { value: '$$', label: '$$ - Moderate' },
-              { value: '$$$', label: '$$$ - Upscale' },
-              { value: '$$$$', label: '$$$$ - Fine Dining' },
-            ]}
-            placeholder="Select price"
-          />
-          <SelectField
-            label="Status"
-            name="status"
-            value={formData.status || ''}
-            onChange={(e) => updateField('status', (e.target.value || null) as Restaurant['status'])}
-            options={[
-              { value: 'open', label: 'Open' },
-              { value: 'closed', label: 'Closed' },
-              { value: 'temporarily_closed', label: 'Temporarily Closed' },
-            ]}
-            placeholder="Select status"
-          />
-          <SelectField
-            label="Public"
-            name="is_public"
-            value={formData.is_public ? 'true' : 'false'}
-            onChange={(e) => updateField('is_public', e.target.value === 'true')}
-            options={[
-              { value: 'true', label: 'Public' },
-              { value: 'false', label: 'Hidden' },
-            ]}
-            allowEmpty={false}
           />
         </FieldSection>
 
@@ -400,6 +309,98 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
               </div>
             </div>
           </div>
+        </FieldSection>
+
+        <FieldSection title="Location" description="Address and coordinates" icon={MapPin}>
+          <TextField
+            label="Address"
+            name="address"
+            value={formData.address || ''}
+            onChange={(e) => updateField('address', e.target.value || null)}
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <TextField
+              label="City"
+              name="city"
+              value={formData.city}
+              onChange={(e) => updateField('city', e.target.value)}
+              required
+            />
+            <TextField
+              label="State"
+              name="state"
+              value={formData.state || ''}
+              onChange={(e) => updateField('state', e.target.value || null)}
+            />
+          </div>
+          <TextField
+            label="Country"
+            name="country"
+            value={formData.country || ''}
+            onChange={(e) => updateField('country', e.target.value || null)}
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <TextField
+              label="Latitude"
+              name="lat"
+              type="number"
+              value={formData.lat?.toString() || ''}
+              onChange={(e) => updateField('lat', e.target.value ? Number(e.target.value) : null)}
+            />
+            <TextField
+              label="Longitude"
+              name="lng"
+              type="number"
+              value={formData.lng?.toString() || ''}
+              onChange={(e) => updateField('lng', e.target.value ? Number(e.target.value) : null)}
+            />
+          </div>
+        </FieldSection>
+
+        <FieldSection title="Details" description="Cuisine and pricing" icon={DollarSign}>
+          <MultiInput
+            label="Cuisine Tags"
+            name="cuisine_tags"
+            values={formData.cuisine_tags || []}
+            onChange={(values) => updateField('cuisine_tags', values.length > 0 ? values : null)}
+            placeholder="Add cuisine"
+          />
+          <SelectField
+            label="Price Tier"
+            name="price_tier"
+            value={formData.price_tier || ''}
+            onChange={(e) => updateField('price_tier', (e.target.value || null) as Restaurant['price_tier'])}
+            options={[
+              { value: '$', label: '$ - Budget' },
+              { value: '$$', label: '$$ - Moderate' },
+              { value: '$$$', label: '$$$ - Upscale' },
+              { value: '$$$$', label: '$$$$ - Fine Dining' },
+            ]}
+            placeholder="Select price"
+          />
+          <SelectField
+            label="Status"
+            name="status"
+            value={formData.status || ''}
+            onChange={(e) => updateField('status', (e.target.value || null) as Restaurant['status'])}
+            options={[
+              { value: 'open', label: 'Open' },
+              { value: 'closed', label: 'Closed' },
+              { value: 'temporarily_closed', label: 'Temporarily Closed' },
+            ]}
+            placeholder="Select status"
+          />
+          <SelectField
+            label="Public"
+            name="is_public"
+            value={formData.is_public ? 'true' : 'false'}
+            onChange={(e) => updateField('is_public', e.target.value === 'true')}
+            options={[
+              { value: 'true', label: 'Public' },
+              { value: 'false', label: 'Hidden' },
+            ]}
+            allowEmpty={false}
+          />
         </FieldSection>
       </div>
 
