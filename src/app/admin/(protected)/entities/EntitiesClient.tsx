@@ -136,6 +136,7 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
       setSelectedRestaurantId(id);
       setSelectedChefId(null);
     }
+    setIsCreatingNew(null);
     setHasUnsavedChanges(false);
   }, []);
 
