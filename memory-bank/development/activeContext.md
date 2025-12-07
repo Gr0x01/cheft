@@ -116,6 +116,19 @@ None
 
 **Testing**: Type-check passing, critical issues fixed, ready for backfill script creation
 
+## Recently Completed (Dec 7, 2025) - PostHog Analytics Setup ✅
+- ✅ **PostHog Installation**: Product analytics + session replay
+  - Package: `posthog-js` v1.302+
+  - Files: `src/lib/posthog.ts`, `src/components/PostHogProvider.tsx`
+  - Session replay enabled globally, **disabled on /admin routes** for privacy
+  - Privacy: person_profiles='identified_only', password masking
+  - Autocapture: pageviews, clicks, user paths
+- ✅ **Documentation**: `/memory-bank/architecture/analytics-setup.md`
+  - Dashboard setup guide (Core Metrics + Session Replay Insights)
+  - Key metrics to monitor (traffic, engagement, content, user journey)
+  - Best practices and troubleshooting
+- **Next Steps**: Create PostHog dashboards in UI (no code needed)
+
 ## Recently Completed (Dec 7, 2025) - Michelin Reference System ✅
 - ✅ **Database Table**: `michelin_restaurants` with 4,009 worldwide entries
   - 195 ★★★ | 522 ★★ | 3,292 ★ across 66 countries

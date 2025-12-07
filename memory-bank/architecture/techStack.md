@@ -30,6 +30,7 @@ Modern web stack optimized for rapid development and minimal operational overhea
 - **Database Hosting**: Supabase (managed Postgres with vector support)
 - **File Storage**: Supabase Storage (photo uploads with RLS policies)
 - **CDN**: Vercel Edge Network (included)
+- **Analytics**: PostHog (product analytics + session replay)
 - **Monitoring**: Vercel Analytics + Supabase monitoring
 
 ## Development Tools
@@ -51,6 +52,11 @@ Modern web stack optimized for rapid development and minimal operational overhea
 - **Geocoding**: Nominatim (OpenStreetMap geocoding service)
 - **Data Validation**: Zod for runtime type checking
 - **Environment Variables**: Next.js built-in env support
+- **Product Analytics**: PostHog (posthog-js v1.302+)
+  - Session replay enabled (disabled on /admin routes)
+  - Autocapture for pageviews and user interactions
+  - Privacy: person_profiles set to 'identified_only', password inputs masked
+  - Configuration: `src/lib/posthog.ts`, Provider: `src/components/PostHogProvider.tsx`
 
 ### External Data Sources
 - **Michelin Reference**: Wikipedia-scraped Michelin star data (4,009 restaurants, 66 countries)
@@ -103,6 +109,7 @@ Modern web stack optimized for rapid development and minimal operational overhea
   "@headlessui/react": "^1.7.0",
   "@supabase/supabase-js": "^2.38.0",
   "openai": "^4.20.0",
+  "posthog-js": "^1.302.0",
   "zod": "^3.22.0"
 }
 ```
@@ -116,6 +123,10 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 # OpenAI  
 OPENAI_API_KEY=your_openai_key
+
+# Analytics
+NEXT_PUBLIC_POSTHOG_KEY=your_posthog_project_api_key
+NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 
 # Optional: External APIs
 NOMINATIM_USER_AGENT=your_app_name_for_geocoding
