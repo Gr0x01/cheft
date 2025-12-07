@@ -9,6 +9,7 @@ import { getStorageUrl } from '@/lib/utils/storage';
 import { PhotoGalleryModal } from './PhotoGalleryModal';
 import { GoogleMapsLogo } from '@/components/icons/GoogleMapsLogo';
 import { ReportIssueButton } from '../feedback/ReportIssueButton';
+import { ExternalLinkTracker } from '@/components/analytics/ExternalLinkTracker';
 
 interface RestaurantHeroProps {
   breadcrumbItems?: Array<{ label: string; href?: string }>;
@@ -189,15 +190,16 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
                   <div>
                     <p className="font-ui text-sm text-white">{fullAddress}</p>
                     {restaurant.maps_url && (
-                      <a 
+                      <ExternalLinkTracker
                         href={restaurant.maps_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        linkType="google_maps"
+                        restaurantName={restaurant.name}
+                        chefName={restaurant.chef?.name}
                         className="font-mono text-xs tracking-wide mt-1 inline-block transition-colors hover:text-white"
                         style={{ color: 'var(--accent-primary)' }}
                       >
                         GET DIRECTIONS →
-                      </a>
+                      </ExternalLinkTracker>
                     )}
                   </div>
                 </div>
@@ -224,10 +226,11 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
               </div>
               
               {restaurant.website_url && (
-                <a 
+                <ExternalLinkTracker
                   href={restaurant.website_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  linkType="website"
+                  restaurantName={restaurant.name}
+                  chefName={restaurant.chef?.name}
                   className="flex items-center gap-2 font-mono text-sm transition-colors hover:text-white"
                   style={{ color: 'var(--accent-primary)' }}
                 >
@@ -235,7 +238,7 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                   </svg>
                   WEBSITE
-                </a>
+                </ExternalLinkTracker>
               )}
             </div>
           </div>

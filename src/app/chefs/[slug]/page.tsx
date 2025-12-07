@@ -13,6 +13,7 @@ import { InstagramEmbed } from '@/components/chef/InstagramEmbed';
 import { getStorageUrl } from '@/lib/utils/storage';
 import { MichelinStar } from '@/components/icons/MichelinStar';
 import { RestaurantMiniCard } from '@/components/restaurant/RestaurantMiniCard';
+import { ChefPageView } from '@/components/analytics/PostHogPageView';
 
 interface ChefPageProps {
   params: Promise<{ slug: string }>;
@@ -267,9 +268,17 @@ export default async function ChefPage({ params }: ChefPageProps) {
   });
 
   const cuisineTags = [...new Set(chef.restaurants.flatMap(r => r.cuisine_tags || []))].slice(0, 5);
+  const hasMichelinStars = chef.restaurants.some(r => r.michelin_stars && r.michelin_stars > 0);
 
   return (
     <>
+      <ChefPageView
+        chefName={chef.name}
+        chefSlug={chef.slug}
+        restaurantCount={chef.restaurants.length}
+        jamesBeardStatus={chef.james_beard_status}
+        hasMichelinStars={hasMichelinStars}
+      />
       <PersonSchema
         name={chef.name}
         description={chef.mini_bio}

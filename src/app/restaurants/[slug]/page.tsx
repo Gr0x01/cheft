@@ -10,6 +10,8 @@ import { MiniMapWrapper } from '@/components/restaurant/MiniMapWrapper';
 import { RestaurantSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 import { ReportIssueButton } from '@/components/feedback/ReportIssueButton';
 import { sanitizeNarrative } from '@/lib/sanitize';
+import { RestaurantPageView } from '@/components/analytics/PostHogPageView';
+import { ExternalLinkTracker } from '@/components/analytics/ExternalLinkTracker';
 
 interface RestaurantPageProps {
   params: Promise<{ slug: string }>;
@@ -36,6 +38,7 @@ interface RestaurantData {
   description: string | null;
   restaurant_narrative: string | null;
   phone: string | null;
+  michelin_stars: number | null;
   chef: {
     id: string;
     name: string;
@@ -268,6 +271,16 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
 
   return (
     <>
+      <RestaurantPageView
+        restaurantName={restaurant.name}
+        restaurantSlug={restaurant.slug}
+        chefName={restaurant.chef?.name || null}
+        city={restaurant.city}
+        state={restaurant.state}
+        priceTier={restaurant.price_tier}
+        michelinStars={restaurant.michelin_stars || null}
+        status={restaurant.status}
+      />
       <RestaurantSchema
         name={restaurant.name}
         description={restaurant.description}

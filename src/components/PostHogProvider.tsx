@@ -18,7 +18,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       const isAdminRoute = pathname.startsWith('/admin')
       
       if (isAdminRoute && posthog.sessionRecording) {
-        posthog.sessionRecording.stop()
+        posthog.stopSessionRecording()
       }
 
       let url = window.origin + pathname
