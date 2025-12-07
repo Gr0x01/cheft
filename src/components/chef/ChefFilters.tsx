@@ -24,11 +24,12 @@ interface ChefFiltersProps {
   totalChefs: number;
   onFilteredChefsChange: (chefs: ChefData[]) => void;
   hideShowDropdown?: boolean;
+  extraContent?: ReactNode;
 }
 
 const CHIP = "font-mono text-[11px] tracking-wider font-medium px-3 py-1.5 transition-all border flex items-center gap-1.5";
 
-export function ChefFilters({ shows = [], chefs, totalChefs, onFilteredChefsChange, hideShowDropdown = false }: ChefFiltersProps) {
+export function ChefFilters({ shows = [], chefs, totalChefs, onFilteredChefsChange, hideShowDropdown = false, extraContent }: ChefFiltersProps) {
   const { filters, setFilters, clearFilters, toggleShow, toggleResult, hasActiveFilters } = useChefFilters();
   const [showDropdownOpen, setShowDropdownOpen] = useState(false);
   const [filteredChefs, setFilteredChefs] = useState<ChefData[]>(chefs);
@@ -195,6 +196,13 @@ export function ChefFilters({ shows = [], chefs, totalChefs, onFilteredChefsChan
                 >
                   <X className="w-3 h-3" /> Clear
                 </button>
+              </>
+            )}
+
+            {extraContent && (
+              <>
+                <div className="h-4 w-px bg-slate-200 ml-auto" />
+                {extraContent}
               </>
             )}
           </div>

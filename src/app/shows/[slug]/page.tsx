@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/supabase';
 import { createStaticClient } from '@/lib/supabase/static';
@@ -93,39 +92,7 @@ export default async function ShowPage({ params }: ShowPageProps) {
         ]}
       />
 
-      {seasons.length > 0 && (
-        <section className="border-b" style={{ borderColor: 'var(--border-light)' }}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h2 className="font-display text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
-              Browse by Season
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-              {seasons.map((season) => (
-                <Link
-                  key={season.season}
-                  href={`/shows/${slug}/${season.season}`}
-                  className="group relative bg-white p-4 text-center transition-all duration-300 hover:-translate-y-1"
-                  style={{ border: '1px solid var(--border-light)' }}
-                >
-                  <div
-                    className="absolute top-0 left-0 w-1 h-full transition-all duration-300 group-hover:w-2"
-                    style={{ background: 'var(--accent-primary)' }}
-                  />
-                  <div
-                    className="font-display text-2xl font-bold group-hover:text-[var(--accent-primary)] transition-colors"
-                    style={{ color: 'var(--text-primary)' }}
-                  >
-                    {season.season_name || `Season ${season.season}`}
-                  </div>
-                  <div className="absolute inset-0 border-2 border-transparent transition-colors duration-300 pointer-events-none group-hover:border-[var(--accent-primary)]" />
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      <ShowPageClient chefs={chefData} />
+      <ShowPageClient chefs={chefData} showSlug={slug} seasons={seasons} />
     </div>
   );
 }
