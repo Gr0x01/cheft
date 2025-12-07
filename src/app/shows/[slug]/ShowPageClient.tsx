@@ -121,7 +121,7 @@ function ShowPageClientInner({ chefs, showSlug, seasons = [] }: ShowPageClientPr
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredChefs.map((chef, index) => (
-              <ChefCard key={chef.id} chef={chef} index={index} />
+              <ChefCard key={chef.id} chef={chef} index={index} hideShowName />
             ))}
           </div>
         )}

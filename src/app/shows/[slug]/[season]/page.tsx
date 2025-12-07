@@ -160,63 +160,16 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
       </PageHero>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
-        {winner && (
+        {seasonData.chef_shows && seasonData.chef_shows.length > 0 && (
           <div className="mb-12">
-            <h2
-              className="font-display text-2xl font-bold mb-6"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              Winner
-            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              <ChefCard chef={winner.chef} index={0} />
-            </div>
-          </div>
-        )}
-
-        {finalists.length > 0 && (
-          <div className="mb-12">
-            <h2
-              className="font-display text-2xl font-bold mb-6"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              Finalists
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {finalists.map((cs: any, index: number) => (
-                <ChefCard key={cs.chef.id} chef={cs.chef} index={index} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {contestants.length > 0 && (
-          <div className="mb-12">
-            <h2
-              className="font-display text-2xl font-bold mb-6"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              Contestants
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {contestants.map((cs: any, index: number) => (
-                <ChefCard key={cs.chef.id} chef={cs.chef} index={index} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {judges.length > 0 && (
-          <div className="mb-12">
-            <h2
-              className="font-display text-2xl font-bold mb-6"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              Judges
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {judges.map((cs: any, index: number) => (
-                <ChefCard key={cs.chef.id} chef={cs.chef} index={index} />
+              {[
+                ...(winner ? [winner] : []),
+                ...finalists,
+                ...judges,
+                ...contestants,
+              ].map((cs: ChefShow, index: number) => (
+                <ChefCard key={cs.chef.id} chef={{...cs.chef, chef_shows: [{ result: cs.result }]}} index={index} hideShowName />
               ))}
             </div>
           </div>

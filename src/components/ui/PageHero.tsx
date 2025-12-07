@@ -27,7 +27,7 @@ export function PageHero({ title, subtitle, stats, breadcrumbItems, children }: 
         }}
       />
       
-      <div className="relative max-w-6xl mx-auto px-4 py-16 sm:py-20">
+      <div className="relative max-w-6xl mx-auto px-4 py-12 sm:py-16">
         {breadcrumbItems && (
           <Breadcrumbs
             items={breadcrumbItems}

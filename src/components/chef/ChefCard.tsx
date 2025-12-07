@@ -20,15 +20,15 @@ interface ChefCardProps {
   };
   className?: string;
   index?: number;
+  hideShowName?: boolean;
 }
 
-export function ChefCard({ chef, index = 0 }: ChefCardProps) {
+export function ChefCard({ chef, index = 0, hideShowName = false }: ChefCardProps) {
   const primaryShow = chef.chef_shows?.find(cs => cs.is_primary) || chef.chef_shows?.[0];
   const totalShows = chef.chef_shows?.length || 0;
   const additionalShowCount = totalShows > 1 ? totalShows - 1 : 0;
   
   const hasJamesBeard = chef.james_beard_status === 'winner' || chef.james_beard_status === 'nominated';
-  const isWinner = primaryShow?.result === 'winner';
 
   return (
     <Link
@@ -73,12 +73,28 @@ export function ChefCard({ chef, index = 0 }: ChefCardProps) {
               <span 
                 className="inline-flex items-center font-mono text-[10px] font-semibold tracking-wide uppercase px-2 py-1"
                 style={{
-                  background: isWinner ? 'var(--accent-success)' : 'var(--slate-800)',
-                  color: isWinner ? 'white' : 'var(--copper-400)',
+                  background: primaryShow.result === 'winner' ? 'var(--accent-success)' 
+                    : primaryShow.result === 'judge' ? '#7C3AED'
+                    : primaryShow.result === 'finalist' ? '#0284C7'
+                    : 'var(--slate-800)',
+                  color: primaryShow.result === 'winner' || primaryShow.result === 'judge' || primaryShow.result === 'finalist' 
+                    ? 'white' : 'var(--copper-400)',
                 }}
               >
-                {abbreviateShowName(primaryShow.show?.name || '')}
-                {isWinner && <span className="ml-1 opacity-80">✓</span>}
+                {hideShowName ? (
+                  <>
+                    {primaryShow.result === 'winner' ? 'WINNER ✓' 
+                      : primaryShow.result === 'judge' ? 'JUDGE ★'
+                      : primaryShow.result === 'finalist' ? 'FINALIST'
+                      : 'CONTESTANT'}
+                  </>
+                ) : (
+                  <>
+                    {abbreviateShowName(primaryShow.show?.name || '')}
+                    {primaryShow.result === 'winner' && <span className="ml-1 opacity-80">✓</span>}
+                    {primaryShow.result === 'judge' && <span className="ml-1 opacity-80">★</span>}
+                  </>
+                )}
               </span>
               {additionalShowCount > 0 && (
                 <span className="font-mono text-[10px] tracking-wide text-slate-400">

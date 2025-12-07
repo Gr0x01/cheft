@@ -22,11 +22,14 @@ export default async function ShowsPage() {
   const totalRestaurants = shows.reduce((sum: number, show: any) => sum + show.restaurant_count, 0);
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
       <Header />
       <PageHero
         title="TV Cooking Shows"
         subtitle="Browse restaurants by the TV shows that made these chefs famous. From Top Chef winners to Iron Chef competitors, find where the stars are cooking today."
+        breadcrumbItems={[
+          { label: 'Shows' },
+        ]}
         stats={[
           { value: shows.length, label: 'SHOWS' },
           { value: totalChefs, label: 'CHEFS' },
