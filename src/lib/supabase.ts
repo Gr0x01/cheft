@@ -392,7 +392,7 @@ export const db = {
     
     if (showError) throw showError;
     
-    const { data: chefData, error: chefError } = await (client as any).rpc('get_show_with_chef_counts', { show_slug: slug });
+    const { data: chefData, error: chefError } = await (client as any).rpc('get_show_with_chef_counts', { p_show_slug: slug });
     
     if (chefError) throw chefError;
     
@@ -429,7 +429,7 @@ export const db = {
   // Get all unique seasons for a show
   async getShowSeasons(showSlug: string) {
     const client = getSupabaseClient();
-    const { data, error } = await (client as any).rpc('get_show_seasons', { show_slug: showSlug });
+    const { data, error } = await (client as any).rpc('get_show_seasons', { p_show_slug: showSlug });
     
     if (error) throw error;
     return data || [];
@@ -465,6 +465,9 @@ export const db = {
             slug: row.chef_slug,
             photo_url: row.chef_photo_url,
             mini_bio: row.chef_mini_bio,
+            james_beard_status: row.chef_james_beard_status,
+            restaurant_count: Number(row.chef_restaurant_count) || 0,
+            chef_shows: row.chef_shows_json || [],
             restaurants: []
           }
         });
