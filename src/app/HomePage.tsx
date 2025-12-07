@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useDeferredValue } from 'react';
 import dynamic from 'next/dynamic';
 import { RestaurantWithDetails } from '@/lib/types';
 import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCompact';
@@ -26,7 +26,6 @@ const RestaurantMap = dynamic(() => import('@/components/RestaurantMap'), {
 
 export default function Home({ initialFeaturedChefs, stats, featuredChef }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [selectedShow, setSelectedShow] = useState<string>('all');
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
   const [selectedRestaurant, setSelectedRestaurant] = useState<RestaurantWithDetails | null>(null);
@@ -35,6 +34,8 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef }: Home
   const [visibleCount, setVisibleCount] = useState(20);
   const [restaurants, setRestaurants] = useState<RestaurantWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   
   const featuredChefs = initialFeaturedChefs;
 
@@ -54,19 +55,11 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef }: Home
     fetchRestaurants();
   }, []);
 
-  const handleSearchChange = useCallback((value: string) => {
-    setSearchQuery(value);
-    const timeoutId = setTimeout(() => {
-      setDebouncedSearchQuery(value);
-    }, 300);
-    return () => clearTimeout(timeoutId);
-  }, []);
-
   const filteredRestaurants = useMemo(() => {
     let filtered = restaurants;
 
-    if (debouncedSearchQuery) {
-      const query = debouncedSearchQuery.toLowerCase();
+    if (deferredSearchQuery) {
+      const query = deferredSearchQuery.toLowerCase();
       filtered = filtered.filter(restaurant =>
         restaurant.name.toLowerCase().includes(query) ||
         restaurant.chef?.name.toLowerCase().includes(query) ||
@@ -86,7 +79,7 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef }: Home
     }
 
     return filtered;
-  }, [debouncedSearchQuery, selectedShow, selectedPriceRange, restaurants]);
+  }, [deferredSearchQuery, selectedShow, selectedPriceRange, restaurants]);
 
   const handleRestaurantClick = (restaurant: RestaurantWithDetails) => {
     setSelectedRestaurant(restaurant);
@@ -146,11 +139,12 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef }: Home
               <path d="M21 21l-4.35-4.35"/>
             </svg>
             <input
+              ref={searchInputRef}
               id="restaurant-search"
               type="text"
               placeholder="Search restaurants, chefs, cities..."
               value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="sidebar-search-input"
               aria-label="Search restaurants, chefs, and cities"
             />
