@@ -49,19 +49,20 @@ export function Header({ currentPage }: HeaderProps) {
         }}
       >
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 group">
-          <div 
-            className="w-8 h-8 flex items-center justify-center"
-            style={{ background: 'var(--accent-primary)' }}
+        <Link href="/" className="flex items-center gap-3 group">
+          <span className="font-display text-2xl font-900 tracking-tight leading-none" 
+            style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}
           >
-            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M12 2L2 7l10 5 10-5-10-5z" />
-              <path d="M2 17l10 5 10-5" />
-              <path d="M2 12l10 5 10-5" />
-            </svg>
-          </div>
-          <span className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
             Cheft
+          </span>
+          <span 
+            className="font-mono text-[9px] font-bold tracking-[0.12em] uppercase inline-block px-2 py-1 border transition-all duration-300 group-hover:!text-[#d35e0f] group-hover:!border-[#d35e0f]"
+            style={{ 
+              color: 'var(--text-muted)',
+              borderColor: 'var(--border-light)'
+            }}
+          >
+            Beta
           </span>
         </Link>
 

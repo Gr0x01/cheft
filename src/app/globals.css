@@ -1737,3 +1737,8 @@ body {
     gap: 16px;
   }
 }
+
+.beta-tag:hover {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
