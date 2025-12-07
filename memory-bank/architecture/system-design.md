@@ -1,5 +1,5 @@
 ---
-Last-Updated: 2025-11-30
+Last-Updated: 2025-12-07
 Maintainer: RB
 Status: Active Design
 ---
@@ -25,6 +25,13 @@ The TV Chef Map is a curated database application that helps fans of cooking TV 
 - Soft deletes to preserve historical data
 - Automated timestamp updates
 - Foreign key constraints ensure data consistency
+
+**Reference Tables:**
+- `michelin_restaurants`: External Michelin star data (syncs to restaurants)
+  - 4,009 restaurants worldwide (195 ★★★, 522 ★★, 3,292 ★)
+  - Auto-sync trigger: exact name + flexible city/state matching
+  - Source: Wikipedia (66 pages scraped via `npm run michelin:scrape`)
+  - Refresh: Yearly (~November when Michelin announces new stars)
 
 ### 2. Natural Language Search System
 

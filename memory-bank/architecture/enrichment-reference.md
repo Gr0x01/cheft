@@ -1,5 +1,5 @@
 ---
-Last-Updated: 2025-12-05
+Last-Updated: 2025-12-07
 Maintainer: RB
 Status: Active
 ---
@@ -133,3 +133,43 @@ console.log(`Tokens: ${result.tokensUsed.total}`);
 **Design Patterns:** `patterns.md` - Repository, Service, Workflow, Facade patterns
 
 **Example Scripts:** `scripts/enrich-all-chef-shows.ts`, `scripts/backfill-performance-blurbs.ts`
+
+---
+
+## External Data Sync (Non-LLM)
+
+### Michelin Stars Reference
+
+**Not LLM-based** - Wikipedia HTML scraper populates `michelin_restaurants` reference table which auto-syncs to `restaurants.michelin_stars`.
+
+| Task | Command | Notes |
+|------|---------|-------|
+| Full scrape | `npm run michelin:scrape` | ~30 seconds, 66 Wikipedia pages worldwide |
+| Dry run | `npm run michelin:scrape:dry-run` | Preview without DB changes |
+| Manual sync | `SELECT * FROM sync_all_michelin_stars()` | Force re-sync to restaurants table |
+| Check table | `npx tsx scripts/michelin/check-table.ts` | Verify table exists |
+
+**Data Stats (Dec 2025):**
+- 4,009 restaurants worldwide
+- 195 ★★★ | 522 ★★ | 3,292 ★
+- 66 countries/regions covered
+
+**Auto-Sync Trigger:**
+- On `michelin_restaurants` INSERT/UPDATE → matches `restaurants` by exact name + city
+- Updates `restaurants.michelin_stars` automatically
+- Handles state abbreviations (NY→New York, CA→California, etc.)
+- Handles neighborhood names (Manhattan→New York state match)
+
+**Files:**
+```
+supabase/migrations/030_michelin_reference_table.sql  # Table + sync functions
+scripts/michelin/
+├── scrape-wikipedia-michelin.ts  # Main scraper (66 pages)
+├── check-table.ts                # Verify table exists
+├── run-sync.ts                   # Manual sync trigger
+└── check-matches.ts              # Debug matching issues
+```
+
+**Refresh Schedule:** Run yearly (~November) when Michelin announces new stars, or when adding new restaurants that might have stars.
+
+**Integration with Restaurant Enrichment:** The Michelin sync is separate from LLM enrichment. When new restaurants are added via enrichment workflows, run `sync_all_michelin_stars()` to check for Michelin matches.

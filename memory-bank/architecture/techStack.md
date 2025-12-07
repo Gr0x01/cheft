@@ -1,5 +1,5 @@
 ---
-Last-Updated: 2025-11-30
+Last-Updated: 2025-12-07
 Maintainer: RB
 Status: Defined
 ---
@@ -51,6 +51,13 @@ Modern web stack optimized for rapid development and minimal operational overhea
 - **Geocoding**: Nominatim (OpenStreetMap geocoding service)
 - **Data Validation**: Zod for runtime type checking
 - **Environment Variables**: Next.js built-in env support
+
+### External Data Sources
+- **Michelin Reference**: Wikipedia-scraped Michelin star data (4,009 restaurants, 66 countries)
+  - Table: `michelin_restaurants` with auto-sync trigger to `restaurants.michelin_stars`
+  - Scraper: `npm run michelin:scrape` (run yearly when stars announced, ~November)
+  - No LLM cost - pure HTML parsing from Wikipedia tables
+  - Coverage: USA, Canada, UK, France, Germany, Italy, Spain, Japan, and 50+ more countries
 
 ## Architecture Decisions
 

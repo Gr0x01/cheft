@@ -1,5 +1,5 @@
 ---
-Last-Updated: 2025-12-06
+Last-Updated: 2025-12-07
 Maintainer: RB
 Status: SEO Auto-Enrichment Implementation In Progress
 ---
@@ -115,6 +115,20 @@ None
 - Modified: `prompts.ts`, `show-repository.ts`, 3 workflow files, `llm-enricher.ts`, `database.types.ts`
 
 **Testing**: Type-check passing, critical issues fixed, ready for backfill script creation
+
+## Recently Completed (Dec 7, 2025) - Michelin Reference System ✅
+- ✅ **Database Table**: `michelin_restaurants` with 4,009 worldwide entries
+  - 195 ★★★ | 522 ★★ | 3,292 ★ across 66 countries
+- ✅ **Wikipedia Scraper**: `npm run michelin:scrape` parses 66 Wikipedia pages
+  - Star count extracted from image filenames (`Etoile_Michelin-1/2/3`)
+  - Handles closed restaurants, deduplication, country mapping
+- ✅ **Auto-Sync Trigger**: On michelin table insert/update → matches restaurants by exact name + city
+  - Handles state abbreviations (NY→New York, CA→California, etc.)
+  - Function `sync_all_michelin_stars()` for manual bulk sync
+- ✅ **Scripts**: `scrape-wikipedia-michelin.ts`, `check-table.ts`, `run-sync.ts`, `check-matches.ts`
+- ✅ **Migration**: `030_michelin_reference_table.sql`
+- **Note**: Low overlap with TV chef restaurants (expected) - data ready for future Michelin filter or spinoff site
+- **Refresh Schedule**: Run yearly (~November when Michelin announces new stars)
 
 ## Recently Completed (Dec 5, 2025) - Multi-Show Discovery Fix ✅
 - **Problem**: LLM only found 1 show per chef despite 6+ actual appearances

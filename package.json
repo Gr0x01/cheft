@@ -24,7 +24,9 @@
     "enrich:narratives": "tsx scripts/backfill-narratives.ts",
     "find-duplicates": "tsx scripts/find-duplicates.ts",
     "merge-duplicate-chefs": "tsx scripts/detect-and-merge-duplicate-chefs.ts",
-    "process-approved-queue": "tsx scripts/process-approved-queue.ts"
+    "process-approved-queue": "tsx scripts/process-approved-queue.ts",
+    "michelin:scrape": "tsx scripts/michelin/scrape-wikipedia-michelin.ts",
+    "michelin:scrape:dry-run": "tsx scripts/michelin/scrape-wikipedia-michelin.ts --dry-run"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.3.24",
