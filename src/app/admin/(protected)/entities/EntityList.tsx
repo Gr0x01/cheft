@@ -49,18 +49,18 @@ export function EntityList({ type, items, selectedId, onSelect, compact }: Entit
             onClick={() => onSelect(item.id)}
             className={`w-full text-left px-5 py-4 transition-all border-l-4 border-b border-stone-100 ${
               isSelected
-                ? 'bg-copper-50/50 border-l-copper-600'
+                ? 'bg-amber-50/50 border-l-amber-600'
                 : 'border-l-transparent hover:bg-stone-50'
             }`}
           >
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className={`font-display text-base font-semibold truncate ${isSelected ? 'text-copper-900' : 'text-stone-900'}`}>
+                  <span className={`font-display text-base font-semibold truncate ${isSelected ? 'text-amber-900' : 'text-stone-900'}`}>
                     {item.name}
                   </span>
                   {item.protected && (
-                    <Shield className="w-3 h-3 text-copper-600 fill-copper-600 flex-shrink-0" />
+                    <Shield className="w-3 h-3 text-amber-600 fill-amber-600 flex-shrink-0" />
                   )}
                 </div>
                 {item.subtitle && !compact && (

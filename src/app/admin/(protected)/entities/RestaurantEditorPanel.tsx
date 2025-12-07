@@ -18,16 +18,75 @@ import {
   Copy,
   Check,
   Shield,
+  Unlink,
 } from 'lucide-react';
+import { ChefTypeahead } from '@/components/admin/forms/ChefTypeahead';
 
 type Restaurant = Database['public']['Tables']['restaurants']['Row'] & { protected?: boolean };
 
 interface RestaurantEditorPanelProps {
-  restaurant: Restaurant;
+  restaurant: Restaurant | null;
   chefs: { id: string; name: string; slug: string }[];
   onDirtyChange?: (dirty: boolean) => void;
   onClose?: () => void;
+  onCreated?: (id: string) => void;
+  isNew?: boolean;
 }
+
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+}
+
+const emptyRestaurant: Restaurant = {
+  id: '',
+  name: '',
+  slug: '',
+  chef_id: '',
+  chef_role: null,
+  city: '',
+  state: null,
+  country: 'USA',
+  address: null,
+  lat: null,
+  lng: null,
+  cuisine_tags: null,
+  price_tier: null,
+  status: 'open',
+  is_public: true,
+  google_place_id: null,
+  google_rating: null,
+  google_review_count: null,
+  google_price_level: null,
+  google_photos: null,
+  maps_url: null,
+  website_url: null,
+  phone: null,
+  photo_urls: null,
+  michelin_stars: null,
+  description: null,
+  restaurant_narrative: null,
+  source_notes: null,
+  last_verified_at: null,
+  verification_source: null,
+  last_enriched_at: null,
+  reservation_url: null,
+  signature_dishes: null,
+  year_opened: null,
+  hours: null,
+  vibe_tags: null,
+  dietary_options: null,
+  awards: null,
+  gift_card_url: null,
+  narrative_generated_at: null,
+  verification_priority: null,
+  created_at: '',
+  updated_at: '',
+};
 
 export interface RestaurantEditorHandle {
   save: () => Promise<void>;
@@ -36,9 +95,10 @@ export interface RestaurantEditorHandle {
   isSaving: boolean;
 }
 
-export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, RestaurantEditorPanelProps>(function RestaurantEditorPanel({ restaurant, chefs, onDirtyChange, onClose }, ref) {
+export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, RestaurantEditorPanelProps>(function RestaurantEditorPanel({ restaurant, chefs, onDirtyChange, onClose, onCreated, isNew = false }, ref) {
   const router = useRouter();
-  const [formData, setFormData] = useState<Restaurant>(restaurant);
+  const [initialData, setInitialData] = useState<Restaurant>(restaurant || emptyRestaurant);
+  const [formData, setFormData] = useState<Restaurant>(restaurant || emptyRestaurant);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mapsUrl, setMapsUrl] = useState('');
@@ -46,12 +106,15 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
   const [copied, setCopied] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showUnlinkConfirm, setShowUnlinkConfirm] = useState(false);
+
+  const currentChef = chefs.find(c => c.id === formData.chef_id);
 
   const updateField = <K extends keyof Restaurant>(field: K, value: Restaurant[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const hasChanges = JSON.stringify(formData) !== JSON.stringify(restaurant);
+  const hasChanges = isNew || JSON.stringify(formData) !== JSON.stringify(initialData);
 
   useEffect(() => {
     onDirtyChange?.(hasChanges);
@@ -83,13 +146,12 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
     try {
       if (hasChanges) {
         await handleSave();
-        setFormData(restaurant);
       }
 
       const response = await fetch('/api/admin/restaurants/fresh-lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurantId: restaurant.id }),
+        body: JSON.stringify({ restaurantId: initialData.id }),
       });
 
       if (!response.ok) {
@@ -116,12 +178,40 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
   };
 
   const handleSave = async () => {
-    console.log('[RestaurantEditorPanel] handleSave called');
     setSaving(true);
     setError(null);
 
     try {
-      console.log('[RestaurantEditorPanel] Updating restaurant:', restaurant.id);
+      if (isNew) {
+        if (!formData.name || !formData.chef_id || !formData.city) {
+          throw new Error('Name, Chef, and City are required');
+        }
+
+        const slug = formData.slug || generateSlug(formData.name);
+
+        const response = await fetch('/api/admin/restaurants/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            chef_id: formData.chef_id,
+            city: formData.city,
+            state: formData.state || null,
+            country: formData.country || 'USA',
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create restaurant');
+        }
+
+        const { restaurant: created } = await response.json();
+        toast.success(`Created ${created.name}`);
+        onCreated?.(created.id);
+        router.refresh();
+        return;
+      }
       
       const updatePayload = {
         name: formData.name,
@@ -145,13 +235,11 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
         protected: formData.protected,
       };
       
-      console.log('[RestaurantEditorPanel] Update payload:', updatePayload);
-      
       const response = await fetch('/api/admin/restaurants/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          restaurantId: restaurant.id,
+          restaurantId: initialData.id,
           updates: updatePayload,
         }),
       });
@@ -161,15 +249,12 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
         throw new Error(errorData.error || 'Failed to update restaurant');
       }
       
-      console.log('[RestaurantEditorPanel] Update successful');
-      
-      Object.assign(restaurant, formData);
-      setFormData({ ...restaurant });
+      setInitialData({ ...formData });
+      setFormData({ ...formData });
       onDirtyChange?.(false);
       
       router.refresh();
     } catch (err) {
-      console.error('[RestaurantEditorPanel] Save error:', err);
       setError(err instanceof Error ? err.message : 'Failed to save changes.');
       throw err;
     } finally {
@@ -178,7 +263,7 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
   };
 
   const handleDiscard = () => {
-    setFormData(restaurant);
+    setFormData({ ...initialData });
     setError(null);
   };
 
@@ -206,20 +291,28 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
             onChange={(e) => updateField('name', e.target.value)}
             required
           />
-          <TextField
-            label="Slug"
-            name="slug"
-            value={formData.slug}
-            onChange={(e) => updateField('slug', e.target.value)}
-            required
-          />
-          <SelectField
+          {!isNew && (
+            <TextField
+              label="Slug"
+              name="slug"
+              value={formData.slug}
+              onChange={(e) => updateField('slug', e.target.value)}
+              required
+            />
+          )}
+          {isNew && formData.name && (
+            <p className="font-mono text-[10px] text-stone-400">
+              Slug: {generateSlug(formData.name)}
+            </p>
+          )}
+          <ChefTypeahead
             label="Chef"
-            name="chef_id"
             value={formData.chef_id}
-            onChange={(e) => updateField('chef_id', e.target.value)}
-            options={chefs.map(chef => ({ value: chef.id, label: chef.name }))}
-            placeholder="Select chef"
+            chefName={currentChef?.name}
+            onChange={(chefId) => updateField('chef_id', chefId || '')}
+            onUnlink={() => setShowUnlinkConfirm(true)}
+            showUnlink={!isNew && !!formData.chef_id}
+            required={isNew}
           />
         </FieldSection>
 
@@ -327,7 +420,7 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
               name="city"
               value={formData.city}
               onChange={(e) => updateField('city', e.target.value)}
-              required
+              required={isNew}
             />
             <TextField
               label="State"
@@ -406,6 +499,41 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
           />
         </FieldSection>
       </div>
+
+      {showUnlinkConfirm && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+          <div className="bg-white border-2 border-stone-900 p-6 max-w-sm mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <Unlink className="w-5 h-5 text-red-600" />
+              </div>
+              <h3 className="font-display text-lg font-bold text-stone-900">
+                Unlink Chef?
+              </h3>
+            </div>
+            <p className="font-mono text-xs text-stone-600 mb-6">
+              Remove <strong>{currentChef?.name}</strong> from this restaurant? The restaurant will no longer appear on the chef's page.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowUnlinkConfirm(false)}
+                className="px-4 py-2 font-mono text-xs uppercase tracking-wider text-stone-600 hover:text-stone-900 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  updateField('chef_id', '');
+                  setShowUnlinkConfirm(false);
+                }}
+                className="px-4 py-2 bg-red-600 text-white font-mono text-xs uppercase tracking-wider hover:bg-red-700 transition-colors"
+              >
+                Unlink Chef
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showConfirmDialog && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">

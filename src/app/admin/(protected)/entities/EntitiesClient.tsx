@@ -5,7 +5,7 @@ import { Database } from '@/lib/database.types';
 import { EntityList } from './EntityList';
 import { ChefEditorPanel } from './ChefEditorPanel';
 import { RestaurantEditorPanel, RestaurantEditorHandle } from './RestaurantEditorPanel';
-import { Search, X, Loader2, Shield } from 'lucide-react';
+import { Search, X, Loader2, Shield, Plus } from 'lucide-react';
 import { Toaster } from 'sonner';
 
 type Chef = Database['public']['Tables']['chefs']['Row'];
@@ -47,20 +47,18 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
   const [isSaving, setIsSaving] = useState(false);
   const pendingSelectionRef = useRef<{ type: 'chef' | 'restaurant'; id: string } | null>(null);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [isCreatingNew, setIsCreatingNew] = useState<'chef' | 'restaurant' | null>(null);
   const restaurantEditorRef = useRef<RestaurantEditorHandle>(null);
+  const chefEditorRef = useRef<{ save: () => Promise<void>; discard: () => void; hasChanges: boolean } | null>(null);
 
   const handleSave = async () => {
-    console.log('[EntitiesClient] handleSave called');
-    console.log('[EntitiesClient] restaurantEditorRef.current:', restaurantEditorRef.current);
-    if (!restaurantEditorRef.current) {
-      console.error('[EntitiesClient] No ref to editor!');
-      return;
-    }
     setIsSaving(true);
     try {
-      console.log('[EntitiesClient] Calling save...');
-      await restaurantEditorRef.current.save();
-      console.log('[EntitiesClient] Save completed');
+      if (chefEditorRef.current) {
+        await chefEditorRef.current.save();
+      } else if (restaurantEditorRef.current) {
+        await restaurantEditorRef.current.save();
+      }
     } catch (error) {
       console.error('[EntitiesClient] Save failed:', error);
     } finally {
@@ -69,6 +67,7 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
   };
 
   const handleDiscard = () => {
+    chefEditorRef.current?.discard();
     restaurantEditorRef.current?.discard();
   };
 
@@ -167,6 +166,7 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
     } else {
       setSelectedChefId(null);
       setSelectedRestaurantId(null);
+      setIsCreatingNew(null);
     }
   }, [hasUnsavedChanges]);
 
@@ -178,10 +178,32 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
     } else {
       setSelectedChefId(null);
       setSelectedRestaurantId(null);
+      setIsCreatingNew(null);
       setHasUnsavedChanges(false);
     }
     pendingSelectionRef.current = null;
   }, [doSelection]);
+
+  const handleAddNew = useCallback(() => {
+    if (hasUnsavedChanges) {
+      setShowDiscardDialog(true);
+      return;
+    }
+    setSelectedChefId(null);
+    setSelectedRestaurantId(null);
+    setIsCreatingNew(activeTab === 'chefs' ? 'chef' : 'restaurant');
+    setHasUnsavedChanges(true);
+  }, [activeTab, hasUnsavedChanges]);
+
+  const handleEntityCreated = useCallback((type: 'chef' | 'restaurant', id: string) => {
+    setIsCreatingNew(null);
+    setHasUnsavedChanges(false);
+    if (type === 'chef') {
+      setSelectedChefId(id);
+    } else {
+      setSelectedRestaurantId(id);
+    }
+  }, []);
 
   const handleCancelDiscard = useCallback(() => {
     setShowDiscardDialog(false);
@@ -201,7 +223,7 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
   ];
 
   const filterOptions = activeTab === 'chefs' ? chefFilterOptions : restaurantFilterOptions;
-  const showingEditor = selectedChef || selectedRestaurant;
+  const showingEditor = selectedChef || selectedRestaurant || isCreatingNew;
 
   return (
     <div className="h-[calc(100vh-7rem)] max-w-7xl mx-auto">
@@ -213,7 +235,7 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
                 onClick={() => { setActiveTab('chefs'); setFilter('all'); }}
                 className={`flex-1 py-3 font-mono text-xs uppercase tracking-[0.15em] transition-all border-b-2 -mb-[2px] ${
                   activeTab === 'chefs'
-                    ? 'text-stone-900 border-copper-600 bg-stone-50'
+                    ? 'text-stone-900 border-amber-600 bg-stone-50'
                     : 'text-stone-400 border-transparent hover:text-stone-600'
                 }`}
               >
@@ -224,7 +246,7 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
                 onClick={() => { setActiveTab('restaurants'); setFilter('all'); }}
                 className={`flex-1 py-3 font-mono text-xs uppercase tracking-[0.15em] transition-all border-b-2 -mb-[2px] ${
                   activeTab === 'restaurants'
-                    ? 'text-stone-900 border-copper-600 bg-stone-50'
+                    ? 'text-stone-900 border-amber-600 bg-stone-50'
                     : 'text-stone-400 border-transparent hover:text-stone-600'
                 }`}
               >
@@ -240,19 +262,28 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
                 placeholder={`Search ${activeTab}...`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-stone-50 border-2 border-stone-200 font-ui text-sm focus:outline-none focus:border-copper-600 transition-colors"
+                className="w-full pl-10 pr-4 py-2.5 bg-stone-50 border-2 border-stone-200 font-ui text-sm focus:outline-none focus:border-amber-600 transition-colors"
               />
             </div>
 
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as FilterType)}
-              className="w-full px-3 py-2 bg-stone-50 border-2 border-stone-200 font-mono text-xs uppercase tracking-wider text-stone-600 focus:outline-none focus:border-copper-600 transition-colors"
-            >
-              {filterOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value as FilterType)}
+                className="flex-1 px-3 py-2 bg-stone-50 border-2 border-stone-200 font-mono text-xs uppercase tracking-wider text-stone-600 focus:outline-none focus:border-amber-600 transition-colors"
+              >
+                {filterOptions.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <button
+                onClick={handleAddNew}
+                className="flex items-center gap-1.5 px-3 py-2 bg-stone-900 text-white font-mono text-xs uppercase tracking-wider hover:bg-stone-800 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add
+              </button>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto">
@@ -301,7 +332,7 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
             <div className="flex items-center justify-between px-6 py-4 border-b-2 border-stone-900 bg-stone-50">
               <div className="flex items-center gap-3">
                 <h2 className="font-display text-xl font-bold text-stone-900">
-                  {selectedChef ? 'Edit Chef' : 'Edit Restaurant'}
+                  {isCreatingNew === 'chef' ? 'Add Chef' : isCreatingNew === 'restaurant' ? 'Add Restaurant' : selectedChef ? 'Edit Chef' : 'Edit Restaurant'}
                 </h2>
                 {selectedRestaurant && (
                   <button
@@ -313,7 +344,7 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
                     }}
                     className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${
                       (selectedRestaurant.protected ?? false)
-                        ? 'bg-copper-100 text-copper-700'
+                        ? 'bg-amber-100 text-amber-700'
                         : 'bg-stone-100 text-stone-400 hover:bg-stone-200 hover:text-stone-600'
                     }`}
                     title={selectedRestaurant.protected ? 'Protected from auto-deletion' : 'Not protected - click to protect'}
@@ -326,7 +357,7 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
                 {hasUnsavedChanges && (
                   <span className="font-mono text-[10px] uppercase tracking-wider text-amber-600">Unsaved</span>
                 )}
-                {selectedRestaurant && (
+                {(selectedChef || selectedRestaurant || isCreatingNew) && (
                   <>
                     <button
                       type="button"
@@ -362,21 +393,27 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
               </div>
             </div>
             <div className="flex-1 overflow-y-auto">
-              {selectedChef && (
+              {(selectedChef || isCreatingNew === 'chef') && (
                 <ChefEditorPanel 
-                  key={selectedChef.id}
-                  chef={selectedChef} 
+                  ref={chefEditorRef}
+                  key={selectedChef?.id || 'new'}
+                  chef={selectedChef}
+                  restaurants={restaurants}
                   onDirtyChange={setHasUnsavedChanges}
+                  onCreated={(id) => handleEntityCreated('chef', id)}
+                  isNew={isCreatingNew === 'chef'}
                 />
               )}
-              {selectedRestaurant && (
+              {(selectedRestaurant || isCreatingNew === 'restaurant') && (
                 <RestaurantEditorPanel 
                   ref={restaurantEditorRef}
-                  key={selectedRestaurant.id}
+                  key={selectedRestaurant?.id || 'new'}
                   restaurant={selectedRestaurant} 
                   chefs={chefs.map(c => ({ id: c.id, name: c.name, slug: c.slug }))}
                   onDirtyChange={setHasUnsavedChanges}
                   onClose={handleCloseEditor}
+                  onCreated={(id) => handleEntityCreated('restaurant', id)}
+                  isNew={isCreatingNew === 'restaurant'}
                 />
               )}
             </div>
