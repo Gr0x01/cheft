@@ -8,6 +8,7 @@ export function initPostHog() {
     if (apiKey && !posthog.__loaded) {
       posthog.init(apiKey, {
         api_host: apiHost,
+        defaults: '2025-05-24',
         person_profiles: 'always',
         capture_pageview: false,
         capture_pageleave: true,
