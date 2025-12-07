@@ -21,7 +21,7 @@ export function FieldSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-2 border-stone-200 bg-white overflow-hidden">
+    <div className="border-2 border-stone-200 bg-white">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}

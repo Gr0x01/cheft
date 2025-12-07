@@ -54,10 +54,10 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      if (chefEditorRef.current) {
-        await chefEditorRef.current.save();
-      } else if (restaurantEditorRef.current) {
-        await restaurantEditorRef.current.save();
+      if (selectedChef || isCreatingNew === 'chef') {
+        await chefEditorRef.current?.save();
+      } else if (selectedRestaurant || isCreatingNew === 'restaurant') {
+        await restaurantEditorRef.current?.save();
       }
     } catch (error) {
       console.error('[EntitiesClient] Save failed:', error);

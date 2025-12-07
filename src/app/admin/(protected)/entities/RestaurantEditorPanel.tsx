@@ -107,6 +107,7 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showUnlinkConfirm, setShowUnlinkConfirm] = useState(false);
+  const [autoSlug, setAutoSlug] = useState(true);
 
   const currentChef = chefs.find(c => c.id === formData.chef_id);
 
@@ -183,8 +184,9 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
 
     try {
       if (isNew) {
-        if (!formData.name || !formData.chef_id || !formData.city) {
-          throw new Error('Name, Chef, and City are required');
+        console.log('[RestaurantEditor] formData:', { name: formData.name, chef_id: formData.chef_id, google_place_id: formData.google_place_id });
+        if (!formData.name || !formData.chef_id || !formData.google_place_id) {
+          throw new Error('Name, Chef, and Place ID are required');
         }
 
         const slug = formData.slug || generateSlug(formData.name);
@@ -195,9 +197,7 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
           body: JSON.stringify({
             name: formData.name,
             chef_id: formData.chef_id,
-            city: formData.city,
-            state: formData.state || null,
-            country: formData.country || 'USA',
+            google_place_id: formData.google_place_id,
           }),
         });
 
@@ -288,23 +288,25 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
             label="Name"
             name="name"
             value={formData.name}
-            onChange={(e) => updateField('name', e.target.value)}
+            onChange={(e) => {
+              const newName = e.target.value;
+              updateField('name', newName);
+              if (isNew && autoSlug) {
+                updateField('slug', generateSlug(newName));
+              }
+            }}
             required
           />
-          {!isNew && (
-            <TextField
-              label="Slug"
-              name="slug"
-              value={formData.slug}
-              onChange={(e) => updateField('slug', e.target.value)}
-              required
-            />
-          )}
-          {isNew && formData.name && (
-            <p className="font-mono text-[10px] text-stone-400">
-              Slug: {generateSlug(formData.name)}
-            </p>
-          )}
+          <TextField
+            label="Slug"
+            name="slug"
+            value={formData.slug}
+            onChange={(e) => {
+              updateField('slug', e.target.value);
+              if (isNew) setAutoSlug(false);
+            }}
+            required
+          />
           <ChefTypeahead
             label="Chef"
             value={formData.chef_id}
@@ -316,10 +318,10 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
           />
         </FieldSection>
 
-        <FieldSection title="Google Places" description="Business info from Google" icon={Star}>
+        <FieldSection title="Google Places" description="Business info from Google" icon={Star} defaultOpen={isNew}>
           <div>
             <label className="block font-mono text-[10px] uppercase tracking-wider text-stone-600 mb-1.5">
-              Place ID
+              Place ID {isNew && <span className="text-red-500">*</span>}
             </label>
             <div className="flex gap-2">
               <input
@@ -420,7 +422,6 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
               name="city"
               value={formData.city}
               onChange={(e) => updateField('city', e.target.value)}
-              required={isNew}
             />
             <TextField
               label="State"

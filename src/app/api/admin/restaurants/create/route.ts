@@ -6,9 +6,7 @@ import { z } from 'zod';
 const createRestaurantSchema = z.object({
   name: z.string().min(1).max(200),
   chef_id: z.string().uuid(),
-  city: z.string().min(1).max(100),
-  state: z.string().max(50).nullable().optional(),
-  country: z.string().max(50).optional().default('USA'),
+  google_place_id: z.string().min(1),
 });
 
 function generateSlug(name: string): string {
@@ -46,7 +44,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { name, chef_id, city, state, country } = parsed.data;
+  const { name, chef_id, google_place_id } = parsed.data;
 
   const adminClient = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -69,9 +67,8 @@ export async function POST(request: NextRequest) {
       name,
       slug: finalSlug,
       chef_id,
-      city,
-      state: state || null,
-      country: country || 'USA',
+      google_place_id,
+      city: '',
       status: 'open',
       is_public: true,
     })
