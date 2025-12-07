@@ -88,6 +88,18 @@ export default async function RestaurantsPage() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 50);
 
+  const { data: statesData } = await (supabase as any)
+    .from('states')
+    .select('name, abbreviation, restaurant_count')
+    .gt('restaurant_count', 0)
+    .order('restaurant_count', { ascending: false });
+
+  const states = (statesData || []).map((s: any) => ({
+    name: s.name,
+    abbreviation: s.abbreviation,
+    count: s.restaurant_count,
+  }));
+
   const totalRestaurants = restaurantData.length;
   const openCount = restaurantData.filter(r => r.status === 'open').length;
 
@@ -129,6 +141,7 @@ export default async function RestaurantsPage() {
         <RestaurantsPageClient
           initialRestaurants={restaurantData}
           cities={cities}
+          states={states}
           totalRestaurants={totalRestaurants}
         />
       </div>

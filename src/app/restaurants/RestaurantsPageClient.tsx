@@ -12,13 +12,20 @@ interface City {
   count: number;
 }
 
+interface StateOption {
+  name: string;
+  abbreviation: string;
+  count: number;
+}
+
 interface RestaurantsPageClientProps {
   initialRestaurants: RestaurantData[];
   cities: City[];
+  states: StateOption[];
   totalRestaurants: number;
 }
 
-function RestaurantsPageClientInner({ initialRestaurants, cities, totalRestaurants }: RestaurantsPageClientProps) {
+function RestaurantsPageClientInner({ initialRestaurants, cities, states, totalRestaurants }: RestaurantsPageClientProps) {
   const [filteredRestaurants, setFilteredRestaurants] = useState<RestaurantData[]>(initialRestaurants);
 
   const handleFilteredRestaurantsChange = useCallback((restaurants: RestaurantData[]) => {
@@ -29,6 +36,7 @@ function RestaurantsPageClientInner({ initialRestaurants, cities, totalRestauran
     <>
       <RestaurantFilters
         cities={cities}
+        states={states}
         restaurants={initialRestaurants}
         totalRestaurants={totalRestaurants}
         onFilteredRestaurantsChange={handleFilteredRestaurantsChange}
