@@ -47,7 +47,13 @@ export function getChefAchievements(chef: {
 
 export function sanitizeText(text: string | null | undefined): string {
   if (!text) return '';
-  return text.trim();
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .trim();
 }
 
 export function validateImageUrl(url: string | null | undefined): string | null {

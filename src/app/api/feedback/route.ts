@@ -15,17 +15,48 @@ interface FeedbackRequest {
 }
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+const ipSubmissionCounts = new Map<string, { count: number; resetAt: number }>();
 
 function isValidUUID(uuid: string): boolean {
   return UUID_REGEX.test(uuid);
 }
 
+function checkIpRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = ipSubmissionCounts.get(ip);
+  
+  if (!record || now > record.resetAt) {
+    ipSubmissionCounts.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  
+  if (record.count >= RATE_LIMIT_MAX) {
+    return false;
+  }
+  
+  record.count++;
+  return true;
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() 
+      || request.headers.get('x-real-ip') 
+      || 'unknown';
+
+    if (!checkIpRateLimit(ip)) {
+      return NextResponse.json(
+        { error: 'Too many submissions. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { entity_type, entity_id, issue_type, message } = body as FeedbackRequest;
 
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     const supabase = await createClient();
 
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();

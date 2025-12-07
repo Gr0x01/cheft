@@ -37,9 +37,14 @@ export async function POST(request: NextRequest) {
   }
 
   const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+  const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
   const fileExt = file.name.split('.').pop()?.toLowerCase();
   if (!fileExt || !allowedExtensions.includes(fileExt)) {
     return NextResponse.json({ error: 'Invalid file type. Allowed: jpg, png, webp' }, { status: 400 });
+  }
+
+  if (!allowedMimeTypes.includes(file.type)) {
+    return NextResponse.json({ error: 'Invalid file MIME type' }, { status: 400 });
   }
 
   const bucketName = type === 'chef' ? 'chef-photos' : 'restaurant-photos';
