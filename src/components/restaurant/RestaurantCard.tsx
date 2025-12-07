@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getRestaurantStatus, getChefAchievements, sanitizeText, validateImageUrl } from '@/lib/utils/restaurant';
 import { getStorageUrl } from '@/lib/utils/storage';
+import { getLocationLink } from '@/lib/utils/location';
 import { MichelinStar } from '../icons/MichelinStar';
 import { Donut } from 'lucide-react';
 
@@ -12,6 +13,7 @@ interface RestaurantCardProps {
     slug: string;
     city: string;
     state?: string | null;
+    country?: string | null;
     price_tier?: string | null;
     cuisine_tags?: string[] | null;
     status: 'open' | 'closed' | 'unknown';
@@ -42,6 +44,7 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
   const sanitizedState = sanitizeText(restaurant.state);
   const sanitizedChefName = restaurant.chef ? sanitizeText(restaurant.chef.name) : '';
   const photoUrl = getStorageUrl('restaurant-photos', restaurant.photo_urls?.[0]);
+  const locationLink = getLocationLink(restaurant.state, restaurant.country);
 
   return (
     <Link
@@ -120,9 +123,20 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
             >
               {sanitizedName}
             </h3>
-            <p className="font-mono text-xs tracking-wide mt-1" style={{ color: 'var(--text-muted)' }}>
-              {sanitizedCity}{sanitizedState ? `, ${sanitizedState}` : ''}
-            </p>
+            {locationLink ? (
+              <Link 
+                href={locationLink}
+                className="font-mono text-xs tracking-wide mt-1 hover:text-[var(--accent-primary)] transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {sanitizedCity}{sanitizedState ? `, ${sanitizedState}` : ''}
+              </Link>
+            ) : (
+              <p className="font-mono text-xs tracking-wide mt-1" style={{ color: 'var(--text-muted)' }}>
+                {sanitizedCity}{sanitizedState ? `, ${sanitizedState}` : ''}
+              </p>
+            )}
           </div>
           {restaurant.price_tier && (
             <span 

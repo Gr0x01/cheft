@@ -23,7 +23,7 @@ function CityPageClientInner({ restaurants }: CityPageClientProps) {
         restaurants={restaurants}
         totalRestaurants={restaurants.length}
         onFilteredRestaurantsChange={handleFilteredRestaurantsChange}
-        hideCityDropdown
+        hideLocationDropdown
       />
 
       <section className="max-w-7xl mx-auto px-4 py-12">

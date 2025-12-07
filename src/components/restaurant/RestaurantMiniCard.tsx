@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { getStorageUrl } from '@/lib/utils/storage';
+import { getLocationLink } from '@/lib/utils/location';
 import { MichelinStar } from '@/components/icons/MichelinStar';
 
 interface RestaurantMiniCardProps {
@@ -10,6 +11,7 @@ interface RestaurantMiniCardProps {
     slug: string;
     city: string;
     state?: string | null;
+    country?: string | null;
     price_tier?: string | null;
     status: 'open' | 'closed' | 'unknown';
     google_rating?: number | null;
@@ -22,6 +24,7 @@ interface RestaurantMiniCardProps {
 export function RestaurantMiniCard({ restaurant, bordered = false }: RestaurantMiniCardProps) {
   const photoUrl = getStorageUrl('restaurant-photos', restaurant.photo_urls?.[0]);
   const isClosed = restaurant.status === 'closed';
+  const locationLink = getLocationLink(restaurant.state, restaurant.country);
 
   return (
     <Link
@@ -71,9 +74,20 @@ export function RestaurantMiniCard({ restaurant, bordered = false }: RestaurantM
             >
               {restaurant.name}
             </h3>
-            <p className="font-mono text-[10px] tracking-wide mt-0.5" style={{ color: 'var(--text-muted)' }}>
-              {restaurant.city}{restaurant.state ? `, ${restaurant.state}` : ''}
-            </p>
+            {locationLink ? (
+              <Link
+                href={locationLink}
+                className="font-mono text-[10px] tracking-wide mt-0.5 hover:text-[var(--accent-primary)] transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {restaurant.city}{restaurant.state ? `, ${restaurant.state}` : ''}
+              </Link>
+            ) : (
+              <p className="font-mono text-[10px] tracking-wide mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                {restaurant.city}{restaurant.state ? `, ${restaurant.state}` : ''}
+              </p>
+            )}
           </div>
           {isClosed ? (
             <span className="font-mono text-[10px] font-bold tracking-wider px-2 py-0.5 flex-shrink-0" style={{ background: 'var(--slate-700)', color: 'white' }}>

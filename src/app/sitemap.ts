@@ -7,7 +7,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = createStaticClient();
 
   try {
-    const [chefsResult, restaurantsResult, citiesResult, showsResult] = await Promise.all([
+    const [chefsResult, restaurantsResult, citiesResult, showsResult, statesResult, countriesResult] = await Promise.all([
       supabase
         .from('chefs')
         .select('slug, updated_at')
@@ -26,12 +26,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .from('shows')
         .select('id, slug, created_at')
         .order('name'),
+      (supabase as any)
+        .from('states')
+        .select('slug, updated_at')
+        .order('name'),
+      (supabase as any)
+        .from('countries')
+        .select('slug, updated_at')
+        .order('name'),
     ]);
 
     const chefs = chefsResult.data || [];
     const restaurants = restaurantsResult.data || [];
     const cities = citiesResult.data || [];
     const shows = showsResult.data || [];
+    const states = (statesResult.data || []) as any[];
+    const countries = (countriesResult.data || []) as any[];
 
     const { data: allSeasons } = await (supabase as any).rpc('get_all_show_seasons_for_sitemap');
 
@@ -60,6 +70,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly',
       priority: 0.9,
     },
+    {
+      url: `${BASE_URL}/states`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
+      url: `${BASE_URL}/countries`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
   ];
 
   const chefRoutes: MetadataRoute.Sitemap = chefs.map((chef) => ({
@@ -80,6 +102,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${BASE_URL}/cities/${city.slug}`,
       lastModified: city.updated_at ? new Date(city.updated_at) : new Date(),
       changeFrequency: 'weekly' as const,
+      priority: 0.5,
+    }));
+
+    const stateRoutes: MetadataRoute.Sitemap = states.map((state) => ({
+      url: `${BASE_URL}/states/${state.slug}`,
+      lastModified: state.updated_at ? new Date(state.updated_at) : new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    }));
+
+    const countryRoutes: MetadataRoute.Sitemap = countries.map((country) => ({
+      url: `${BASE_URL}/countries/${country.slug}`,
+      lastModified: country.updated_at ? new Date(country.updated_at) : new Date(),
+      changeFrequency: 'weekly' as const,
       priority: 0.7,
     }));
 
@@ -97,7 +133,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
 
-    return [...staticRoutes, ...chefRoutes, ...restaurantRoutes, ...cityRoutes, ...showRoutes, ...seasonRoutes];
+    return [...staticRoutes, ...chefRoutes, ...restaurantRoutes, ...stateRoutes, ...countryRoutes, ...cityRoutes, ...showRoutes, ...seasonRoutes];
   } catch (error) {
     console.error('Sitemap generation error:', error);
     

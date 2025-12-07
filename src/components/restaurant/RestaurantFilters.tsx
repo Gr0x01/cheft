@@ -16,19 +16,26 @@ interface City {
   count: number;
 }
 
+interface StateOption {
+  name: string;
+  abbreviation: string;
+  count: number;
+}
+
 interface RestaurantFiltersProps {
   cities?: City[];
+  states?: StateOption[];
   restaurants: RestaurantData[];
   totalRestaurants: number;
   onFilteredRestaurantsChange: (restaurants: RestaurantData[]) => void;
-  hideCityDropdown?: boolean;
+  hideLocationDropdown?: boolean;
 }
 
 const CHIP = "font-mono text-[11px] tracking-wider font-medium px-3 py-1.5 transition-all border flex items-center gap-1.5";
 
-export function RestaurantFilters({ cities = [], restaurants, totalRestaurants, onFilteredRestaurantsChange, hideCityDropdown = false }: RestaurantFiltersProps) {
+export function RestaurantFilters({ cities = [], states = [], restaurants, totalRestaurants, onFilteredRestaurantsChange, hideLocationDropdown = false }: RestaurantFiltersProps) {
   const { filters, setFilters, clearFilters, hasActiveFilters } = useRestaurantFilters();
-  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
+  const [stateDropdownOpen, setStateDropdownOpen] = useState(false);
   const [filteredRestaurants, setFilteredRestaurants] = useState<RestaurantData[]>(restaurants);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -41,7 +48,7 @@ export function RestaurantFilters({ cities = [], restaurants, totalRestaurants, 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setCityDropdownOpen(false);
+        setStateDropdownOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -56,8 +63,8 @@ export function RestaurantFilters({ cities = [], restaurants, totalRestaurants, 
     { value: 'reviews', label: 'Most Reviews' },
   ];
 
-  const selectedCity = filters.city 
-    ? cities.find(c => c.name === filters.city)
+  const selectedState = filters.state 
+    ? states.find(s => s.name === filters.state || s.abbreviation === filters.state)
     : null;
 
   const openCount = filteredRestaurants.filter(r => r.status === 'open').length;
@@ -86,52 +93,52 @@ export function RestaurantFilters({ cities = [], restaurants, totalRestaurants, 
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
             </form>
 
-            {/* City dropdown */}
-            {!hideCityDropdown && cities.length > 0 && (
+            {/* State dropdown */}
+            {!hideLocationDropdown && states.length > 0 && (
               <>
                 <div className="relative" ref={dropdownRef}>
                   <button
-                    onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
+                    onClick={() => setStateDropdownOpen(!stateDropdownOpen)}
                     className={CHIP}
                     style={{
-                      background: filters.city ? 'var(--accent-primary)' : 'transparent',
-                      color: filters.city ? 'white' : 'var(--text-secondary)',
-                      borderColor: filters.city ? 'var(--accent-primary)' : 'var(--border-light)',
+                      background: filters.state ? 'var(--accent-primary)' : 'transparent',
+                      color: filters.state ? 'white' : 'var(--text-secondary)',
+                      borderColor: filters.state ? 'var(--accent-primary)' : 'var(--border-light)',
                     }}
                   >
                     <MapPin className="w-3 h-3" />
-                    {selectedCity ? `${selectedCity.name}${selectedCity.state ? `, ${selectedCity.state}` : ''}` : 'All Cities'}
+                    {selectedState ? selectedState.name : 'All States'}
                     <ChevronDown className="w-3 h-3" />
                   </button>
 
-                  {cityDropdownOpen && (
+                  {stateDropdownOpen && (
                     <div 
-                      className="absolute top-full left-0 mt-1 w-64 border shadow-lg z-50 max-h-72 overflow-y-auto"
+                      className="absolute top-full left-0 mt-1 w-56 border shadow-lg z-50 max-h-72 overflow-y-auto"
                       style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-light)' }}
                     >
                       <button
-                        onClick={() => { setFilters({ city: null }); setCityDropdownOpen(false); }}
+                        onClick={() => { setFilters({ state: null }); setStateDropdownOpen(false); }}
                         className="w-full px-3 py-2 text-left font-mono text-[11px] tracking-wider hover:bg-slate-50 transition-colors flex items-center justify-between"
-                        style={{ color: !filters.city ? 'var(--accent-primary)' : 'var(--text-secondary)' }}
+                        style={{ color: !filters.state ? 'var(--accent-primary)' : 'var(--text-secondary)' }}
                       >
-                        All Cities
-                        {!filters.city && <Check className="w-3.5 h-3.5" />}
+                        All States
+                        {!filters.state && <Check className="w-3.5 h-3.5" />}
                       </button>
                       <div className="border-t" style={{ borderColor: 'var(--border-light)' }} />
-                      {cities.map(city => (
+                      {states.map(state => (
                         <button
-                          key={`${city.name}-${city.state}`}
-                          onClick={() => { setFilters({ city: city.name }); setCityDropdownOpen(false); }}
+                          key={state.abbreviation}
+                          onClick={() => { setFilters({ state: state.name }); setStateDropdownOpen(false); }}
                           className="w-full px-3 py-2 text-left font-mono text-[11px] tracking-wider hover:bg-slate-50 transition-colors flex items-center justify-between"
                           style={{ 
-                            color: filters.city === city.name ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                            fontWeight: filters.city === city.name ? 600 : 400,
+                            color: filters.state === state.name ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                            fontWeight: filters.state === state.name ? 600 : 400,
                           }}
                         >
-                          <span>{city.name}{city.state ? `, ${city.state}` : ''}</span>
+                          <span>{state.name}</span>
                           <span className="flex items-center gap-1.5">
-                            <span className="text-slate-400 text-[10px]">{city.count}</span>
-                            {filters.city === city.name && <Check className="w-3.5 h-3.5" />}
+                            <span className="text-slate-400 text-[10px]">{state.count}</span>
+                            {filters.state === state.name && <Check className="w-3.5 h-3.5" />}
                           </span>
                         </button>
                       ))}

@@ -9,6 +9,7 @@ export type SortOption = 'name' | 'rating' | 'reviews';
 export interface RestaurantFilters {
   q: string;
   city: string | null;
+  state: string | null;
   price: PriceTier | null;
   openOnly: boolean;
   michelinOnly: boolean;
@@ -50,6 +51,7 @@ export function useRestaurantFilters() {
     return {
       q: searchParams.get('q') || '',
       city: searchParams.get('city'),
+      state: searchParams.get('state'),
       price: priceParam as PriceTier | null,
       openOnly: searchParams.get('status') === 'open',
       michelinOnly: searchParams.get('michelin') === 'true',
@@ -66,6 +68,9 @@ export function useRestaurantFilters() {
 
     if (merged.city) params.set('city', merged.city);
     else params.delete('city');
+
+    if (merged.state) params.set('state', merged.state);
+    else params.delete('state');
 
     if (merged.price) params.set('price', merged.price);
     else params.delete('price');
@@ -89,6 +94,7 @@ export function useRestaurantFilters() {
   const hasActiveFilters = useMemo(() => {
     return filters.q !== '' || 
            filters.city !== null || 
+           filters.state !== null ||
            filters.price !== null || 
            filters.openOnly || 
            filters.michelinOnly;
@@ -116,6 +122,10 @@ export function filterRestaurants(restaurants: RestaurantData[], filters: Restau
 
   if (filters.city) {
     result = result.filter(r => r.city === filters.city);
+  }
+
+  if (filters.state) {
+    result = result.filter(r => r.state === filters.state);
   }
 
   if (filters.price) {

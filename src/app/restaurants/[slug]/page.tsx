@@ -154,7 +154,9 @@ async function getRestaurant(slug: string): Promise<RestaurantData | null> {
   return data as unknown as RestaurantData;
 }
 
-async function getCityRestaurants(city: string, state: string | null, excludeId: string): Promise<SiblingRestaurant[]> {
+async function getStateRestaurants(state: string | null, excludeId: string): Promise<SiblingRestaurant[]> {
+  if (!state) return [];
+  
   const supabase = createStaticClient();
 
   const { data } = await supabase
@@ -181,14 +183,35 @@ async function getCityRestaurants(city: string, state: string | null, excludeId:
         )
       )
     `)
-    .eq('city', city)
-    .eq('state', state || '')
+    .eq('state', state)
     .eq('is_public', true)
     .neq('id', excludeId)
     .order('google_rating', { ascending: false, nullsFirst: false })
     .limit(6);
 
   return (data || []) as unknown as SiblingRestaurant[];
+}
+
+async function getStateSlug(state: string | null): Promise<string | null> {
+  if (!state) return null;
+  
+  const supabase = createStaticClient();
+  
+  const { data: byName } = await (supabase as any)
+    .from('states')
+    .select('slug')
+    .eq('name', state)
+    .maybeSingle();
+  
+  if (byName?.slug) return byName.slug;
+  
+  const { data: byAbbr } = await (supabase as any)
+    .from('states')
+    .select('slug')
+    .eq('abbreviation', state)
+    .maybeSingle();
+  
+  return byAbbr?.slug || null;
 }
 
 
@@ -257,8 +280,8 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
     .sort((a, b) => (b.google_rating || 0) - (a.google_rating || 0))
     .slice(0, 6) || [];
 
-  const cityRestaurants = await getCityRestaurants(restaurant.city, restaurant.state, restaurant.id);
-  const citySlug = await getCitySlug(restaurant.city, restaurant.state);
+  const stateRestaurants = await getStateRestaurants(restaurant.state, restaurant.id);
+  const stateSlug = await getStateSlug(restaurant.state);
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://cheft.app';
   const restaurantUrl = `${baseUrl}/restaurants/${restaurant.slug}`;
@@ -426,7 +449,7 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
             </section>
           )}
 
-          {cityRestaurants.length > 0 && (
+          {stateRestaurants.length > 0 && restaurant.state && (
             <section 
               className="py-12 border-t"
               style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
@@ -434,31 +457,30 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
               <div className="max-w-6xl mx-auto px-4">
                 <div className="flex items-baseline gap-4 mb-8">
                   <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                    More in {restaurant.city}
+                    More in {restaurant.state}
                   </h2>
                   <span className="font-mono text-sm" style={{ color: 'var(--text-muted)' }}>
-                    {cityRestaurants.length}+ RESTAURANTS
+                    {stateRestaurants.length}+ RESTAURANTS
                   </span>
                 </div>
 
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {cityRestaurants.map((r: any) => (
+                  {stateRestaurants.map((r: any) => (
                     <RestaurantCard key={r.id} restaurant={r} />
                   ))}
                 </div>
 
-                {citySlug && (
+                {stateSlug && (
                   <div className="mt-8 text-center">
                     <Link
-                      href={`/cities/${citySlug}`}
+                      href={`/states/${stateSlug}`}
                       className="inline-flex items-center gap-2 font-mono text-sm font-semibold px-6 py-3 transition-colors"
                       style={{ 
                         background: 'var(--accent-primary)', 
                         color: 'white'
                       }}
                     >
-                      VIEW ALL RESTAURANTS IN {restaurant.city.toUpperCase()}
-                      {restaurant.state && `, ${restaurant.state.toUpperCase()}`}
+                      VIEW ALL RESTAURANTS IN {restaurant.state.toUpperCase()}
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                       </svg>
