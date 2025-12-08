@@ -33,7 +33,7 @@ export interface RefreshStaleChefOutput {
   bioUpdated: boolean;
   showsUpdated: number;
   restaurantsUpdated: number;
-  restaurantsDeleted: number;
+  restaurantsStagedForReview: number;
   statusesVerified: number;
   narrativeCreated: boolean;
 }
@@ -157,7 +157,7 @@ export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput
       bioUpdated: false,
       showsUpdated: 0,
       restaurantsUpdated: 0,
-      restaurantsDeleted: 0,
+      restaurantsStagedForReview: 0,
       statusesVerified: 0,
       narrativeCreated: false,
     };
@@ -257,7 +257,7 @@ export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput
           for (const restaurant of result.restaurants) {
             if (!restaurant.name || !restaurant.city) continue;
             
-            const saveResult = await this.restaurantRepo.createRestaurant(input.chefId, restaurant);
+            const saveResult = await this.restaurantRepo.createRestaurant(input.chefId, restaurant, input.chefName);
             if (saveResult.success) {
               if (saveResult.restaurantId) {
                 foundRestaurantIds.push(saveResult.restaurantId);
@@ -270,18 +270,18 @@ export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput
           output.restaurantsUpdated = newRestaurants;
 
           try {
-            const staleResult = await this.restaurantRepo.deleteStaleRestaurants(input.chefId, foundRestaurantIds);
-            output.restaurantsDeleted = staleResult.deleted;
+            const staleResult = await this.restaurantRepo.handleStaleRestaurants(input.chefId, input.chefName, foundRestaurantIds);
+            output.restaurantsStagedForReview = staleResult.stagedForReview;
           } catch (cleanupError) {
             const cleanupMsg = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
-            console.error(`   ⚠️  Stale cleanup failed (non-fatal): ${cleanupMsg}`);
-            this.addError('stale_cleanup_failed', cleanupMsg, false);
+            console.error(`   ⚠️  Stale handling failed (non-fatal): ${cleanupMsg}`);
+            this.addError('stale_handling_failed', cleanupMsg, false);
           }
         }
 
         this.completeStep(stepNum, result.tokensUsed, { 
           restaurantsAdded: output.restaurantsUpdated,
-          restaurantsDeleted: output.restaurantsDeleted,
+          restaurantsStagedForReview: output.restaurantsStagedForReview,
         });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);

@@ -3,6 +3,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../../src/lib/database.types';
 import { logDataChange, AuditLogEntry } from '../../queue/audit-log';
 import { checkForDuplicate } from '../../../../src/lib/duplicates/detector';
+import { PendingDiscoveryRepository } from './pending-discovery-repository';
 
 const RestaurantSchema = z.object({
   name: z.string(),
@@ -25,7 +26,11 @@ const RestaurantSchema = z.object({
 export type RestaurantData = z.infer<typeof RestaurantSchema>;
 
 export class RestaurantRepository {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  private pendingDiscoveryRepo: PendingDiscoveryRepository;
+
+  constructor(private supabase: SupabaseClient<Database>) {
+    this.pendingDiscoveryRepo = new PendingDiscoveryRepository(supabase);
+  }
 
   private sanitizeRestaurantName(name: string): string {
     return name.replace(/\s*\(\[.*?\]\(.*?\)\)/g, '').trim();
@@ -50,8 +55,9 @@ export class RestaurantRepository {
     restaurantName: string,
     city: string,
     address?: string | null,
-    state?: string | null
-  ): Promise<{ isDuplicate: boolean; existingId?: string; confidence?: number }> {
+    state?: string | null,
+    chefName?: string
+  ): Promise<{ isDuplicate: boolean; existingId?: string; existingName?: string; confidence?: number; stagedForReview?: boolean }> {
     const cityMatches = await (this.supabase
       .from('restaurants') as ReturnType<typeof this.supabase.from>)
       .select('id, chef_id, name, address')
@@ -73,12 +79,30 @@ export class RestaurantRepository {
           console.log(`      🔍 DUPLICATE DETECTED: "${restaurantName}" matches existing "${existing.name}"`);
           console.log(`         Confidence: ${dupeCheck.confidence.toFixed(2)} | Reason: ${dupeCheck.reasoning}`);
 
+          const stageResult = await this.pendingDiscoveryRepo.insert({
+            discovery_type: 'restaurant',
+            source_chef_name: chefName,
+            data: {
+              action: 'potential_duplicate',
+              new_restaurant: { name: restaurantName, city, state, address },
+              existing_restaurant: { id: existing.id, name: existing.name, address: existing.address },
+              confidence: dupeCheck.confidence,
+              reasoning: dupeCheck.reasoning,
+              source: 'llm_enrichment_duplicate_check',
+            },
+            status: 'needs_review',
+            notes: `Potential duplicate: "${restaurantName}" may be same as "${existing.name}" (${(dupeCheck.confidence * 100).toFixed(0)}% confidence)`,
+          });
+          if (!stageResult.success && !stageResult.isDuplicate) {
+            console.warn(`      ⚠️  Failed to stage duplicate for review: ${stageResult.error}`);
+          }
+
           const auditEntry: AuditLogEntry = {
             table_name: 'restaurants',
             record_id: existing.id,
             change_type: 'update',
             new_data: {
-              duplicate_prevented: true,
+              duplicate_staged_for_review: true,
               attempted_name: restaurantName,
               matched_name: existing.name,
               confidence: dupeCheck.confidence,
@@ -91,8 +115,10 @@ export class RestaurantRepository {
 
           return { 
             isDuplicate: true, 
-            existingId: existing.id, 
-            confidence: dupeCheck.confidence 
+            existingId: existing.id,
+            existingName: existing.name,
+            confidence: dupeCheck.confidence,
+            stagedForReview: true,
           };
         }
       }
@@ -103,13 +129,14 @@ export class RestaurantRepository {
 
   async createRestaurant(
     chefId: string,
-    restaurant: RestaurantData
-  ): Promise<{ success: boolean; restaurantId?: string; isNew: boolean }> {
+    restaurant: RestaurantData,
+    chefName?: string
+  ): Promise<{ success: boolean; restaurantId?: string; isNew: boolean; stagedForReview?: boolean }> {
     const cleanName = this.sanitizeRestaurantName(restaurant.name);
     
     const exactMatch = await (this.supabase
       .from('restaurants') as ReturnType<typeof this.supabase.from>)
-      .select('id, chef_id, name, address')
+      .select('id, chef_id, name, address, protected, status')
       .eq('name', cleanName)
       .eq('city', restaurant.city || '')
       .maybeSingle();
@@ -118,6 +145,9 @@ export class RestaurantRepository {
       if (exactMatch.data.chef_id !== chefId) {
         console.log(`      ⚠️  Restaurant "${cleanName}" already linked to different chef`);
       }
+      if (restaurant.status && restaurant.status !== 'unknown') {
+        await this.updateStatusOnly(exactMatch.data.id, restaurant.status);
+      }
       return { success: true, restaurantId: exactMatch.data.id, isNew: false };
     }
 
@@ -125,11 +155,12 @@ export class RestaurantRepository {
       cleanName,
       restaurant.city || '',
       restaurant.address,
-      restaurant.state
+      restaurant.state,
+      chefName
     );
 
     if (dupeCheck.isDuplicate && dupeCheck.existingId) {
-      return { success: true, restaurantId: dupeCheck.existingId, isNew: false };
+      return { success: true, restaurantId: dupeCheck.existingId, isNew: false, stagedForReview: dupeCheck.stagedForReview };
     }
 
     const slug = this.generateSlug(cleanName, restaurant.city || undefined);
@@ -164,6 +195,25 @@ export class RestaurantRepository {
     }
 
     return { success: true, restaurantId: data.id, isNew: true };
+  }
+
+  async updateStatusOnly(
+    restaurantId: string,
+    status: 'open' | 'closed' | 'unknown'
+  ): Promise<{ success: boolean; error?: string }> {
+    const { error } = await (this.supabase
+      .from('restaurants') as ReturnType<typeof this.supabase.from>)
+      .update({
+        status,
+        last_verified_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', restaurantId);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    return { success: true };
   }
 
   async updateStatus(
@@ -227,51 +277,74 @@ export class RestaurantRepository {
     }));
   }
 
-  async deleteStaleRestaurants(
+  async handleStaleRestaurants(
     chefId: string,
+    chefName: string,
     keepIds: string[]
-  ): Promise<{ deleted: number; protected: number; deletedNames: string[] }> {
+  ): Promise<{ stagedForReview: number; protected: number; stagedNames: string[] }> {
     const existing = await this.getChefRestaurants(chefId);
     
-    const toDelete = existing.filter(r => !keepIds.includes(r.id) && !r.protected);
+    const staleUnprotected = existing.filter(r => !keepIds.includes(r.id) && !r.protected);
     const protectedCount = existing.filter(r => !keepIds.includes(r.id) && r.protected).length;
 
-    if (toDelete.length === 0) {
-      return { deleted: 0, protected: protectedCount, deletedNames: [] };
+    if (staleUnprotected.length === 0) {
+      if (protectedCount > 0) {
+        console.log(`      🔒 ${protectedCount} protected restaurants not found by LLM (kept as-is)`);
+      }
+      return { stagedForReview: 0, protected: protectedCount, stagedNames: [] };
     }
 
-    for (const restaurant of toDelete) {
+    const stagedNames: string[] = [];
+
+    for (const restaurant of staleUnprotected) {
       const { data: fullRecord } = await (this.supabase
         .from('restaurants') as ReturnType<typeof this.supabase.from>)
-        .select('*')
+        .select('id, name, city, state, address, status')
         .eq('id', restaurant.id)
         .single();
 
       if (fullRecord) {
+        await this.pendingDiscoveryRepo.insert({
+          discovery_type: 'restaurant',
+          source_chef_id: chefId,
+          source_chef_name: chefName,
+          data: {
+            action: 'not_found_by_llm',
+            restaurant_id: fullRecord.id,
+            restaurant_name: fullRecord.name,
+            city: fullRecord.city,
+            state: fullRecord.state,
+            address: fullRecord.address,
+            current_status: fullRecord.status,
+            source: 'llm_enrichment_stale_check',
+          },
+          status: 'needs_review',
+          notes: `Restaurant "${fullRecord.name}" not found during LLM re-enrichment for ${chefName}. May be closed, sold, or no longer associated with this chef.`,
+        });
+
         const auditEntry: AuditLogEntry = {
           table_name: 'restaurants',
           record_id: restaurant.id,
-          change_type: 'delete',
-          old_data: fullRecord,
-          new_data: undefined,
-          source: 'llm_enricher_stale_cleanup',
-          confidence: 1.0,
+          change_type: 'update',
+          new_data: {
+            staged_for_review: true,
+            reason: 'not_found_by_llm',
+            chef_name: chefName,
+          },
+          source: 'llm_enricher_stale_review',
+          confidence: 0.7,
         };
         await logDataChange(this.supabase, auditEntry);
+
+        stagedNames.push(restaurant.name);
       }
-
-      await (this.supabase
-        .from('restaurants') as ReturnType<typeof this.supabase.from>)
-        .delete()
-        .eq('id', restaurant.id);
     }
 
-    const deletedNames = toDelete.map(r => r.name);
-    console.log(`      🗑️  Deleted ${toDelete.length} stale restaurants: ${deletedNames.join(', ')}`);
+    console.log(`      📋 Staged ${stagedNames.length} restaurants for admin review: ${stagedNames.join(', ')}`);
     if (protectedCount > 0) {
-      console.log(`      🔒 Kept ${protectedCount} protected restaurants`);
+      console.log(`      🔒 ${protectedCount} protected restaurants not found by LLM (kept as-is)`);
     }
 
-    return { deleted: toDelete.length, protected: protectedCount, deletedNames };
+    return { stagedForReview: stagedNames.length, protected: protectedCount, stagedNames };
   }
 }

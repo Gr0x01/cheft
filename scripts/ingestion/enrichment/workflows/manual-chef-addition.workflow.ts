@@ -264,7 +264,7 @@ export class ManualChefAdditionWorkflow extends BaseWorkflow<ManualChefAdditionI
         for (const restaurant of result.restaurants) {
           if (!restaurant.name || !restaurant.city) continue;
           
-          const saveResult = await this.restaurantRepo.createRestaurant(input.chefId, restaurant);
+          const saveResult = await this.restaurantRepo.createRestaurant(input.chefId, restaurant, input.chefName);
           if (saveResult.success && saveResult.isNew && saveResult.restaurantId) {
             newRestaurants++;
             this.createdRestaurantIds.push(saveResult.restaurantId);

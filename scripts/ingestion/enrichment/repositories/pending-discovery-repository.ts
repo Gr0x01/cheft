@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Database } from '../../../../src/lib/database.types';
+import { Database, Json } from '../../../../src/lib/database.types';
 import { normalizeShowName, resolveShowAlias } from '../shared/season-parser';
 
 export type DiscoveryType = 'show' | 'chef' | 'restaurant';
@@ -10,7 +10,7 @@ export interface PendingDiscovery {
   discovery_type: DiscoveryType;
   source_chef_id: string | null;
   source_chef_name: string | null;
-  data: Record<string, unknown>;
+  data: Json;
   status: DiscoveryStatus;
   notes: string | null;
   error_message: string | null;
@@ -23,7 +23,7 @@ export interface DiscoveryInput {
   discovery_type: DiscoveryType;
   source_chef_id?: string;
   source_chef_name?: string;
-  data: Record<string, unknown>;
+  data: Json;
   status?: DiscoveryStatus;
   notes?: string;
 }
@@ -176,7 +176,7 @@ export class PendingDiscoveryRepository {
     return counts;
   }
 
-  async checkDuplicate(type: DiscoveryType, data: Record<string, unknown>): Promise<PendingDiscovery | null> {
+  async checkDuplicate(type: DiscoveryType, data: Json): Promise<PendingDiscovery | null> {
     if (type === 'show') {
       return this.checkShowDuplicate(data);
     } else if (type === 'chef') {
@@ -187,8 +187,9 @@ export class PendingDiscoveryRepository {
     return null;
   }
 
-  private async checkShowDuplicate(data: Record<string, unknown>): Promise<PendingDiscovery | null> {
-    const name = data.name as string | undefined;
+  private async checkShowDuplicate(data: Json): Promise<PendingDiscovery | null> {
+    const dataObj = data as Record<string, unknown>;
+    const name = dataObj.name as string | undefined;
     if (!name) return null;
 
     const normalized = resolveShowAlias(name);
@@ -201,7 +202,7 @@ export class PendingDiscoveryRepository {
     if (existing) {
       for (const show of existing) {
         if (resolveShowAlias(show.name) === normalized) {
-          return { id: show.id, discovery_type: 'show', data: { existing: true } } as PendingDiscovery;
+          return { id: show.id, discovery_type: 'show', data: { existing: true }, source_chef_id: null, source_chef_name: null, status: 'merged' as DiscoveryStatus, notes: null, error_message: null, created_at: '', reviewed_at: null, reviewed_by: null };
         }
       }
     }
@@ -225,8 +226,9 @@ export class PendingDiscoveryRepository {
     return null;
   }
 
-  private async checkChefDuplicate(data: Record<string, unknown>): Promise<PendingDiscovery | null> {
-    const name = data.name as string | undefined;
+  private async checkChefDuplicate(data: Json): Promise<PendingDiscovery | null> {
+    const dataObj = data as Record<string, unknown>;
+    const name = dataObj.name as string | undefined;
     if (!name) return null;
 
     const normalized = normalizeShowName(name);
@@ -239,7 +241,7 @@ export class PendingDiscoveryRepository {
     if (existing) {
       for (const chef of existing) {
         if (normalizeShowName(chef.name) === normalized) {
-          return { id: chef.id, discovery_type: 'chef', data: { existing: true } } as PendingDiscovery;
+          return { id: chef.id, discovery_type: 'chef', data: { existing: true }, source_chef_id: null, source_chef_name: null, status: 'merged' as DiscoveryStatus, notes: null, error_message: null, created_at: '', reviewed_at: null, reviewed_by: null };
         }
       }
     }
@@ -247,9 +249,10 @@ export class PendingDiscoveryRepository {
     return null;
   }
 
-  private async checkRestaurantDuplicate(data: Record<string, unknown>): Promise<PendingDiscovery | null> {
-    const name = data.name as string | undefined;
-    const city = data.city as string | undefined;
+  private async checkRestaurantDuplicate(data: Json): Promise<PendingDiscovery | null> {
+    const dataObj = data as Record<string, unknown>;
+    const name = dataObj.name as string | undefined;
+    const city = dataObj.city as string | undefined;
     if (!name || !city) return null;
 
     const normalizedKey = `${normalizeShowName(name)}|${city.toLowerCase().trim()}`;
@@ -264,7 +267,7 @@ export class PendingDiscoveryRepository {
       for (const r of existing) {
         const key = `${normalizeShowName(r.name)}|${r.city.toLowerCase().trim()}`;
         if (key === normalizedKey) {
-          return { id: r.id, discovery_type: 'restaurant', data: { existing: true } } as PendingDiscovery;
+          return { id: r.id, discovery_type: 'restaurant', data: { existing: true }, source_chef_id: null, source_chef_name: null, status: 'merged' as DiscoveryStatus, notes: null, error_message: null, created_at: '', reviewed_at: null, reviewed_by: null };
         }
       }
     }
