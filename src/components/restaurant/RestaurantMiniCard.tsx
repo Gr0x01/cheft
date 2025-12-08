@@ -75,14 +75,9 @@ export function RestaurantMiniCard({ restaurant, bordered = false }: RestaurantM
               {restaurant.name}
             </h3>
             {locationLink ? (
-              <Link
-                href={locationLink}
-                className="font-mono text-[10px] tracking-wide mt-0.5 hover:text-[var(--accent-primary)] transition-colors"
-                style={{ color: 'var(--text-muted)' }}
-                onClick={(e) => e.stopPropagation()}
-              >
+              <span className="block font-mono text-[10px] tracking-wide mt-0.5" style={{ color: 'var(--text-muted)' }}>
                 {restaurant.city}{restaurant.state ? `, ${restaurant.state}` : ''}
-              </Link>
+              </span>
             ) : (
               <p className="font-mono text-[10px] tracking-wide mt-0.5" style={{ color: 'var(--text-muted)' }}>
                 {restaurant.city}{restaurant.state ? `, ${restaurant.state}` : ''}

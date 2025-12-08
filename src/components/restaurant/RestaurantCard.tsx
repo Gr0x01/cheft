@@ -124,14 +124,9 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
               {sanitizedName}
             </h3>
             {locationLink ? (
-              <Link 
-                href={locationLink}
-                className="font-mono text-xs tracking-wide mt-1 hover:text-[var(--accent-primary)] transition-colors"
-                style={{ color: 'var(--text-muted)' }}
-                onClick={(e) => e.stopPropagation()}
-              >
+              <span className="block font-mono text-xs tracking-wide mt-1" style={{ color: 'var(--text-muted)' }}>
                 {sanitizedCity}{sanitizedState ? `, ${sanitizedState}` : ''}
-              </Link>
+              </span>
             ) : (
               <p className="font-mono text-xs tracking-wide mt-1" style={{ color: 'var(--text-muted)' }}>
                 {sanitizedCity}{sanitizedState ? `, ${sanitizedState}` : ''}
