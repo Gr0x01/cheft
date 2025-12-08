@@ -1,40 +1,45 @@
 'use client'
 
-import { Suspense, useEffect } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { initPostHog } from '@/lib/posthog'
 import posthog from 'posthog-js'
 
+if (typeof window !== 'undefined') {
+  initPostHog()
+}
+
 function PostHogPageView() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const [initialized, setInitialized] = useState(false)
 
   useEffect(() => {
-    if (pathname) {
-      const isAdminRoute = pathname.startsWith('/admin')
-      
-      if (isAdminRoute && posthog.sessionRecording) {
-        posthog.stopSessionRecording()
-      }
+    setInitialized(true)
+  }, [])
 
-      let url = window.origin + pathname
-      if (searchParams && searchParams.toString()) {
-        url = url + `?${searchParams.toString()}`
-      }
-      posthog.capture('$pageview', {
-        $current_url: url,
-      })
+  useEffect(() => {
+    if (!initialized || !pathname) return
+
+    const isAdminRoute = pathname.startsWith('/admin')
+    
+    if (isAdminRoute && posthog.sessionRecording) {
+      posthog.stopSessionRecording()
     }
-  }, [pathname, searchParams])
+
+    let url = window.origin + pathname
+    if (searchParams && searchParams.toString()) {
+      url = url + `?${searchParams.toString()}`
+    }
+    posthog.capture('$pageview', {
+      $current_url: url,
+    })
+  }, [pathname, searchParams, initialized])
 
   return null
 }
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    initPostHog()
-  }, [])
-
   return (
     <>
       <Suspense fallback={null}>
