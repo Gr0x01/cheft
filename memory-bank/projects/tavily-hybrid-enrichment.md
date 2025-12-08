@@ -123,11 +123,8 @@ Replace expensive OpenAI Responses API with a tiered hybrid approach:
 ### 1.2 Tavily Client
 - [x] `scripts/ingestion/enrichment/shared/tavily-client.ts`
 - [x] Auto-caching with TTL support
-- [x] Helper functions: `searchChefShows()`, `searchChefRestaurants()`
+- [x] Helper functions: `searchChefShows()`, `searchChefRestaurants()`, `searchChefBio()`, `searchRestaurantStatus()`
 - [x] Cache stats and invalidation
-- [ ] **TODO**: Add expanded query functions:
-  - `searchChefBio()` - Wikipedia, awards, training
-  - `searchRestaurantDetails()` - Status, cuisine, price
 
 ### 1.3 Local LLM Client  
 - [x] `scripts/ingestion/enrichment/shared/local-llm-client.ts`
@@ -155,10 +152,10 @@ Replace expensive OpenAI Responses API with a tiered hybrid approach:
 
 ---
 
-## Phase 2: Staging System (IN PROGRESS)
+## Phase 2: Staging System ✅ COMPLETE
 
 ### 2.1 Database Schema
-- [ ] Migration `035_pending_discoveries_table.sql`
+- [x] Migration `035_pending_discoveries_table.sql`
   ```sql
   pending_discoveries (
     id UUID PRIMARY KEY,
@@ -172,31 +169,34 @@ Replace expensive OpenAI Responses API with a tiered hybrid approach:
   )
   ```
 
-- [ ] Migration `036_add_year_to_chef_shows.sql`
+- [x] Migration `036_add_year_to_chef_shows.sql`
   ```sql
   ALTER TABLE chef_shows ADD COLUMN year INTEGER;
   ```
 
 ### 2.2 Season/Year Parser
-- [ ] `scripts/ingestion/enrichment/shared/season-parser.ts`
+- [x] `scripts/ingestion/enrichment/shared/season-parser.ts`
 - Parse formats:
   - "Season 11" → `{season: 11, year: null}`
   - "S3" → `{season: 3, year: null}`
   - "2021" → `{season: null, year: 2021}`
   - "2018-2022" → multiple records with year each
+- Also includes `normalizeShowName()` and `resolveShowAlias()` helpers
 
 ### 2.3 Serial Queue for Local LLM
-- [ ] `scripts/ingestion/enrichment/shared/llm-queue.ts`
+- [x] `scripts/ingestion/enrichment/shared/llm-queue.ts`
 - Check availability before each job
 - One at a time (4080 limitation)
-- Graceful fallback to OpenAI
-- Job persistence for resume
+- **No auto-fallback** - queue and wait if local unavailable
+- `forceProcessWithOpenAI()` for admin override
+- In-memory queue (jobs cheap to re-run)
 
 ### 2.4 Pending Discovery Repository
-- [ ] `scripts/ingestion/enrichment/repositories/pending-discovery-repository.ts`
+- [x] `scripts/ingestion/enrichment/repositories/pending-discovery-repository.ts`
 - CRUD for pending_discoveries
-- Dedup check against existing data
+- Dedup check against existing shows/chefs/restaurants
 - Batch operations
+- Stats by status
 
 ---
 
@@ -233,6 +233,8 @@ Replace expensive OpenAI Responses API with a tiered hybrid approach:
 - [ ] Approve show → creates show record
 - [ ] Approve chef → creates chef, links to show
 - [ ] Approve restaurant → creates restaurant, links to chef
+- [ ] Enforce protected restaurant rules (see "Protected Restaurant Behavior" section)
+  - If `is_protected = true`: update details only, never change `chef_id`
 
 ---
 
@@ -257,7 +259,7 @@ Replace expensive OpenAI Responses API with a tiered hybrid approach:
 
 ## Files Reference
 
-### Created
+### Created (Phase 1)
 - `supabase/migrations/034_search_cache_table.sql`
 - `scripts/ingestion/enrichment/shared/tavily-client.ts`
 - `scripts/ingestion/enrichment/shared/local-llm-client.ts`
@@ -265,27 +267,192 @@ Replace expensive OpenAI Responses API with a tiered hybrid approach:
 - `scripts/test-extraction-comparison.ts`
 - `scripts/test-tiered-extraction.ts`
 
-### To Create
+### Created (Phase 2)
 - `supabase/migrations/035_pending_discoveries_table.sql`
 - `supabase/migrations/036_add_year_to_chef_shows.sql`
 - `scripts/ingestion/enrichment/shared/season-parser.ts`
 - `scripts/ingestion/enrichment/shared/llm-queue.ts`
 - `scripts/ingestion/enrichment/repositories/pending-discovery-repository.ts`
+
+### To Create (Phase 3-4)
 - `scripts/extract-to-staging.ts`
 - `src/app/admin/discoveries/page.tsx`
 - `src/app/admin/discoveries/[id]/page.tsx`
 
-### To Modify
+### To Modify (Phase 3)
 - `src/components/admin/AdminNav.tsx`
-- `scripts/ingestion/enrichment/shared/local-llm-client.ts`
+
+---
+
+## Error Handling Strategy
+
+**Keep it simple - fail fast, log clearly, retry manually.**
+
+### Tavily Failures
+- **Rate limit (429)**: Wait 60s, retry once, then skip chef and log
+- **API down (5xx)**: Skip chef, continue batch, log for manual retry
+- **No results**: Cache empty result (prevents re-fetching), flag in staging
+
+### Extraction Failures  
+- **Garbage output**: Log raw response, insert to staging with `status: 'needs_review'`
+- **Schema validation fail**: Same as above - human reviews bad extractions
+- **Partial data**: Accept what we got, flag incomplete fields
+
+### Local LLM Unavailable
+- **Default behavior**: Queue job, retry when local available (check every 5 min)
+- **Admin override**: "Run with OpenAI" button in UI for urgent batches
+- **Never silently degrade** - either complete the enrichment or don't touch the record
+
+### Implementation
+```typescript
+// Simple retry wrapper - no complex backoff needed for solo project
+async function withRetry<T>(fn: () => Promise<T>, retries = 1): Promise<T | null> {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      console.error(`Attempt ${i + 1} failed:`, e.message);
+      if (i < retries) await sleep(60000); // 60s wait
+    }
+  }
+  return null; // Caller handles null
+}
+```
+
+---
+
+## Deduplication Strategy
+
+**Match by normalized name + location, merge by newest-wins.**
+
+### Show Matching
+- Normalize: lowercase, strip "the", collapse spaces
+- "Tournament of Champions" → "tournament champions"
+- "TOC" → manual alias table (5-10 entries, hardcoded)
+- **Conflict**: If show exists, check if season is new → add season only
+
+### Restaurant Matching  
+- Key: `normalize(name) + city + state`
+- "The French Laundry, Yountville, CA" = "french laundry yountville ca"
+- **Conflict**: Compare `last_verified_at`, keep newer data
+- **Multi-chef**: If restaurant exists under different chef → flag for review
+
+### Chef Matching
+- Key: `normalize(name)` 
+- Check existing before insert
+- **Conflict**: Merge shows/restaurants lists, keep longer bio
+
+### Show Name Aliases (Hardcoded)
+```typescript
+const SHOW_ALIASES: Record<string, string> = {
+  'toc': 'tournament of champions',
+  'ggg': "guy's grocery games",
+  'ddd': 'diners drive-ins and dives',
+  'iron chef america': 'iron chef',
+  'top chef masters': 'top chef', // Same show, different format
+};
+```
+
+---
+
+## Protected Restaurant Behavior
+
+**Protection = verified chef relationship, not frozen data.**
+
+A restaurant with `is_protected = true` means the chef-restaurant link has been manually verified.
+
+### Can Update (via enrichment or admin)
+- `status` (open/closed/temporarily_closed)
+- `google_place_id`, `google_rating`, `google_review_count`, `google_url`
+- `photo_urls`
+- `price_tier`, `cuisine_type`
+- `address`, `latitude`, `longitude`
+- `last_verified_at`
+
+### Cannot Change
+- `chef_id` - relationship is locked
+- Cannot be deleted or orphaned from chef
+- Cannot be reassigned to different chef without removing protection first
+
+### Admin Override
+- Admin can unprotect → edit chef_id → re-protect if needed
+- Bulk operations skip protected restaurants by default
+
+---
+
+## Approval Cascade Logic
+
+**Simple state machine - approve triggers creation, failure rolls back.**
+
+### States
+```
+pending → approved → created
+        → rejected → (deleted after 30 days)
+        → needs_review → (manual intervention)
+```
+
+### Cascade Rules
+
+**Approve Show:**
+1. Check if show slug exists → if yes, just add season
+2. Create show record
+3. No further cascade (chefs link to shows, not vice versa)
+
+**Approve Chef:**
+1. Check if chef slug exists → if yes, merge data and skip create
+2. Create chef record  
+3. Link to shows (must already exist or be in same approval batch)
+4. **No auto-approve restaurants** - they get their own review
+
+**Approve Restaurant:**
+1. Check if restaurant exists (name + city) → if yes, update instead
+2. Create restaurant record
+3. Link to chef (must already exist)
+4. Trigger Google Places lookup (async, doesn't block approval)
+
+### Failure Handling
+- **FK violation**: Chef doesn't exist → reject with message "Approve chef first"
+- **Duplicate**: Already exists → auto-merge and mark as `status: 'merged'`
+- **Validation fail**: Bad data → `status: 'needs_review'` with error message
+
+### Batch Approval
+- Admin can approve multiple at once
+- Process in order: shows → chefs → restaurants
+- If any fails, continue others and report failures
+
+---
+
+## Testing Strategy (Solo-Dev Appropriate)
+
+**Manual testing + one happy-path E2E test per phase.**
+
+### Phase 2 Tests
+- [ ] Manual: Run harvest on 5 new chefs, verify cache populated
+- [ ] Manual: Run extraction, verify staging table has entries
+- [ ] Script: `npm run test:staging` - insert mock data, verify dedup works
+
+### Phase 3 Tests  
+- [ ] Manual: Approve a show → verify show created
+- [ ] Manual: Approve a chef → verify chef created, shows linked
+- [ ] Manual: Reject → verify record marked rejected
+- [ ] E2E: `tests/admin-discoveries.spec.ts` - load page, approve one, verify DB
+
+### Phase 4 Tests
+- [ ] Manual: Full flow - harvest → extract → approve → verify public page
+- [ ] E2E: `tests/enrichment-flow.spec.ts` - end-to-end with mock Tavily
+
+### Test Data
+- Keep 5 test chefs in `scripts/test-data/test-chefs.json`
+- Mock Tavily responses in `scripts/test-data/mock-tavily-responses.json`
+- Can replay without hitting API
 
 ---
 
 ## Open Questions
 
-1. **Batch size for local LLM queue?** - Probably 1 (serialize)
-2. **Auto-reject rules?** - Shows with <2 chefs? Restaurants already closed?
-3. **Merge UI?** - When discovery matches existing but has more data?
+1. ~~**Batch size for local LLM queue?**~~ → 1 (serialize, 4080 limitation)
+2. **Auto-reject rules?** - Defer until we see patterns in staging data
+3. **Merge UI?** - V1: Just show diff, admin picks. No fancy merge tool
 
 ---
 
@@ -297,7 +464,16 @@ Replace expensive OpenAI Responses API with a tiered hybrid approach:
 - Updated cost analysis: ~$14 for full harvest (68% savings)
 - Chose pay-as-you-go Tavily ($0.008/credit)
 
-### 2025-12-08
+### 2025-12-08 (Phase 2)
+- Phase 2 complete: staging system
+- Created migrations 035 (pending_discoveries) and 036 (year column)
+- Created season-parser.ts with year range support
+- Created llm-queue.ts with wait-for-local behavior (no auto-fallback)
+- Created pending-discovery-repository.ts with dedup checks
+- Added searchChefBio() to tavily-client.ts
+- Modified local-llm-client.ts to throw LocalUnavailableError instead of fallback
+
+### 2025-12-08 (Phase 1)
 - Phase 1 complete: cache, clients, harvest script
 - Tested on 5 chefs, end-to-end working
 - Began Phase 2 planning

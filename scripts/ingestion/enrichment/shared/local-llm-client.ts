@@ -1,5 +1,12 @@
 import OpenAI from 'openai';
 
+export class LocalUnavailableError extends Error {
+  constructor() {
+    super('Local LLM unavailable - queue job and retry later');
+    this.name = 'LocalUnavailableError';
+  }
+}
+
 export type EnrichmentTier = 'extraction' | 'synthesis';
 
 const TIER_CONFIG = {
@@ -72,8 +79,7 @@ export async function generateWithTier(
   if (useLocal) {
     const localAvailable = await isLocalAvailable();
     if (!localAvailable) {
-      console.log(`      ⚠️  Local LLM unavailable, falling back to OpenAI`);
-      useLocal = false;
+      throw new LocalUnavailableError();
     }
   }
 

@@ -154,6 +154,15 @@ export async function searchChefRestaurants(chefName: string, chefId?: string): 
   });
 }
 
+export async function searchChefBio(chefName: string, chefId?: string): Promise<TavilyResponse> {
+  return searchTavily(`${chefName} chef biography Wikipedia James Beard Michelin star awards`, {
+    entityType: 'chef',
+    entityId: chefId,
+    entityName: chefName,
+    ttlDays: 90,
+  });
+}
+
 export async function searchRestaurantStatus(
   restaurantName: string,
   city: string,
