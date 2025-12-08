@@ -116,6 +116,7 @@ export async function searchTavily(
       search_depth: 'advanced',
       include_raw_content: false,
       max_results: options.maxResults ?? 10,
+      exclude_domains: ['cheft.app'],
     }),
   });
 

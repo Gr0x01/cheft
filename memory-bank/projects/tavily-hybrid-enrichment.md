@@ -198,25 +198,44 @@ Replace expensive OpenAI Responses API with a tiered hybrid approach:
 - Batch operations
 - Stats by status
 
+### 2.5 Show Normalization (Complete)
+- [x] Show name normalization with parenthetical removal
+- [x] Alias resolution (TOC → Tournament of Champions, etc.)
+- [x] Duplicate show merge via SQL function
+- [x] **Final state**: 234 shows (from ~268), 989 chef_shows, 0 parenthetical names remaining
+
 ---
 
 ## Phase 3: Admin UI
 
-### 3.1 Discoveries Dashboard
-- [ ] `/admin/discoveries/page.tsx`
-- Table with filters (type, status, source chef)
-- Bulk actions (approve all, reject all)
-- Stats: pending count by type
+### 3.0 Architecture Decision: Replace Review Queue
+- **Decision**: Replace `review_queue` tab with `pending_discoveries`
+- **Rationale**: Both are system-generated enrichment staging; Tavily hybrid replaces old OpenAI enrichment
+- **Final tabs**: `Discoveries | Duplicates | Feedback`
+- **Migration**: 
+  - `review_queue` table kept for historical data (read-only)
+  - New enrichment writes only to `pending_discoveries`
+  - Old queue items can be migrated or archived
 
-### 3.2 Discovery Detail Page
-- [ ] `/admin/discoveries/[id]/page.tsx`
-- Full data preview
-- Edit before approval
-- "This will trigger..." cascade preview
-- Approve/Reject buttons
+### 3.1 Discoveries Tab (replaces Review Queue)
+- [ ] Modify `/admin/(protected)/review/page.tsx`
+- [ ] Replace ReviewTable with DiscoveriesTable
+- [ ] Data source: `pending_discoveries` table
+- [ ] Filters: type (show/chef/restaurant), status, source chef
+- [ ] Bulk actions: approve selected, reject selected
+- [ ] Stats: pending count by discovery_type
 
-### 3.3 Navigation
-- [ ] Add "Discoveries" to AdminNav
+### 3.2 Discovery Detail Modal/Page
+- [ ] Create `DiscoveryDetail.tsx` component
+- [ ] Full data preview with JSON viewer
+- [ ] Edit fields before approval
+- [ ] Cascade preview: "Approving will create: 1 show, link to 3 chefs"
+- [ ] Approve/Reject buttons with confirmation
+
+### 3.3 Tab Updates
+- [ ] Rename "Review Queue" → "Discoveries" in ReviewTabs.tsx
+- [ ] Update stats queries to use pending_discoveries
+- [ ] Remove old review_queue components (or archive)
 
 ---
 
@@ -276,11 +295,16 @@ Replace expensive OpenAI Responses API with a tiered hybrid approach:
 
 ### To Create (Phase 3-4)
 - `scripts/extract-to-staging.ts`
-- `src/app/admin/discoveries/page.tsx`
-- `src/app/admin/discoveries/[id]/page.tsx`
+- `src/app/admin/(protected)/review/components/DiscoveriesSection.tsx`
+- `src/app/admin/(protected)/review/components/DiscoveryDetail.tsx`
+- `src/app/admin/(protected)/review/DiscoveriesTable.tsx`
 
 ### To Modify (Phase 3)
-- `src/components/admin/AdminNav.tsx`
+- `src/app/admin/(protected)/review/page.tsx` - swap data source to pending_discoveries
+- `src/app/admin/(protected)/review/ReviewTabs.tsx` - rename tab "Review Queue" → "Discoveries"
+
+### To Archive (Phase 3)
+- `src/app/admin/(protected)/review/ReviewTable.tsx` - replaced by DiscoveriesTable
 
 ---
 
@@ -458,11 +482,22 @@ pending → approved → created
 
 ## Changelog
 
+### 2025-12-08 (Phase 3 Planning)
+- Architecture decision: Replace Review Queue tab with Discoveries
+- Rationale: Both are system-generated; consolidate to 3 tabs (Discoveries | Duplicates | Feedback)
+- Updated file references for Phase 3 implementation
+
 ### 2025-12-08 (continued)
 - Expanded query strategy: 4 queries/chef + 1/restaurant
 - Added extraction schemas for shows, bio, restaurants
 - Updated cost analysis: ~$14 for full harvest (68% savings)
 - Chose pay-as-you-go Tavily ($0.008/credit)
+
+### 2025-12-08 (Phase 2 - Show Normalization)
+- Normalized 234 shows: 34 merged duplicates, 11 renamed
+- Removed all parenthetical suffixes from show names
+- Created merge_shows() SQL function for safe duplicate handling
+- chef_shows relationships preserved (989 records intact)
 
 ### 2025-12-08 (Phase 2)
 - Phase 2 complete: staging system

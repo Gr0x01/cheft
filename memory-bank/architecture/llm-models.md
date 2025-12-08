@@ -192,6 +192,16 @@ To change the primary model:
 
 **Never change model names directly in code without updating this reference first.**
 
+## Local LLM (Development/Testing)
+
+For experimental work and cost-free testing, a local LLM is available:
+
+| Model | Endpoint | Use Case |
+|-------|----------|----------|
+| `qwen/qwen3-8b` | `http://10.2.0.10:1234` | Local testing, data normalization experiments |
+
+**Usage**: OpenAI-compatible API. Set base URL to `http://10.2.0.10:1234/v1` with any API key.
+
 ## References
 
 - **OpenAI Pricing Page**: https://openai.com/api/pricing/
