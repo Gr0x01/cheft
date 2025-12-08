@@ -202,11 +202,15 @@ Replace expensive OpenAI Responses API with a tiered hybrid approach:
 - [x] Show name normalization with parenthetical removal
 - [x] Alias resolution (TOC → Tournament of Champions, etc.)
 - [x] Duplicate show merge via SQL function
-- [x] **Final state**: 234 shows (from ~268), 989 chef_shows, 0 parenthetical names remaining
+- [x] Orphan cleanup (deleted shows with 0 chef links)
+- [x] Typo fixes (Beet → Beat, Hells → Hell's, etc.)
+- [x] Variant merges (Bobby's Triple Threat → Bobby Flay's Triple Threat, etc.)
+- [x] Apostrophe normalization (curly → straight)
+- [x] **Final state**: 165 shows, 293 chefs, ~988 chef_shows
 
 ---
 
-## Phase 3: Admin UI
+## Phase 3: Admin UI ✅ COMPLETE
 
 ### 3.0 Architecture Decision: Replace Review Queue
 - **Decision**: Replace `review_queue` tab with `pending_discoveries`
@@ -217,25 +221,53 @@ Replace expensive OpenAI Responses API with a tiered hybrid approach:
   - New enrichment writes only to `pending_discoveries`
   - Old queue items can be migrated or archived
 
-### 3.1 Discoveries Tab (replaces Review Queue)
-- [ ] Modify `/admin/(protected)/review/page.tsx`
-- [ ] Replace ReviewTable with DiscoveriesTable
-- [ ] Data source: `pending_discoveries` table
-- [ ] Filters: type (show/chef/restaurant), status, source chef
-- [ ] Bulk actions: approve selected, reject selected
-- [ ] Stats: pending count by discovery_type
+### 3.1 Discoveries Tab (replaces Review Queue) ✅
+- [x] Modify `/admin/(protected)/review/page.tsx`
+- [x] Replace ReviewTable with DiscoveriesClient
+- [x] Data source: `pending_discoveries` table
+- [x] Bulk actions: approve selected, reject selected (with checkboxes)
+- [x] Stats: pending count by discovery_type (show/chef/restaurant)
 
-### 3.2 Discovery Detail Modal/Page
-- [ ] Create `DiscoveryDetail.tsx` component
-- [ ] Full data preview with JSON viewer
-- [ ] Edit fields before approval
-- [ ] Cascade preview: "Approving will create: 1 show, link to 3 chefs"
-- [ ] Approve/Reject buttons with confirmation
+### 3.2 Discovery Detail Modal ✅
+- [x] Create `DiscoveryDetail.tsx` component
+- [x] Full data preview with JSON viewer (collapsible raw JSON)
+- [x] Approve/Reject buttons with confirmation
+- [ ] Edit fields before approval (deferred - v2)
+- [ ] Cascade preview (deferred - v2)
 
-### 3.3 Tab Updates
-- [ ] Rename "Review Queue" → "Discoveries" in ReviewTabs.tsx
-- [ ] Update stats queries to use pending_discoveries
-- [ ] Remove old review_queue components (or archive)
+### 3.3 Tab Updates ✅
+- [x] Rename "Review Queue" → "Discoveries" in ReviewTabs.tsx
+- [x] Update stats queries to use pending_discoveries
+- [x] Added discoveryCount badge to tab
+
+### 3.4 Show Trigger Section ✅ (NEW)
+- [x] `ShowTriggerSection.tsx` component
+- [x] Dropdown of existing 165 shows (Combobox with search)
+- [x] Option to add NEW show name
+- [x] Cost estimate display (~$0.05/chef)
+- [x] Confirmation modal with warning before harvest
+- [x] API route: `POST /api/admin/harvest-show`
+  - Tavily search for show contestants/winners
+  - gpt-4o-mini extraction of chef names
+  - For each chef: search restaurants
+  - Stage all to `pending_discoveries`
+  - Returns: chefsFound, restaurantsFound, discoveriesCreated, estimatedCost
+
+### 3.5 TypeScript Types ✅
+- [x] Added `pending_discoveries` to `database.types.ts`
+- [x] Added `search_cache` to `database.types.ts`
+
+**Files Created (Phase 3):**
+- `src/app/admin/(protected)/review/components/DiscoveriesSection.tsx`
+- `src/app/admin/(protected)/review/components/DiscoveriesClient.tsx`
+- `src/app/admin/(protected)/review/components/DiscoveryDetail.tsx`
+- `src/app/admin/(protected)/review/components/ShowTriggerSection.tsx`
+- `src/app/api/admin/harvest-show/route.ts`
+
+**Files Modified (Phase 3):**
+- `src/app/admin/(protected)/review/page.tsx`
+- `src/app/admin/(protected)/review/ReviewTabs.tsx`
+- `src/lib/database.types.ts`
 
 ---
 
@@ -481,6 +513,15 @@ pending → approved → created
 ---
 
 ## Changelog
+
+### 2025-12-08 (Phase 3 Complete)
+- Built complete admin UI for discoveries review
+- Created DiscoveriesSection, DiscoveriesClient, DiscoveryDetail components
+- Created ShowTriggerSection with show dropdown + harvest trigger
+- Created harvest-show API route (Tavily search + gpt-4o-mini extraction)
+- Replaced Review Queue tab with Discoveries tab
+- Added pending_discoveries and search_cache to database.types.ts
+- Type-check passing
 
 ### 2025-12-08 (Phase 3 Planning)
 - Architecture decision: Replace Review Queue tab with Discoveries

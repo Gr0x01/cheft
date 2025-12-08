@@ -3,28 +3,41 @@
 import { useState } from 'react';
 
 interface ReviewTabsProps {
-  queueContent: React.ReactNode;
+  discoveriesContent: React.ReactNode;
   duplicatesContent: React.ReactNode;
   feedbackContent: React.ReactNode;
+  discoveryCount: number;
   duplicateCount: number;
   feedbackCount: number;
 }
 
-export function ReviewTabs({ queueContent, duplicatesContent, feedbackContent, duplicateCount, feedbackCount }: ReviewTabsProps) {
-  const [activeTab, setActiveTab] = useState<'queue' | 'duplicates' | 'feedback'>('queue');
+export function ReviewTabs({ 
+  discoveriesContent, 
+  duplicatesContent, 
+  feedbackContent, 
+  discoveryCount,
+  duplicateCount, 
+  feedbackCount 
+}: ReviewTabsProps) {
+  const [activeTab, setActiveTab] = useState<'discoveries' | 'duplicates' | 'feedback'>('discoveries');
 
   return (
     <div>
       <div className="flex gap-8 mb-8">
         <button
-          onClick={() => setActiveTab('queue')}
-          className={`font-mono text-xs uppercase tracking-[0.15em] pb-2 border-b-2 transition-all ${
-            activeTab === 'queue'
+          onClick={() => setActiveTab('discoveries')}
+          className={`font-mono text-xs uppercase tracking-[0.15em] pb-2 border-b-2 transition-all flex items-center gap-2 ${
+            activeTab === 'discoveries'
               ? 'text-stone-900 border-copper-600'
               : 'text-stone-400 border-transparent hover:text-stone-600'
           }`}
         >
-          Review Queue
+          Discoveries
+          {discoveryCount > 0 && (
+            <span className="font-mono text-[10px] bg-purple-600 text-white px-1.5 py-0.5">
+              {discoveryCount}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveTab('duplicates')}
@@ -58,7 +71,7 @@ export function ReviewTabs({ queueContent, duplicatesContent, feedbackContent, d
         </button>
       </div>
 
-      {activeTab === 'queue' && queueContent}
+      {activeTab === 'discoveries' && discoveriesContent}
       {activeTab === 'duplicates' && duplicatesContent}
       {activeTab === 'feedback' && feedbackContent}
     </div>

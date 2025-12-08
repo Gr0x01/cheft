@@ -8,6 +8,7 @@ import { ChevronDown } from 'lucide-react';
 
 const primaryNav = [
   { href: '/admin/review', label: 'Review' },
+  { href: '/admin/shows', label: 'Shows' },
   { href: '/admin/entities', label: 'Entities' },
 ];
 

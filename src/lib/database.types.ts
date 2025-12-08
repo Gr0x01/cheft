@@ -741,11 +741,115 @@ export interface Database {
         };
         Relationships: [];
       };
+      pending_discoveries: {
+        Row: {
+          id: string;
+          discovery_type: "show" | "chef" | "restaurant";
+          source_chef_id: string | null;
+          source_chef_name: string | null;
+          data: Json;
+          status: "pending" | "approved" | "rejected" | "needs_review" | "merged";
+          notes: string | null;
+          error_message: string | null;
+          created_at: string;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          discovery_type: "show" | "chef" | "restaurant";
+          source_chef_id?: string | null;
+          source_chef_name?: string | null;
+          data: Json;
+          status?: "pending" | "approved" | "rejected" | "needs_review" | "merged";
+          notes?: string | null;
+          error_message?: string | null;
+          created_at?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          discovery_type?: "show" | "chef" | "restaurant";
+          source_chef_id?: string | null;
+          source_chef_name?: string | null;
+          data?: Json;
+          status?: "pending" | "approved" | "rejected" | "needs_review" | "merged";
+          notes?: string | null;
+          error_message?: string | null;
+          created_at?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pending_discoveries_source_chef_id_fkey";
+            columns: ["source_chef_id"];
+            isOneToOne: false;
+            referencedRelation: "chefs";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      search_cache: {
+        Row: {
+          id: string;
+          entity_type: string;
+          entity_id: string | null;
+          entity_name: string | null;
+          query: string;
+          query_hash: string;
+          results: Json;
+          result_count: number;
+          source: string;
+          fetched_at: string;
+          expires_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          entity_type: string;
+          entity_id?: string | null;
+          entity_name?: string | null;
+          query: string;
+          query_hash: string;
+          results: Json;
+          result_count: number;
+          source: string;
+          fetched_at?: string;
+          expires_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          entity_type?: string;
+          entity_id?: string | null;
+          entity_name?: string | null;
+          query?: string;
+          query_hash?: string;
+          results?: Json;
+          result_count?: number;
+          source?: string;
+          fetched_at?: string;
+          expires_at?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      get_shows_with_counts: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          id: string;
+          name: string;
+          slug: string;
+          network: string | null;
+          created_at: string;
+          chef_count: number;
+          restaurant_count: number;
+        }[];
+      };
       get_feedback_summary: {
         Args: Record<PropertyKey, never>;
         Returns: {
