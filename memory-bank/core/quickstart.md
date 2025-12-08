@@ -28,9 +28,10 @@ npm run type-check   # Run TypeScript checks
 npm run test         # Run Jest tests
 npm run test:e2e     # Run Playwright tests
 
-# Enrichment
-npm run enrich:chef  # Enrich single chef
-npm run michelin:scrape  # Update Michelin star data
+# Enrichment (Tavily Hybrid System)
+npx tsx scripts/harvest-tavily-cache.ts          # Populate Tavily search cache
+npx tsx scripts/extract-from-cache.ts            # Extract restaurants from cache
+npx tsx scripts/extract-from-cache.ts --limit 5  # Test on 5 chefs
 ```
 
 ## Active Focus

@@ -127,6 +127,13 @@ export function DiscoveriesClient({ items }: DiscoveriesClientProps) {
 
   const getDataSummary = (item: PendingDiscovery): string => {
     const d = item.data;
+    if (d.action === 'potential_duplicate') {
+      const newRest = d.new_restaurant as { name?: string } | undefined;
+      return newRest?.name ? String(newRest.name) : 'Potential Duplicate';
+    }
+    if (d.action === 'not_found_by_llm') {
+      return d.restaurant_name ? String(d.restaurant_name) : 'Not Found';
+    }
     if (d.name) return String(d.name);
     if (d.chef_name) return String(d.chef_name);
     return item.discovery_type;
@@ -134,6 +141,14 @@ export function DiscoveriesClient({ items }: DiscoveriesClientProps) {
 
   const getDataPreview = (item: PendingDiscovery): string => {
     const d = item.data;
+    if (d.action === 'potential_duplicate') {
+      const existing = d.existing_restaurant as { name?: string } | undefined;
+      const confidence = d.confidence as number | undefined;
+      return existing?.name ? `→ ${existing.name} (${Math.round((confidence || 0) * 100)}%)` : '';
+    }
+    if (d.action === 'not_found_by_llm') {
+      return d.city ? `${d.city}${d.state ? `, ${d.state}` : ''}` : '';
+    }
     if (item.discovery_type === 'show') {
       const seasons = d.seasons || d.season;
       return seasons ? `Season ${seasons}` : '';

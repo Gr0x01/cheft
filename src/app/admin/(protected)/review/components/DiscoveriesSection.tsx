@@ -44,7 +44,7 @@ export async function DiscoveriesSection() {
     supabase
       .from('pending_discoveries')
       .select('*')
-      .eq('status', 'pending')
+      .in('status', ['pending', 'needs_review'])
       .order('created_at', { ascending: false })
       .limit(100),
   ]);
@@ -92,7 +92,7 @@ export async function DiscoveriesSection() {
         </div>
       </div>
 
-      {stats.pending > 0 && (
+      {(stats.pending > 0 || stats.needs_review > 0) && (
         <div className="mb-8">
           <h3 className="font-mono text-[10px] text-stone-400 uppercase tracking-[0.2em] mb-4">By Type</h3>
           <div className="flex gap-6">

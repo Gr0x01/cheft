@@ -13,6 +13,12 @@ Status: Phase 3 Complete - Maintenance Mode
 
 ## Recently Completed (Dec 8, 2025)
 
+### Tavily Cache Extraction Script ✅
+- **New script**: `scripts/extract-from-cache.ts` - Extracts restaurants from cached Tavily search results
+- **Flow**: Tavily cache → gpt-5-mini extraction → RestaurantRepository (with staging)
+- **Cost**: ~$0.006/chef (~$1.76 for all 293 chefs)
+- **Tested**: 5 chefs processed, 2 new restaurants, 1 staged for review
+
 ### Restaurant Enrichment Flow Improvements ✅
 - **Safer stale handling**: `deleteStaleRestaurants()` → `handleStaleRestaurants()` - stages for admin review instead of auto-deleting
 - **Duplicate detection with review**: Suspected duplicates now staged to `pending_discoveries` with `needs_review` status
