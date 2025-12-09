@@ -11,15 +11,14 @@ const googleApiKey = process.env.GOOGLE_PLACES_API_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 const placesService = createGooglePlacesService({ apiKey: googleApiKey });
 
-async function enrichPlaces(limit: number = 300) {
-  console.log('\n🗺️  Google Places Enrichment\n');
+async function refreshPlaces(limit: number = 1500) {
+  console.log('\n🔄 Google Places Refresh (coords + status)\n');
   console.log('='.repeat(60) + '\n');
 
-  // Get restaurants without Google Place ID
   const { data: restaurants, error } = await supabase
     .from('restaurants')
-    .select('id, name, city, state, country, google_place_id')
-    .is('google_place_id', null)
+    .select('id, name, city, state, google_place_id, lat, lng, status')
+    .not('google_place_id', 'is', null)
     .limit(limit);
 
   if (error) {
@@ -27,43 +26,28 @@ async function enrichPlaces(limit: number = 300) {
     return;
   }
 
-  console.log(`Found ${restaurants.length} restaurants to enrich\n`);
+  console.log(`Found ${restaurants.length} restaurants with Google Place IDs\n`);
 
   let successCount = 0;
   let failCount = 0;
-  let notFoundCount = 0;
+  let closedCount = 0;
+  let coordsAddedCount = 0;
 
   for (let i = 0; i < restaurants.length; i++) {
     const rest = restaurants[i];
     const progress = `[${i + 1}/${restaurants.length}]`;
 
     try {
-      // Search for place
-      const query = `${rest.name} ${rest.city} ${rest.state}`;
-      console.log(`${progress} Searching: ${query}`);
+      console.log(`${progress} Refreshing: ${rest.name}`);
 
-      const results = await placesService.textSearch(query, { maxResults: 1 });
+      const details = await placesService.getPlaceDetails(rest.google_place_id, { includePhotos: false });
 
-      if (!results || results.length === 0) {
-        console.log(`  ⚠️  Not found\n`);
-        notFoundCount++;
+      if (!details) {
+        console.log(`  ⚠️  Place not found (may be deleted)\n`);
+        failCount++;
         continue;
       }
 
-      const place = results[0];
-
-      // Get detailed place info with photos
-      const details = await placesService.getPlaceDetails(place.placeId, { includePhotos: true });
-
-      // Extract photo URLs
-      const photoUrls = await Promise.all(
-        (details.photos || []).slice(0, 5).map(photo => 
-          placesService.getPhotoUrl(photo.name, 1200)
-        )
-      );
-      const validPhotoUrls = photoUrls.filter(url => url !== null) as string[];
-
-      // Map business status to our status
       const statusMap: Record<string, 'open' | 'closed' | undefined> = {
         'OPERATIONAL': 'open',
         'CLOSED_PERMANENTLY': 'closed',
@@ -71,17 +55,11 @@ async function enrichPlaces(limit: number = 300) {
       };
       const mappedStatus = details.businessStatus ? statusMap[details.businessStatus] : undefined;
 
-      // Update restaurant
       const updateData: Record<string, unknown> = {
-        google_place_id: details.placeId,
-        google_rating: details.rating,
-        google_review_count: details.userRatingsTotal,
-        google_price_level: details.priceLevel ? parseInt(details.priceLevel.replace('PRICE_LEVEL_', '')) : null,
-        photo_urls: validPhotoUrls,
-        website_url: details.websiteUri || null,
-        maps_url: details.googleMapsUri || null,
         lat: details.lat || null,
         lng: details.lng || null,
+        google_rating: details.rating,
+        google_review_count: details.userRatingsTotal,
         last_enriched_at: new Date().toISOString(),
       };
 
@@ -98,14 +76,19 @@ async function enrichPlaces(limit: number = 300) {
         console.log(`  ❌ Failed to update: ${updateError.message}\n`);
         failCount++;
       } else {
-        const statusInfo = mappedStatus ? ` [${mappedStatus.toUpperCase()}]` : '';
-        const coordInfo = details.lat && details.lng ? ' 📍' : ' ⚠️ no coords';
-        console.log(`  ✅ ${details.name} - ${details.rating || 'N/A'}⭐ - ${validPhotoUrls.length} photos${coordInfo}${statusInfo}\n`);
+        const wasClosedNow = mappedStatus === 'closed' && rest.status !== 'closed';
+        const addedCoords = !rest.lat && details.lat;
+        
+        if (wasClosedNow) closedCount++;
+        if (addedCoords) coordsAddedCount++;
+
+        const statusInfo = wasClosedNow ? ' 🚫 NOW CLOSED' : (mappedStatus ? ` [${mappedStatus}]` : '');
+        const coordInfo = addedCoords ? ' 📍 coords added' : '';
+        console.log(`  ✅ ${details.rating || 'N/A'}⭐${coordInfo}${statusInfo}\n`);
         successCount++;
       }
 
-      // Rate limiting - 100 requests per second
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise(resolve => setTimeout(resolve, 100));
 
     } catch (error: any) {
       console.log(`  ❌ Error: ${error.message}\n`);
@@ -116,16 +99,16 @@ async function enrichPlaces(limit: number = 300) {
   console.log('='.repeat(60));
   console.log('\n📊 Summary:');
   console.log(`   Success: ${successCount}`);
-  console.log(`   Not found: ${notFoundCount}`);
   console.log(`   Failed: ${failCount}`);
+  console.log(`   Coords added: ${coordsAddedCount}`);
+  console.log(`   Newly closed: ${closedCount}`);
   console.log(`   Total: ${restaurants.length}\n`);
 
   const cost = placesService.getCostTracker();
   console.log('💰 Cost:');
-  console.log(`   Text searches: ${cost.textSearchCalls}`);
   console.log(`   Details calls: ${cost.detailsCalls}`);
   console.log(`   Estimated: $${cost.estimatedCostUsd.toFixed(2)}\n`);
 }
 
-const limit = parseInt(process.argv[2] || '300');
-enrichPlaces(limit);
+const limit = parseInt(process.argv[2] || '1500');
+refreshPlaces(limit);
