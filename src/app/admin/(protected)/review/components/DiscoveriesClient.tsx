@@ -42,21 +42,21 @@ export function DiscoveriesClient({ items }: DiscoveriesClientProps) {
   const handleAction = async (id: string, action: 'approve' | 'reject') => {
     setProcessing((prev) => new Set(prev).add(id));
 
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+      const res = await fetch('/api/admin/discoveries/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, action }),
+      });
 
-    const { error } = await supabase
-      .from('pending_discoveries')
-      .update({
-        status: action === 'approve' ? 'approved' : 'rejected',
-        reviewed_at: new Date().toISOString(),
-        reviewed_by: user?.id || null,
-      })
-      .eq('id', id);
+      const data = await res.json();
 
-    if (error) {
-      console.error('Failed to update discovery:', error);
-      setError(`Failed to update: ${error.message}`);
+      if (!res.ok) {
+        setError(data.error || 'Failed to process discovery');
+      }
+    } catch (err) {
+      console.error('Failed to process discovery:', err);
+      setError('Network error');
     }
 
     setProcessing((prev) => {
@@ -74,21 +74,19 @@ export function DiscoveriesClient({ items }: DiscoveriesClientProps) {
     const ids = Array.from(selectedIds);
     ids.forEach(id => setProcessing((prev) => new Set(prev).add(id)));
 
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const results = await Promise.allSettled(
+      ids.map(id =>
+        fetch('/api/admin/discoveries/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, action }),
+        }).then(res => res.json())
+      )
+    );
 
-    const { error } = await supabase
-      .from('pending_discoveries')
-      .update({
-        status: action === 'approve' ? 'approved' : 'rejected',
-        reviewed_at: new Date().toISOString(),
-        reviewed_by: user?.id || null,
-      })
-      .in('id', ids);
-
-    if (error) {
-      console.error('Bulk action failed:', error);
-      setError(`Bulk action failed: ${error.message}`);
+    const failures = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value.error));
+    if (failures.length > 0) {
+      setError(`${failures.length} of ${ids.length} items failed`);
     }
 
     setSelectedIds(new Set());
