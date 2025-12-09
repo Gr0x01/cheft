@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Dialog, Transition, Combobox } from '@headlessui/react';
 import { 
   Tv, Search, Plus, AlertTriangle, Loader2, ChevronDown, ChevronRight,
-  DollarSign, Users, Sparkles, ArrowUpDown, Eye, EyeOff, Link2
+  DollarSign, Users, Sparkles, ArrowUpDown, Eye, EyeOff, Link2, Users2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { clsx } from 'clsx';
@@ -191,6 +191,16 @@ export function ShowsClient({ shows, potentialShows }: ShowsClientProps) {
 
   const handleTogglePublic = (show: ShowWithStats) => {
     updateShow(show.id, { is_public: !show.is_public });
+  };
+
+  const handleToggleFamilyPublic = (show: ShowWithStats) => {
+    const childCount = shows.filter(s => s.parent_show_id === show.id).length;
+    const newState = !show.is_public;
+    const action = newState ? 'enable' : 'disable';
+    if (childCount > 0 && !confirm(`This will ${action} "${show.name}" and ${childCount} child show(s). Continue?`)) {
+      return;
+    }
+    updateShow(show.id, { is_public: newState, cascade_visibility: true });
   };
 
   const handleUpdateShowType = (show: ShowWithStats, newType: string | null) => {
@@ -513,27 +523,48 @@ export function ShowsClient({ shows, potentialShows }: ShowsClientProps) {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleTogglePublic(show);
-                      }}
-                      disabled={updating === show.id}
-                      className={clsx(
-                        'p-1.5 rounded transition-colors',
-                        show.is_public 
-                          ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200' 
-                          : 'bg-stone-100 text-stone-400 hover:bg-stone-200'
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTogglePublic(show);
+                        }}
+                        disabled={updating === show.id}
+                        className={clsx(
+                          'p-1.5 rounded transition-colors',
+                          show.is_public 
+                            ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200' 
+                            : 'bg-stone-100 text-stone-400 hover:bg-stone-200'
+                        )}
+                        title={show.is_public ? 'Hide show' : 'Make public'}
+                      >
+                        {updating === show.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : show.is_public ? (
+                          <Eye className="w-4 h-4" />
+                        ) : (
+                          <EyeOff className="w-4 h-4" />
+                        )}
+                      </button>
+                      {!show.parent_show_id && shows.some(s => s.parent_show_id === show.id) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleFamilyPublic(show);
+                          }}
+                          disabled={updating === show.id}
+                          className={clsx(
+                            'p-1.5 rounded transition-colors',
+                            show.is_public 
+                              ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' 
+                              : 'bg-stone-100 text-stone-400 hover:bg-stone-200'
+                          )}
+                          title={`Toggle ${show.name} + all variants`}
+                        >
+                          <Users2 className="w-4 h-4" />
+                        </button>
                       )}
-                    >
-                      {updating === show.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : show.is_public ? (
-                        <Eye className="w-4 h-4" />
-                      ) : (
-                        <EyeOff className="w-4 h-4" />
-                      )}
-                    </button>
+                    </div>
                   </td>
                 </tr>
                 

@@ -82,17 +82,43 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const { error } = await adminClient
-    .from('shows')
-    .update(sanitizedUpdates)
-    .eq('id', showId);
+  const cascadeVisibility = updates.cascade_visibility === true && 'is_public' in sanitizedUpdates;
 
-  if (error) {
-    console.error('Failed to update show:', error);
-    return NextResponse.json({ error: 'Failed to update show' }, { status: 500 });
+  if (cascadeVisibility) {
+    const { error: parentError } = await adminClient
+      .from('shows')
+      .update({ is_public: sanitizedUpdates.is_public })
+      .eq('id', showId);
+
+    if (parentError) {
+      console.error('Failed to update parent show:', parentError);
+      return NextResponse.json({ error: 'Failed to update show' }, { status: 500 });
+    }
+
+    const { error: childrenError } = await adminClient
+      .from('shows')
+      .update({ is_public: sanitizedUpdates.is_public })
+      .eq('parent_show_id', showId);
+
+    if (childrenError) {
+      console.error('Failed to update child shows:', childrenError);
+      return NextResponse.json({ error: 'Failed to update child shows' }, { status: 500 });
+    }
+
+    console.log(`[Cascade Update] Show ${showId} + children set is_public=${sanitizedUpdates.is_public} by ${user.email}`);
+  } else {
+    const { error } = await adminClient
+      .from('shows')
+      .update(sanitizedUpdates)
+      .eq('id', showId);
+
+    if (error) {
+      console.error('Failed to update show:', error);
+      return NextResponse.json({ error: 'Failed to update show' }, { status: 500 });
+    }
+
+    console.log(`[Update] Show ${showId} updated by ${user.email}:`, sanitizedUpdates);
   }
-
-  console.log(`[Update] Show ${showId} updated by ${user.email}:`, sanitizedUpdates);
 
   return NextResponse.json({ success: true });
 }
