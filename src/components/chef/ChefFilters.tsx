@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo, type ReactNode } from 'react';
-import { Trophy, Medal, Search, ChevronDown, Check, X } from 'lucide-react';
+import { useState, useRef, useEffect, useMemo, useCallback, type ReactNode } from 'react';
+import { Trophy, Medal, Search, ChevronDown, Check, X, SlidersHorizontal } from 'lucide-react';
 import { 
   useChefFilters, 
   filterChefs, 
@@ -26,15 +26,18 @@ interface ChefFiltersProps {
   onFilteredChefsChange: (chefs: ChefData[]) => void;
   hideShowDropdown?: boolean;
   extraContent?: ReactNode;
+  belowFilterContent?: ReactNode;
 }
 
 const CHIP = "font-mono text-[11px] tracking-wider font-medium px-3 py-1.5 transition-all border flex items-center gap-1.5";
 
-export function ChefFilters({ shows = [], chefs, totalChefs, onFilteredChefsChange, hideShowDropdown = false, extraContent }: ChefFiltersProps) {
+export function ChefFilters({ shows = [], chefs, totalChefs, onFilteredChefsChange, hideShowDropdown = false, extraContent, belowFilterContent }: ChefFiltersProps) {
   const { filters, setFilters, clearFilters, toggleShow, toggleResult, hasActiveFilters } = useChefFilters();
   const [showDropdownOpen, setShowDropdownOpen] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [filteredChefs, setFilteredChefs] = useState<ChefData[]>(chefs);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const mobileFiltersRef = useRef<HTMLDivElement>(null);
 
   const expandedShowSlugs = useMemo(() => 
     filters.shows.flatMap(slug => {
@@ -44,22 +47,30 @@ export function ChefFilters({ shows = [], chefs, totalChefs, onFilteredChefsChan
     [filters.shows, shows]
   );
 
+  const onFilteredChefsChangeRef = useRef(onFilteredChefsChange);
+  onFilteredChefsChangeRef.current = onFilteredChefsChange;
+
   useEffect(() => {
     const expandedFilters = { ...filters, shows: expandedShowSlugs };
     const filtered = filterChefs(chefs, expandedFilters);
     setFilteredChefs(filtered);
-    onFilteredChefsChange(filtered);
-  }, [chefs, filters, expandedShowSlugs, onFilteredChefsChange]);
+    onFilteredChefsChangeRef.current(filtered);
+  }, [chefs, filters, expandedShowSlugs]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdownOpen(false);
       }
+      if (mobileFiltersRef.current && !mobileFiltersRef.current.contains(event.target as Node)) {
+        setMobileFiltersOpen(false);
+      }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const activeChipFiltersCount = filters.results.length + (filters.jb ? 1 : 0);
 
   const filterOptions: { 
     type: 'result' | 'jb'; 
@@ -105,13 +116,13 @@ export function ChefFilters({ shows = [], chefs, totalChefs, onFilteredChefsChan
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex flex-wrap items-center gap-2">
             {/* Search */}
-            <form className="relative" onSubmit={e => e.preventDefault()}>
+            <form className="relative w-full sm:w-auto" onSubmit={e => e.preventDefault()}>
               <input
                 type="search"
                 placeholder="Search..."
                 value={filters.q}
                 onChange={e => setFilters({ q: e.target.value })}
-                className="w-44 h-8 pl-8 pr-3 font-mono text-[11px] border transition-colors focus:outline-none focus:border-[#B87333]"
+                className="w-full sm:w-44 h-8 pl-8 pr-3 font-mono text-[11px] border transition-colors focus:outline-none focus:border-[#B87333]"
                 style={{ 
                   background: 'var(--bg-primary)',
                   borderColor: 'var(--border-light)',
@@ -180,22 +191,79 @@ export function ChefFilters({ shows = [], chefs, totalChefs, onFilteredChefsChan
               </>
             )}
 
-            {/* Filter chips */}
-            {filterOptions.map(opt => (
+            {/* Extra content (variant/city dropdowns) - show before filters */}
+            {extraContent && (
+              <>
+                {extraContent}
+                <div className="h-4 w-px bg-slate-200 hidden sm:block" />
+              </>
+            )}
+
+            {/* Desktop filter chips */}
+            <div className="hidden sm:flex items-center gap-2">
+              {filterOptions.map(opt => (
+                <button
+                  key={`${opt.type}-${opt.value}`}
+                  onClick={() => handleClick(opt)}
+                  className={CHIP}
+                  style={{
+                    background: isActive(opt) ? (opt.activeColor || 'var(--accent-primary)') : 'transparent',
+                    color: isActive(opt) ? 'white' : 'var(--text-secondary)',
+                    borderColor: isActive(opt) ? (opt.activeColor || 'var(--accent-primary)') : 'var(--border-light)',
+                  }}
+                >
+                  {opt.icon}
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Mobile filters dropdown */}
+            <div className="relative sm:hidden" ref={mobileFiltersRef}>
               <button
-                key={`${opt.type}-${opt.value}`}
-                onClick={() => handleClick(opt)}
+                onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
                 className={CHIP}
                 style={{
-                  background: isActive(opt) ? (opt.activeColor || 'var(--accent-primary)') : 'transparent',
-                  color: isActive(opt) ? 'white' : 'var(--text-secondary)',
-                  borderColor: isActive(opt) ? (opt.activeColor || 'var(--accent-primary)') : 'var(--border-light)',
+                  background: activeChipFiltersCount > 0 ? 'var(--accent-primary)' : 'transparent',
+                  color: activeChipFiltersCount > 0 ? 'white' : 'var(--text-secondary)',
+                  borderColor: activeChipFiltersCount > 0 ? 'var(--accent-primary)' : 'var(--border-light)',
                 }}
               >
-                {opt.icon}
-                {opt.label}
+                <SlidersHorizontal className="w-3 h-3" />
+                Filters
+                {activeChipFiltersCount > 0 && (
+                  <span className="ml-1 bg-white/20 px-1.5 py-0.5 text-[10px] rounded">
+                    {activeChipFiltersCount}
+                  </span>
+                )}
+                <ChevronDown className="w-3 h-3" />
               </button>
-            ))}
+
+              {mobileFiltersOpen && (
+                <div 
+                  className="absolute top-full left-0 mt-1 w-48 border shadow-lg z-50"
+                  style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-light)' }}
+                >
+                  {filterOptions.map(opt => (
+                    <button
+                      key={`mobile-${opt.type}-${opt.value}`}
+                      onClick={() => handleClick(opt)}
+                      className="w-full px-3 py-2.5 text-left font-mono text-[11px] tracking-wider hover:bg-slate-50 transition-colors flex items-center justify-between"
+                      style={{ 
+                        color: isActive(opt) ? (opt.activeColor || 'var(--accent-primary)') : 'var(--text-secondary)',
+                        fontWeight: isActive(opt) ? 600 : 400,
+                      }}
+                    >
+                      <span className="flex items-center gap-2">
+                        {opt.icon}
+                        {opt.label}
+                      </span>
+                      {isActive(opt) && <Check className="w-3.5 h-3.5" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {hasActiveFilters && (
               <>
@@ -206,13 +274,6 @@ export function ChefFilters({ shows = [], chefs, totalChefs, onFilteredChefsChan
                 >
                   <X className="w-3 h-3" /> Clear
                 </button>
-              </>
-            )}
-
-            {extraContent && (
-              <>
-                <div className="h-4 w-px bg-slate-200 ml-auto" />
-                {extraContent}
               </>
             )}
           </div>
@@ -251,6 +312,17 @@ export function ChefFilters({ shows = [], chefs, totalChefs, onFilteredChefsChan
           </select>
         </div>
       </div>
+
+      {belowFilterContent && (
+        <div 
+          className="border-b py-3"
+          style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
+        >
+          <div className="max-w-7xl mx-auto px-4">
+            {belowFilterContent}
+          </div>
+        </div>
+      )}
     </>
   );
 }

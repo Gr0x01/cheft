@@ -569,16 +569,20 @@ export const db = {
       price_tier: string | null;
     } | null;
   }>> {
-    const client = getSupabaseClient();
-    const { data: showData } = await client
-      .from('shows')
-      .select('id')
-      .eq('slug', showSlug)
-      .single();
-    
-    if (!showData) return [];
+    try {
+      const client = getSupabaseClient();
+      const { data: showData, error: showError } = await client
+        .from('shows')
+        .select('id')
+        .eq('slug', showSlug)
+        .single();
+      
+      if (showError || !showData) {
+        if (showError) console.error('Error fetching show for winners:', showError);
+        return [];
+      }
 
-    const showId = (showData as { id: string }).id;
+      const showId = (showData as { id: string }).id;
 
     const { data: winners, error } = await client
       .from('chef_shows')
@@ -643,6 +647,10 @@ export const db = {
         if (!isNaN(aNum) && !isNaN(bNum)) return bNum - aNum;
         return 0;
       });
+    } catch (error) {
+      console.error('Error in getShowWinnersWithRestaurants:', error);
+      return [];
+    }
   },
 
   async getShowRestaurantLocations(showSlug: string): Promise<Array<{
@@ -654,16 +662,20 @@ export const db = {
     city: string;
     chef_name: string;
   }>> {
-    const client = getSupabaseClient();
-    const { data: showData } = await client
-      .from('shows')
-      .select('id')
-      .eq('slug', showSlug)
-      .single();
-    
-    if (!showData) return [];
+    try {
+      const client = getSupabaseClient();
+      const { data: showData, error: showError } = await client
+        .from('shows')
+        .select('id')
+        .eq('slug', showSlug)
+        .single();
+      
+      if (showError || !showData) {
+        if (showError) console.error('Error fetching show for locations:', showError);
+        return [];
+      }
 
-    const showId = (showData as { id: string }).id;
+      const showId = (showData as { id: string }).id;
 
     const { data: chefIds } = await client
       .from('chef_shows')
@@ -693,7 +705,7 @@ export const db = {
 
     if (error || !restaurants) return [];
 
-    return (restaurants as any[]).map(r => ({
+    return (restaurants as Array<{ id: string; name: string; slug: string; lat: number; lng: number; city: string; chef: { name: string } | null }>).map(r => ({
       id: r.id,
       name: r.name,
       slug: r.slug,
@@ -702,6 +714,10 @@ export const db = {
       city: r.city,
       chef_name: r.chef?.name || '',
     }));
+    } catch (error) {
+      console.error('Error in getShowRestaurantLocations:', error);
+      return [];
+    }
   },
 
   async getShowStats(showSlug: string): Promise<{
@@ -709,16 +725,20 @@ export const db = {
     totalCities: number;
     michelinStars: number;
   }> {
-    const client = getSupabaseClient();
-    const { data: showData } = await client
-      .from('shows')
-      .select('id')
-      .eq('slug', showSlug)
-      .single();
-    
-    if (!showData) return { totalRestaurants: 0, totalCities: 0, michelinStars: 0 };
+    try {
+      const client = getSupabaseClient();
+      const { data: showData, error: showError } = await client
+        .from('shows')
+        .select('id')
+        .eq('slug', showSlug)
+        .single();
+      
+      if (showError || !showData) {
+        if (showError) console.error('Error fetching show for stats:', showError);
+        return { totalRestaurants: 0, totalCities: 0, michelinStars: 0 };
+      }
 
-    const showId = (showData as { id: string }).id;
+      const showId = (showData as { id: string }).id;
 
     const { data: chefIds } = await client
       .from('chef_shows')
@@ -747,6 +767,10 @@ export const db = {
       totalCities: cities.size,
       michelinStars,
     };
+    } catch (error) {
+      console.error('Error in getShowStats:', error);
+      return { totalRestaurants: 0, totalCities: 0, michelinStars: 0 };
+    }
   }
 };
 
