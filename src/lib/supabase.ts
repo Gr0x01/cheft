@@ -578,6 +578,8 @@ export const db = {
     
     if (!showData) return [];
 
+    const showId = (showData as { id: string }).id;
+
     const { data: winners, error } = await client
       .from('chef_shows')
       .select(`
@@ -600,7 +602,7 @@ export const db = {
           )
         )
       `)
-      .eq('show_id', showData.id)
+      .eq('show_id', showId)
       .eq('result', 'winner')
       .order('season', { ascending: false });
 
@@ -661,12 +663,16 @@ export const db = {
     
     if (!showData) return [];
 
+    const showId = (showData as { id: string }).id;
+
     const { data: chefIds } = await client
       .from('chef_shows')
       .select('chef_id')
-      .eq('show_id', showData.id);
+      .eq('show_id', showId);
     
     if (!chefIds || chefIds.length === 0) return [];
+
+    const chefIdList = (chefIds as Array<{ chef_id: string }>).map(c => c.chef_id);
 
     const { data: restaurants, error } = await client
       .from('restaurants')
@@ -679,7 +685,7 @@ export const db = {
         city,
         chef:chefs(name)
       `)
-      .in('chef_id', chefIds.map(c => c.chef_id))
+      .in('chef_id', chefIdList)
       .eq('status', 'open')
       .eq('is_public', true)
       .not('lat', 'is', null)
@@ -712,27 +718,32 @@ export const db = {
     
     if (!showData) return { totalRestaurants: 0, totalCities: 0, michelinStars: 0 };
 
+    const showId = (showData as { id: string }).id;
+
     const { data: chefIds } = await client
       .from('chef_shows')
       .select('chef_id')
-      .eq('show_id', showData.id);
+      .eq('show_id', showId);
     
     if (!chefIds || chefIds.length === 0) return { totalRestaurants: 0, totalCities: 0, michelinStars: 0 };
+
+    const chefIdList = (chefIds as Array<{ chef_id: string }>).map(c => c.chef_id);
 
     const { data: restaurants } = await client
       .from('restaurants')
       .select('city, michelin_stars')
-      .in('chef_id', chefIds.map(c => c.chef_id))
+      .in('chef_id', chefIdList)
       .eq('status', 'open')
       .eq('is_public', true);
 
     if (!restaurants) return { totalRestaurants: 0, totalCities: 0, michelinStars: 0 };
 
-    const cities = new Set(restaurants.map(r => r.city));
-    const michelinStars = restaurants.reduce((sum, r) => sum + (r.michelin_stars || 0), 0);
+    const typedRestaurants = restaurants as Array<{ city: string; michelin_stars: number | null }>;
+    const cities = new Set(typedRestaurants.map(r => r.city));
+    const michelinStars = typedRestaurants.reduce((sum, r) => sum + (r.michelin_stars || 0), 0);
 
     return {
-      totalRestaurants: restaurants.length,
+      totalRestaurants: typedRestaurants.length,
       totalCities: cities.size,
       michelinStars,
     };
