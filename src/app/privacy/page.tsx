@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 import { Header } from '@/components/ui/Header';
 import { PageHero } from '@/components/ui/PageHero';
 import { Footer } from '@/components/ui/Footer';
-import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | Cheft',
@@ -30,7 +29,7 @@ export default function PrivacyPage() {
       <main className="max-w-4xl mx-auto px-4 py-16 sm:py-20">
         <div className="space-y-12">
           <p className="font-ui text-sm" style={{ color: 'var(--text-muted)' }}>
-            Last updated: December 2024
+            Last updated: December 2025
           </p>
 
           <section>
@@ -88,19 +87,15 @@ export default function PrivacyPage() {
               Contact
             </h2>
             <p className="font-ui text-lg leading-relaxed mb-6" style={{ color: 'var(--text-secondary)' }}>
-              Questions about this policy? Reach out via the About page or open an issue on GitHub.
+              Questions about this policy? Email us at{' '}
+              <a
+                href="mailto:info@cheft.app"
+                className="underline hover:no-underline"
+                style={{ color: 'var(--accent-primary)' }}
+              >
+                info@cheft.app
+              </a>
             </p>
-            <Link
-              href="/about"
-              className="inline-flex items-center gap-2 font-mono text-sm font-bold tracking-wide transition-all duration-200 px-6 py-3"
-              style={{
-                background: 'var(--accent-primary)',
-                color: 'white',
-                borderRadius: 'var(--radius-md)',
-              }}
-            >
-              ABOUT CHEFT
-            </Link>
           </section>
         </div>
       </main>
