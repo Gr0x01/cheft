@@ -1,51 +1,46 @@
 ---
 Last-Updated: 2025-12-09
 Maintainer: RB
-Status: Show Hierarchy Project - COMPLETE
+Status: Maintenance Mode - Show Visibility Scoped
 ---
 
 # Active Context: Chefs
 
 ## Current Status
-- **Phase**: Show Hierarchy Project - COMPLETE
-- **Mode**: Maintenance mode
-- **Focus**: Bug fixes, content expansion
+- **Phase**: Maintenance Mode
+- **Mode**: Content-focused operation
+- **Focus**: Top Chef + Tournament of Champions only
 
-## Show Hierarchy Project - COMPLETE
+## Recent Changes (Dec 9, 2025)
 
-### All Phases Complete
-- **Phase 1**: Database Schema ✅
-- **Phase 2**: Data Cleanup ✅
-- **Phase 3**: Ingestion Pipeline ✅
-- **Phase 4**: TypeScript Types ✅
-- **Phase 5**: Frontend - Show Pages ✅
-- **Phase 6**: Admin UI ✅ (Dec 9)
-- **Phase 7**: Frontend - Chef Pages ✅ (Dec 9)
-- **Phase 8**: Frontend - Filters ✅ (Dec 9)
-- **Phase 9**: Validation ✅ (Dec 9)
+### Show Visibility Scope Reduction ✅
+Reduced public shows from 86 to 19 - focusing only on properly parsed shows:
+- **Top Chef** (core) + 13 named seasons + 3 variants
+- **Tournament of Champions** (core) + 1 variant
+- All other shows set to `is_public=false` (still tracked, just hidden from public UI)
 
-### Phase 8 Summary (Frontend Filters)
-- `/chefs` dropdown now shows only public parent shows
-- Selecting a parent show includes chefs from all child shows
-- Chef counts aggregate parent + children
-- Files: `page.tsx`, `ChefsPageClient.tsx`, `ChefFilters.tsx`
+**Reason**: Other shows (Chopped, Iron Chef, etc.) have chefs only due to overlap, not comprehensive parsing. Will re-enable when properly harvested.
 
-### Project Doc: `memory-bank/projects/show-hierarchy-project.md`
+### Admin Cascade Toggle ✅
+Added family visibility toggle to `/admin/shows`:
+- Blue "Users2" icon appears next to parent shows with children
+- Clicking toggles `is_public` for parent + all child shows at once
+- Confirmation dialog shows affected child count
+- API: `cascade_visibility: true` flag in update route
 
 ---
 
-## Recently Completed (Dec 9, 2025)
+## Show Hierarchy Project ✅ (Completed Dec 9, 2025)
 
-### Show Hierarchy Phase 5 & 6 ✅
-- **Phase 5**: Frontend show pages with variant tabs, parent breadcrumbs
-- **Phase 6**: Admin UI for managing show hierarchy
+All 9 phases complete:
+- Database schema with parent_show_id, show_type, is_public
+- Data cleanup: parent-child relationships set
+- Ingestion: auto-create non-public shows
+- Frontend: show pages with variant tabs, chef pages gray out non-public
+- Admin UI: full show management with cascade toggle
+- Filters: dropdown shows only public parents, expands to include children
 
-### Key Changes
-- `get_shows_with_counts()` - Only returns public parent shows
-- `get_show_with_chef_counts()` - Aggregates chefs from child shows
-- `get_show_children()` - New RPC for variant tabs
-- `/shows/[slug]` - Variant tabs for core shows, parent breadcrumbs for variants
-- `/admin/shows` - Full show management with hierarchy editing
+### Project Doc: `memory-bank/projects/show-hierarchy-project.md`
 
 ---
 
@@ -55,7 +50,8 @@ Status: Show Hierarchy Project - COMPLETE
 - **Cities**: 162 city pages
 - **States**: Full US state coverage
 - **Countries**: International coverage
-- **Shows**: ~160 shows (mix of public/non-public, core/variant types)
+- **Public Shows**: 19 (Top Chef + TOC families only)
+- **Hidden Shows**: ~142 (tracked but not public-facing)
 
 ## Infrastructure Status
 - **Production**: Live on Vercel
@@ -66,14 +62,15 @@ Status: Show Hierarchy Project - COMPLETE
 ## No Current Blockers
 
 ## Deferred/Future Work
-1. **Merge Duplicate Shows** - Part of Phase 6, deferred
-2. **Multi-Show UI Display** - Better UI for chefs with many TV appearances
-3. **Duplicate Chef Detection** - Migration ready but not deployed
-4. **SEO Backfill Script** - Auto-generated descriptions for all pages
+1. **Re-enable Other Shows** - Harvest Chopped, Iron Chef, etc. properly then enable
+2. **Merge Duplicate Shows** - Part of Phase 6, deferred
+3. **Multi-Show UI Display** - Better UI for chefs with many TV appearances
+4. **Duplicate Chef Detection** - Migration ready but not deployed
+5. **SEO Backfill Script** - Auto-generated descriptions for all pages
 
 ## Key Files Reference
 - Show hierarchy: `supabase/migrations/037_show_hierarchy.sql`
 - Admin shows: `src/app/admin/(protected)/shows/`
-- API route: `src/app/api/admin/shows/update/route.ts`
+- API route: `src/app/api/admin/shows/update/route.ts` (cascade_visibility support)
 - Frontend show pages: `src/app/shows/[slug]/`
 - Tooltip component: `src/components/ui/Tooltip.tsx`
