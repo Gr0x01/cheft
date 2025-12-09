@@ -157,7 +157,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
           <div
             className="mt-6 p-4"
             style={{
-              background: 'var(--accent-success)',
+              background: '#f59e0b',
               color: 'white',
             }}
           >

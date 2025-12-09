@@ -435,8 +435,8 @@ export default async function ChefPage({ params }: ChefPageProps) {
                             className="font-mono text-[9px] font-bold tracking-wider px-1.5 py-0.5 uppercase"
                             style={{ 
                               background: isPublic 
-                                ? (appearance.result === 'winner' ? 'var(--accent-success)' : 
-                                   appearance.result === 'finalist' ? '#f59e0b' : '#6366f1')
+                                ? (appearance.result === 'winner' ? '#f59e0b' : 
+                                   appearance.result === 'finalist' ? '#0284C7' : '#7C3AED')
                                 : 'var(--text-muted)',
                               color: 'white'
                             }}
@@ -674,6 +674,36 @@ export default async function ChefPage({ params }: ChefPageProps) {
                               <dd className="font-ui text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{chef.current_position}</dd>
                             </div>
                           )}
+                          {sortedShows.length > 0 && (
+                            <div>
+                              <dt className="font-mono text-[10px] tracking-wide" style={{ color: 'var(--text-muted)' }}>KNOWN FOR</dt>
+                              <dd className="font-ui text-sm space-y-1" style={{ color: 'var(--text-primary)' }}>
+                                {(() => {
+                                  const showsToDisplay = [
+                                    primaryShow,
+                                    ...sortedShows.filter(s => s !== primaryShow && s.result && s.result !== 'contestant')
+                                  ].filter(Boolean);
+                                  return showsToDisplay.map((show, idx) => (
+                                    <div key={show?.id || idx}>
+                                      {show?.show?.name}
+                                      {show?.result && show.result !== 'contestant' && (
+                                        <span 
+                                          className="ml-1.5 font-mono text-[9px] font-bold tracking-wider px-1 py-0.5 uppercase"
+                                          style={{ 
+                                            background: show.result === 'winner' ? '#f59e0b' : 
+                                                       show.result === 'finalist' ? '#0284C7' : '#7C3AED',
+                                            color: 'white'
+                                          }}
+                                        >
+                                          {show.result === 'winner' ? 'Winner' : show.result === 'finalist' ? 'Finalist' : 'Judge'}
+                                        </span>
+                                      )}
+                                    </div>
+                                  ));
+                                })()}
+                              </dd>
+                            </div>
+                          )}
                           {cuisineTags.length > 0 && (
                             <div>
                               <dt className="font-mono text-[10px] tracking-wide" style={{ color: 'var(--text-muted)' }}>CUISINE</dt>
@@ -697,7 +727,7 @@ export default async function ChefPage({ params }: ChefPageProps) {
                           <ul className="space-y-2">
                             {primaryShow?.result === 'winner' && primaryShow.show?.name && (
                               <li className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full" style={{ background: 'var(--accent-success)' }} />
+                                <span className="w-2 h-2 rounded-full" style={{ background: '#f59e0b' }} />
                                 <span className="font-ui text-sm" style={{ color: 'var(--text-primary)' }}>{primaryShow.show.name} Winner</span>
                               </li>
                             )}
@@ -768,8 +798,8 @@ export default async function ChefPage({ params }: ChefPageProps) {
                       <div 
                         className="absolute top-0 left-0 w-1 h-full"
                         style={{ 
-                          background: appearance.result === 'winner' ? 'var(--accent-success)' : 
-                                     appearance.result === 'finalist' ? '#f59e0b' : 
+                          background: appearance.result === 'winner' ? '#f59e0b' : 
+                                     appearance.result === 'finalist' ? '#0284C7' : 
                                      appearance.result === 'judge' ? '#6366f1' : 'var(--accent-primary)'
                         }}
                       />
@@ -792,8 +822,8 @@ export default async function ChefPage({ params }: ChefPageProps) {
                           <span 
                             className="font-mono text-[10px] font-bold tracking-wider px-2 py-1 uppercase flex-shrink-0"
                             style={{ 
-                              background: appearance.result === 'winner' ? 'var(--accent-success)' : 
-                                         appearance.result === 'finalist' ? '#f59e0b' : '#6366f1',
+                              background: appearance.result === 'winner' ? '#f59e0b' : 
+                                         appearance.result === 'finalist' ? '#0284C7' : '#7C3AED',
                               color: 'white'
                             }}
                           >

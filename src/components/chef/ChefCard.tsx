@@ -73,9 +73,9 @@ export function ChefCard({ chef, index = 0, hideShowName = false }: ChefCardProp
               <span 
                 className="inline-flex items-center font-mono text-[10px] font-semibold tracking-wide uppercase px-2 py-1"
                 style={{
-                  background: primaryShow.result === 'winner' ? 'var(--accent-success)' 
-                    : primaryShow.result === 'judge' ? '#7C3AED'
+                  background: primaryShow.result === 'winner' ? '#f59e0b' 
                     : primaryShow.result === 'finalist' ? '#0284C7'
+                    : primaryShow.result === 'judge' ? '#7C3AED'
                     : 'var(--slate-800)',
                   color: primaryShow.result === 'winner' || primaryShow.result === 'judge' || primaryShow.result === 'finalist' 
                     ? 'white' : 'var(--copper-400)',
