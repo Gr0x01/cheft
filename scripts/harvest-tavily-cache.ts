@@ -77,13 +77,17 @@ async function main() {
   let freshSearches = 0;
   const startTime = Date.now();
 
-  for (let i = 0; i < chefsToProcess.length; i++) {
-    const chef = chefsToProcess[i];
-    const results = await harvestChef(chef, i, chefsToProcess.length);
-    totalShows += results.shows;
-    totalRestaurants += results.restaurants;
-
-    await new Promise((resolve) => setTimeout(resolve, 300));
+  const BATCH_SIZE = 20;
+  for (let i = 0; i < chefsToProcess.length; i += BATCH_SIZE) {
+    const batch = chefsToProcess.slice(i, i + BATCH_SIZE);
+    const batchResults = await Promise.all(
+      batch.map((chef, j) => harvestChef(chef, i + j, chefsToProcess.length))
+    );
+    for (const result of batchResults) {
+      totalShows += result.shows;
+      totalRestaurants += result.restaurants;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
   }
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);

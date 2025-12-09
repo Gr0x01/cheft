@@ -137,6 +137,18 @@ async function processChef(
 
   for (const restaurant of extracted) {
     if (!restaurant.name || !restaurant.city) continue;
+    
+    const invalidNames = ['unnamed', 'unknown', 'food truck', 'pop-up', 'popup', 'n/a', 'tbd'];
+    const nameLower = restaurant.name.toLowerCase();
+    if (invalidNames.some(inv => nameLower.includes(inv)) || restaurant.name.length < 3) {
+      console.log(`      ⏭️  Skipped invalid: "${restaurant.name}"`);
+      continue;
+    }
+    
+    if (restaurant.city.toLowerCase() === 'unknown' || restaurant.city.length < 2) {
+      console.log(`      ⏭️  Skipped (no city): "${restaurant.name}"`);
+      continue;
+    }
 
     const validPriceRanges = ['$', '$$', '$$$', '$$$$'];
     const priceRange = validPriceRanges.includes(restaurant.price_range || '')
@@ -207,14 +219,19 @@ async function main() {
   let totalCost = 0;
   const startTime = Date.now();
 
-  for (let i = 0; i < chefsToProcess.length; i++) {
-    const result = await processChef(chefsToProcess[i], i, chefsToProcess.length);
-    totalRestaurants += result.restaurants;
-    totalNew += result.new;
-    totalStaged += result.staged;
-    totalCost += result.cost;
-
-    await new Promise(r => setTimeout(r, 100));
+  const BATCH_SIZE = 50;
+  for (let i = 0; i < chefsToProcess.length; i += BATCH_SIZE) {
+    const batch = chefsToProcess.slice(i, i + BATCH_SIZE);
+    const batchResults = await Promise.all(
+      batch.map((chef, j) => processChef(chef, i + j, chefsToProcess.length))
+    );
+    for (const result of batchResults) {
+      totalRestaurants += result.restaurants;
+      totalNew += result.new;
+      totalStaged += result.staged;
+      totalCost += result.cost;
+    }
+    await new Promise(r => setTimeout(r, 200));
   }
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);

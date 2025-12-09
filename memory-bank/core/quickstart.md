@@ -1,16 +1,16 @@
 ---
 Last-Updated: 2025-12-09
 Maintainer: RB
-Status: Phase 3 Complete - Maintenance Mode
+Status: Pre-Launch - Final Polish
 ---
 
 # Quickstart: Cheft
 
 ## Current Status
-- **Phase**: Phase 3 Complete - Maintenance Mode
-- **Version**: 0.5.0
+- **Phase**: Pre-Launch
+- **Version**: 0.6.0
 - **Environment**: Production (Live on Vercel)
-- **Focus**: Bug fixes, performance tuning, content expansion
+- **Focus**: UI polish, testing, then launch
 
 ## Key Commands
 ```bash
@@ -20,24 +20,20 @@ npm run build        # Build for production
 npm run lint         # Run ESLint
 npm run type-check   # Run TypeScript checks
 
-# Database (Supabase)
-# Set up via Supabase dashboard
-# Run migrations when ready
-
 # Testing
-npm run test         # Run Jest tests
 npm run test:e2e     # Run Playwright tests
+npm run test:e2e:ui  # Interactive test mode
 
-# Enrichment (Tavily Hybrid System)
-npx tsx scripts/harvest-tavily-cache.ts          # Populate Tavily search cache
-npx tsx scripts/extract-from-cache.ts            # Extract restaurants from cache
-npx tsx scripts/extract-from-cache.ts --limit 5  # Test on 5 chefs
+# Enrichment (if needed)
+npx tsx scripts/harvest-tavily-cache.ts   # Populate Tavily search cache
+npx tsx scripts/extract-from-cache.ts     # Extract restaurants from cache
+npx tsx scripts/enrich-google-places.ts   # Backfill Google Place IDs
 ```
 
 ## Active Focus
-- Maintenance mode: bug fixes and incremental improvements
-- Content expansion: adding new chefs and restaurants
-- Performance monitoring via PostHog
+- UI polish and cleanup
+- E2E testing before launch
+- Mobile responsiveness verification
 
 ## Quick Links
 - [Project Brief](./projectbrief.md)
@@ -48,7 +44,7 @@ npx tsx scripts/extract-from-cache.ts --limit 5  # Test on 5 chefs
 1. ✅ Next.js project initialized
 2. ✅ Supabase project setup and MCP integration
 3. ✅ Environment variables configured
-4. ✅ Database schema deployed with 560 restaurants
+4. ✅ Database schema deployed
 5. ✅ SEO pages live (chefs, restaurants, cities, states, countries)
 6. ✅ Admin panel with data management and photo uploads
 7. ✅ Data enrichment complete (bios, Google Places)
@@ -56,20 +52,20 @@ npx tsx scripts/extract-from-cache.ts --limit 5  # Test on 5 chefs
 9. ✅ PostHog analytics with session replay
 10. ✅ Tavily hybrid enrichment system
 11. ✅ Geographic navigation (states, countries)
+12. ✅ Fresh restaurant data via Tavily migration
 
 ## Database Status
-- **Restaurants**: 560 TV chef locations
+- **Restaurants**: 1,036 TV chef locations
 - **Chefs**: 238 unique contestants/winners  
-- **Coverage**: 162 cities, 50+ states, 10+ countries
-- **Data Quality**: 100% geocoded, 100% bios, 100% Google Places
-- **Enrichment**: 88% chef photos, 72% restaurant photos
+- **Coverage**: 162+ cities, 50+ states, 10+ countries
+- **Data Quality**: 98.5% Google Places, ~98% photos
 - **Michelin**: 4,009 reference restaurants from Wikipedia
 
 ## Admin Panel
 - **Login**: `/admin/login` (Supabase Auth with magic link)
+- **Entities**: `/admin/entities` (chef/restaurant management)
 - **Review Queue**: `/admin/review` (pending approvals)
 - **Activity Log**: `/admin/activity` (audit trail)
 - **Data Dashboard**: `/admin/data` (completeness metrics)
-- **Manage Data**: `/admin/manage` (photo upload, re-enrichment)
-- **Shows**: `/admin/shows` (harvest trigger for show data)
+- **Shows**: `/admin/shows` (show visibility management)
 - **Enrichment Jobs**: `/admin/enrichment-jobs` (job monitoring)

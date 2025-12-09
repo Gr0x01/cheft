@@ -29,8 +29,9 @@ function getChefCompleteness(chef: Chef): { score: number; missing: string[] } {
 
 function getRestaurantCompleteness(restaurant: Restaurant): { score: number; missing: string[] } {
   const missing: string[] = [];
-  if (!restaurant.google_place_id) missing.push('places');
-  if (!restaurant.google_rating) missing.push('rating');
+  const isClosedOrUnknown = restaurant.status === 'closed' || restaurant.status === 'unknown';
+  if (!restaurant.google_place_id && !isClosedOrUnknown) missing.push('places');
+  if (!restaurant.google_rating && !isClosedOrUnknown) missing.push('rating');
   if (!restaurant.address) missing.push('address');
   const total = 3;
   return { score: (total - missing.length) / total, missing };
