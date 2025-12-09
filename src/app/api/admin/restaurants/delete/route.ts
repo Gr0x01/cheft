@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { z } from 'zod';
@@ -76,6 +77,8 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`[Delete] Permanently deleted restaurant: ${restaurant.name} (${restaurant.slug}) by ${user.email}`);
+
+    revalidatePath('/admin/entities');
 
     return NextResponse.json({
       success: true,
