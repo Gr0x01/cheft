@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { Header } from '@/components/ui/Header';
 import { PageHero } from '@/components/ui/PageHero';
+import { Footer } from '@/components/ui/Footer';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
@@ -89,6 +90,8 @@ export default function AboutPage() {
           </section>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { RestaurantWithDetails } from '@/lib/types';
 import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCompact';
 import { ChefCard } from '@/components/chef/ChefCard';
 import { Header } from '@/components/ui/Header';
+import { Footer } from '@/components/ui/Footer';
 import { FeaturedChefHero } from '@/components/chef/FeaturedChefHero';
 import { DiscoveryRow } from '@/components/home/DiscoveryRow';
 import { Search } from 'lucide-react';
@@ -350,6 +351,8 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef }: Home
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 }

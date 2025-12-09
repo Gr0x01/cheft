@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createStaticClient } from '@/lib/supabase/static';
 import { Header } from '@/components/ui/Header';
+import { Footer } from '@/components/ui/Footer';
 import { ItemListSchema } from '@/components/seo/SchemaOrg';
 import { ChefCard } from '@/components/chef/ChefCard';
 import { PageHero } from '@/components/ui/PageHero';
@@ -231,6 +232,8 @@ export default async function CityPage({ params }: CityPageProps) {
             </div>
           </section>
         )}
+
+        <Footer />
       </div>
     </>
   );

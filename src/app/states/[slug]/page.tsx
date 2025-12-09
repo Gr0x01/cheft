@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createStaticClient } from '@/lib/supabase/static';
 import { Header } from '@/components/ui/Header';
+import { Footer } from '@/components/ui/Footer';
 import { PageHero } from '@/components/ui/PageHero';
 import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
 import { ChefCard } from '@/components/chef/ChefCard';
@@ -293,6 +294,8 @@ export default async function StatePage({ params }: StatePageProps) {
             </>
           )}
         </main>
+
+        <Footer />
       </div>
     </>
   );

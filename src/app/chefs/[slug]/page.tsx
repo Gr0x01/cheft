@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { createStaticClient } from '@/lib/supabase/static';
 import { Header } from '@/components/ui/Header';
+import { Footer } from '@/components/ui/Footer';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { ReportIssueButton } from '@/components/feedback/ReportIssueButton';
 import { ChefCard } from '@/components/chef/ChefCard';
@@ -920,6 +921,8 @@ export default async function ChefPage({ params }: ChefPageProps) {
             </section>
           )}
         </main>
+
+        <Footer />
       </div>
     </>
   );
