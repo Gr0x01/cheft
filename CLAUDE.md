@@ -19,7 +19,6 @@ YOU MUST READ THESE FILES BEFORE ANYTHING ELSE.
 3. `/memory-bank/development/activeContext.md` – current sprint goals + blockers
 4. `/memory-bank/development/progress.md` – quarterly highlights of shipped work
 5. `/memory-bank/architecture/techStack.md` – current stack, deployments, references
-6. `/memory-bank/development/operations.md` – quality gates and process expectations
 
 Read additional docs only if needed (`architecture/patterns.md`, `development/daily-log/`, etc.). Long-form history now lives under `memory-bank/archive/` and is optional.
 
@@ -56,6 +55,24 @@ Always adjust the metadata header (`Last-Updated`, `Maintainer`) when you edit a
 3. Stop and check in before layering abstractions, helpers, or advanced error handling.
 4. Follow KISS and YAGNI—do not build for hypothetical futures without explicit direction.
 5. **Solo dev context**: Skip enterprise patterns unless explicitly needed (e.g., simple functions over complex class hierarchies)
+
+### Codebase Hygiene: Modify, Don't Multiply
+**The default action is EDIT, not CREATE.**
+
+1. **Search before creating**: Before making a new file, component, or utility, search the codebase for existing implementations to extend or modify.
+2. **Extend existing files**: Add functionality to existing files rather than creating parallel structures. One well-organized file beats three scattered ones.
+3. **Clean as you go**: When refactoring or adding features:
+   - Remove dead code, unused imports, and orphaned files
+   - Update all references when renaming or moving code
+   - Delete obsolete files—don't leave them "just in case"
+4. **No abandoned code**: If you replace a component or approach, delete the old one. Don't leave `ComponentOld.tsx` or `utils-backup.ts` lying around.
+5. **Verify references**: After any file operation, confirm imports and references still resolve. Broken imports = broken build.
+
+**Red flags that suggest you're being too additive:**
+- Creating `NewComponent.tsx` when `Component.tsx` exists and could be extended
+- Adding `utils2.ts` instead of extending `utils.ts`
+- Leaving old implementations "for reference"
+- Multiple files doing similar things in slightly different ways
 
 ### LLM Model Usage - CRITICAL
 **NEVER change LLM model names or configurations without explicit authorization.**

@@ -1,5 +1,5 @@
 ---
-Last-Updated: 2025-12-07
+Last-Updated: 2025-12-09
 Maintainer: RB
 Status: Active Design
 ---
@@ -40,7 +40,7 @@ The TV Chef Map is a curated database application that helps fans of cooking TV 
 ```
 User Query: "Top Chef winners in Chicago under $50"
                     ↓
-        LLM Interpretation (GPT-3.5-turbo)
+        LLM Interpretation (gpt-4o-mini)
                     ↓
 Structured Filters: {
   show_names: ["Top Chef"],
@@ -91,36 +91,13 @@ Raw Restaurant Data → Web Scraping → LLM Processing → Enriched Data
    - Refreshes restaurant list
    - Shows interpretation: "Showing Gordon Ramsay's 3 restaurants in Las Vegas"
 
-### Flow 2: Achievement Tracking
+### Flow 2: Achievement Tracking (PLANNED - Not Yet Implemented)
 
-1. **User Browse**: Views restaurant list
-2. **Achievement Calculation**:
-   - Query user's visit history
-   - Calculate progress (e.g., "12/47 Top Chef Winners")
-3. **Visit Marking**:
-   - User marks restaurant as visited
-   - Update user progress
-   - Check for achievement unlocks
-4. **Achievement Unlock**:
-   - Display celebration animation
-   - Generate shareable achievement image
-   - Suggest next targets
+Future feature for tracking restaurant visits and unlocking achievements.
 
-### Flow 3: Trip Planning
+### Flow 3: Trip Planning (PLANNED - Not Yet Implemented)
 
-1. **Destination Selection**: User selects city
-2. **Cluster Detection**: 
-   - Find all chef restaurants in area
-   - Group by proximity
-   - Identify multi-chef opportunities
-3. **Itinerary Building**:
-   - User selects restaurants
-   - System suggests optimal routing
-   - Provides chef presence schedules
-4. **Export Options**:
-   - Generate shareable itinerary
-   - Add to calendar
-   - Save for offline access
+Future feature for multi-restaurant itinerary building.
 
 ## API Architecture
 

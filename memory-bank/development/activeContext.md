@@ -37,17 +37,8 @@ Fixed duplicate UI showing both named seasons (California, Charleston) AND numbe
 
 ---
 
-## Show Hierarchy Project ✅ (Completed Dec 9, 2025)
-
-All 9 phases complete:
-- Database schema with parent_show_id, show_type, is_public
-- Data cleanup: parent-child relationships set
-- Ingestion: auto-create non-public shows
-- Frontend: show pages with variant tabs, chef pages gray out non-public
-- Admin UI: full show management with cascade toggle
-- Filters: dropdown shows only public parents, expands to include children
-
-### Project Doc: `memory-bank/projects/show-hierarchy-project.md`
+## Recent Completed Projects
+- **Show Hierarchy** (Dec 9): Parent-child show relationships, visibility control. See `archive/show-hierarchy-project.md`
 
 ---
 

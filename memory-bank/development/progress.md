@@ -1,5 +1,5 @@
 ---
-Last-Updated: 2025-12-08
+Last-Updated: 2025-12-09
 Maintainer: RB
 Status: Phase 3 Complete
 ---
@@ -8,17 +8,9 @@ Status: Phase 3 Complete
 
 ## Project Timeline
 
-### Phase 0: Project Setup (Nov 2025)
-✅ CLAUDE.md rules, memory bank structure, tech stack (Next.js, Supabase, Tailwind)
+**Phases 0-2 (Nov 2025)**: Setup → MVP → SEO Pages. Foundation complete, deployed to Vercel.
 
-### Phase 1: MVP Infrastructure (Nov 2025)
-✅ Database schema, Supabase MCP integration, data pipeline, 311 restaurants imported
-
-### Phase 2: SEO Pages & Frontend (Nov-Dec 2025)
-✅ Chef/restaurant/city pages, admin panel, data enrichment, deployed to Vercel production
-
-### Phase 3: User Engagement & Admin Tools (Dec 2025)
-✅ **COMPLETE** - All planned features shipped
+**Phase 3 (Dec 2025)**: User engagement & admin tools. ✅ COMPLETE
 
 ## Key Milestones
 

@@ -1,5 +1,5 @@
 ---
-Last-Updated: 2025-11-30
+Last-Updated: 2025-12-09
 Maintainer: RB
 Status: Implemented
 ---
@@ -101,8 +101,8 @@ export const db = {
 
 1. **Read Operations (Allowed)**
    - ✅ Shows: Successfully read 5 records
-   - ✅ Chefs: Successfully read 180 records  
-   - ✅ Restaurants: Successfully read 311 public records
+   - ✅ Chefs: Successfully read 238 records  
+   - ✅ Restaurants: Successfully read 560 public records
    - ✅ Search: Working with proper filtering
 
 2. **Write Operations (Denied)**
