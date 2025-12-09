@@ -85,6 +85,7 @@ These use the exact same restaurant-map template. Config + data + deploy.
 ## Tier 2: High-Value, Slightly More Work
 
 ### 🔥 Shark Tank Products Directory
+- **Deep Dive:** [shark-tank.md](./shark-tank.md)
 - **What:** All Shark Tank products with availability, pricing, "still in business" status
 - **Example search:** "where to buy Scrub Daddy", "Shark Tank products on Amazon"
 - **Why underserved:** Existing sites (allsharktankproducts.com, sharktankshopper.com) are AdSense-riddled, slow, not tracking dead products

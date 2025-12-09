@@ -107,7 +107,8 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
   const [copied, setCopied] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [showUnlinkConfirm, setShowUnlinkConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [autoSlug, setAutoSlug] = useState(true);
 
   const currentChef = chefs.find(c => c.id === formData.chef_id);
@@ -314,7 +315,7 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
             value={formData.chef_id}
             chefName={currentChef?.name}
             onChange={(chefId) => updateField('chef_id', chefId || '')}
-            onUnlink={() => setShowUnlinkConfirm(true)}
+            onUnlink={() => setShowDeleteConfirm(true)}
             showUnlink={!isNew && !!formData.chef_id}
             required={isNew}
           />
@@ -520,7 +521,7 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
         </FieldSection>
       </div>
 
-      {showUnlinkConfirm && (
+      {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
           <div className="bg-white border-2 border-stone-900 p-6 max-w-sm mx-4">
             <div className="flex items-center gap-3 mb-4">
@@ -528,27 +529,47 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
                 <Unlink className="w-5 h-5 text-red-600" />
               </div>
               <h3 className="font-display text-lg font-bold text-stone-900">
-                Unlink Chef?
+                Delete Restaurant?
               </h3>
             </div>
             <p className="font-mono text-xs text-stone-600 mb-6">
-              Remove <strong>{currentChef?.name}</strong> from this restaurant? The restaurant will no longer appear on the chef's page.
+              Permanently delete <strong>{formData.name}</strong>? This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <button
-                onClick={() => setShowUnlinkConfirm(false)}
-                className="px-4 py-2 font-mono text-xs uppercase tracking-wider text-stone-600 hover:text-stone-900 transition-colors"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="px-4 py-2 font-mono text-xs uppercase tracking-wider text-stone-600 hover:text-stone-900 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  updateField('chef_id', '');
-                  setShowUnlinkConfirm(false);
+                onClick={async () => {
+                  setDeleting(true);
+                  try {
+                    const response = await fetch('/api/admin/restaurants/delete', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ restaurantId: initialData.id }),
+                    });
+                    if (!response.ok) {
+                      const errorData = await response.json();
+                      throw new Error(errorData.error || 'Failed to delete');
+                    }
+                    toast.success(`Deleted ${formData.name}`);
+                    router.refresh();
+                    onClose?.();
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : 'Failed to delete');
+                  } finally {
+                    setDeleting(false);
+                    setShowDeleteConfirm(false);
+                  }
                 }}
-                className="px-4 py-2 bg-red-600 text-white font-mono text-xs uppercase tracking-wider hover:bg-red-700 transition-colors"
+                disabled={deleting}
+                className="px-4 py-2 bg-red-600 text-white font-mono text-xs uppercase tracking-wider hover:bg-red-700 transition-colors disabled:opacity-50"
               >
-                Unlink Chef
+                {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
