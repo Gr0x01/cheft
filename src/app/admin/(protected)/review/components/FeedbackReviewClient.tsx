@@ -5,14 +5,6 @@ import Link from 'next/link';
 import { Flag, ExternalLink, CheckCircle2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import type { FeedbackSummary } from './FeedbackSection';
 
-function sanitizeText(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
 
 interface FeedbackReviewClientProps {
   summaries: FeedbackSummary[];
@@ -118,7 +110,7 @@ export function FeedbackReviewClient({ summaries }: FeedbackReviewClientProps) {
 
                   {summary.latest_message && (
                     <p className="font-ui text-sm text-slate-600 line-clamp-2">
-                      "{sanitizeText(summary.latest_message)}"
+                      "{summary.latest_message}"
                     </p>
                   )}
                 </div>
@@ -171,7 +163,7 @@ export function FeedbackReviewClient({ summaries }: FeedbackReviewClientProps) {
                       {summary.latest_message && (
                         <p className="font-ui text-sm text-slate-700 mt-2">
                           <strong>Message:</strong><br />
-                          {sanitizeText(summary.latest_message)}
+                          {summary.latest_message}
                         </p>
                       )}
                     </div>

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getRestaurantStatus, getChefAchievements, sanitizeText, validateImageUrl } from '@/lib/utils/restaurant';
+import { getRestaurantStatus, getChefAchievements, validateImageUrl } from '@/lib/utils/restaurant';
 import { getStorageUrl } from '@/lib/utils/storage';
 import { getLocationLink } from '@/lib/utils/location';
 import { MichelinStar } from '../icons/MichelinStar';
@@ -39,10 +39,6 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
   const status = getRestaurantStatus(restaurant.status);
   const chefAchievements = restaurant.chef ? getChefAchievements(restaurant.chef) : { isShowWinner: false, isJBWinner: false, isJBNominee: false, isJBSemifinalist: false };
   
-  const sanitizedName = sanitizeText(restaurant.name);
-  const sanitizedCity = sanitizeText(restaurant.city);
-  const sanitizedState = sanitizeText(restaurant.state);
-  const sanitizedChefName = restaurant.chef ? sanitizeText(restaurant.chef.name) : '';
   const photoUrl = getStorageUrl('restaurant-photos', restaurant.photo_urls?.[0]);
   const locationLink = getLocationLink(restaurant.state, restaurant.country);
 
@@ -121,15 +117,15 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
               className={`font-display text-xl font-bold truncate transition-colors group-hover:text-[var(--accent-primary)] ${status.isClosed ? 'line-through' : ''}`}
               style={{ color: 'var(--text-primary)' }}
             >
-              {sanitizedName}
+              {restaurant.name}
             </h3>
             {locationLink ? (
               <span className="block font-mono text-xs tracking-wide mt-1" style={{ color: 'var(--text-muted)' }}>
-                {sanitizedCity}{sanitizedState ? `, ${sanitizedState}` : ''}
+                {restaurant.city}{restaurant.state ? `, ${restaurant.state}` : ''}
               </span>
             ) : (
               <p className="font-mono text-xs tracking-wide mt-1" style={{ color: 'var(--text-muted)' }}>
-                {sanitizedCity}{sanitizedState ? `, ${sanitizedState}` : ''}
+                {restaurant.city}{restaurant.state ? `, ${restaurant.state}` : ''}
               </p>
             )}
           </div>
@@ -148,7 +144,7 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
             className="mt-3 font-ui text-sm font-medium truncate"
             style={{ color: 'var(--text-secondary)' }}
           >
-            by {sanitizedChefName}
+            by {restaurant.chef.name}
             {chefAchievements.isShowWinner && (
               <span 
                 className="ml-2 font-mono text-[10px] tracking-wider px-1.5 py-0.5"

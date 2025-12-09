@@ -21,7 +21,9 @@ function MapController({ selectedRestaurant }: { selectedRestaurant?: Restaurant
   const prevSelectedIdRef = useRef<string | null>(null);
   
   useEffect(() => {
-    if (selectedRestaurant && selectedRestaurant.lat && selectedRestaurant.lng) {
+    if (selectedRestaurant && 
+        typeof selectedRestaurant.lat === 'number' && !isNaN(selectedRestaurant.lat) &&
+        typeof selectedRestaurant.lng === 'number' && !isNaN(selectedRestaurant.lng)) {
       if (prevSelectedIdRef.current !== selectedRestaurant.id) {
         prevSelectedIdRef.current = selectedRestaurant.id;
         map.flyTo([selectedRestaurant.lat, selectedRestaurant.lng], 12, {

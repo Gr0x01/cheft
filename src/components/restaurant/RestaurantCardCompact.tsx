@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getRestaurantStatus, getChefAchievements, sanitizeText } from '@/lib/utils/restaurant';
+import { getRestaurantStatus, getChefAchievements } from '@/lib/utils/restaurant';
 import { getStorageUrl } from '@/lib/utils/storage';
 import { Donut } from 'lucide-react';
 
@@ -35,10 +35,6 @@ export function RestaurantCardCompact({ restaurant, index = 0, asButton = false 
   const status = getRestaurantStatus(restaurant.status);
   const chefAchievements = restaurant.chef ? getChefAchievements(restaurant.chef) : { isShowWinner: false, isJBWinner: false, isJBNominee: false, isJBSemifinalist: false };
   
-  const sanitizedName = sanitizeText(restaurant.name);
-  const sanitizedCity = sanitizeText(restaurant.city);
-  const sanitizedState = sanitizeText(restaurant.state);
-  const sanitizedChefName = restaurant.chef ? sanitizeText(restaurant.chef.name) : '';
   const photoUrl = getStorageUrl('restaurant-photos', restaurant.photo_urls?.[0]);
 
   const content = (
@@ -66,7 +62,7 @@ export function RestaurantCardCompact({ restaurant, index = 0, asButton = false 
           <h3 
             className={`compact-name ${status.isClosed ? 'line-through' : ''}`}
           >
-            {sanitizedName}
+            {restaurant.name}
           </h3>
           {status.isClosed ? (
             <span className="compact-price-closed">CLOSED</span>
@@ -77,7 +73,7 @@ export function RestaurantCardCompact({ restaurant, index = 0, asButton = false 
 
         {restaurant.chef && (
           <div className="compact-chef-row">
-            <span className="compact-chef-name">by {sanitizedChefName}</span>
+            <span className="compact-chef-name">by {restaurant.chef.name}</span>
             {chefAchievements.isShowWinner && (
               <span className="compact-badge compact-badge-winner">WIN</span>
             )}
@@ -89,7 +85,7 @@ export function RestaurantCardCompact({ restaurant, index = 0, asButton = false 
 
         <div className="compact-meta-row">
           <span className="compact-location">
-            {sanitizedCity}{sanitizedState ? `, ${sanitizedState}` : ''}
+            {restaurant.city}{restaurant.state ? `, ${restaurant.state}` : ''}
           </span>
           {restaurant.google_rating && (
             <>

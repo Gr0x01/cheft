@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronRight } from 'lucide-react';
-import { getRestaurantStatus, getChefAchievements, sanitizeText } from '@/lib/utils/restaurant';
+import { getRestaurantStatus, getChefAchievements } from '@/lib/utils/restaurant';
 import { getStorageUrl } from '@/lib/utils/storage';
 import { MichelinStar } from '@/components/icons/MichelinStar';
 import type { RestaurantWithDetails } from '@/lib/types';
@@ -18,8 +18,6 @@ function DiscoveryCard({ restaurant, index }: { restaurant: RestaurantWithDetail
   const status = getRestaurantStatus(restaurant.status);
   const chefAchievements = restaurant.chef ? getChefAchievements(restaurant.chef) : { isShowWinner: false, isJBWinner: false };
   const photoUrl = getStorageUrl('restaurant-photos', restaurant.photo_urls?.[0]);
-  const sanitizedName = sanitizeText(restaurant.name);
-  const sanitizedCity = sanitizeText(restaurant.city);
   const michelinStars = restaurant.michelin_stars || 0;
 
   return (
@@ -58,8 +56,8 @@ function DiscoveryCard({ restaurant, index }: { restaurant: RestaurantWithDetail
         )}
       </div>
       <div className="discovery-card-content">
-        <h3 className="discovery-card-name">{sanitizedName}</h3>
-        <p className="discovery-card-location">{sanitizedCity}</p>
+        <h3 className="discovery-card-name">{restaurant.name}</h3>
+        <p className="discovery-card-location">{restaurant.city}</p>
         <div className="discovery-card-badges">
           {restaurant.price_tier && (
             <span className="discovery-card-price">{restaurant.price_tier}</span>
