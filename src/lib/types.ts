@@ -54,6 +54,7 @@ export interface Restaurant {
   photo_urls?: string[] | null;
   google_rating?: number | null;
   google_review_count?: number | null;
+  michelin_stars?: number | null;
   chef?: Chef;
 }
 

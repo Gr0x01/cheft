@@ -177,16 +177,6 @@ body {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.main-content {
-  display: flex;
-  height: 600px;
-  overflow: hidden;
-  position: relative;
-  flex-shrink: 0;
-  margin: 24px;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-sm);
-}
 
 .sidebar {
   width: 400px;
@@ -1155,139 +1145,458 @@ body {
   background: var(--accent-secondary);
 }
 
-/* Mobile Floating Action Button */
-.mobile-map-fab {
+.mobile-discovery {
   display: none;
-  position: fixed;
-  bottom: 24px;
-  right: 20px;
-  background: var(--accent-primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius-lg);
-  padding: 14px 20px;
-  box-shadow: 6px 6px 0 var(--accent-secondary), 
-              0 8px 24px rgba(211, 94, 15, 0.4);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  z-index: 1000;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.mobile-map-fab:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 8px 8px 0 var(--accent-secondary),
-              0 10px 28px rgba(211, 94, 15, 0.5);
+.desktop-map-layout {
+  display: flex;
+  height: 600px;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+  margin: 24px;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
 }
 
-.mobile-map-fab:focus-visible {
-  outline: 3px solid var(--accent-secondary);
-  outline-offset: 3px;
+.mobile-search-section {
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-light);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-.mobile-map-fab:active {
-  transform: translate(2px, 2px);
-  box-shadow: 4px 4px 0 var(--accent-secondary),
-              0 4px 16px rgba(211, 94, 15, 0.3);
+.mobile-search-wrapper {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-.mobile-map-fab svg {
+.mobile-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 20px;
   height: 20px;
-  flex-shrink: 0;
+  color: var(--text-muted);
+  pointer-events: none;
 }
 
-.mobile-map-fab span {
-  font-weight: 700;
-  text-transform: uppercase;
+.mobile-search-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px 0 44px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  font-size: 16px;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
 }
 
-/* Mobile Map Overlay */
-.mobile-map-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
+.mobile-search-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
   background: var(--bg-secondary);
-  animation: slideUpOverlay 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 0 3px rgba(211, 94, 15, 0.12);
 }
 
-@keyframes slideUpOverlay {
+.mobile-city-pills {
+  padding: 20px 16px;
+}
+
+.mobile-section-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.city-pills-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.city-pills-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.city-pill {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.city-pill:hover {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+}
+
+.discovery-row {
+  padding: 28px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.discovery-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  margin-bottom: 20px;
+}
+
+.discovery-row-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.discovery-row-accent {
+  width: 4px;
+  height: 24px;
+  background: var(--accent-primary);
+  border-radius: 2px;
+}
+
+.discovery-row-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.discovery-row-link {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+  text-decoration: none;
+  padding: 6px 10px;
+  border: 1px solid var(--accent-primary);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.discovery-row-link:hover {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.discovery-row-link:hover svg {
+  transform: translateX(2px);
+}
+
+.discovery-row-link svg {
+  transition: transform 0.2s ease;
+}
+
+.discovery-row-scroll {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 4px 16px 12px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.discovery-row-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.discovery-card {
+  flex-shrink: 0;
+  width: 168px;
+  background: var(--bg-secondary);
+  border-radius: 0;
+  overflow: hidden;
+  text-decoration: none;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-light);
+  animation: discoveryCardFadeIn 0.4s ease-out backwards;
+}
+
+@keyframes discoveryCardFadeIn {
   from {
-    transform: translateY(100%);
+    opacity: 0;
+    transform: translateY(8px);
   }
   to {
+    opacity: 1;
     transform: translateY(0);
   }
 }
 
-.mobile-map-header {
-  height: 60px;
-  background: var(--bg-secondary);
-  border-bottom: 3px solid var(--accent-primary);
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  gap: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  position: relative;
-  z-index: 1001;
-}
-
-.mobile-map-close {
-  width: 40px;
-  height: 40px;
-  background: transparent;
-  border: 2px solid var(--border-medium);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.mobile-map-close:hover {
-  background: var(--bg-tertiary);
+.discovery-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   border-color: var(--accent-primary);
 }
 
-.mobile-map-close:focus-visible {
-  outline: 3px solid var(--accent-primary);
-  outline-offset: 2px;
+.discovery-card:hover .discovery-card-name {
+  color: var(--accent-primary);
 }
 
-.mobile-map-close:active {
-  transform: scale(0.95);
+.discovery-card:hover .discovery-card-img {
+  transform: scale(1.05);
 }
 
-.mobile-map-close svg {
-  width: 20px;
-  height: 20px;
-  color: var(--text-primary);
+.discovery-card-image {
+  position: relative;
+  width: 168px;
+  height: 112px;
+  background: var(--slate-900);
+  overflow: hidden;
 }
 
-.mobile-map-title {
+.discovery-card-image[data-closed="true"] {
+  filter: grayscale(100%);
+  opacity: 0.7;
+}
+
+.discovery-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.discovery-card-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--slate-900);
+}
+
+.discovery-card-michelin {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: flex;
+  gap: 2px;
+  padding: 3px 5px;
+  background: #D3072B;
+  border-radius: 2px;
+}
+
+.discovery-card-closed {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 2px 6px;
+  background: var(--slate-800);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.discovery-card-content {
+  padding: 12px;
+  border-top: 2px solid var(--accent-primary);
+}
+
+.discovery-card-name {
   font-family: var(--font-display);
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.2s ease;
 }
 
-.mobile-map-content {
-  height: calc(100vh - 60px);
+.discovery-card-location {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.discovery-card-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.discovery-card-price {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+
+.discovery-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.discovery-card-badge.winner {
+  background: var(--accent-success);
+  color: white;
+}
+
+.discovery-card-badge.jb {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #78350f;
+}
+
+.mobile-content-wrapper {
+  position: relative;
+  min-height: 300px;
+}
+
+.mobile-search-results {
+  padding: 20px 16px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.mobile-search-results.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
   position: relative;
 }
 
+.mobile-results-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.mobile-results-accent {
+  width: 4px;
+  height: 20px;
+  background: var(--accent-primary);
+  border-radius: 2px;
+}
+
+.mobile-results-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.mobile-results-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-view-all-results {
+  display: block;
+  text-align: center;
+  padding: 14px;
+  margin-top: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.mobile-view-all-results:hover {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.mobile-browse-content {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.mobile-browse-content.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  position: relative;
+}
+
+.mobile-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 16px;
+  color: var(--text-muted);
+}
+
 @media (max-width: 768px) {
+  .mobile-discovery {
+    display: block;
+  }
+  
+  .desktop-map-layout {
+    display: none;
+  }
+  
   .app-header {
     padding: 0 16px;
     height: auto;
@@ -1308,67 +1617,6 @@ body {
     gap: 24px;
     padding-top: 8px;
     border-top: 1px solid var(--border-light);
-  }
-  
-  .sidebar-search {
-    padding: 12px 16px;
-  }
-  
-  .sidebar-search .search-icon {
-    left: 28px;
-  }
-  
-  .main-content {
-    flex-direction: column;
-  }
-  
-  .sidebar {
-    width: 100%;
-    height: calc(100vh - 140px);
-    border-right: none;
-    border-bottom: none;
-  }
-  
-  .map-section {
-    display: none;
-  }
-  
-  .mobile-map-fab {
-    display: flex;
-  }
-  
-  .mobile-map-overlay {
-    display: block;
-  }
-  
-  .restaurant-list {
-    padding: 12px 16px;
-    gap: 16px;
-  }
-  
-  .homepage-card-wrapper {
-    animation: slideUpCard 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
-  }
-  
-  .homepage-card-wrapper:nth-child(1) { animation-delay: 0ms; }
-  .homepage-card-wrapper:nth-child(2) { animation-delay: 50ms; }
-  .homepage-card-wrapper:nth-child(3) { animation-delay: 100ms; }
-  .homepage-card-wrapper:nth-child(4) { animation-delay: 150ms; }
-  .homepage-card-wrapper:nth-child(5) { animation-delay: 200ms; }
-  
-  @keyframes slideUpCard {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  .compact-card {
-    border-radius: var(--radius-md);
   }
 }
 

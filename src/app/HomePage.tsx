@@ -2,11 +2,14 @@
 
 import { useState, useMemo, useEffect, useRef, useDeferredValue } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { RestaurantWithDetails } from '@/lib/types';
 import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCompact';
 import { ChefCard } from '@/components/chef/ChefCard';
 import { Header } from '@/components/ui/Header';
 import { FeaturedChefHero } from '@/components/chef/FeaturedChefHero';
+import { DiscoveryRow } from '@/components/home/DiscoveryRow';
+import { Search } from 'lucide-react';
 
 interface HomePageProps {
   initialFeaturedChefs: any[];
@@ -30,7 +33,6 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef }: Home
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
   const [selectedRestaurant, setSelectedRestaurant] = useState<RestaurantWithDetails | null>(null);
   const [hoveredRestaurant, setHoveredRestaurant] = useState<string | null>(null);
-  const [showMobileMap, setShowMobileMap] = useState(false);
   const [visibleCount, setVisibleCount] = useState(20);
   const [restaurants, setRestaurants] = useState<RestaurantWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -81,13 +83,46 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef }: Home
     return filtered;
   }, [deferredSearchQuery, selectedShow, selectedPriceRange, restaurants]);
 
+  const winnerRestaurants = useMemo(() => {
+    const winners = restaurants.filter(r => {
+      const isWinner = r.chef?.chef_shows?.some(cs => cs.result === 'winner');
+      return isWinner && r.status === 'open';
+    });
+    
+    const michelin = winners.filter(r => r.michelin_stars && r.michelin_stars > 0);
+    const nonMichelin = winners.filter(r => !r.michelin_stars || r.michelin_stars === 0);
+    
+    const shuffle = <T,>(arr: T[]): T[] => {
+      const shuffled = [...arr];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    };
+    
+    return [...shuffle(michelin), ...shuffle(nonMichelin)].slice(0, 12);
+  }, [restaurants]);
+
+  const popularCities = [
+    { name: 'New York', slug: 'new-york' },
+    { name: 'Los Angeles', slug: 'los-angeles' },
+    { name: 'Chicago', slug: 'chicago' },
+    { name: 'San Francisco', slug: 'san-francisco' },
+    { name: 'Miami', slug: 'miami' },
+    { name: 'Las Vegas', slug: 'las-vegas' },
+    { name: 'Seattle', slug: 'seattle' },
+    { name: 'Houston', slug: 'houston' },
+  ];
+
   const handleRestaurantClick = (restaurant: RestaurantWithDetails) => {
     setSelectedRestaurant(restaurant);
   };
 
+  const isSearching = deferredSearchQuery.length > 0;
 
   return (
-    <div className="app-container map-layout">
+    <div className="app-container">
       <Header currentPage="home" />
 
       <section className="hero-section">
@@ -120,10 +155,76 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef }: Home
         </div>
       </section>
 
-      {/* Featured Chef Hero */}
       {featuredChef && <FeaturedChefHero chef={featuredChef} />}
 
-      <main className="main-content" id="main-content">
+      {/* Mobile Discovery Layout */}
+      <div className="mobile-discovery">
+        <div className="mobile-search-section">
+          <div className="mobile-search-wrapper">
+            <Search className="mobile-search-icon" />
+            <input
+              type="text"
+              placeholder="Search restaurants, chefs, cities..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="mobile-search-input"
+              aria-label="Search restaurants, chefs, and cities"
+            />
+          </div>
+        </div>
+
+        <div className="mobile-content-wrapper">
+          <div className={`mobile-search-results ${isSearching ? 'visible' : ''}`}>
+            <div className="mobile-results-header">
+              <span className="mobile-results-accent" />
+              <h2 className="mobile-results-title">
+                {filteredRestaurants.length} result{filteredRestaurants.length !== 1 ? 's' : ''}
+              </h2>
+            </div>
+            <div className="mobile-results-grid">
+              {filteredRestaurants.slice(0, 10).map((restaurant, index) => (
+                <RestaurantCardCompact key={restaurant.id} restaurant={restaurant} index={index} />
+              ))}
+            </div>
+            {filteredRestaurants.length > 10 && (
+              <Link href={`/restaurants?q=${encodeURIComponent(searchQuery)}`} className="mobile-view-all-results">
+                View all {filteredRestaurants.length} results →
+              </Link>
+            )}
+          </div>
+
+          <div className={`mobile-browse-content ${isSearching ? '' : 'visible'}`}>
+            <div className="mobile-city-pills">
+              <h2 className="mobile-section-label">Popular Cities</h2>
+              <div className="city-pills-scroll">
+                {popularCities.map((city) => (
+                  <Link key={city.slug} href={`/cities/${city.slug}`} className="city-pill">
+                    {city.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {!isLoading && (
+              <DiscoveryRow 
+                title="Competition Winners" 
+                restaurants={winnerRestaurants}
+                viewAllHref="/restaurants"
+              />
+            )}
+
+            {isLoading && (
+              <div className="mobile-loading">
+                <div className="map-loading-spinner"></div>
+                <span>Loading restaurants...</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Map Layout */}
+      <main className="desktop-map-layout" id="main-content">
         <aside className="sidebar">
           <div className="sidebar-header">
             <h1 className="sidebar-title">{filteredRestaurants.length} Restaurants</h1>
@@ -232,46 +333,6 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef }: Home
           />
         </section>
       </main>
-
-      {/* Mobile Map Toggle Button */}
-      <button 
-        className="mobile-map-fab"
-        onClick={() => setShowMobileMap(true)}
-        aria-label="Show map"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-          <circle cx="12" cy="10" r="3"/>
-        </svg>
-        <span>Map</span>
-      </button>
-
-      {/* Mobile Map Overlay */}
-      {showMobileMap && (
-        <div className="mobile-map-overlay">
-          <div className="mobile-map-header">
-            <button 
-              className="mobile-map-close"
-              onClick={() => setShowMobileMap(false)}
-              aria-label="Close map"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6L6 18M6 6l12 12"/>
-              </svg>
-            </button>
-            <span className="mobile-map-title">{filteredRestaurants.length} Restaurants</span>
-          </div>
-          <div className="mobile-map-content">
-            <RestaurantMap 
-              restaurants={filteredRestaurants}
-              selectedRestaurant={selectedRestaurant}
-              hoveredRestaurantId={hoveredRestaurant}
-              onRestaurantSelect={handleRestaurantClick}
-              isLoading={isLoading}
-            />
-          </div>
-        </div>
-      )}
 
       {/* Featured Chefs Section */}
       <section className="featured-chefs-section">
