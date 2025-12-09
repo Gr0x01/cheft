@@ -28,6 +28,13 @@ Added family visibility toggle to `/admin/shows`:
 - Confirmation dialog shows affected child count
 - API: `cascade_visibility: true` flag in update route
 
+### Season Names UI Cleanup ✅
+Fixed duplicate UI showing both named seasons (California, Charleston) AND numbered seasons (13, 14):
+- **Season pills now show names**: `13 · California` format for Top Chef
+- **Variant tabs filtered**: Only shows actual variants (All-Stars, World All-Stars), not named_season types
+- **Hardcoded mapping** in `ShowPageClient.tsx` - `TOP_CHEF_SEASON_NAMES` record
+- Top Chef is annual so mapping is stable; update when new seasons air
+
 ---
 
 ## Show Hierarchy Project ✅ (Completed Dec 9, 2025)

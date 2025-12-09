@@ -173,3 +173,49 @@ scripts/michelin/
 **Refresh Schedule:** Run yearly (~November) when Michelin announces new stars, or when adding new restaurants that might have stars.
 
 **Integration with Restaurant Enrichment:** The Michelin sync is separate from LLM enrichment. When new restaurants are added via enrichment workflows, run `sync_all_michelin_stars()` to check for Michelin matches.
+
+---
+
+## Show Season Mappings
+
+### The Problem
+
+TV shows have multiple ways of identifying seasons:
+- **Numbered seasons** (1, 2, 3...) - The actual production season
+- **Named seasons** (California, Houston) - Location-based marketing names  
+- **Variants** (All-Stars, World All-Stars) - Special editions, not regular numbered seasons
+
+LLM may return either format. UI needs to display cleanly without duplication.
+
+### Top Chef Season → Location Mapping
+
+| Season | Location | Season | Location |
+|--------|----------|--------|----------|
+| 3 | Miami | 14 | Charleston |
+| 6 | Las Vegas | 15 | Colorado |
+| 9 | Texas | 16 | Kentucky |
+| 10 | Seattle | 18 | Portland |
+| 11 | New Orleans | 19 | Houston |
+| 13 | California | 21 | Wisconsin |
+| | | 22 | Destination Canada |
+
+**Variants (NOT numbered seasons):** All-Stars (S8, S17), World All-Stars (S20), Holiday Special
+
+### Tournament of Champions
+
+Seasons 1-6 (2020-2025). One variant: All-Star Christmas.
+
+### Code Locations
+
+**Frontend display:** `src/app/shows/[slug]/ShowPageClient.tsx`
+- `TOP_CHEF_SEASON_NAMES` record - displays `13 · California` format
+- Filters `named_season` types out of variant tabs
+
+**Ingestion:** `scripts/ingestion/enrichment/repositories/show-repository.ts`
+- `showNameMap` routes LLM output variations to correct slugs
+
+### When to Update
+
+1. **New Top Chef season** → Add to `TOP_CHEF_SEASON_NAMES` in `ShowPageClient.tsx`
+2. **New show** → Document here, add UI mapping if has named seasons
+3. **Unknown show name from LLM** → Add to `showNameMap` in `show-repository.ts`

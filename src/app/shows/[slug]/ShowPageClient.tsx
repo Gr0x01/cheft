@@ -8,6 +8,22 @@ import { ChefFilters } from '@/components/chef/ChefFilters';
 import { EmptyState } from '@/components/ui/EmptyState';
 import type { ChefData } from '@/lib/hooks/useChefFilters';
 
+const TOP_CHEF_SEASON_NAMES: Record<string, string> = {
+  '3': 'Miami',
+  '6': 'Las Vegas',
+  '9': 'Texas',
+  '10': 'Seattle',
+  '11': 'New Orleans',
+  '13': 'California',
+  '14': 'Charleston',
+  '15': 'Colorado',
+  '16': 'Kentucky',
+  '18': 'Portland',
+  '19': 'Houston',
+  '21': 'Wisconsin',
+  '22': 'Destination Canada',
+};
+
 interface Season {
   season: string;
   season_name: string | null;
@@ -47,6 +63,7 @@ const MAX_VISIBLE_SEASONS = 12;
 
 function SeasonPill({ season, showSlug }: { season: Season; showSlug: string }) {
   const seasonNum = season.season.replace(/\D/g, '') || season.season;
+  const seasonName = showSlug === 'top-chef' ? TOP_CHEF_SEASON_NAMES[seasonNum] : null;
   return (
     <Link
       href={`/shows/${showSlug}/${season.season}`}
@@ -62,7 +79,7 @@ function SeasonPill({ season, showSlug }: { season: Season; showSlug: string }) 
           className="font-mono text-sm font-bold"
           style={{ color: 'var(--accent-primary)' }}
         >
-          {seasonNum}
+          {seasonNum}{seasonName && <span className="font-normal text-xs ml-1 opacity-70">· {seasonName}</span>}
         </span>
       </div>
     </Link>
@@ -70,6 +87,7 @@ function SeasonPill({ season, showSlug }: { season: Season; showSlug: string }) 
 }
 
 function SeasonLinks({ seasons, showSlug }: { seasons: Season[]; showSlug: string }) {
+  if (seasons.length === 0) return null;
   const [expanded, setExpanded] = useState(false);
   const sortedSeasons = useMemo(() => sortSeasons(seasons), [seasons]);
   
@@ -200,9 +218,10 @@ function ShowPageClientInner({ chefs, showSlug, seasons = [], childShows = [], p
     <SeasonLinks seasons={seasons} showSlug={showSlug} />
   ) : null;
 
-  const variantTabs = childShows.length > 0 && showSlug ? (
+  const variantChildShows = childShows.filter(c => c.show_type !== 'named_season');
+  const variantTabs = variantChildShows.length > 0 && showSlug ? (
     <VariantTabs 
-      childShows={childShows} 
+      childShows={variantChildShows} 
       showSlug={showSlug}
       selectedVariant={selectedVariant}
       onSelectVariant={setSelectedVariant}
