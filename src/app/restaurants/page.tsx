@@ -4,6 +4,7 @@ import { Header } from '@/components/ui/Header';
 import { PageHero } from '@/components/ui/PageHero';
 import { ItemListSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 import { RestaurantsPageClient } from './RestaurantsPageClient';
+import { Footer } from '@/components/ui/Footer';
 
 export const revalidate = 604800;
 
@@ -144,6 +145,8 @@ export default async function RestaurantsPage() {
           states={states}
           totalRestaurants={totalRestaurants}
         />
+
+        <Footer />
       </div>
     </>
   );

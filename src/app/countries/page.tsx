@@ -5,6 +5,7 @@ import { PageHero } from '@/components/ui/PageHero';
 import { CountryCard } from '@/components/country/CountryCard';
 import { LocationError } from '@/components/ui/LocationError';
 import { ItemListSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
+import { Footer } from '@/components/ui/Footer';
 
 export const revalidate = 604800;
 
@@ -139,6 +140,8 @@ export default async function CountriesPage() {
             </div>
           </section>
         </main>
+
+        <Footer />
       </div>
     </>
   );

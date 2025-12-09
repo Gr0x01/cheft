@@ -4,6 +4,7 @@ import { Header } from '@/components/ui/Header';
 import { PageHero } from '@/components/ui/PageHero';
 import { ItemListSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 import { ChefsPageClient } from './ChefsPageClient';
+import { Footer } from '@/components/ui/Footer';
 
 export const revalidate = 604800;
 
@@ -167,6 +168,8 @@ export default async function ChefsPage() {
           shows={shows}
           totalChefs={totalChefs}
         />
+
+        <Footer />
       </div>
     </>
   );

@@ -7,6 +7,7 @@ import { PageHero } from '@/components/ui/PageHero';
 import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
 import { ChefCard } from '@/components/chef/ChefCard';
 import { ItemListSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
+import { Footer } from '@/components/ui/Footer';
 
 interface CountryPageProps {
   params: Promise<{ slug: string }>;
@@ -294,6 +295,8 @@ export default async function CountryPage({ params }: CountryPageProps) {
             </>
           )}
         </main>
+
+        <Footer />
       </div>
     </>
   );

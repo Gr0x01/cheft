@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { db } from '@/lib/supabase';
 import { Header } from '@/components/ui/Header';
 import { PageHero } from '@/components/ui/PageHero';
+import { Footer } from '@/components/ui/Footer';
 
 export const revalidate = 604800;
 
@@ -117,6 +118,8 @@ export default async function ShowsPage() {
           ))}
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

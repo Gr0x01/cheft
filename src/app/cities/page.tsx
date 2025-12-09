@@ -6,6 +6,7 @@ import { PageHero } from '@/components/ui/PageHero';
 import { FilterBar } from '@/components/ui/FilterBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ItemListSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
+import { Footer } from '@/components/ui/Footer';
 
 export const revalidate = 604800; // 1 week
 
@@ -124,6 +125,8 @@ export default async function CitiesPage({
             </div>
           )}
         </main>
+
+        <Footer />
       </div>
     </>
   );

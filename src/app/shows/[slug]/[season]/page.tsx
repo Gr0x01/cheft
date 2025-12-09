@@ -7,6 +7,7 @@ import { ChefCard } from '@/components/chef/ChefCard';
 import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCompact';
 import { Header } from '@/components/ui/Header';
 import { PageHero } from '@/components/ui/PageHero';
+import { Footer } from '@/components/ui/Footer';
 
 interface Restaurant {
   id: string;
@@ -208,6 +209,8 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
           </div>
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }
