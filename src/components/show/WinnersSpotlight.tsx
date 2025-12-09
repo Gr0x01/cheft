@@ -212,7 +212,7 @@ export function WinnersSpotlight({ winners, showName, showSlug }: WinnersSpotlig
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {displayWinners.map((winner, index) => (
-            <WinnerCard key={winner.chef.id} winner={winner} index={index} />
+            <WinnerCard key={`${winner.chef.id}-s${winner.season}`} winner={winner} index={index} />
           ))}
         </div>
       </div>

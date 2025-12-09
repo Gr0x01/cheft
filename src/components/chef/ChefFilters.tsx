@@ -47,6 +47,9 @@ export function ChefFilters({ shows = [], chefs, totalChefs, onFilteredChefsChan
     [filters.shows, shows]
   );
 
+  const expandedShowSlugsKey = expandedShowSlugs.join(',');
+  const filtersKey = `${filters.q}|${filters.results.join(',')}|${filters.jb}|${filters.sort}`;
+
   const onFilteredChefsChangeRef = useRef(onFilteredChefsChange);
   onFilteredChefsChangeRef.current = onFilteredChefsChange;
 
@@ -55,7 +58,7 @@ export function ChefFilters({ shows = [], chefs, totalChefs, onFilteredChefsChan
     const filtered = filterChefs(chefs, expandedFilters);
     setFilteredChefs(filtered);
     onFilteredChefsChangeRef.current(filtered);
-  }, [chefs, filters, expandedShowSlugs]);
+  }, [chefs, filtersKey, expandedShowSlugsKey]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
