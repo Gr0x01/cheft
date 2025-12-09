@@ -104,8 +104,12 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
   const { slug, season } = await params;
   
   let seasonData;
+  let showData;
   try {
-    seasonData = await db.getShowSeason(slug, season);
+    [seasonData, showData] = await Promise.all([
+      db.getShowSeason(slug, season),
+      db.getShow(slug),
+    ]);
     if (!seasonData) notFound();
   } catch {
     notFound();
@@ -123,17 +127,27 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
     }))
   ) || [];
 
+  const isVariant = showData?.parent_show_id !== null;
+  const breadcrumbItems = isVariant && showData?.parent_show_slug
+    ? [
+        { label: 'Shows', href: '/shows' },
+        { label: showData.parent_show_name, href: `/shows/${showData.parent_show_slug}` },
+        { label: seasonData.name, href: `/shows/${slug}` },
+        { label: seasonName },
+      ]
+    : [
+        { label: 'Shows', href: '/shows' },
+        { label: seasonData.name, href: `/shows/${slug}` },
+        { label: seasonName },
+      ];
+
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
       <Header />
       <PageHero
         title={seasonName}
         subtitle={seasonData.name}
-        breadcrumbItems={[
-          { label: 'Shows', href: '/shows' },
-          { label: seasonData.name, href: `/shows/${slug}` },
-          { label: seasonName },
-        ]}
+        breadcrumbItems={breadcrumbItems}
         stats={[
           { value: seasonData.chef_shows?.length || 0, label: 'CHEFS' },
           { value: allRestaurants.length, label: 'RESTAURANTS' },

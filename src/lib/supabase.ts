@@ -368,15 +368,16 @@ export const db = {
     };
   },
 
-  // Get all shows with chef and restaurant counts
   async getShowsWithCounts(): Promise<Array<{
     id: string;
     name: string;
     slug: string;
     network: string | null;
     created_at: string;
+    show_type: string | null;
     chef_count: number;
     restaurant_count: number;
+    child_count: number;
   }>> {
     const client = getSupabaseClient();
     const { data, error } = await (client as any).rpc('get_shows_with_counts');
@@ -385,12 +386,11 @@ export const db = {
     return (data as any) || [];
   },
 
-  // Get show by slug with all chefs
   async getShow(slug: string) {
     const client = getSupabaseClient();
     const { data: show, error: showError } = await client
       .from('shows')
-      .select('id, name, slug, network, created_at')
+      .select('id, name, slug, network, created_at, parent_show_id, show_type, is_public')
       .eq('slug', slug)
       .single();
     
@@ -399,6 +399,12 @@ export const db = {
     const { data: chefData, error: chefError } = await (client as any).rpc('get_show_with_chef_counts', { p_show_slug: slug });
     
     if (chefError) throw chefError;
+    
+    const firstRow = chefData?.[0];
+    const parentInfo = (firstRow?.parent_show_slug && firstRow?.parent_show_name) ? {
+      parent_show_slug: firstRow.parent_show_slug,
+      parent_show_name: firstRow.parent_show_name,
+    } : null;
     
     const chefShowsMap = new Map();
     (chefData || []).forEach((row: any) => {
@@ -412,6 +418,8 @@ export const db = {
           season_name: row.season_name,
           result: row.result,
           is_primary: row.is_primary,
+          source_show_slug: row.source_show_slug,
+          source_show_name: row.source_show_name,
           chef: {
             id: row.chef_id,
             name: row.chef_name,
@@ -426,8 +434,42 @@ export const db = {
     
     return {
       ...(show as any),
+      ...parentInfo,
       chef_shows: Array.from(chefShowsMap.values())
     };
+  },
+
+  async getShowChildren(parentSlug: string): Promise<Array<{
+    id: string;
+    name: string;
+    slug: string;
+    show_type: string | null;
+    chef_count: number;
+  }>> {
+    const client = getSupabaseClient();
+    try {
+      const { data, error } = await (client as any).rpc('get_show_children', { p_parent_slug: parentSlug });
+      
+      if (error) {
+        console.error('RPC get_show_children failed:', error);
+        return [];
+      }
+      
+      if (!Array.isArray(data)) {
+        return [];
+      }
+      
+      return data.map((row: any) => ({
+        id: row.child_show_id,
+        name: row.child_show_name,
+        slug: row.child_show_slug,
+        show_type: row.child_show_type,
+        chef_count: row.child_chef_count,
+      }));
+    } catch (error) {
+      console.error('Failed to fetch show children:', error);
+      return [];
+    }
   },
 
   // Get all unique seasons for a show

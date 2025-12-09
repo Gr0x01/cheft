@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, Fragment } from 'react';
+import { useState, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dialog, Transition, Combobox } from '@headlessui/react';
 import { 
-  Tv, Search, Plus, AlertTriangle, Loader2, ChevronDown, Check, 
-  DollarSign, Users, Sparkles, ArrowUpDown 
+  Tv, Search, Plus, AlertTriangle, Loader2, ChevronDown, ChevronRight,
+  DollarSign, Users, Sparkles, ArrowUpDown, Eye, EyeOff, Link2
 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { toast } from 'sonner';
 import { clsx } from 'clsx';
 
 interface ShowWithStats {
@@ -17,6 +17,10 @@ interface ShowWithStats {
   network: string | null;
   created_at: string;
   chef_count: number;
+  is_public: boolean;
+  show_type: string | null;
+  parent_show_id: string | null;
+  parent_show_name: string | null;
 }
 
 interface PotentialShow {
@@ -41,12 +45,31 @@ const COST_PER_CHEF = 0.05;
 const COST_RANGE_MIN = 0.50;
 const COST_RANGE_MAX = 2.00;
 
-type SortField = 'name' | 'chef_count' | 'network';
+type SortField = 'name' | 'chef_count' | 'network' | 'is_public' | 'show_type';
 type SortDir = 'asc' | 'desc';
+type FilterVisibility = 'all' | 'public' | 'non-public';
+type FilterType = 'all' | 'core' | 'spinoff' | 'variant' | 'named_season' | 'unset';
+
+const SHOW_TYPE_LABELS: Record<string, string> = {
+  core: 'Core',
+  spinoff: 'Spinoff',
+  variant: 'Variant',
+  named_season: 'Named Season',
+};
+
+const SHOW_TYPE_COLORS: Record<string, string> = {
+  core: 'bg-blue-100 text-blue-700',
+  spinoff: 'bg-purple-100 text-purple-700',
+  variant: 'bg-amber-100 text-amber-700',
+  named_season: 'bg-teal-100 text-teal-700',
+};
 
 export function ShowsClient({ shows, potentialShows }: ShowsClientProps) {
-  const [sortField, setSortField] = useState<SortField>('chef_count');
-  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [filterVisibility, setFilterVisibility] = useState<FilterVisibility>('all');
+  const [filterType, setFilterType] = useState<FilterType>('all');
+  const [expandedShow, setExpandedShow] = useState<string | null>(null);
   const [selectedShow, setSelectedShow] = useState<ShowWithStats | null>(null);
   const [newShowName, setNewShowName] = useState('');
   const [isNewShow, setIsNewShow] = useState(false);
@@ -54,17 +77,29 @@ export function ShowsClient({ shows, potentialShows }: ShowsClientProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [harvesting, setHarvesting] = useState(false);
   const [result, setResult] = useState<HarvestResult | null>(null);
+  const [updating, setUpdating] = useState<string | null>(null);
   const router = useRouter();
 
-  const sortedShows = [...shows].sort((a, b) => {
+  const filteredShows = shows.filter(show => {
+    if (filterVisibility === 'public' && !show.is_public) return false;
+    if (filterVisibility === 'non-public' && show.is_public) return false;
+    if (filterType === 'unset' && show.show_type !== null) return false;
+    if (filterType !== 'all' && filterType !== 'unset' && show.show_type !== filterType) return false;
+    if (query && !show.name.toLowerCase().includes(query.toLowerCase())) return false;
+    return true;
+  });
+
+  const sortedShows = [...filteredShows].sort((a, b) => {
     let cmp = 0;
     if (sortField === 'name') cmp = a.name.localeCompare(b.name);
     else if (sortField === 'chef_count') cmp = a.chef_count - b.chef_count;
     else if (sortField === 'network') cmp = (a.network || '').localeCompare(b.network || '');
+    else if (sortField === 'is_public') cmp = (a.is_public ? 1 : 0) - (b.is_public ? 1 : 0);
+    else if (sortField === 'show_type') cmp = (a.show_type || '').localeCompare(b.show_type || '');
     return sortDir === 'desc' ? -cmp : cmp;
   });
 
-  const filteredShows = query === ''
+  const comboFilteredShows = query === ''
     ? shows
     : shows.filter((show) =>
         show.name.toLowerCase().includes(query.toLowerCase())
@@ -129,6 +164,43 @@ export function ShowsClient({ shows, potentialShows }: ShowsClientProps) {
     }
   };
 
+  const updateShow = async (showId: string, updates: Record<string, unknown>) => {
+    if (updating) return;
+    setUpdating(showId);
+    
+    try {
+      const response = await fetch('/api/admin/shows/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ showId, updates }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        toast.error(data.error || 'Failed to update show');
+        return;
+      }
+      toast.success('Show updated');
+    } catch {
+      toast.error('Failed to update show');
+    } finally {
+      setUpdating(null);
+      router.refresh();
+    }
+  };
+
+  const handleTogglePublic = (show: ShowWithStats) => {
+    updateShow(show.id, { is_public: !show.is_public });
+  };
+
+  const handleUpdateShowType = (show: ShowWithStats, newType: string | null) => {
+    updateShow(show.id, { show_type: newType || null });
+  };
+
+  const handleUpdateParent = (show: ShowWithStats, parentId: string | null) => {
+    updateShow(show.id, { parent_show_id: parentId || null });
+  };
+
   const closeConfirm = () => {
     setConfirmOpen(false);
     setResult(null);
@@ -142,6 +214,10 @@ export function ShowsClient({ shows, potentialShows }: ShowsClientProps) {
       year: 'numeric',
     });
   };
+
+  const publicCount = shows.filter(s => s.is_public).length;
+  const nonPublicCount = shows.filter(s => !s.is_public).length;
+  const coreShows = shows.filter(s => s.show_type === 'core' || (!s.show_type && !s.parent_show_id));
 
   return (
     <div className="space-y-8">
@@ -193,10 +269,10 @@ export function ShowsClient({ shows, potentialShows }: ShowsClientProps) {
                     </Combobox.Button>
                   </div>
                   <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto bg-white border border-stone-200 shadow-lg">
-                    {filteredShows.length === 0 && query !== '' ? (
+                    {comboFilteredShows.length === 0 && query !== '' ? (
                       <div className="px-4 py-2 text-sm text-stone-500">No shows found</div>
                     ) : (
-                      filteredShows.map((show) => (
+                      comboFilteredShows.map((show) => (
                         <Combobox.Option
                           key={show.id}
                           value={show}
@@ -264,18 +340,79 @@ export function ShowsClient({ shows, potentialShows }: ShowsClientProps) {
       </div>
 
       <div className="bg-white border border-stone-200">
-        <div className="px-6 py-4 border-b border-stone-200 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Users className="w-5 h-5 text-stone-600" />
-            <h3 className="font-display text-lg font-bold text-stone-900">Active Shows</h3>
-            <span className="font-mono text-xs text-stone-400">({shows.length})</span>
+        <div className="px-6 py-4 border-b border-stone-200">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <Users className="w-5 h-5 text-stone-600" />
+              <h3 className="font-display text-lg font-bold text-stone-900">All Shows</h3>
+              <span className="font-mono text-xs text-stone-400">
+                ({shows.length} total • {publicCount} public • {nonPublicCount} hidden)
+              </span>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[10px] text-stone-400 uppercase">Visibility:</span>
+              <div className="flex">
+                {(['all', 'public', 'non-public'] as FilterVisibility[]).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setFilterVisibility(v)}
+                    className={clsx(
+                      'px-2 py-1 text-xs font-medium border-y border-l last:border-r first:rounded-l last:rounded-r',
+                      filterVisibility === v
+                        ? 'bg-stone-800 text-white border-stone-800'
+                        : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
+                    )}
+                  >
+                    {v === 'all' ? 'All' : v === 'public' ? 'Public' : 'Hidden'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[10px] text-stone-400 uppercase">Type:</span>
+              <div className="flex">
+                {(['all', 'core', 'spinoff', 'variant', 'named_season', 'unset'] as FilterType[]).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setFilterType(t)}
+                    className={clsx(
+                      'px-2 py-1 text-xs font-medium border-y border-l last:border-r first:rounded-l last:rounded-r',
+                      filterType === t
+                        ? 'bg-stone-800 text-white border-stone-800'
+                        : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
+                    )}
+                  >
+                    {t === 'all' ? 'All' : t === 'unset' ? 'Unset' : SHOW_TYPE_LABELS[t] || t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex-1 min-w-[200px]">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Filter by name..."
+                  className="w-full pl-9 pr-3 py-1.5 text-sm border border-stone-200 rounded focus:border-copper-500 focus:ring-1 focus:ring-copper-500"
+                />
+              </div>
+            </div>
           </div>
         </div>
+
         <table className="w-full">
           <thead className="bg-stone-50 border-b border-stone-200">
             <tr>
+              <th className="w-8 px-3"></th>
               <th 
-                className="px-6 py-3 text-left font-mono text-[10px] text-stone-500 uppercase tracking-wider cursor-pointer hover:text-stone-700"
+                className="px-4 py-3 text-left font-mono text-[10px] text-stone-500 uppercase tracking-wider cursor-pointer hover:text-stone-700"
                 onClick={() => handleSort('name')}
               >
                 <span className="inline-flex items-center gap-1">
@@ -284,16 +421,19 @@ export function ShowsClient({ shows, potentialShows }: ShowsClientProps) {
                 </span>
               </th>
               <th 
-                className="px-6 py-3 text-left font-mono text-[10px] text-stone-500 uppercase tracking-wider cursor-pointer hover:text-stone-700"
-                onClick={() => handleSort('network')}
+                className="px-4 py-3 text-left font-mono text-[10px] text-stone-500 uppercase tracking-wider cursor-pointer hover:text-stone-700"
+                onClick={() => handleSort('show_type')}
               >
                 <span className="inline-flex items-center gap-1">
-                  Network
-                  {sortField === 'network' && <ArrowUpDown className="w-3 h-3" />}
+                  Type
+                  {sortField === 'show_type' && <ArrowUpDown className="w-3 h-3" />}
                 </span>
               </th>
+              <th className="px-4 py-3 text-left font-mono text-[10px] text-stone-500 uppercase tracking-wider">
+                Parent
+              </th>
               <th 
-                className="px-6 py-3 text-right font-mono text-[10px] text-stone-500 uppercase tracking-wider cursor-pointer hover:text-stone-700"
+                className="px-4 py-3 text-right font-mono text-[10px] text-stone-500 uppercase tracking-wider cursor-pointer hover:text-stone-700"
                 onClick={() => handleSort('chef_count')}
               >
                 <span className="inline-flex items-center gap-1 justify-end">
@@ -301,35 +441,175 @@ export function ShowsClient({ shows, potentialShows }: ShowsClientProps) {
                   {sortField === 'chef_count' && <ArrowUpDown className="w-3 h-3" />}
                 </span>
               </th>
-              <th className="px-6 py-3 text-right font-mono text-[10px] text-stone-500 uppercase tracking-wider">
-                Created
+              <th 
+                className="px-4 py-3 text-center font-mono text-[10px] text-stone-500 uppercase tracking-wider cursor-pointer hover:text-stone-700"
+                onClick={() => handleSort('is_public')}
+              >
+                <span className="inline-flex items-center gap-1">
+                  Public
+                  {sortField === 'is_public' && <ArrowUpDown className="w-3 h-3" />}
+                </span>
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-stone-100">
             {sortedShows.map((show) => (
-              <tr key={show.id} className="hover:bg-stone-50 transition-colors">
-                <td className="px-6 py-3">
-                  <span className="font-medium text-stone-900">{show.name}</span>
-                </td>
-                <td className="px-6 py-3 text-sm text-stone-500">
-                  {show.network || '—'}
-                </td>
-                <td className="px-6 py-3 text-right">
-                  <span className={clsx(
-                    'font-mono text-sm font-bold',
-                    show.chef_count > 0 ? 'text-emerald-600' : 'text-stone-300'
-                  )}>
-                    {show.chef_count}
-                  </span>
-                </td>
-                <td className="px-6 py-3 text-right text-sm text-stone-500">
-                  {formatDate(show.created_at)}
-                </td>
-              </tr>
+              <Fragment key={show.id}>
+                <tr 
+                  className={clsx(
+                    'hover:bg-stone-50 transition-colors cursor-pointer',
+                    expandedShow === show.id && 'bg-stone-50'
+                  )}
+                  onClick={() => setExpandedShow(expandedShow === show.id ? null : show.id)}
+                >
+                  <td className="px-3 py-3">
+                    {expandedShow === show.id ? (
+                      <ChevronDown className="w-4 h-4 text-stone-400" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-stone-400" />
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className={clsx(
+                        'font-medium',
+                        show.is_public ? 'text-stone-900' : 'text-stone-400'
+                      )}>
+                        {show.name}
+                      </span>
+                      {show.network && (
+                        <span className="text-xs text-stone-400">({show.network})</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    {show.show_type ? (
+                      <span className={clsx(
+                        'px-2 py-0.5 text-xs font-medium rounded',
+                        SHOW_TYPE_COLORS[show.show_type] || 'bg-stone-100 text-stone-600'
+                      )}>
+                        {SHOW_TYPE_LABELS[show.show_type] || show.show_type}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-stone-300">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {show.parent_show_name ? (
+                      <span className="text-sm text-stone-600 flex items-center gap-1">
+                        <Link2 className="w-3 h-3" />
+                        {show.parent_show_name}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-stone-300">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <span className={clsx(
+                      'font-mono text-sm font-bold',
+                      show.chef_count > 0 ? 'text-emerald-600' : 'text-stone-300'
+                    )}>
+                      {show.chef_count}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTogglePublic(show);
+                      }}
+                      disabled={updating === show.id}
+                      className={clsx(
+                        'p-1.5 rounded transition-colors',
+                        show.is_public 
+                          ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200' 
+                          : 'bg-stone-100 text-stone-400 hover:bg-stone-200'
+                      )}
+                    >
+                      {updating === show.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : show.is_public ? (
+                        <Eye className="w-4 h-4" />
+                      ) : (
+                        <EyeOff className="w-4 h-4" />
+                      )}
+                    </button>
+                  </td>
+                </tr>
+                
+                {expandedShow === show.id && (
+                  <tr className="bg-stone-50">
+                    <td colSpan={6} className="px-6 py-4">
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <label className="block font-mono text-[10px] text-stone-500 uppercase tracking-wider mb-2">
+                            Show Type
+                          </label>
+                          <select
+                            value={show.show_type || ''}
+                            onChange={(e) => handleUpdateShowType(show, e.target.value || null)}
+                            disabled={updating === show.id}
+                            className="w-full border border-stone-300 rounded px-3 py-2 text-sm focus:border-copper-500 focus:ring-1 focus:ring-copper-500"
+                          >
+                            <option value="">Not set</option>
+                            <option value="core">Core</option>
+                            <option value="spinoff">Spinoff</option>
+                            <option value="variant">Variant</option>
+                            <option value="named_season">Named Season</option>
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <label className="block font-mono text-[10px] text-stone-500 uppercase tracking-wider mb-2">
+                            Parent Show
+                          </label>
+                          <select
+                            value={show.parent_show_id || ''}
+                            onChange={(e) => handleUpdateParent(show, e.target.value || null)}
+                            disabled={updating === show.id}
+                            className="w-full border border-stone-300 rounded px-3 py-2 text-sm focus:border-copper-500 focus:ring-1 focus:ring-copper-500"
+                          >
+                            <option value="">None (top-level)</option>
+                            {coreShows
+                              .filter(s => s.id !== show.id)
+                              .map(s => (
+                                <option key={s.id} value={s.id}>{s.name}</option>
+                              ))
+                            }
+                          </select>
+                        </div>
+                        
+                        <div className="col-span-2 flex items-center gap-4 pt-2 border-t border-stone-200">
+                          <div className="text-xs text-stone-500">
+                            <strong>Slug:</strong> {show.slug}
+                          </div>
+                          <div className="text-xs text-stone-500">
+                            <strong>Created:</strong> {formatDate(show.created_at)}
+                          </div>
+                          <a
+                            href={`/shows/${show.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-copper-600 hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            View public page →
+                          </a>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             ))}
           </tbody>
         </table>
+        
+        {sortedShows.length === 0 && (
+          <div className="px-6 py-12 text-center text-stone-500">
+            No shows match your filters
+          </div>
+        )}
       </div>
 
       {potentialShows.length > 0 && (

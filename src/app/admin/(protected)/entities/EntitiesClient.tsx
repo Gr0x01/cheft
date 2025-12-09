@@ -6,7 +6,6 @@ import { EntityList } from './EntityList';
 import { ChefEditorPanel } from './ChefEditorPanel';
 import { RestaurantEditorPanel, RestaurantEditorHandle } from './RestaurantEditorPanel';
 import { Search, X, Loader2, Shield, Plus } from 'lucide-react';
-import { Toaster } from 'sonner';
 
 type Chef = Database['public']['Tables']['chefs']['Row'];
 type Restaurant = Database['public']['Tables']['restaurants']['Row'] & { protected?: boolean };
@@ -448,7 +447,6 @@ export function EntitiesClient({ chefs, restaurants }: EntitiesClientProps) {
           </div>
         </div>
       )}
-      <Toaster position="bottom-right" />
     </div>
   );
 }

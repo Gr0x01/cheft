@@ -37,7 +37,8 @@ export async function generateStaticParams() {
   
   const { data: shows } = await supabase
     .from('shows')
-    .select('slug');
+    .select('slug')
+    .eq('is_public', true);
 
   return ((shows || []) as Array<{ slug: string }>).map(show => ({
     slug: show.slug,
@@ -54,7 +55,14 @@ export default async function ShowPage({ params }: ShowPageProps) {
     notFound();
   }
 
-  const seasons: Array<{ season: string; season_name: string | null }> = await db.getShowSeasons(slug);
+  const isVariant = show.parent_show_id !== null;
+  const isCore = show.show_type === 'core' || (!show.parent_show_id && !show.show_type);
+  
+  const [seasons, childShows] = await Promise.all([
+    db.getShowSeasons(slug),
+    isCore ? db.getShowChildren(slug) : Promise.resolve([]),
+  ]);
+
   const allChefs = show.chef_shows?.filter((cs: any) => cs.chef.restaurant_count > 0) || [];
   const totalRestaurants = allChefs.reduce((sum: number, cs: any) => sum + (cs.chef.restaurant_count || 0), 0);
 
@@ -67,6 +75,8 @@ export default async function ShowPage({ params }: ShowPageProps) {
     james_beard_status: cs.chef.james_beard_status,
     restaurant_count: cs.chef.restaurant_count || 0,
     has_michelin: false,
+    source_show_slug: cs.source_show_slug,
+    source_show_name: cs.source_show_name,
     chef_shows: [{
       show: { name: show.name, slug: show.slug },
       season: cs.season,
@@ -75,16 +85,24 @@ export default async function ShowPage({ params }: ShowPageProps) {
     }],
   }));
 
+  const breadcrumbItems = isVariant && show.parent_show_slug
+    ? [
+        { label: 'Shows', href: '/shows' },
+        { label: show.parent_show_name, href: `/shows/${show.parent_show_slug}` },
+        { label: show.name },
+      ]
+    : [
+        { label: 'Shows', href: '/shows' },
+        { label: show.name },
+      ];
+
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
       <Header />
       <PageHero
         title={show.name}
         subtitle={show.network}
-        breadcrumbItems={[
-          { label: 'Shows', href: '/shows' },
-          { label: show.name },
-        ]}
+        breadcrumbItems={breadcrumbItems}
         stats={[
           { value: allChefs.length, label: 'CHEFS' },
           { value: totalRestaurants, label: 'RESTAURANTS' },
@@ -92,7 +110,16 @@ export default async function ShowPage({ params }: ShowPageProps) {
         ]}
       />
 
-      <ShowPageClient chefs={chefData} showSlug={slug} seasons={seasons} />
+      <ShowPageClient 
+        chefs={chefData} 
+        showSlug={slug} 
+        seasons={seasons}
+        childShows={childShows}
+        parentInfo={isVariant && show.parent_show_slug ? {
+          slug: show.parent_show_slug,
+          name: show.parent_show_name,
+        } : undefined}
+      />
     </div>
   );
 }

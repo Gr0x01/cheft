@@ -13,10 +13,23 @@ interface Season {
   season_name: string | null;
 }
 
+interface ChildShow {
+  id: string;
+  name: string;
+  slug: string;
+  show_type: string | null;
+  chef_count: number;
+}
+
 interface ShowPageClientProps {
-  chefs: ChefData[];
+  chefs: (ChefData & { source_show_slug?: string; source_show_name?: string })[];
   showSlug?: string;
   seasons?: Season[];
+  childShows?: ChildShow[];
+  parentInfo?: {
+    slug: string;
+    name: string;
+  };
 }
 
 function sortSeasons(seasons: Season[]): Season[] {
@@ -92,35 +105,137 @@ function SeasonLinks({ seasons, showSlug }: { seasons: Season[]; showSlug: strin
   );
 }
 
-function ShowPageClientInner({ chefs, showSlug, seasons = [] }: ShowPageClientProps) {
+function VariantTabs({ 
+  childShows, 
+  showSlug, 
+  selectedVariant, 
+  onSelectVariant 
+}: { 
+  childShows: ChildShow[]; 
+  showSlug: string;
+  selectedVariant: string | null;
+  onSelectVariant: (slug: string | null) => void;
+}) {
+  if (childShows.length === 0) return null;
+
+  const getShortName = (name: string) => {
+    const parts = name.split(':');
+    if (parts.length > 1) return parts[1].trim();
+    const parentMatch = name.match(/^(.+?)\s+(All-Stars|Masters|Jr\.|Junior|Legends|World)/i);
+    if (parentMatch) return parentMatch[2];
+    return name;
+  };
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className="font-mono text-[10px] tracking-wider uppercase text-slate-400 mr-1">View:</span>
+      <button
+        onClick={() => onSelectVariant(null)}
+        className={`font-mono text-[11px] font-semibold px-3 py-1.5 border transition-all duration-200 ${
+          selectedVariant === null 
+            ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)] text-white' 
+            : 'border-[var(--border-light)] hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)]'
+        }`}
+        style={selectedVariant !== null ? { color: 'var(--text-secondary)' } : {}}
+      >
+        All
+      </button>
+      {childShows.map((child) => (
+        <button
+          key={child.id}
+          onClick={() => onSelectVariant(child.slug)}
+          className={`font-mono text-[11px] font-semibold px-3 py-1.5 border transition-all duration-200 ${
+            selectedVariant === child.slug 
+              ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)] text-white' 
+              : 'border-[var(--border-light)] hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)]'
+          }`}
+          style={selectedVariant !== child.slug ? { color: 'var(--text-secondary)' } : {}}
+        >
+          {getShortName(child.name)}
+          <span className="ml-1 opacity-60">({child.chef_count})</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ParentShowBanner({ parentInfo }: { parentInfo: { slug: string; name: string } }) {
+  return (
+    <div 
+      className="mb-4 px-4 py-2 border-l-4"
+      style={{ 
+        borderLeftColor: 'var(--accent-primary)',
+        background: 'var(--bg-secondary)',
+      }}
+    >
+      <span className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>
+        Part of the{' '}
+        <Link 
+          href={`/shows/${parentInfo.slug}`}
+          className="font-semibold hover:underline"
+          style={{ color: 'var(--accent-primary)' }}
+        >
+          {parentInfo.name}
+        </Link>
+        {' '}family
+      </span>
+    </div>
+  );
+}
+
+function ShowPageClientInner({ chefs, showSlug, seasons = [], childShows = [], parentInfo }: ShowPageClientProps) {
   const [filteredChefs, setFilteredChefs] = useState<ChefData[]>(chefs);
+  const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
 
   const handleFilteredChefsChange = useCallback((filtered: ChefData[]) => {
     setFilteredChefs(filtered);
   }, []);
 
+  const displayedChefs = useMemo(() => {
+    if (!selectedVariant) return filteredChefs;
+    return filteredChefs.filter((chef: any) => chef.source_show_slug === selectedVariant);
+  }, [filteredChefs, selectedVariant]);
+
   const seasonLinks = seasons.length > 0 && showSlug ? (
     <SeasonLinks seasons={seasons} showSlug={showSlug} />
   ) : null;
 
+  const variantTabs = childShows.length > 0 && showSlug ? (
+    <VariantTabs 
+      childShows={childShows} 
+      showSlug={showSlug}
+      selectedVariant={selectedVariant}
+      onSelectVariant={setSelectedVariant}
+    />
+  ) : null;
+
+  const extraContent = (
+    <div className="space-y-3">
+      {variantTabs}
+      {seasonLinks}
+    </div>
+  );
+
   return (
     <>
+      {parentInfo && <ParentShowBanner parentInfo={parentInfo} />}
+      
       <ChefFilters
         chefs={chefs}
-        totalChefs={chefs.length}
+        totalChefs={displayedChefs.length}
         onFilteredChefsChange={handleFilteredChefsChange}
         hideShowDropdown
-        extraContent={seasonLinks}
+        extraContent={extraContent}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {filteredChefs.length === 0 ? (
+        {displayedChefs.length === 0 ? (
           <EmptyState
             message="No chefs found matching your criteria"
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredChefs.map((chef, index) => (
+            {displayedChefs.map((chef, index) => (
               <ChefCard key={chef.id} chef={chef} index={index} hideShowName />
             ))}
           </div>
@@ -130,7 +245,7 @@ function ShowPageClientInner({ chefs, showSlug, seasons = [] }: ShowPageClientPr
   );
 }
 
-export function ShowPageClient({ chefs, showSlug, seasons }: ShowPageClientProps) {
+export function ShowPageClient({ chefs, showSlug, seasons, childShows, parentInfo }: ShowPageClientProps) {
   return (
     <Suspense fallback={
       <div className="max-w-7xl mx-auto px-4 py-12">
@@ -141,7 +256,13 @@ export function ShowPageClient({ chefs, showSlug, seasons }: ShowPageClientProps
         </div>
       </div>
     }>
-      <ShowPageClientInner chefs={chefs} showSlug={showSlug} seasons={seasons} />
+      <ShowPageClientInner 
+        chefs={chefs} 
+        showSlug={showSlug} 
+        seasons={seasons} 
+        childShows={childShows}
+        parentInfo={parentInfo}
+      />
     </Suspense>
   );
 }

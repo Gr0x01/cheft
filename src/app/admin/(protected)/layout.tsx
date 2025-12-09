@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { AdminNav } from './AdminNav';
+import { Toaster } from 'sonner';
 
 export default async function AdminLayout({
   children,
@@ -63,6 +64,7 @@ export default async function AdminLayout({
       <main className="px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
+      <Toaster position="bottom-right" />
     </div>
   );
 }
