@@ -1,5 +1,5 @@
 import { generateText, tool } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { createOpenAI, openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 
 export interface LLMClientConfig {
@@ -21,15 +21,56 @@ export interface LLMResponse {
   steps?: unknown[];
 }
 
+function getLocalProvider() {
+  const lmStudioUrl = process.env.LM_STUDIO_URL;
+  if (!lmStudioUrl) return null;
+  
+  return createOpenAI({
+    baseURL: `${lmStudioUrl}/v1`,
+    apiKey: 'not-needed',
+  });
+}
+
+async function isLocalAvailable(): Promise<boolean> {
+  const lmStudioUrl = process.env.LM_STUDIO_URL;
+  if (!lmStudioUrl) return false;
+
+  try {
+    const response = await fetch(`${lmStudioUrl}/v1/models`, {
+      signal: AbortSignal.timeout(2000),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 export class LLMClient {
   private model: string;
   private searchModel: string;
   private searchTokens: { prompt: number; completion: number; total: number };
+  private useLocal: boolean = false;
+  private localProvider: ReturnType<typeof createOpenAI> | null = null;
 
   constructor(config: LLMClientConfig = {}) {
     this.model = config.model ?? 'gpt-4.1';
     this.searchModel = config.searchModel ?? 'gpt-4o-search-preview';
     this.searchTokens = { prompt: 0, completion: 0, total: 0 };
+  }
+
+  private async ensureLocalChecked(): Promise<void> {
+    if (this.localProvider !== null || this.useLocal) return;
+    
+    const available = await isLocalAvailable();
+    if (available) {
+      this.localProvider = getLocalProvider();
+      this.useLocal = true;
+      console.log(`   🖥️  Using local LLM at ${process.env.LM_STUDIO_URL}`);
+    }
+  }
+
+  private getProvider() {
+    return this.useLocal && this.localProvider ? this.localProvider : openai;
   }
 
   private async webSearch(query: string): Promise<string> {
@@ -60,11 +101,14 @@ export class LLMClient {
       useResponseModel?: boolean;
     } = {}
   ): Promise<LLMResponse> {
+    await this.ensureLocalChecked();
+    
     const maxTokens = options.maxTokens ?? 8000;
     const maxSteps = options.maxSteps ?? 10;
+    const provider = this.getProvider();
 
     const result = await generateText({
-      model: openai(this.model),
+      model: provider(this.model),
       system,
       prompt,
       tools: {

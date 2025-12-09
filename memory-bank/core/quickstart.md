@@ -1,5 +1,5 @@
 ---
-Last-Updated: 2025-12-09
+Last-Updated: 2025-12-10
 Maintainer: RB
 Status: Pre-Launch - Final Polish
 ---
@@ -28,7 +28,33 @@ npm run test:e2e:ui  # Interactive test mode
 npx tsx scripts/harvest-tavily-cache.ts   # Populate Tavily search cache
 npx tsx scripts/extract-from-cache.ts     # Extract restaurants from cache
 npx tsx scripts/enrich-google-places.ts   # Backfill Google Place IDs
+
+# Adding New Shows (fully automated)
+npx tsx scripts/add-show.ts --show "Show Name" --network "Network" --contestants "Name:season:result,..."
+npx tsx scripts/add-show.ts --config path/to/show-config.json
 ```
+
+## Adding a New TV Show
+Use `scripts/add-show.ts` to add a new show with contestants. It handles everything:
+1. Creates/makes show public in database
+2. Creates chef records for each contestant
+3. Runs full enrichment (bio, restaurants, other TV appearances)
+4. Generates show and season SEO descriptions
+5. Reports Google Places status (run `enrich-google-places.ts` after)
+
+**Config file format** (`shows/example.json`):
+```json
+{
+  "showName": "Holiday Baking Championship",
+  "network": "Food Network",
+  "contestants": [
+    { "name": "Melissa Yanc", "season": "6", "result": "winner" },
+    { "name": "Ashley Landerman", "season": "10", "result": "winner" }
+  ]
+}
+```
+
+**Local LLM**: Auto-detects `LM_STUDIO_URL` env var and uses local LLM if available.
 
 ## Active Focus
 - UI polish and cleanup
