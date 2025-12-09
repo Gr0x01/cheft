@@ -1,29 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Crimson_Pro, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import PlausibleProvider from "next-plausible";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import "./globals.css";
-
-const crimsonPro = Crimson_Pro({
-  variable: "--font-crimson-pro",
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
-});
-
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
-});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -67,9 +45,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://lh3.googleusercontent.com" />
         <link rel="dns-prefetch" href="https://upload.wikimedia.org" />
       </head>
-      <body
-        className={`${crimsonPro.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} antialiased`}
-      >
+      <body className="antialiased">
         <PostHogProvider>{children}</PostHogProvider>
       </body>
     </html>
