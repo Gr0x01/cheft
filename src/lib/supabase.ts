@@ -137,7 +137,8 @@ export const db = {
         )
       `)
       .eq('is_public', true)
-      .order('name');
+      .order('name')
+      .limit(5000);
     
     if (error) throw error;
     return transformRestaurants(data);
@@ -546,6 +547,194 @@ export const db = {
       season: firstRow.season,
       season_name: firstRow.season_name,
       chef_shows: Array.from(chefsMap.values())
+    };
+  },
+
+  async getShowWinnersWithRestaurants(showSlug: string): Promise<Array<{
+    chef: {
+      id: string;
+      name: string;
+      slug: string;
+      photo_url: string | null;
+    };
+    season: string;
+    flagship: {
+      id: string;
+      name: string;
+      slug: string;
+      city: string;
+      state: string | null;
+      photo_url: string | null;
+      michelin_stars: number | null;
+      price_tier: string | null;
+    } | null;
+  }>> {
+    const client = getSupabaseClient();
+    const { data: showData } = await client
+      .from('shows')
+      .select('id')
+      .eq('slug', showSlug)
+      .single();
+    
+    if (!showData) return [];
+
+    const { data: winners, error } = await client
+      .from('chef_shows')
+      .select(`
+        season,
+        chef:chefs(
+          id,
+          name,
+          slug,
+          photo_url,
+          restaurants(
+            id,
+            name,
+            slug,
+            city,
+            state,
+            photo_urls,
+            michelin_stars,
+            price_tier,
+            status
+          )
+        )
+      `)
+      .eq('show_id', showData.id)
+      .eq('result', 'winner')
+      .order('season', { ascending: false });
+
+    if (error || !winners) return [];
+
+    return (winners as any[])
+      .filter(w => w.chef && w.season)
+      .map(w => {
+        const openRestaurants = (w.chef.restaurants || [])
+          .filter((r: any) => r.status === 'open')
+          .sort((a: any, b: any) => (b.michelin_stars || 0) - (a.michelin_stars || 0));
+        
+        const flagship = openRestaurants[0];
+        
+        return {
+          chef: {
+            id: w.chef.id,
+            name: w.chef.name,
+            slug: w.chef.slug,
+            photo_url: w.chef.photo_url,
+          },
+          season: w.season,
+          flagship: flagship ? {
+            id: flagship.id,
+            name: flagship.name,
+            slug: flagship.slug,
+            city: flagship.city,
+            state: flagship.state,
+            photo_url: flagship.photo_urls?.[0] || null,
+            michelin_stars: flagship.michelin_stars,
+            price_tier: flagship.price_tier,
+          } : null,
+        };
+      })
+      .sort((a, b) => {
+        const aNum = parseInt(a.season, 10);
+        const bNum = parseInt(b.season, 10);
+        if (!isNaN(aNum) && !isNaN(bNum)) return bNum - aNum;
+        return 0;
+      });
+  },
+
+  async getShowRestaurantLocations(showSlug: string): Promise<Array<{
+    id: string;
+    name: string;
+    slug: string;
+    lat: number;
+    lng: number;
+    city: string;
+    chef_name: string;
+  }>> {
+    const client = getSupabaseClient();
+    const { data: showData } = await client
+      .from('shows')
+      .select('id')
+      .eq('slug', showSlug)
+      .single();
+    
+    if (!showData) return [];
+
+    const { data: chefIds } = await client
+      .from('chef_shows')
+      .select('chef_id')
+      .eq('show_id', showData.id);
+    
+    if (!chefIds || chefIds.length === 0) return [];
+
+    const { data: restaurants, error } = await client
+      .from('restaurants')
+      .select(`
+        id,
+        name,
+        slug,
+        lat,
+        lng,
+        city,
+        chef:chefs(name)
+      `)
+      .in('chef_id', chefIds.map(c => c.chef_id))
+      .eq('status', 'open')
+      .eq('is_public', true)
+      .not('lat', 'is', null)
+      .not('lng', 'is', null);
+
+    if (error || !restaurants) return [];
+
+    return (restaurants as any[]).map(r => ({
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+      lat: r.lat,
+      lng: r.lng,
+      city: r.city,
+      chef_name: r.chef?.name || '',
+    }));
+  },
+
+  async getShowStats(showSlug: string): Promise<{
+    totalRestaurants: number;
+    totalCities: number;
+    michelinStars: number;
+  }> {
+    const client = getSupabaseClient();
+    const { data: showData } = await client
+      .from('shows')
+      .select('id')
+      .eq('slug', showSlug)
+      .single();
+    
+    if (!showData) return { totalRestaurants: 0, totalCities: 0, michelinStars: 0 };
+
+    const { data: chefIds } = await client
+      .from('chef_shows')
+      .select('chef_id')
+      .eq('show_id', showData.id);
+    
+    if (!chefIds || chefIds.length === 0) return { totalRestaurants: 0, totalCities: 0, michelinStars: 0 };
+
+    const { data: restaurants } = await client
+      .from('restaurants')
+      .select('city, michelin_stars')
+      .in('chef_id', chefIds.map(c => c.chef_id))
+      .eq('status', 'open')
+      .eq('is_public', true);
+
+    if (!restaurants) return { totalRestaurants: 0, totalCities: 0, michelinStars: 0 };
+
+    const cities = new Set(restaurants.map(r => r.city));
+    const michelinStars = restaurants.reduce((sum, r) => sum + (r.michelin_stars || 0), 0);
+
+    return {
+      totalRestaurants: restaurants.length,
+      totalCities: cities.size,
+      michelinStars,
     };
   }
 };
