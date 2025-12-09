@@ -1,7 +1,7 @@
 ---
-Last-Updated: 2025-12-08
+Last-Updated: 2025-12-09
 Maintainer: RB
-Status: Phase 2 Complete
+Status: Phase 3 Complete
 ---
 
 # Show Hierarchy Project
@@ -93,11 +93,15 @@ Add `parent_show_id` and `is_public` to create hierarchical relationships with v
 - `cutthroat-kitchen-all-star-tournament` → `cutthroat-kitchen-all-stars`
 - `the-next-food-network-star` → `food-network-star`
 
-### Phase 3: Ingestion Pipeline (Simplified)
-- [ ] Update `show-repository.ts`:
-  - [ ] Auto-create unknown shows with `is_public=false`
-  - [ ] Keep `showNameMap` for known show routing
-  - [ ] No LLM prompt changes needed - admin classifies via admin panel
+### Phase 3: Ingestion Pipeline (Simplified) ✅ COMPLETE
+- [x] Update `show-repository.ts`:
+  - [x] Auto-create unknown shows with `is_public=false` via upsert
+  - [x] Added `createShow()` method with race-condition safe upsert
+  - [x] Input validation (empty names, invalid slugs)
+  - [x] Unicode-safe `slugify()` helper (NFD normalization)
+  - [x] Keep `showNameMap` for known show routing
+- [x] Update `database.types.ts` with new show fields
+- [x] Update `supabase.ts` Show interface
 
 ### Phase 4: TypeScript Types
 - [ ] Update `src/lib/supabase.ts` - Show interface with new fields

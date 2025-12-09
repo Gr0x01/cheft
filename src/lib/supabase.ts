@@ -45,7 +45,11 @@ export { getSupabaseClient as supabase };
 export interface Show {
   id: string;
   name: string;
+  slug: string;
   network: string | null;
+  parent_show_id: string | null;
+  show_type: 'core' | 'spinoff' | 'variant' | 'named_season' | null;
+  is_public: boolean | null;
   created_at: string;
 }
 

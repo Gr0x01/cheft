@@ -2,6 +2,17 @@ import { z } from 'zod';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../../src/lib/database.types';
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/['']/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-+/g, '-');
+}
+
 const TVShowAppearanceSchema = z.object({
   showName: z.string(),
   season: z.string().nullable().optional(),
@@ -91,11 +102,14 @@ export class ShowRepository {
     const newCombinations: Array<{ showId: string; season: string | null }> = [];
 
     for (const show of tvShows) {
-      const showId = await this.findShowByName(show.showName);
+      let showId = await this.findShowByName(show.showName);
       if (!showId) {
-        console.log(`      ⚠️  Could not find show "${show.showName}" in database, skipping`);
-        skipped++;
-        continue;
+        showId = await this.createShow(show.showName);
+        if (!showId) {
+          console.log(`      ⚠️  Could not create show "${show.showName}" in database, skipping`);
+          skipped++;
+          continue;
+        }
       }
 
       const seasonValue = show.season ?? null;
@@ -279,5 +293,53 @@ export class ShowRepository {
     if (error) {
       throw new Error(`Failed to save season description: ${error.message}`);
     }
+  }
+
+  async createShow(showName: string): Promise<string | null> {
+    if (!showName?.trim()) {
+      console.error('      ❌ Invalid show name provided');
+      return null;
+    }
+
+    const trimmedName = showName.trim();
+    const slug = slugify(trimmedName);
+    
+    if (!slug) {
+      console.error(`      ❌ Could not generate valid slug for "${trimmedName}"`);
+      return null;
+    }
+
+    const { data, error } = await this.supabase
+      .from('shows')
+      .upsert(
+        {
+          name: trimmedName,
+          slug,
+          is_public: false,
+        },
+        {
+          onConflict: 'slug',
+          ignoreDuplicates: true,
+        }
+      )
+      .select('id')
+      .single();
+
+    if (error) {
+      const { data: existing } = await this.supabase
+        .from('shows')
+        .select('id')
+        .eq('slug', slug)
+        .maybeSingle();
+      
+      if (existing) {
+        return existing.id;
+      }
+      console.error(`      ❌ Failed to create show "${trimmedName}": ${error.message}`);
+      return null;
+    }
+
+    console.log(`      📺 Created new show (non-public): ${trimmedName}`);
+    return data.id;
   }
 }

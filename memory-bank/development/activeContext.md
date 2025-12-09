@@ -1,7 +1,7 @@
 ---
-Last-Updated: 2025-12-08
+Last-Updated: 2025-12-09
 Maintainer: RB
-Status: Show Hierarchy Project - Phase 2 Complete
+Status: Show Hierarchy Project - Phase 3 Complete
 ---
 
 # Active Context: Chefs
@@ -14,25 +14,18 @@ Status: Show Hierarchy Project - Phase 2 Complete
 ## In Progress: Show Hierarchy Project
 
 ### Phase 1: Database Schema ✅ COMPLETE
-- Created `supabase/migrations/037_show_hierarchy.sql`
-- Added columns: `parent_show_id`, `show_type`, `is_public`
-- Added indexes for query performance
-- Updated RPCs: `get_shows_with_counts()`, `get_show_with_chef_counts()`
-- New RPCs: `get_show_family()`, `get_show_children()`
-
 ### Phase 2: Data Cleanup ✅ COMPLETE
-- Applied migration to production database
-- Classified 86 shows as public (31 core, 17 spinoff, 25 variant, 13 named_season)
-- 75 shows remain non-public (obscure/incomplete)
-- Merged 4 duplicate shows
-- Fixed `get_show_children()` RPC ambiguity bug
-- `/shows` page will now display ~49 shows instead of 148+
+### Phase 3: Ingestion Pipeline ✅ COMPLETE (Dec 9)
+- Auto-create unknown shows with `is_public=false` via upsert
+- Added `createShow()` method with race-condition safe upsert
+- Unicode-safe `slugify()` helper (NFD normalization)
+- Updated TypeScript types (`database.types.ts`, `supabase.ts`)
 
-### Next: Phase 3+ - Frontend Updates
-- Update TypeScript types in `src/lib/supabase.ts`
-- Update `/shows` page to use new RPC
+### Next: Phase 4+ - Frontend Updates
+- Update `/shows` page to use new RPC (already working)
 - Gray out non-public shows on chef pages
 - Update show filters to only show public shows
+- Admin UI for show hierarchy management
 
 ### Project Doc: `memory-bank/projects/show-hierarchy-project.md`
 

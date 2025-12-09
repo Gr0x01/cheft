@@ -673,6 +673,9 @@ export interface Database {
           description: string | null;
           season_descriptions: Json | null;
           seo_generated_at: string | null;
+          parent_show_id: string | null;
+          show_type: "core" | "spinoff" | "variant" | "named_season" | null;
+          is_public: boolean | null;
           created_at: string;
         };
         Insert: {
@@ -684,6 +687,9 @@ export interface Database {
           description?: string | null;
           season_descriptions?: Json | null;
           seo_generated_at?: string | null;
+          parent_show_id?: string | null;
+          show_type?: "core" | "spinoff" | "variant" | "named_season" | null;
+          is_public?: boolean | null;
           created_at?: string;
         };
         Update: {
@@ -695,9 +701,20 @@ export interface Database {
           description?: string | null;
           season_descriptions?: Json | null;
           seo_generated_at?: string | null;
+          parent_show_id?: string | null;
+          show_type?: "core" | "spinoff" | "variant" | "named_season" | null;
+          is_public?: boolean | null;
           created_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "shows_parent_show_id_fkey";
+            columns: ["parent_show_id"];
+            isOneToOne: false;
+            referencedRelation: "shows";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       user_feedback: {
         Row: {
@@ -846,8 +863,10 @@ export interface Database {
           slug: string;
           network: string | null;
           created_at: string;
+          show_type: string | null;
           chef_count: number;
           restaurant_count: number;
+          child_count: number;
         }[];
       };
       get_feedback_summary: {
