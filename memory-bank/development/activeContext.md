@@ -1,19 +1,19 @@
 ---
 Last-Updated: 2025-12-09
 Maintainer: RB
-Status: Show Hierarchy Project - Phase 7 Complete
+Status: Show Hierarchy Project - COMPLETE
 ---
 
 # Active Context: Chefs
 
 ## Current Status
-- **Phase**: Show Hierarchy Project
-- **Mode**: Active development
-- **Focus**: Frontend filters (Phase 8)
+- **Phase**: Show Hierarchy Project - COMPLETE
+- **Mode**: Maintenance mode
+- **Focus**: Bug fixes, content expansion
 
-## In Progress: Show Hierarchy Project
+## Show Hierarchy Project - COMPLETE
 
-### Completed Phases
+### All Phases Complete
 - **Phase 1**: Database Schema ✅
 - **Phase 2**: Data Cleanup ✅
 - **Phase 3**: Ingestion Pipeline ✅
@@ -21,18 +21,14 @@ Status: Show Hierarchy Project - Phase 7 Complete
 - **Phase 5**: Frontend - Show Pages ✅
 - **Phase 6**: Admin UI ✅ (Dec 9)
 - **Phase 7**: Frontend - Chef Pages ✅ (Dec 9)
+- **Phase 8**: Frontend - Filters ✅ (Dec 9)
+- **Phase 9**: Validation ✅ (Dec 9)
 
-### Phase 7 Summary (Chef Pages)
-- Non-public shows grayed out (dashed border + reduced opacity)
-- Non-public shows NOT clickable (no navigation)
-- Custom `Tooltip` component with 500ms delay hover
-- Updated queries to fetch `is_public` from shows
-- Files: `TVAppearanceBadge.tsx`, `ShowBadgeCompact.tsx`, `ShowBadgeStrip.tsx`, `FeaturedChefHero.tsx`
-- New: `src/components/ui/Tooltip.tsx`
-
-### Next: Phase 8 - Frontend Filters
-- `ChefFilters.tsx` - only public shows in dropdown
-- `useChefFilters.ts` - expand parent selection to include children
+### Phase 8 Summary (Frontend Filters)
+- `/chefs` dropdown now shows only public parent shows
+- Selecting a parent show includes chefs from all child shows
+- Chef counts aggregate parent + children
+- Files: `page.tsx`, `ChefsPageClient.tsx`, `ChefFilters.tsx`
 
 ### Project Doc: `memory-bank/projects/show-hierarchy-project.md`
 

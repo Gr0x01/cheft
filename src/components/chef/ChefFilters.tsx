@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, type ReactNode } from 'react';
+import { useState, useRef, useEffect, useMemo, type ReactNode } from 'react';
 import { Trophy, Medal, Search, ChevronDown, Check, X } from 'lucide-react';
 import { 
   useChefFilters, 
@@ -15,6 +15,7 @@ interface Show {
   id: string;
   name: string;
   slug: string;
+  childSlugs?: string[];
   chef_count: number;
 }
 
@@ -35,11 +36,20 @@ export function ChefFilters({ shows = [], chefs, totalChefs, onFilteredChefsChan
   const [filteredChefs, setFilteredChefs] = useState<ChefData[]>(chefs);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const expandedShowSlugs = useMemo(() => 
+    filters.shows.flatMap(slug => {
+      const show = shows.find(s => s.slug === slug);
+      return show ? [slug, ...(show.childSlugs || [])] : [slug];
+    }),
+    [filters.shows, shows]
+  );
+
   useEffect(() => {
-    const filtered = filterChefs(chefs, filters);
+    const expandedFilters = { ...filters, shows: expandedShowSlugs };
+    const filtered = filterChefs(chefs, expandedFilters);
     setFilteredChefs(filtered);
     onFilteredChefsChange(filtered);
-  }, [chefs, filters, onFilteredChefsChange]);
+  }, [chefs, filters, expandedShowSlugs, onFilteredChefsChange]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

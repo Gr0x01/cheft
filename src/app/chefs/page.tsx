@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 export default async function ChefsPage() {
   const supabase = createStaticClient();
 
-  const [chefsResult, showsResult] = await Promise.all([
+  const [chefsResult, showsResult, allShowsResult] = await Promise.all([
     supabase
       .from('chefs')
       .select(`
@@ -48,8 +48,17 @@ export default async function ChefsPage() {
     supabase.from('shows').select(`
       id,
       name,
-      slug
-    `).order('name'),
+      slug,
+      parent_show_id
+    `)
+    .eq('is_public', true)
+    .is('parent_show_id', null)
+    .order('name'),
+    supabase.from('shows').select(`
+      id,
+      slug,
+      parent_show_id
+    `),
   ]);
 
   if (chefsResult.error) {
@@ -86,14 +95,34 @@ export default async function ChefsPage() {
   });
 
   const showsData = showsResult.data || [];
-  const shows = showsData.map(show => ({
-    id: show.id,
-    name: show.name,
-    slug: show.slug,
-    chef_count: chefs.filter(c => 
-      c.chef_shows?.some(cs => cs.show?.slug === show.slug)
-    ).length,
-  }));
+  const allShowsData = allShowsResult.data || [];
+  
+  const childSlugsMap: Record<string, string[]> = {};
+  const showById = new Map(allShowsData.map(s => [s.id, s]));
+  allShowsData.forEach(show => {
+    if (show.parent_show_id) {
+      const parentShow = showById.get(show.parent_show_id);
+      if (parentShow) {
+        if (!childSlugsMap[parentShow.slug]) {
+          childSlugsMap[parentShow.slug] = [];
+        }
+        childSlugsMap[parentShow.slug].push(show.slug);
+      }
+    }
+  });
+  
+  const shows = showsData.map(show => {
+    const familySlugs = [show.slug, ...(childSlugsMap[show.slug] || [])];
+    return {
+      id: show.id,
+      name: show.name,
+      slug: show.slug,
+      childSlugs: childSlugsMap[show.slug] || [],
+      chef_count: chefs.filter(c => 
+        c.chef_shows?.some(cs => familySlugs.includes(cs.show?.slug || ''))
+      ).length,
+    };
+  });
 
   const totalChefs = chefs.length;
   const jbWinnersCount = chefs.filter(c => c.james_beard_status === 'winner').length;

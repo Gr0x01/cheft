@@ -10,6 +10,7 @@ interface Show {
   id: string;
   name: string;
   slug: string;
+  childSlugs: string[];
   chef_count: number;
 }
 
