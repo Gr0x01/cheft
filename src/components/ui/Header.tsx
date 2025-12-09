@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 interface HeaderProps {
-  currentPage?: 'chefs' | 'restaurants' | 'states' | 'cities' | 'countries' | 'about' | 'home';
+  currentPage?: 'chefs' | 'restaurants' | 'cities' | 'countries' | 'about' | 'home';
 }
 
 export function Header({ currentPage }: HeaderProps) {
@@ -101,22 +101,6 @@ export function Header({ currentPage }: HeaderProps) {
             RESTAURANTS
           </Link>
           <Link 
-            href="/states" 
-            className={`font-mono text-xs tracking-wider transition-colors ${
-              currentPage === 'states' 
-                ? 'font-semibold' 
-                : 'hover:text-[var(--accent-primary)]'
-            }`}
-            style={{ 
-              color: currentPage === 'states' 
-                ? 'var(--accent-primary)' 
-                : 'var(--text-muted)' 
-            }}
-            aria-current={currentPage === 'states' ? 'page' : undefined}
-          >
-            STATES
-          </Link>
-          <Link 
             href="/about" 
             className={`font-mono text-xs tracking-wider transition-colors ${
               currentPage === 'about' 
@@ -195,20 +179,6 @@ export function Header({ currentPage }: HeaderProps) {
                 aria-current={currentPage === 'restaurants' ? 'page' : undefined}
               >
                 RESTAURANTS
-              </Link>
-              <Link 
-                href="/states"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`px-4 py-4 font-mono text-sm tracking-wider transition-colors border-b ${
-                  currentPage === 'states' ? 'font-semibold' : ''
-                }`}
-                style={{ 
-                  color: currentPage === 'states' ? 'var(--accent-primary)' : 'var(--text-muted)',
-                  borderColor: 'var(--border-light)'
-                }}
-                aria-current={currentPage === 'states' ? 'page' : undefined}
-              >
-                STATES
               </Link>
               <Link 
                 href="/about"

@@ -19,6 +19,7 @@ import {
   Check,
   Shield,
   Unlink,
+  Globe,
 } from 'lucide-react';
 import { ChefTypeahead } from '@/components/admin/forms/ChefTypeahead';
 
@@ -231,6 +232,7 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
         google_rating: formData.google_rating,
         google_review_count: formData.google_review_count,
         maps_url: formData.maps_url,
+        website_url: formData.website_url,
         michelin_stars: formData.michelin_stars,
         protected: formData.protected,
       };
@@ -452,6 +454,23 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
               onChange={(e) => updateField('lng', e.target.value ? Number(e.target.value) : null)}
             />
           </div>
+        </FieldSection>
+
+<FieldSection title="Links" description="Website and maps" icon={Globe}>
+          <TextField
+            label="Website"
+            name="website_url"
+            value={formData.website_url || ''}
+            onChange={(e) => updateField('website_url', e.target.value || null)}
+            placeholder="https://..."
+          />
+          <TextField
+            label="Maps URL"
+            name="maps_url"
+            value={formData.maps_url || ''}
+            onChange={(e) => updateField('maps_url', e.target.value || null)}
+            placeholder="Google Maps link"
+          />
         </FieldSection>
 
         <FieldSection title="Details" description="Cuisine and pricing" icon={DollarSign}>

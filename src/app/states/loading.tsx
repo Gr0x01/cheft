@@ -3,7 +3,7 @@ import { Header } from '@/components/ui/Header';
 export default function StatesLoading() {
   return (
     <div className="min-h-screen overflow-auto" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
-      <Header currentPage="states" />
+      <Header />
       
       <div className="bg-gradient-to-b from-[var(--bg-secondary)] to-[var(--bg-primary)] py-16">
         <div className="max-w-7xl mx-auto px-4">

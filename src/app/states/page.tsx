@@ -71,7 +71,7 @@ export default async function StatesPage() {
       <BreadcrumbSchema items={breadcrumbItems} />
 
       <div className="min-h-screen overflow-auto" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
-        <Header currentPage="states" />
+        <Header />
 
         <PageHero
           title="States"
