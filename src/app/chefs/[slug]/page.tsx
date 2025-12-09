@@ -33,6 +33,7 @@ interface ChefData {
   featured_instagram_post: string | null;
   current_position: string | null;
   social_links: { instagram?: string; twitter?: string; website?: string } | null;
+  updated_at: string;
   chef_shows: Array<{
     id: string;
     season: string | null;
@@ -77,6 +78,7 @@ async function getChef(slug: string): Promise<ChefData | null> {
         featured_instagram_post,
         current_position,
         social_links,
+        updated_at,
         chef_shows (
           id,
           season,
@@ -289,6 +291,7 @@ export default async function ChefPage({ params }: ChefPageProps) {
         worksFor={worksFor}
         sameAs={sameAs}
         url={chefUrl}
+        dateModified={chef.updated_at}
       />
       <BreadcrumbSchema items={breadcrumbItems} />
 
@@ -769,6 +772,12 @@ export default async function ChefPage({ params }: ChefPageProps) {
                           </a>
                         </div>
                       )}
+
+                      <div className="pt-4 border-t" style={{ borderColor: 'var(--border-light)' }}>
+                        <span className="font-mono text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                          Updated {new Date(chef.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                      </div>
                     </div>
                   </aside>
                 </div>

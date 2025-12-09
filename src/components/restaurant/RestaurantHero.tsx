@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Breadcrumbs } from '../seo/Breadcrumbs';
-import { getRestaurantStatus, getChefAchievements, sanitizeText, validateImageUrl } from '@/lib/utils/restaurant';
+import { getRestaurantStatus, getChefAchievements, validateImageUrl } from '@/lib/utils/restaurant';
 import { getStorageUrl } from '@/lib/utils/storage';
 import { PhotoGalleryModal } from './PhotoGalleryModal';
 import { GoogleMapsLogo } from '@/components/icons/GoogleMapsLogo';
@@ -31,6 +31,7 @@ interface RestaurantHeroProps {
     phone?: string | null;
     website_url?: string | null;
     maps_url?: string | null;
+    updated_at?: string;
     chef?: {
       name: string;
       slug: string;
@@ -53,9 +54,6 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
   const primaryShow = restaurant.chef?.chef_shows?.find(cs => cs.is_primary) || restaurant.chef?.chef_shows?.[0];
   const chefAchievements = restaurant.chef ? getChefAchievements(restaurant.chef) : { isShowWinner: false, isJBWinner: false, isJBNominee: false, isJBSemifinalist: false };
   
-  const sanitizedName = sanitizeText(restaurant.name);
-  const sanitizedDescription = sanitizeText(restaurant.description);
-  const sanitizedChefName = restaurant.chef ? sanitizeText(restaurant.chef.name) : '';
   
   const photos = (restaurant.photo_urls || []).filter(Boolean);
   const photoCount = photos.length;
@@ -121,7 +119,7 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
             <h1 
               className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-none tracking-tight"
             >
-              {sanitizedName}
+              {restaurant.name}
             </h1>
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -140,7 +138,7 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
               )}
               {restaurant.price_tier && (
                 <span 
-                  className="font-mono text-lg font-bold px-3 py-1"
+                  className="font-mono text-sm font-bold px-3 py-1.5"
                   style={{ background: 'rgba(211, 94, 15, 0.2)', color: 'var(--accent-primary)' }}
                 >
                   {restaurant.price_tier}
@@ -166,12 +164,13 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
               </div>
             )}
 
-            {sanitizedDescription && (
+            {restaurant.description && (
               <p 
                 className="mt-6 font-ui text-base leading-relaxed max-w-2xl"
                 style={{ color: 'rgba(255,255,255,0.75)' }}
-                dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
-              />
+              >
+                {restaurant.description}
+              </p>
             )}
 
             <div className="mt-6 space-y-4">
@@ -189,18 +188,32 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
                   </svg>
                   <div>
                     <p className="font-ui text-sm text-white">{fullAddress}</p>
-                    {restaurant.maps_url && (
-                      <ExternalLinkTracker
-                        href={restaurant.maps_url}
-                        linkType="google_maps"
-                        restaurantName={restaurant.name}
-                        chefName={restaurant.chef?.name}
-                        className="font-mono text-xs tracking-wide mt-1 inline-block transition-colors hover:text-white"
-                        style={{ color: 'var(--accent-primary)' }}
-                      >
-                        GET DIRECTIONS →
-                      </ExternalLinkTracker>
-                    )}
+                    <div className="flex items-center gap-8 mt-1">
+                      {restaurant.maps_url && (
+                        <ExternalLinkTracker
+                          href={restaurant.maps_url}
+                          linkType="google_maps"
+                          restaurantName={restaurant.name}
+                          chefName={restaurant.chef?.name}
+                          className="font-mono text-xs tracking-wide inline-block transition-colors hover:text-white"
+                          style={{ color: 'var(--accent-primary)' }}
+                        >
+                          GET DIRECTIONS →
+                        </ExternalLinkTracker>
+                      )}
+                      {restaurant.website_url && (
+                        <ExternalLinkTracker
+                          href={restaurant.website_url}
+                          linkType="website"
+                          restaurantName={restaurant.name}
+                          chefName={restaurant.chef?.name}
+                          className="font-mono text-xs tracking-wide inline-block transition-colors hover:text-white"
+                          style={{ color: 'var(--accent-primary)' }}
+                        >
+                          WEBSITE →
+                        </ExternalLinkTracker>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -225,21 +238,6 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
                 )}
               </div>
               
-              {restaurant.website_url && (
-                <ExternalLinkTracker
-                  href={restaurant.website_url}
-                  linkType="website"
-                  restaurantName={restaurant.name}
-                  chefName={restaurant.chef?.name}
-                  className="flex items-center gap-2 font-mono text-sm transition-colors hover:text-white"
-                  style={{ color: 'var(--accent-primary)' }}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                  </svg>
-                  WEBSITE
-                </ExternalLinkTracker>
-              )}
             </div>
           </div>
 
@@ -344,12 +342,19 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
               )}
               </div>
               
-              {restaurant.google_rating && (
-                <div className="flex items-center gap-1 justify-end" style={{ opacity: 0.5 }}>
-                  <GoogleMapsLogo size={12} className="text-white" />
-                  <span className="font-mono text-[10px] text-white">Google Maps</span>
-                </div>
-              )}
+              <div className="flex items-center justify-between" style={{ opacity: 0.5 }}>
+                {restaurant.updated_at && (
+                  <span className="font-mono text-[10px] text-white">
+                    Updated {new Date(restaurant.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                )}
+                {restaurant.google_rating && (
+                  <div className="flex items-center gap-1">
+                    <GoogleMapsLogo size={12} className="text-white" />
+                    <span className="font-mono text-[10px] text-white">Google Maps</span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -373,7 +378,7 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
                 {getStorageUrl('chef-photos', restaurant.chef.photo_url) ? (
                   <Image
                     src={getStorageUrl('chef-photos', restaurant.chef.photo_url)!}
-                    alt={`${sanitizeText(restaurant.chef.name)} profile photo`}
+                    alt={`${restaurant.chef.name} profile photo`}
                     fill
                     className="object-cover"
                     sizes="64px"
@@ -393,7 +398,7 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
                 <h3 
                   className="font-display text-xl font-bold text-white group-hover/chef:text-[var(--accent-primary)] transition-colors"
                 >
-                  {sanitizedChefName}
+                  {restaurant.chef.name}
                 </h3>
                 <div className="mt-1 flex items-center gap-2 flex-wrap">
                   {primaryShow?.show?.name && (

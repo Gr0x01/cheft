@@ -66,11 +66,12 @@ export function RestaurantMiniCard({ restaurant, bordered = false }: RestaurantM
         </div>
       )}
       <div className={`flex-1 p-4 flex flex-col justify-center ${isClosed ? 'opacity-60' : ''}`}>
-        <div className="flex justify-between items-start gap-3">
-          <div className="min-w-0 flex-1">
+        <div className="flex justify-between items-start gap-2">
+          <div className="min-w-0 flex-1 overflow-hidden">
             <h3 
               className={`font-display text-base font-bold truncate transition-colors group-hover:text-[var(--accent-primary)] ${isClosed ? 'line-through' : ''}`}
               style={{ color: 'var(--text-primary)' }}
+              title={restaurant.name}
             >
               {restaurant.name}
             </h3>

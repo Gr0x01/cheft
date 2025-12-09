@@ -10,6 +10,7 @@ interface PersonSchemaProps {
   }>;
   sameAs?: string[];
   url: string;
+  dateModified?: string;
 }
 
 export function PersonSchema({
@@ -21,6 +22,7 @@ export function PersonSchema({
   worksFor = [],
   sameAs = [],
   url,
+  dateModified,
 }: PersonSchemaProps) {
   const schema = {
     '@context': 'https://schema.org',
@@ -39,6 +41,7 @@ export function PersonSchema({
       })),
     }),
     ...(sameAs.length > 0 && { sameAs }),
+    ...(dateModified && { dateModified }),
   };
 
   return (
@@ -76,6 +79,7 @@ interface RestaurantSchemaProps {
     name: string;
     url: string;
   };
+  dateModified?: string;
 }
 
 export function RestaurantSchema({
@@ -90,6 +94,7 @@ export function RestaurantSchema({
   geo,
   aggregateRating,
   founder,
+  dateModified,
 }: RestaurantSchemaProps) {
   const schema = {
     '@context': 'https://schema.org',
@@ -130,6 +135,7 @@ export function RestaurantSchema({
         url: founder.url,
       },
     }),
+    ...(dateModified && { dateModified }),
   };
 
   return (

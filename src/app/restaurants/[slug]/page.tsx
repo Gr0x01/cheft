@@ -39,6 +39,7 @@ interface RestaurantData {
   restaurant_narrative: string | null;
   phone: string | null;
   michelin_stars: number | null;
+  updated_at: string;
   chef: {
     id: string;
     name: string;
@@ -118,6 +119,7 @@ async function getRestaurant(slug: string): Promise<RestaurantData | null> {
       description,
       restaurant_narrative,
       phone,
+      updated_at,
       chef:chefs (
         id,
         name,
@@ -330,6 +332,7 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
             ? { name: restaurant.chef.name, url: `${baseUrl}/chefs/${restaurant.chef.slug}` }
             : undefined
         }
+        dateModified={restaurant.updated_at}
       />
       <BreadcrumbSchema items={breadcrumbItems} />
 
