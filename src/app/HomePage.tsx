@@ -10,12 +10,23 @@ import { Header } from '@/components/ui/Header';
 import { Footer } from '@/components/ui/Footer';
 import { FeaturedChefHero } from '@/components/chef/FeaturedChefHero';
 import { DiscoveryRow } from '@/components/home/DiscoveryRow';
+import { ShowsShowcase } from '@/components/home/ShowsShowcase';
 import { Search } from 'lucide-react';
+
+interface Show {
+  id: string;
+  name: string;
+  slug: string;
+  network: string | null;
+  chef_count: number;
+  restaurant_count: number;
+}
 
 interface HomePageProps {
   initialFeaturedChefs: any[];
   stats: { restaurants: number; chefs: number; cities: number };
   featuredChef: any | null;
+  shows: Show[];
 }
 
 const RestaurantMap = dynamic(() => import('@/components/RestaurantMap'), { 
@@ -28,7 +39,7 @@ const RestaurantMap = dynamic(() => import('@/components/RestaurantMap'), {
   )
 });
 
-export default function Home({ initialFeaturedChefs, stats, featuredChef }: HomePageProps) {
+export default function Home({ initialFeaturedChefs, stats, featuredChef, shows }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedShow, setSelectedShow] = useState<string>('all');
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
@@ -334,6 +345,8 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef }: Home
           />
         </section>
       </main>
+
+      <ShowsShowcase shows={shows} />
 
       {/* Featured Chefs Section */}
       <section className="featured-chefs-section">
