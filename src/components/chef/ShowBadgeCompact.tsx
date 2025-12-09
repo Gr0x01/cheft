@@ -1,7 +1,8 @@
 import { abbreviateShowName, formatSeasonDisplay, getShowType } from '@/lib/utils/showBadges';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface ShowBadgeCompactProps {
-  show?: { name: string } | null;
+  show?: { name: string; is_public?: boolean | null } | null;
   season?: string | null;
   result?: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
   hideSeason?: boolean;
@@ -10,6 +11,7 @@ interface ShowBadgeCompactProps {
 export function ShowBadgeCompact({ show, season, result, hideSeason = false }: ShowBadgeCompactProps) {
   if (!show) return null;
 
+  const isPublic = show.is_public !== false;
   const showType = getShowType(show.name, result);
   const abbreviatedName = abbreviateShowName(show.name);
   const seasonDisplay = hideSeason ? null : formatSeasonDisplay(season);
@@ -34,14 +36,18 @@ export function ShowBadgeCompact({ show, season, result, hideSeason = false }: S
     return 'rgba(255,255,255,0.7)';
   };
 
-  return (
+  const badge = (
     <span
-      className="inline-flex items-center gap-1 font-mono text-[9px] font-medium tracking-wide uppercase px-2 py-1 transition-all duration-200 hover:scale-105"
+      className={`inline-flex items-center gap-1 font-mono text-[9px] font-medium tracking-wide uppercase px-2 py-1 transition-all duration-200 ${isPublic ? 'hover:scale-105' : 'cursor-default'}`}
       style={{
-        background: getBackgroundColor(),
-        color: getTextColor(),
+        background: isPublic ? getBackgroundColor() : 'rgba(128,128,128,0.3)',
+        color: isPublic ? getTextColor() : 'rgba(255,255,255,0.5)',
         height: '20px',
         whiteSpace: 'nowrap',
+        opacity: isPublic ? 1 : 0.7,
+        borderStyle: isPublic ? 'solid' : 'dashed',
+        borderWidth: isPublic ? '0' : '1px',
+        borderColor: 'rgba(255,255,255,0.2)',
       }}
     >
       <span className="font-bold">{abbreviatedName}</span>
@@ -53,4 +59,14 @@ export function ShowBadgeCompact({ show, season, result, hideSeason = false }: S
       )}
     </span>
   );
+
+  if (!isPublic) {
+    return (
+      <Tooltip content="Not yet in our database" position="bottom">
+        {badge}
+      </Tooltip>
+    );
+  }
+
+  return badge;
 }

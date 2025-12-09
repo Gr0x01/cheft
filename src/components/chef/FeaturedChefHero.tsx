@@ -27,7 +27,7 @@ interface FeaturedChefHeroProps {
     mini_bio?: string | null;
     james_beard_status?: 'semifinalist' | 'nominated' | 'winner' | null;
     chef_shows?: Array<{
-      show?: { name: string } | null;
+      show?: { name: string; is_public?: boolean | null } | null;
       season?: string | null;
       result?: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
       is_primary?: boolean;

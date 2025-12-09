@@ -103,30 +103,37 @@ Add `parent_show_id` and `is_public` to create hierarchical relationships with v
 - [x] Update `database.types.ts` with new show fields
 - [x] Update `supabase.ts` Show interface
 
-### Phase 4: TypeScript Types
-- [ ] Update `src/lib/supabase.ts` - Show interface with new fields
-- [ ] Update `src/lib/database.types.ts` (auto-generated after migration)
+### Phase 4: TypeScript Types ✅ COMPLETE
+- [x] Update `src/lib/supabase.ts` - Show interface with new fields
+- [x] Update `src/lib/database.types.ts` (auto-generated after migration)
 
-### Phase 5: Frontend - Show Pages
-- [ ] `/shows` directory - only `is_public=true` AND `parent_show_id IS NULL`
-- [ ] `/shows/[slug]` core - aggregate chefs, variant filter tabs
-- [ ] `/shows/[slug]` variant - breadcrumb to parent, family banner
+### Phase 5: Frontend - Show Pages ✅ COMPLETE
+- [x] `/shows` directory - already filters via RPC (public + no parent only)
+- [x] `/shows/[slug]` core - variant tabs to filter by child shows
+- [x] `/shows/[slug]` variant - breadcrumb to parent, family banner
+- [x] `/shows/[slug]/[season]` - breadcrumbs handle variant parents
+- [x] `generateStaticParams` - filters to `is_public=true` shows only
+- [x] `getShow()` returns parent info, `getShowChildren()` added
 
-### Phase 6: Frontend - Chef Pages
-- [ ] `TVAppearanceBadge.tsx` - gray out non-public shows, add tooltip
-- [ ] `ShowBadgeCompact.tsx` - same treatment
-- [ ] `ShowBadgeStrip.tsx` - same treatment
+### Phase 6: Admin UI ✅ COMPLETE
+- [x] `/admin/shows` - show all (public + non-public) with direct table query
+- [x] Toggle is_public per show (eye icon button)
+- [x] Set parent_show_id dropdown (in expandable row)
+- [x] Set show_type dropdown (core/spinoff/variant/named_season)
+- [x] View hierarchy (type badges, parent links, filters by type/visibility)
+- [x] API route `/api/admin/shows/update` with validation (circular ref, UUID, type)
+- [x] Sonner toasts for success/error feedback (moved to admin layout)
+- [ ] Merge duplicate shows (deferred)
 
-### Phase 7: Frontend - Filters
+### Phase 7: Frontend - Chef Pages ✅ COMPLETE
+- [x] `TVAppearanceBadge.tsx` - gray out non-public shows, add tooltip
+- [x] `ShowBadgeCompact.tsx` - same treatment
+- [x] `ShowBadgeStrip.tsx` - same treatment
+- [x] `FeaturedChefHero.tsx` - updated type to include `is_public`
+
+### Phase 8: Frontend - Filters
 - [ ] `ChefFilters.tsx` - only public shows in dropdown
 - [ ] `useChefFilters.ts` - expand parent selection to include children
-
-### Phase 8: Admin UI
-- [ ] `/admin/shows` - show all (public + non-public)
-- [ ] Toggle is_public per show
-- [ ] Set parent_show_id dropdown
-- [ ] View hierarchy (tree structure)
-- [ ] Merge duplicate shows
 
 ### Phase 9: Validation
 - [ ] Run `npm run type-check`

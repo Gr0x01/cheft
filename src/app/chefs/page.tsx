@@ -40,7 +40,7 @@ export default async function ChefsPage() {
           season,
           result,
           is_primary,
-          show:shows (name, slug)
+          show:shows (name, slug, is_public)
         ),
         restaurants!restaurants_chef_id_fkey (id, michelin_stars, status)
       `)

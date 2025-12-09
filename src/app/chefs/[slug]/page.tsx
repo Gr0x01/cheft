@@ -14,6 +14,7 @@ import { getStorageUrl } from '@/lib/utils/storage';
 import { MichelinStar } from '@/components/icons/MichelinStar';
 import { RestaurantMiniCard } from '@/components/restaurant/RestaurantMiniCard';
 import { ChefPageView } from '@/components/analytics/PostHogPageView';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface ChefPageProps {
   params: Promise<{ slug: string }>;
@@ -39,7 +40,7 @@ interface ChefData {
     is_primary: boolean;
     show_id: string;
     performance_blurb: string | null;
-    show: { name: string; slug: string } | null;
+    show: { name: string; slug: string; is_public: boolean | null } | null;
   }>;
   restaurants: Array<{
     id: string;
@@ -83,7 +84,7 @@ async function getChef(slug: string): Promise<ChefData | null> {
           is_primary,
           show_id,
           performance_blurb,
-          show:shows (name, slug)
+          show:shows (name, slug, is_public)
         ),
         restaurants!restaurants_chef_id_fkey (
           id,
@@ -408,42 +409,68 @@ export default async function ChefPage({ params }: ChefPageProps) {
                     TV CREDITS
                   </span>
                   <div className="w-px h-5" style={{ background: 'var(--border-light)' }} />
-                  {sortedShows.map((appearance, idx) => (
-                    <Link
-                      key={appearance.id || idx}
-                      href={appearance.show?.slug && appearance.season 
-                        ? `/shows/${appearance.show.slug}/${appearance.season}`
-                        : appearance.show?.slug 
-                        ? `/shows/${appearance.show.slug}` 
-                        : '#'}
-                      className="flex items-center gap-2 px-3 py-1.5 transition-colors hover:bg-black/5 rounded"
-                      style={{ background: 'white', border: '1px solid var(--border-light)' }}
-                    >
-                      <span 
-                        className="font-mono text-sm font-bold"
-                        style={{ color: 'var(--accent-primary)' }}
-                      >
-                        {appearance.show?.name || ''}
-                      </span>
-                      {appearance.season && (
-                        <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
-                          {appearance.season.replace('Season ', 'S')}
-                        </span>
-                      )}
-                      {appearance.result && appearance.result !== 'contestant' && (
+                  {sortedShows.map((appearance, idx) => {
+                    const isPublic = appearance.show?.is_public !== false;
+                    const showUrl = isPublic && appearance.show?.slug && appearance.season 
+                      ? `/shows/${appearance.show.slug}/${appearance.season}`
+                      : isPublic && appearance.show?.slug 
+                      ? `/shows/${appearance.show.slug}` 
+                      : null;
+                    
+                    const content = (
+                      <>
                         <span 
-                          className="font-mono text-[9px] font-bold tracking-wider px-1.5 py-0.5 uppercase"
+                          className="font-mono text-sm font-bold"
+                          style={{ color: isPublic ? 'var(--accent-primary)' : 'var(--text-muted)' }}
+                        >
+                          {appearance.show?.name || ''}
+                        </span>
+                        {appearance.season && (
+                          <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
+                            {appearance.season.replace('Season ', 'S')}
+                          </span>
+                        )}
+                        {appearance.result && appearance.result !== 'contestant' && (
+                          <span 
+                            className="font-mono text-[9px] font-bold tracking-wider px-1.5 py-0.5 uppercase"
+                            style={{ 
+                              background: isPublic 
+                                ? (appearance.result === 'winner' ? 'var(--accent-success)' : 
+                                   appearance.result === 'finalist' ? '#f59e0b' : '#6366f1')
+                                : 'var(--text-muted)',
+                              color: 'white'
+                            }}
+                          >
+                            {appearance.result === 'winner' ? 'W' : appearance.result === 'finalist' ? 'F' : 'J'}
+                          </span>
+                        )}
+                      </>
+                    );
+                    
+                    return showUrl ? (
+                      <Link
+                        key={appearance.id || idx}
+                        href={showUrl}
+                        className="flex items-center gap-2 px-3 py-1.5 transition-colors hover:bg-black/5 rounded"
+                        style={{ background: 'white', border: '1px solid var(--border-light)' }}
+                      >
+                        {content}
+                      </Link>
+                    ) : (
+                      <Tooltip key={appearance.id || idx} content="Not yet in our database">
+                        <span
+                          className="flex items-center gap-2 px-3 py-1.5 rounded cursor-default"
                           style={{ 
-                            background: appearance.result === 'winner' ? 'var(--accent-success)' : 
-                                       appearance.result === 'finalist' ? '#f59e0b' : '#6366f1',
-                            color: 'white'
+                            background: 'var(--bg-tertiary)', 
+                            border: '1px dashed var(--border-light)',
+                            opacity: 0.6
                           }}
                         >
-                          {appearance.result === 'winner' ? 'W' : appearance.result === 'finalist' ? 'F' : 'J'}
+                          {content}
                         </span>
-                      )}
-                    </Link>
-                  ))}
+                      </Tooltip>
+                    );
+                  })}
                 </div>
               </div>
             </div>

@@ -50,7 +50,7 @@ interface RestaurantData {
       season: string | null;
       result: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
       is_primary: boolean;
-      show: { name: string; slug: string } | null;
+      show: { name: string; slug: string; is_public: boolean | null } | null;
     }>;
     restaurants: SiblingRestaurant[];
   } | null;
@@ -129,7 +129,7 @@ async function getRestaurant(slug: string): Promise<RestaurantData | null> {
           season,
           result,
           is_primary,
-          show:shows (name, slug)
+          show:shows (name, slug, is_public)
         ),
         restaurants!restaurants_chef_id_fkey (
           id,

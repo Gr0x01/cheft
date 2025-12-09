@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { sanitizeNarrative } from '@/lib/sanitize';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface TVAppearanceBadgeProps {
   show: {
     name: string;
     slug?: string;
+    is_public?: boolean | null;
   };
   season?: string | null;
   result?: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
@@ -27,18 +29,20 @@ export function TVAppearanceBadge({
     judge: { bg: '#6366f1', color: 'white' },
   };
 
-  const showUrl = show.slug && season 
+  const isPublic = show.is_public !== false;
+  const showUrl = isPublic && show.slug && season 
     ? `/shows/${show.slug}/${season}`
-    : show.slug 
+    : isPublic && show.slug 
     ? `/shows/${show.slug}` 
     : null;
 
   const content = (
     <div
-      className="relative p-4 transition-all duration-200 group"
+      className={`relative p-4 transition-all duration-200 group ${!isPublic ? 'cursor-default' : ''}`}
       style={{ 
-        background: 'var(--bg-secondary)',
-        border: '1px solid var(--border-light)',
+        background: isPublic ? 'var(--bg-secondary)' : 'var(--bg-tertiary)',
+        border: isPublic ? '1px solid var(--border-light)' : '1px dashed var(--border-light)',
+        opacity: isPublic ? 1 : 0.6,
       }}
     >
       {showUrl && (
@@ -51,7 +55,7 @@ export function TVAppearanceBadge({
         <div className="min-w-0 flex-1">
           <p 
             className={`font-display text-lg font-bold ${showUrl ? 'group-hover:text-[var(--accent-primary)] transition-colors' : ''}`}
-            style={{ color: 'var(--text-primary)' }}
+            style={{ color: isPublic ? 'var(--text-primary)' : 'var(--text-muted)' }}
           >
             {show.name}
           </p>
@@ -96,13 +100,21 @@ export function TVAppearanceBadge({
     );
   }
 
+  if (!isPublic) {
+    return (
+      <Tooltip content="Not yet in our database">
+        {content}
+      </Tooltip>
+    );
+  }
+
   return content;
 }
 
 interface TVAppearanceListProps {
   appearances: Array<{
     id?: string;
-    show?: { name: string; slug?: string } | null;
+    show?: { name: string; slug?: string; is_public?: boolean | null } | null;
     season?: string | null;
     result?: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
     is_primary?: boolean;

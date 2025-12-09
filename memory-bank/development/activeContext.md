@@ -1,7 +1,7 @@
 ---
 Last-Updated: 2025-12-09
 Maintainer: RB
-Status: Show Hierarchy Project - Phase 3 Complete
+Status: Show Hierarchy Project - Phase 7 Complete
 ---
 
 # Active Context: Chefs
@@ -9,83 +9,49 @@ Status: Show Hierarchy Project - Phase 3 Complete
 ## Current Status
 - **Phase**: Show Hierarchy Project
 - **Mode**: Active development
-- **Focus**: Frontend updates for show hierarchy
+- **Focus**: Frontend filters (Phase 8)
 
 ## In Progress: Show Hierarchy Project
 
-### Phase 1: Database Schema ✅ COMPLETE
-### Phase 2: Data Cleanup ✅ COMPLETE
-### Phase 3: Ingestion Pipeline ✅ COMPLETE (Dec 9)
-- Auto-create unknown shows with `is_public=false` via upsert
-- Added `createShow()` method with race-condition safe upsert
-- Unicode-safe `slugify()` helper (NFD normalization)
-- Updated TypeScript types (`database.types.ts`, `supabase.ts`)
+### Completed Phases
+- **Phase 1**: Database Schema ✅
+- **Phase 2**: Data Cleanup ✅
+- **Phase 3**: Ingestion Pipeline ✅
+- **Phase 4**: TypeScript Types ✅
+- **Phase 5**: Frontend - Show Pages ✅
+- **Phase 6**: Admin UI ✅ (Dec 9)
+- **Phase 7**: Frontend - Chef Pages ✅ (Dec 9)
 
-### Next: Phase 4+ - Frontend Updates
-- Update `/shows` page to use new RPC (already working)
-- Gray out non-public shows on chef pages
-- Update show filters to only show public shows
-- Admin UI for show hierarchy management
+### Phase 7 Summary (Chef Pages)
+- Non-public shows grayed out (dashed border + reduced opacity)
+- Non-public shows NOT clickable (no navigation)
+- Custom `Tooltip` component with 500ms delay hover
+- Updated queries to fetch `is_public` from shows
+- Files: `TVAppearanceBadge.tsx`, `ShowBadgeCompact.tsx`, `ShowBadgeStrip.tsx`, `FeaturedChefHero.tsx`
+- New: `src/components/ui/Tooltip.tsx`
+
+### Next: Phase 8 - Frontend Filters
+- `ChefFilters.tsx` - only public shows in dropdown
+- `useChefFilters.ts` - expand parent selection to include children
 
 ### Project Doc: `memory-bank/projects/show-hierarchy-project.md`
 
 ---
 
-## Recently Completed (Dec 8, 2025)
+## Recently Completed (Dec 9, 2025)
 
-### Tavily Cache Extraction Script ✅
-- **New script**: `scripts/extract-from-cache.ts` - Extracts restaurants from cached Tavily search results
-- **Flow**: Tavily cache → gpt-5-mini extraction → RestaurantRepository (with staging)
-- **Cost**: ~$0.006/chef (~$1.76 for all 293 chefs)
-- **Tested**: 5 chefs processed, 2 new restaurants, 1 staged for review
+### Show Hierarchy Phase 5 & 6 ✅
+- **Phase 5**: Frontend show pages with variant tabs, parent breadcrumbs
+- **Phase 6**: Admin UI for managing show hierarchy
 
-### Restaurant Enrichment Flow Improvements ✅
-- **Safer stale handling**: `deleteStaleRestaurants()` → `handleStaleRestaurants()` - stages for admin review instead of auto-deleting
-- **Duplicate detection with review**: Suspected duplicates now staged to `pending_discoveries` with `needs_review` status
-- **Protected restaurant support**: Protected restaurants are never modified; unprotected get status-only updates
-- **Admin visibility**: All questionable cases (not found by LLM, potential duplicates) go to `/admin/review`
-- **Files modified**: `restaurant-repository.ts`, `refresh-stale-chef.workflow.ts`, `manual-chef-addition.workflow.ts`, `pending-discovery-repository.ts`
+### Key Changes
+- `get_shows_with_counts()` - Only returns public parent shows
+- `get_show_with_chef_counts()` - Aggregates chefs from child shows
+- `get_show_children()` - New RPC for variant tabs
+- `/shows/[slug]` - Variant tabs for core shows, parent breadcrumbs for variants
+- `/admin/shows` - Full show management with hierarchy editing
 
-## Recently Completed (Dec 7-8, 2025)
-
-### Admin Shows Page with Harvest Trigger ✅
-- Built `/admin/shows` page for managing TV show data
-- Harvest trigger for importing show data from Wikipedia
-- Phase 3 admin tooling complete
-
-### Tavily Hybrid Enrichment System ✅
-- **Phase 1**: Core Tavily integration for web search enrichment
-- **Phase 2**: Staging system for review before committing changes
-- Improved data quality through hybrid LLM + web search approach
-
-### Geographic Navigation Pages ✅
-- **State Pages**: `/states` directory + `/states/[slug]` detail pages
-- **Country Pages**: `/countries` directory + `/countries/[slug]` detail pages
-- Full geographic hierarchy: Countries → States → Cities → Restaurants
-- New components: `StateCard.tsx`, `CountryCard.tsx`
-- Location utilities in `src/lib/utils/location.ts`
-
-### Chef's Table Show Import ✅
-- Wikipedia scraper for Chef's Table series data
-- All Chef's Table variants imported (France, Pastry, BBQ, Pizza, Noodles, Legends)
-
-### PostHog Analytics Improvements ✅
-- Fixed session recording issues
-- Fixed stack overflow bug in provider
-- Added 2025 defaults configuration
-- Session replay disabled on /admin routes for privacy
-
-### Database Migrations (032-036) ✅
-- `032_add_chefs_table_shows.sql` - Show linkage
-- `033_create_states_table.sql` - Geographic data (230+ lines)
-- `034_search_cache_table.sql` - Caching layer
-- `035_pending_discoveries_table.sql` - Staging for enrichment
-- `036_add_year_to_chef_shows.sql` - Year field for appearances
-
-### Security & Quality Improvements ✅
-- Removed onClick handlers from Server Components
-- Improved sanitization (replaced isomorphic-dompurify with regex)
-- Various admin panel fixes
+---
 
 ## Current Data Summary
 - **Chefs**: 238 total (100% bios, 88% photos)
@@ -93,7 +59,7 @@ Status: Show Hierarchy Project - Phase 3 Complete
 - **Cities**: 162 city pages
 - **States**: Full US state coverage
 - **Countries**: International coverage
-- **Shows**: All major TV chef competition shows
+- **Shows**: ~160 shows (mix of public/non-public, core/variant types)
 
 ## Infrastructure Status
 - **Production**: Live on Vercel
@@ -104,13 +70,14 @@ Status: Show Hierarchy Project - Phase 3 Complete
 ## No Current Blockers
 
 ## Deferred/Future Work
-1. **Multi-Show UI Display** - Better UI for chefs with many TV appearances
-2. **Duplicate Chef Detection** - Migration ready but not deployed
-3. **SEO Backfill Script** - Auto-generated descriptions for all pages
-4. **Community Features** - User contributions and verification (if needed)
+1. **Merge Duplicate Shows** - Part of Phase 6, deferred
+2. **Multi-Show UI Display** - Better UI for chefs with many TV appearances
+3. **Duplicate Chef Detection** - Migration ready but not deployed
+4. **SEO Backfill Script** - Auto-generated descriptions for all pages
 
 ## Key Files Reference
-- Geographic pages: `src/app/states/`, `src/app/countries/`
-- Enrichment: `scripts/ingestion/enrichment/` (19-file service architecture)
-- Admin: `src/app/admin/`
-- Analytics: `src/lib/posthog.ts`, `src/components/PostHogProvider.tsx`
+- Show hierarchy: `supabase/migrations/037_show_hierarchy.sql`
+- Admin shows: `src/app/admin/(protected)/shows/`
+- API route: `src/app/api/admin/shows/update/route.ts`
+- Frontend show pages: `src/app/shows/[slug]/`
+- Tooltip component: `src/components/ui/Tooltip.tsx`

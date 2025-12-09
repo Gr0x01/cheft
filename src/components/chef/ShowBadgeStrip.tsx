@@ -3,7 +3,7 @@ import { sortShowsByImportance } from '@/lib/utils/showBadges';
 
 interface ShowBadgeStripProps {
   shows: Array<{
-    show?: { name: string } | null;
+    show?: { name: string; is_public?: boolean | null } | null;
     season?: string | null;
     result?: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
     is_primary?: boolean;
