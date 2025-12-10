@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { db } from '@/lib/supabase';
 import HomePage from './HomePage';
+import { WebSiteSchema } from '@/components/seo/SchemaOrg';
 
 export const revalidate = 3600;
 
@@ -34,13 +35,22 @@ export default async function Page() {
   ]);
 
   const chefsData = await db.getFeaturedChefs(12, featuredChef?.id);
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://cheft.app';
 
   return (
-    <HomePage 
-      initialFeaturedChefs={chefsData}
-      stats={stats}
-      featuredChef={featuredChef}
-      shows={shows}
-    />
+    <>
+      <WebSiteSchema
+        name="Cheft"
+        url={baseUrl}
+        description={`Discover ${stats.restaurants} restaurants owned by Top Chef, Iron Chef, and Tournament of Champions winners and contestants.`}
+        searchUrl={`${baseUrl}/restaurants?q={search_term_string}`}
+      />
+      <HomePage 
+        initialFeaturedChefs={chefsData}
+        stats={stats}
+        featuredChef={featuredChef}
+        shows={shows}
+      />
+    </>
   );
 }

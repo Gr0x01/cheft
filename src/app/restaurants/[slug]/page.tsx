@@ -129,6 +129,7 @@ async function getRestaurant(slug: string): Promise<RestaurantData | null> {
       description,
       restaurant_narrative,
       phone,
+      michelin_stars,
       updated_at,
       chef:chefs (
         id,
@@ -387,6 +388,7 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
             : undefined
         }
         dateModified={restaurant.updated_at}
+        michelinStars={restaurant.michelin_stars}
       />
       <BreadcrumbSchema items={breadcrumbItems} />
 

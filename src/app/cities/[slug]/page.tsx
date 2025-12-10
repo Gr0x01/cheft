@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { createStaticClient } from '@/lib/supabase/static';
 import { Header } from '@/components/ui/Header';
 import { Footer } from '@/components/ui/Footer';
-import { ItemListSchema } from '@/components/seo/SchemaOrg';
+import { ItemListSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 import { ChefCard } from '@/components/chef/ChefCard';
 import { PageHero } from '@/components/ui/PageHero';
 import { sanitizeNarrative } from '@/lib/sanitize';
@@ -173,8 +173,15 @@ export default async function CityPage({ params }: CityPageProps) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://cheft.app';
   const cityUrl = `${baseUrl}/cities/${slug}`;
 
+  const breadcrumbItems = [
+    { name: 'Home', url: baseUrl },
+    { name: 'Cities', url: `${baseUrl}/cities` },
+    { name: displayName, url: cityUrl },
+  ];
+
   return (
     <>
+      <BreadcrumbSchema items={breadcrumbItems} />
       <ItemListSchema
         name={`TV Chef Restaurants in ${displayName}`}
         description={`${city.restaurant_count} restaurants by Top Chef winners and contestants in ${displayName}`}

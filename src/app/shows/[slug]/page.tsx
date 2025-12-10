@@ -8,6 +8,7 @@ import { ShowPageClient } from './ShowPageClient';
 import { WinnersSpotlight } from '@/components/show/WinnersSpotlight';
 import { ShowRestaurantMap } from '@/components/show/ShowRestaurantMap';
 import { Footer } from '@/components/ui/Footer';
+import { ItemListSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 
 export const revalidate = 604800;
 
@@ -118,10 +119,38 @@ export default async function ShowPage({ params }: ShowPageProps) {
     { value: allChefs.length, label: 'CHEFS' },
     { value: showStats.totalRestaurants || totalRestaurants, label: 'RESTAURANTS' },
     { value: showStats.totalCities, label: 'CITIES' },
-    ...(showStats.michelinStars > 0 ? [{ value: showStats.michelinStars, label: 'MICHELIN ★' }] : []),
+    ...(showStats.michelinStars > 0 ? [{ value: showStats.michelinStars, label: 'MICHELIN' }] : []),
   ];
 
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://cheft.app';
+  const showUrl = `${baseUrl}/shows/${slug}`;
+
+  const schemaBreadcrumbItems = isVariant && show.parent_show_slug
+    ? [
+        { name: 'Home', url: baseUrl },
+        { name: 'Shows', url: `${baseUrl}/shows` },
+        { name: show.parent_show_name, url: `${baseUrl}/shows/${show.parent_show_slug}` },
+        { name: show.name, url: showUrl },
+      ]
+    : [
+        { name: 'Home', url: baseUrl },
+        { name: 'Shows', url: `${baseUrl}/shows` },
+        { name: show.name, url: showUrl },
+      ];
+
   return (
+    <>
+      <BreadcrumbSchema items={schemaBreadcrumbItems} />
+      <ItemListSchema
+        name={`${show.name} Chefs`}
+        description={`${allChefs.length} chefs from ${show.name} and their ${totalRestaurants} restaurants`}
+        url={showUrl}
+        items={chefData.slice(0, 50).map((chef: { name: string; slug: string }, i: number) => ({
+          name: chef.name,
+          url: `${baseUrl}/chefs/${chef.slug}`,
+          position: i + 1,
+        }))}
+      />
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
       <Header />
       <PageHero
@@ -157,5 +186,6 @@ export default async function ShowPage({ params }: ShowPageProps) {
 
       <Footer />
     </div>
+    </>
   );
 }

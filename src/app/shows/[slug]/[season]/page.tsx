@@ -8,6 +8,7 @@ import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCom
 import { Header } from '@/components/ui/Header';
 import { PageHero } from '@/components/ui/PageHero';
 import { Footer } from '@/components/ui/Footer';
+import { ItemListSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 
 interface Restaurant {
   id: string;
@@ -142,7 +143,39 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
         { label: seasonName },
       ];
 
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://cheft.app';
+  const seasonUrl = `${baseUrl}/shows/${slug}/${season}`;
+
+  const schemaBreadcrumbItems = isVariant && showData?.parent_show_slug
+    ? [
+        { name: 'Home', url: baseUrl },
+        { name: 'Shows', url: `${baseUrl}/shows` },
+        { name: showData.parent_show_name, url: `${baseUrl}/shows/${showData.parent_show_slug}` },
+        { name: seasonData.name, url: `${baseUrl}/shows/${slug}` },
+        { name: seasonName, url: seasonUrl },
+      ]
+    : [
+        { name: 'Home', url: baseUrl },
+        { name: 'Shows', url: `${baseUrl}/shows` },
+        { name: seasonData.name, url: `${baseUrl}/shows/${slug}` },
+        { name: seasonName, url: seasonUrl },
+      ];
+
+  const allChefShows = seasonData.chef_shows || [];
+
   return (
+    <>
+      <BreadcrumbSchema items={schemaBreadcrumbItems} />
+      <ItemListSchema
+        name={`${seasonData.name} ${seasonName} Chefs`}
+        description={`${allChefShows.length} chefs from ${seasonData.name} ${seasonName} and their restaurants`}
+        url={seasonUrl}
+        items={allChefShows.slice(0, 50).map((cs: ChefShow, i: number) => ({
+          name: cs.chef.name,
+          url: `${baseUrl}/chefs/${cs.chef.slug}`,
+          position: i + 1,
+        }))}
+      />
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
       <Header />
       <PageHero
@@ -212,5 +245,6 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
 
       <Footer />
     </div>
+    </>
   );
 }

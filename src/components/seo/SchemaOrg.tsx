@@ -80,6 +80,7 @@ interface RestaurantSchemaProps {
     url: string;
   };
   dateModified?: string;
+  michelinStars?: number | null;
 }
 
 export function RestaurantSchema({
@@ -95,6 +96,7 @@ export function RestaurantSchema({
   aggregateRating,
   founder,
   dateModified,
+  michelinStars,
 }: RestaurantSchemaProps) {
   const schema = {
     '@context': 'https://schema.org',
@@ -136,6 +138,9 @@ export function RestaurantSchema({
       },
     }),
     ...(dateModified && { dateModified }),
+    ...(michelinStars && michelinStars > 0 && {
+      award: `${michelinStars} Michelin Star${michelinStars > 1 ? 's' : ''}`,
+    }),
   };
 
   return (
@@ -203,6 +208,45 @@ export function BreadcrumbSchema({ items }: BreadcrumbSchemaProps) {
       name: item.name,
       item: item.url,
     })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+interface WebSiteSchemaProps {
+  name: string;
+  url: string;
+  description?: string;
+  searchUrl?: string;
+}
+
+export function WebSiteSchema({
+  name,
+  url,
+  description,
+  searchUrl,
+}: WebSiteSchemaProps) {
+  const schema: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name,
+    url,
+    ...(description && { description }),
+    ...(searchUrl && {
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: searchUrl,
+        },
+        'query-input': 'required name=search_term_string',
+      },
+    }),
   };
 
   return (
