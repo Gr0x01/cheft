@@ -53,6 +53,12 @@ function ShowCard({ show, index }: { show: Show; index: number }) {
 export function ShowsShowcase({ shows }: ShowsShowcaseProps) {
   if (shows.length === 0) return null;
 
+  const sortedShows = [...shows].sort((a, b) => {
+    if (a.slug === 'top-chef') return -1;
+    if (b.slug === 'top-chef') return 1;
+    return (b.chef_count + b.restaurant_count) - (a.chef_count + a.restaurant_count);
+  });
+
   return (
     <section className="shows-showcase">
       <div className="shows-showcase-container">
@@ -66,7 +72,7 @@ export function ShowsShowcase({ shows }: ShowsShowcaseProps) {
           </Link>
         </div>
         <div className="shows-showcase-grid">
-          {shows.slice(0, 4).map((show, index) => (
+          {sortedShows.slice(0, 4).map((show, index) => (
             <ShowCard key={show.id} show={show} index={index} />
           ))}
         </div>
