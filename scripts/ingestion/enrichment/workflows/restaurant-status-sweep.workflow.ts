@@ -4,8 +4,8 @@ import { BaseWorkflow } from './base-workflow';
 import { CostEstimate, ValidationResult } from '../types/workflow-types';
 import { StatusVerificationService } from '../services/status-verification-service';
 import { RestaurantRepository } from '../repositories/restaurant-repository';
-import { LLMClient } from '../shared/llm-client';
 import { TokenTracker } from '../shared/token-tracker';
+import { configure as configureSynthesis } from '../shared/synthesis-client';
 
 export interface RestaurantStatusSweepInput {
   restaurantIds?: string[];
@@ -61,10 +61,10 @@ export class RestaurantStatusSweepWorkflow extends BaseWorkflow<RestaurantStatus
     });
 
     this.supabase = supabase;
-    const llmClient = new LLMClient({ model: options.model || 'gpt-5-mini' });
+    configureSynthesis({ accuracyModel: options.model || 'gpt-4o-mini' });
     const tokenTracker = TokenTracker.getInstance();
 
-    this.statusVerificationService = new StatusVerificationService(llmClient, tokenTracker);
+    this.statusVerificationService = new StatusVerificationService(tokenTracker);
     this.restaurantRepo = new RestaurantRepository(supabase);
   }
 

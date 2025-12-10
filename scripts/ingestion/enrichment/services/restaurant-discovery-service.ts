@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { LLMClient } from '../shared/llm-client';
 import { TokenTracker, TokenUsage } from '../shared/token-tracker';
-import { parseAndValidate, enumWithCitationStrip } from '../shared/result-parser';
-import { withRetry } from '../shared/retry-handler';
+import { enumWithCitationStrip } from '../shared/result-parser';
+import { searchRestaurants, combineSearchResultsCompact, SearchResult } from '../shared/search-client';
+import { synthesize } from '../shared/synthesis-client';
 
 const RestaurantSchema = z.object({
   name: z.string(),
@@ -37,14 +37,13 @@ export interface RestaurantOnlyResult {
   error?: string;
 }
 
-const RESTAURANT_ONLY_SYSTEM_PROMPT = `You are a restaurant ownership researcher. Your job is to find restaurants that a chef OWNS or has an ownership stake in.
+const RESTAURANT_SYSTEM_PROMPT = `You are a restaurant ownership researcher extracting data from search results.
 
 CRITICAL RULES:
 1. ONLY include restaurants where the chef is an OWNER or PARTNER (has equity/ownership)
 2. DO NOT include restaurants where they merely worked as an employee
 3. DO NOT include past employers or places they trained at
-4. Search multiple times to find all owned restaurants
-5. Return the complete list as JSON
+4. Only use information from the provided search results
 
 OWNERSHIP means:
 - They founded/opened the restaurant
@@ -58,12 +57,12 @@ NOT ownership:
 - Training or early career positions
 
 Guidelines:
-- Include CURRENT status - verify if open or closed
+- Include CURRENT status if mentioned - verify if open or closed
 - Cuisine tags should be specific (e.g., "Japanese", "New American")
 - Price range: $ (<$15), $$ ($15-30), $$$ ($30-60), $$$$ ($60+)
-- Track Michelin stars and awards if available
+- Track Michelin stars and awards if mentioned
 
-Your output must be ONLY a JSON object, no other text.
+CRITICAL: Respond with ONLY valid JSON. No explanatory text.
 
 Response format:
 {
@@ -88,7 +87,6 @@ Response format:
 
 export class RestaurantDiscoveryService {
   constructor(
-    private llmClient: LLMClient,
     private tokenTracker: TokenTracker,
     private maxRestaurants: number = 10
   ) {}
@@ -99,47 +97,65 @@ export class RestaurantDiscoveryService {
     showName: string,
     options: { season?: string; result?: string } = {}
   ): Promise<RestaurantOnlyResult> {
-    const prompt = `Find restaurants that chef "${chefName}" OWNS, opened, or is a PARTNER in.
+    console.log(`   🍽️  Discovering restaurants for ${chefName}`);
 
-Step 1: Search "${chefName} restaurant"
-Step 2: Search "${chefName} owns restaurant"
-Step 3: Search "${chefName} opened restaurant"  
-Step 4: Search "${chefName} chef owner"
+    try {
+      const searchResults = await searchRestaurants(chefName, chefId);
+      const searchContext = combineSearchResultsCompact(searchResults, 12000);
 
-After searching, include ONLY restaurants where ${chefName}:
+      if (!searchContext || searchContext.length < 100) {
+        console.log(`      ⚠️  Insufficient search results for ${chefName}`);
+        return {
+          chefId,
+          chefName,
+          restaurants: [],
+          newRestaurants: 0,
+          existingRestaurants: 0,
+          tokensUsed: { prompt: 0, completion: 0, total: 0 },
+          success: false,
+          error: 'Insufficient search results',
+        };
+      }
+
+      const prompt = `Extract restaurants that chef "${chefName}" OWNS from these search results.
+
+SEARCH RESULTS:
+${searchContext}
+
+Based on the search results above, include ONLY restaurants where ${chefName}:
 - Founded or opened the restaurant
 - Is an owner or partner (has equity)
 - Is the chef-owner running their own place
 
 DO NOT include restaurants where they:
 - Just worked as an employee for someone else
-- Trained early in their career (e.g., worked at Quince before opening their own place)
+- Trained early in their career
 - Made guest appearances
 
-Output ONLY a JSON object with "restaurants" array.`;
+Return ONLY a JSON object with "restaurants" array.`;
 
-    try {
-      const result = await withRetry(
-        () => this.llmClient.generateWithWebSearch(
-          RESTAURANT_ONLY_SYSTEM_PROMPT,
-          prompt,
-          { maxTokens: 16000, maxSteps: 15 }
-        ),
-        `find restaurants for ${chefName}`
-      );
+      const result = await synthesize('accuracy', RESTAURANT_SYSTEM_PROMPT, prompt, RestaurantsOnlySchema, {
+        maxTokens: 8000,
+      });
 
-      const tokensUsed: TokenUsage = result.usage;
-      this.tokenTracker.trackUsage(tokensUsed);
+      this.tokenTracker.trackUsage(result.usage);
 
-      if (!result.text || result.text.trim() === '') {
-        throw new Error('LLM returned empty response');
+      if (!result.success || !result.data) {
+        return {
+          chefId,
+          chefName,
+          restaurants: [],
+          newRestaurants: 0,
+          existingRestaurants: 0,
+          tokensUsed: result.usage,
+          success: false,
+          error: result.error,
+        };
       }
 
-      const validated = parseAndValidate(result.text, RestaurantsOnlySchema);
+      const restaurants = (result.data.restaurants || []).slice(0, this.maxRestaurants);
 
-      const restaurants = (validated.restaurants || []).slice(0, this.maxRestaurants);
-
-      console.log(`      🍽️  Found ${validated.restaurants?.length || 0} restaurants for ${chefName} (keeping ${restaurants.length})`);
+      console.log(`      🍽️  Found ${result.data.restaurants?.length || 0} restaurants for ${chefName} (keeping ${restaurants.length})`);
       restaurants.forEach(r => {
         console.log(`         - ${r.name} (${r.city}, ${r.state || r.country}) [${r.status}]`);
       });
@@ -150,13 +166,105 @@ Output ONLY a JSON object with "restaurants" array.`;
         restaurants: restaurants as z.infer<typeof RestaurantSchema>[],
         newRestaurants: 0,
         existingRestaurants: 0,
-        tokensUsed,
+        tokensUsed: result.usage,
         success: true,
       };
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
-      console.error(`   ❌ Restaurant enrichment error for "${chefName}": ${msg}`);
-      
+      console.error(`   ❌ Restaurant discovery error for "${chefName}": ${msg}`);
+
+      return {
+        chefId,
+        chefName,
+        restaurants: [],
+        newRestaurants: 0,
+        existingRestaurants: 0,
+        tokensUsed: { prompt: 0, completion: 0, total: 0 },
+        success: false,
+        error: msg,
+      };
+    }
+  }
+
+  async findRestaurantsFromCache(
+    chefId: string,
+    chefName: string,
+    cachedSearches: SearchResult[]
+  ): Promise<RestaurantOnlyResult> {
+    console.log(`   🍽️  Extracting restaurants for ${chefName} (from cache)`);
+
+    try {
+      const searchContext = combineSearchResultsCompact(cachedSearches, 12000);
+
+      if (!searchContext || searchContext.length < 100) {
+        return {
+          chefId,
+          chefName,
+          restaurants: [],
+          newRestaurants: 0,
+          existingRestaurants: 0,
+          tokensUsed: { prompt: 0, completion: 0, total: 0 },
+          success: false,
+          error: 'Insufficient cached search results',
+        };
+      }
+
+      const prompt = `Extract restaurants that chef "${chefName}" OWNS from these search results.
+
+SEARCH RESULTS:
+${searchContext}
+
+Based on the search results above, include ONLY restaurants where ${chefName}:
+- Founded or opened the restaurant
+- Is an owner or partner (has equity)
+- Is the chef-owner running their own place
+
+DO NOT include restaurants where they:
+- Just worked as an employee for someone else
+- Trained early in their career
+- Made guest appearances
+
+Return ONLY a JSON object with "restaurants" array.`;
+
+      const result = await synthesize('accuracy', RESTAURANT_SYSTEM_PROMPT, prompt, RestaurantsOnlySchema, {
+        maxTokens: 8000,
+      });
+
+      this.tokenTracker.trackUsage(result.usage);
+
+      if (!result.success || !result.data) {
+        return {
+          chefId,
+          chefName,
+          restaurants: [],
+          newRestaurants: 0,
+          existingRestaurants: 0,
+          tokensUsed: result.usage,
+          success: false,
+          error: result.error,
+        };
+      }
+
+      const restaurants = (result.data.restaurants || []).slice(0, this.maxRestaurants);
+
+      console.log(`      🍽️  Found ${result.data.restaurants?.length || 0} restaurants for ${chefName} (keeping ${restaurants.length})`);
+      restaurants.forEach(r => {
+        console.log(`         - ${r.name} (${r.city}, ${r.state || r.country}) [${r.status}]`);
+      });
+
+      return {
+        chefId,
+        chefName,
+        restaurants: restaurants as z.infer<typeof RestaurantSchema>[],
+        newRestaurants: 0,
+        existingRestaurants: 0,
+        tokensUsed: result.usage,
+        success: true,
+      };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`   ❌ Restaurant extraction error for "${chefName}": ${msg}`);
+
       return {
         chefId,
         chefName,

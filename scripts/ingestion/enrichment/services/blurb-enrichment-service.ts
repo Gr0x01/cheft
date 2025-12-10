@@ -1,8 +1,7 @@
 import { z } from 'zod';
-import { LLMClient } from '../shared/llm-client';
 import { TokenTracker, TokenUsage } from '../shared/token-tracker';
-import { extractJsonFromText } from '../shared/result-parser';
-import { withRetry } from '../shared/retry-handler';
+import { searchBlurbDetails, combineSearchResultsCompact, SearchResult } from '../shared/search-client';
+import { synthesize } from '../shared/synthesis-client';
 import { TVShowBasic } from './show-discovery-service';
 
 const BlurbResultSchema = z.object({
@@ -10,6 +9,8 @@ const BlurbResultSchema = z.object({
   season: z.string().nullable().optional(),
   performanceBlurb: z.string(),
 });
+
+const BlurbsArraySchema = z.array(BlurbResultSchema);
 
 export type BlurbResult = z.infer<typeof BlurbResultSchema>;
 
@@ -20,13 +21,21 @@ export interface BlurbEnrichmentResult {
   error?: string;
 }
 
-const BLURB_SYSTEM_PROMPT = `You are a TV cooking competition expert. Generate brief performance summaries for chef TV appearances.
+const BLURB_SYSTEM_PROMPT = `You are a TV cooking competition expert. Generate brief performance summaries based on the search results provided.
 
-Return ONLY a JSON array. No explanatory text.`;
+Guidelines:
+- Keep blurbs to 1-2 sentences
+- Focus on their journey, memorable moments, or achievements
+- Use information from the search results only
+- If no specific information is found, write a generic but appropriate blurb
+
+CRITICAL: Return ONLY a JSON array. No explanatory text.
+
+Output format:
+[{"showName": "Show Name", "season": "15", "performanceBlurb": "Brief 1-2 sentence summary."}]`;
 
 export class BlurbEnrichmentService {
   constructor(
-    private llmClient: LLMClient,
     private tokenTracker: TokenTracker
   ) {}
 
@@ -42,8 +51,21 @@ export class BlurbEnrichmentService {
       };
     }
 
+    console.log(`   📝 Generating blurbs for ${shows.length} shows`);
+
     try {
-      const showList = shows.map(s => 
+      const searchResults: SearchResult[] = [];
+      for (const show of shows) {
+        const result = await searchBlurbDetails(chefName, show.showName, show.season || undefined);
+        searchResults.push(result);
+        if (!result.fromCache) {
+          await new Promise(r => setTimeout(r, 300));
+        }
+      }
+
+      const searchContext = combineSearchResultsCompact(searchResults, 10000);
+
+      const showList = shows.map(s =>
         `- ${s.showName}${s.season ? ' Season ' + s.season : ''} (${s.result || 'contestant'})`
       ).join('\n');
 
@@ -51,46 +73,109 @@ export class BlurbEnrichmentService {
 
 ${showList}
 
-For each show, search for their specific performance details and return:
-- showName: Exact show name
-- season: Season number or null
-- performanceBlurb: Brief summary of their competition journey/achievement
+SEARCH RESULTS:
+${searchContext}
 
-Example output:
-[{"showName": "Top Chef", "season": "15", "performanceBlurb": "Reached the finale with consistently strong pasta dishes, known for fresh handmade noodles."}]`;
+Based on the search results above, create a brief performance summary for each show appearance.
 
-      const result = await withRetry(
-        () => this.llmClient.generateWithWebSearch(
-          BLURB_SYSTEM_PROMPT,
-          prompt,
-          { maxTokens: 8000, searchContextSize: 'low', useResponseModel: true }
-        ),
-        `generate blurbs for ${chefName}`
-      );
+Return ONLY a JSON array with showName, season, and performanceBlurb for each show.`;
 
-      const tokensUsed: TokenUsage = result.usage;
-      this.tokenTracker.trackUsage(tokensUsed);
+      const result = await synthesize('creative', BLURB_SYSTEM_PROMPT, prompt, BlurbsArraySchema, {
+        maxTokens: 4000,
+        temperature: 0.5,
+      });
 
-      if (!result.text || result.text.trim() === '') {
-        throw new Error('LLM returned empty response');
+      this.tokenTracker.trackUsage(result.usage);
+
+      if (!result.success || !result.data) {
+        return {
+          success: false,
+          blurbs: [],
+          tokensUsed: result.usage,
+          error: result.error,
+        };
       }
 
-      const jsonText = extractJsonFromText(result.text);
-      const parsed = JSON.parse(jsonText);
-      const normalized = Array.isArray(parsed) ? parsed : [parsed];
-      const blurbs = z.array(BlurbResultSchema).parse(normalized);
-
-      console.log(`      📝 Generated ${blurbs.length} blurbs for ${chefName}`);
+      console.log(`      📝 Generated ${result.data.length} blurbs for ${chefName}`);
 
       return {
         success: true,
-        blurbs,
-        tokensUsed,
+        blurbs: result.data,
+        tokensUsed: result.usage,
       };
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       console.error(`   ❌ Blurb generation error for "${chefName}": ${msg}`);
-      
+
+      return {
+        success: false,
+        blurbs: [],
+        tokensUsed: { prompt: 0, completion: 0, total: 0 },
+        error: msg,
+      };
+    }
+  }
+
+  async generateBlurbsFromCache(
+    chefName: string,
+    shows: TVShowBasic[],
+    cachedSearches: SearchResult[]
+  ): Promise<BlurbEnrichmentResult> {
+    if (!shows || shows.length === 0) {
+      return {
+        success: true,
+        blurbs: [],
+        tokensUsed: { prompt: 0, completion: 0, total: 0 },
+      };
+    }
+
+    console.log(`   📝 Generating blurbs for ${shows.length} shows (from cache)`);
+
+    try {
+      const searchContext = combineSearchResultsCompact(cachedSearches, 10000);
+
+      const showList = shows.map(s =>
+        `- ${s.showName}${s.season ? ' Season ' + s.season : ''} (${s.result || 'contestant'})`
+      ).join('\n');
+
+      const prompt = `Generate 1-2 sentence performance blurbs for ${chefName}'s TV appearances:
+
+${showList}
+
+SEARCH RESULTS:
+${searchContext}
+
+Based on the search results above, create a brief performance summary for each show appearance.
+
+Return ONLY a JSON array with showName, season, and performanceBlurb for each show.`;
+
+      const result = await synthesize('creative', BLURB_SYSTEM_PROMPT, prompt, BlurbsArraySchema, {
+        maxTokens: 4000,
+        temperature: 0.5,
+      });
+
+      this.tokenTracker.trackUsage(result.usage);
+
+      if (!result.success || !result.data) {
+        return {
+          success: false,
+          blurbs: [],
+          tokensUsed: result.usage,
+          error: result.error,
+        };
+      }
+
+      console.log(`      📝 Generated ${result.data.length} blurbs for ${chefName}`);
+
+      return {
+        success: true,
+        blurbs: result.data,
+        tokensUsed: result.usage,
+      };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`   ❌ Blurb generation error for "${chefName}": ${msg}`);
+
       return {
         success: false,
         blurbs: [],
@@ -121,7 +206,7 @@ Example output:
     for (let i = 0; i < shows.length; i += batchSize) {
       const batch = shows.slice(i, i + batchSize);
       const result = await this.generateBlurbs(chefName, batch);
-      
+
       totalTokens.prompt += result.tokensUsed.prompt;
       totalTokens.completion += result.tokensUsed.completion;
       totalTokens.total += result.tokensUsed.total;

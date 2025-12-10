@@ -1,6 +1,5 @@
-import { LLMClient } from '../shared/llm-client';
 import { TokenTracker, TokenUsage } from '../shared/token-tracker';
-import { withRetry } from '../shared/retry-handler';
+import { synthesizeRaw } from '../shared/synthesis-client';
 
 export interface NarrativeResult {
   success: boolean;
@@ -18,43 +17,49 @@ export class NarrativeService {
     chefId: string,
     chefContext: any
   ): Promise<NarrativeResult> {
+    console.log(`   📖 Generating narrative for chef ${chefContext.name}`);
+
     try {
       const { buildChefNarrativePrompt, CHEF_NARRATIVE_SYSTEM_PROMPT } = await import('../../../../src/lib/narratives/prompts');
-      
+
       const prompt = buildChefNarrativePrompt(chefContext);
-      
-      const narrativeClient = new LLMClient({ model: 'gpt-4.1-mini' });
-      const result = await withRetry(
-        () => narrativeClient.generateWithWebSearch(
-          CHEF_NARRATIVE_SYSTEM_PROMPT,
-          prompt,
-          { maxTokens: 8000, maxSteps: 50, searchContextSize: 'medium' }
-        ),
-        `generate narrative for chef ${chefContext.name}`
-      );
 
-      const tokensUsed: TokenUsage = result.usage;
-      this.tokenTracker.trackUsage(tokensUsed);
+      const result = await synthesizeRaw('creative', CHEF_NARRATIVE_SYSTEM_PROMPT, prompt, {
+        maxTokens: 2000,
+        temperature: 0.7,
+      });
 
-      if (!result.text || result.text.trim() === '') {
-        throw new Error('LLM returned empty narrative');
+      this.tokenTracker.trackUsage(result.usage);
+
+      if (!result.success) {
+        return {
+          success: false,
+          narrative: null,
+          tokensUsed: result.usage,
+          error: result.error,
+        };
       }
 
       const narrative = result.text.trim();
 
       if (narrative.length < 50) {
-        throw new Error(`Generated narrative too short: ${narrative.length} characters`);
+        return {
+          success: false,
+          narrative: null,
+          tokensUsed: result.usage,
+          error: `Generated narrative too short: ${narrative.length} characters`,
+        };
       }
 
       return {
         success: true,
         narrative,
-        tokensUsed,
+        tokensUsed: result.usage,
       };
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       console.error(`   ❌ Narrative generation error: ${msg}`);
-      
+
       return {
         success: false,
         narrative: null,
@@ -68,43 +73,49 @@ export class NarrativeService {
     restaurantId: string,
     restaurantContext: any
   ): Promise<NarrativeResult> {
+    console.log(`   📖 Generating narrative for restaurant ${restaurantContext.name}`);
+
     try {
       const { buildRestaurantNarrativePrompt, RESTAURANT_NARRATIVE_SYSTEM_PROMPT } = await import('../../../../src/lib/narratives/prompts');
-      
+
       const prompt = buildRestaurantNarrativePrompt(restaurantContext);
-      
-      const narrativeClient = new LLMClient({ model: 'gpt-4.1-mini' });
-      const result = await withRetry(
-        () => narrativeClient.generateWithWebSearch(
-          RESTAURANT_NARRATIVE_SYSTEM_PROMPT,
-          prompt,
-          { maxTokens: 6000, maxSteps: 30, searchContextSize: 'medium' }
-        ),
-        `generate narrative for restaurant ${restaurantContext.name}`
-      );
 
-      const tokensUsed: TokenUsage = result.usage;
-      this.tokenTracker.trackUsage(tokensUsed);
+      const result = await synthesizeRaw('creative', RESTAURANT_NARRATIVE_SYSTEM_PROMPT, prompt, {
+        maxTokens: 1500,
+        temperature: 0.7,
+      });
 
-      if (!result.text || result.text.trim() === '') {
-        throw new Error('LLM returned empty narrative');
+      this.tokenTracker.trackUsage(result.usage);
+
+      if (!result.success) {
+        return {
+          success: false,
+          narrative: null,
+          tokensUsed: result.usage,
+          error: result.error,
+        };
       }
 
       const narrative = result.text.trim();
 
       if (narrative.length < 50) {
-        throw new Error(`Generated narrative too short: ${narrative.length} characters`);
+        return {
+          success: false,
+          narrative: null,
+          tokensUsed: result.usage,
+          error: `Generated narrative too short: ${narrative.length} characters`,
+        };
       }
 
       return {
         success: true,
         narrative,
-        tokensUsed,
+        tokensUsed: result.usage,
       };
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       console.error(`   ❌ Restaurant narrative error: ${msg}`);
-      
+
       return {
         success: false,
         narrative: null,
@@ -118,43 +129,49 @@ export class NarrativeService {
     cityId: string,
     cityContext: any
   ): Promise<NarrativeResult> {
+    console.log(`   📖 Generating narrative for city ${cityContext.name}`);
+
     try {
       const { buildCityNarrativePrompt, CITY_NARRATIVE_SYSTEM_PROMPT } = await import('../../../../src/lib/narratives/prompts');
-      
+
       const prompt = buildCityNarrativePrompt(cityContext);
-      
-      const narrativeClient = new LLMClient({ model: 'gpt-4.1-mini' });
-      const result = await withRetry(
-        () => narrativeClient.generateWithWebSearch(
-          CITY_NARRATIVE_SYSTEM_PROMPT,
-          prompt,
-          { maxTokens: 8000, maxSteps: 40, searchContextSize: 'medium' }
-        ),
-        `generate narrative for city ${cityContext.name}`
-      );
 
-      const tokensUsed: TokenUsage = result.usage;
-      this.tokenTracker.trackUsage(tokensUsed);
+      const result = await synthesizeRaw('creative', CITY_NARRATIVE_SYSTEM_PROMPT, prompt, {
+        maxTokens: 2000,
+        temperature: 0.7,
+      });
 
-      if (!result.text || result.text.trim() === '') {
-        throw new Error('LLM returned empty narrative');
+      this.tokenTracker.trackUsage(result.usage);
+
+      if (!result.success) {
+        return {
+          success: false,
+          narrative: null,
+          tokensUsed: result.usage,
+          error: result.error,
+        };
       }
 
       const narrative = result.text.trim();
 
       if (narrative.length < 50) {
-        throw new Error(`Generated narrative too short: ${narrative.length} characters`);
+        return {
+          success: false,
+          narrative: null,
+          tokensUsed: result.usage,
+          error: `Generated narrative too short: ${narrative.length} characters`,
+        };
       }
 
       return {
         success: true,
         narrative,
-        tokensUsed,
+        tokensUsed: result.usage,
       };
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       console.error(`   ❌ City narrative error: ${msg}`);
-      
+
       return {
         success: false,
         narrative: null,

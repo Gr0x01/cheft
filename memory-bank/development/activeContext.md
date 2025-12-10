@@ -1,62 +1,89 @@
 ---
-Last-Updated: 2025-12-09
+Last-Updated: 2025-12-10
 Maintainer: RB
-Status: Pre-Launch - UI Polish & Testing
+Status: Pre-Launch - Ready for Show Expansion
 ---
 
 # Active Context: Chefs
 
 ## Current Status
 - **Phase**: Pre-Launch
-- **Mode**: UI cleanup and testing
-- **Focus**: Final polish before public launch
+- **Mode**: Ready to expand show coverage
+- **Focus**: Add Top Chef Masters and other shows
 
-## Recent Changes (Dec 9, 2025)
+## Enrichment System v2 Complete
+The enrichment system has been fully refactored and hardened:
+- **Search**: All web searches through Tavily API with caching (search-client.ts, tavily-client.ts)
+- **Synthesis**: Two-tier model - accuracy (gpt-4o-mini) for facts, creative (local Qwen3) for prose (synthesis-client.ts)
+- **Status**: Google Places API checked first, Tavily fallback
+- **Workflows**: All 4 workflows updated, all 7 services migrated
+- **Code review**: A- grade, critical null safety and env var validation issues fixed
+- **Dead code**: Old LLMClient files archived to scripts/archive/enricher-v1/
 
-### Tavily Fresh Start Migration ✅
-Complete restaurant data refresh using Tavily web search + LLM extraction:
-- **997 restaurants** from fresh Tavily extraction (clean, LLM-verified ownership)
-- **1,021 with Google Places** data (98.5% coverage)
-- **15 missing Place IDs** - mostly closed/coming soon/international (acceptable)
-- Old stale data purged, backup saved to `deleted_restaurants_backup.json`
+See `memory-bank/architecture/enrichment-reference.md` for quick reference.
 
-### Admin Completeness Logic Fix ✅
-- Closed/unknown restaurants no longer trigger "missing Google Places" warning
-- Updated `EntitiesClient.tsx` - `getRestaurantCompleteness()` function
+---
 
-### Show Visibility Scope Reduction ✅
-- 19 public shows (Top Chef + TOC families only)
-- Other shows hidden until properly harvested
+## Show Coverage Analysis (Dec 9, 2025)
+
+### Currently Public Shows (5 core)
+- Top Chef (main) + 14 season variants
+- Top Chef Masters
+- Tournament of Champions + All-Star Christmas
+- Holiday Baking Championship
+
+### Shows Ready to Enable (configs created, data incomplete)
+| Show | Config File | Chefs to Add | Status |
+|------|-------------|--------------|--------|
+| Top Chef Masters | `shows/top-chef-masters.json` | 28 | Config ready, needs enrichment |
+
+### Shows Needing Research + Config
+- Top Chef Canada (12 seasons)
+- Top Chef: Just Desserts (2 seasons)
+- Top Chef Duels (1 season)
+- Halloween Baking Championship (11 seasons)
+- Other Top Chef international variants
+
+### Gap Analysis
+Current chef_shows links vs expected:
+- Top Chef Masters: 11 links, need ~28 more
+- Top Chef Canada: 5 links, need ~50+ more
+- Holiday Baking: 6 links, need ~20+ (only those with restaurants)
+- Halloween Baking: 1 link, need ~10+ (only those with restaurants)
 
 ---
 
 ## Current Data Summary
-- **Chefs**: 238 total (100% bios, 88% photos)
-- **Restaurants**: 1,036 locations (98.5% Google Places, ~98% photos)
+- **Chefs**: 300 total (100% bios, 88% photos)
+- **Restaurants**: 1,036 locations (98.5% Google Places)
 - **Cities**: 162+ city pages
-- **States**: Full US state coverage
-- **Countries**: International coverage
-- **Public Shows**: 19 (Top Chef + TOC families only)
+- **Public Shows**: 5 core (Top Chef, Top Chef Masters, TOC, Holiday Baking)
 
 ## Infrastructure Status
 - **Production**: Live on Vercel
 - **Database**: Supabase PostgreSQL
 - **Analytics**: PostHog with session replay
-- **Enrichment**: Tavily hybrid + OpenAI LLM
+- **Enrichment**: Needs cleanup before expansion
 
-## Pre-Launch Checklist
-- [ ] UI polish and cleanup
-- [ ] E2E testing (`npm run test:e2e`)
-- [ ] Mobile responsiveness check
-- [ ] Final review of public pages
+## Next Steps (In Order)
+1. ~~**Fix enrichment system**~~ - ✅ Complete, code reviewed
+2. **Test with Top Chef Masters** - Use `shows/top-chef-masters.json` as pilot
+3. **Expand to other shows** - Create configs, run enrichment
+4. **Enable shows** - Only after proper data coverage
 
-## Key Scripts (Active)
-- `scripts/harvest-tavily-cache.ts` - Populate web search cache
-- `scripts/extract-from-cache.ts` - Extract restaurants from cache
+## Key Scripts
+- `scripts/add-show.ts` - Add show with contestants (uses enricher v2)
 - `scripts/enrich-google-places.ts` - Backfill Google Place IDs
-- `scripts/find-duplicates.ts` - Detect duplicate restaurants
+- `scripts/michelin/scrape-wikipedia-michelin.ts` - Refresh Michelin data
 
-## Deferred/Future Work
-1. **Re-enable Other Shows** - Harvest Chopped, Iron Chef, etc. properly
-2. **Multi-Show UI Display** - Better UI for chefs with many TV appearances
-3. **SEO Backfill Script** - Auto-generated descriptions for all pages
+## Show Config Format
+Location: `shows/*.json`
+```json
+{
+  "showName": "Show Name",
+  "network": "Network",
+  "contestants": [
+    { "name": "Chef Name", "season": "1", "result": "winner" }
+  ]
+}
+```

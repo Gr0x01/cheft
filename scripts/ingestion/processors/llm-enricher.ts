@@ -1,7 +1,5 @@
-import { z } from 'zod';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../src/lib/database.types';
-import { LLMClient } from '../enrichment/shared/llm-client';
 import { TokenTracker, TokenUsage } from '../enrichment/shared/token-tracker';
 import { ChefRepository } from '../enrichment/repositories/chef-repository';
 import { RestaurantRepository } from '../enrichment/repositories/restaurant-repository';
@@ -19,11 +17,10 @@ import { RestaurantStatusSweepWorkflow } from '../enrichment/workflows/restauran
 import { PartialUpdateWorkflow } from '../enrichment/workflows/partial-update.workflow';
 import { ManualChefAdditionWorkflow } from '../enrichment/workflows/manual-chef-addition.workflow';
 import type { WorkflowResult } from '../enrichment/types/workflow-types';
+import { configure as configureSynthesis, getTierInfo } from '../enrichment/shared/synthesis-client';
 
 export type { ChefBioResult, RestaurantStatusResult, RestaurantOnlyResult, ShowDescriptionResult };
 export type { WorkflowResult };
-
-
 
 export interface LLMEnricherConfig {
   model?: string;
@@ -34,24 +31,25 @@ export function createLLMEnricher(
   supabase: SupabaseClient<Database>,
   config: LLMEnricherConfig = {}
 ) {
-  const modelName = config.model ?? 'gpt-5-mini';
+  const modelName = config.model ?? 'gpt-4o-mini';
   const maxRestaurants = config.maxRestaurantsPerChef ?? 10;
-  
-  const llmClient = new LLMClient({ model: modelName });
+
+  configureSynthesis({ accuracyModel: modelName });
+
   const tokenTracker = TokenTracker.getInstance();
   const chefRepo = new ChefRepository(supabase);
   const restaurantRepo = new RestaurantRepository(supabase);
   const showRepo = new ShowRepository(supabase);
   const cityRepo = new CityRepository(supabase);
-  
-  const chefBioService = new ChefBioService(llmClient, tokenTracker);
-  const restaurantDiscoveryService = new RestaurantDiscoveryService(llmClient, tokenTracker, maxRestaurants);
-  const showDiscoveryService = new ShowDiscoveryService(llmClient, tokenTracker);
-  const blurbEnrichmentService = new BlurbEnrichmentService(llmClient, tokenTracker);
-  const statusVerificationService = new StatusVerificationService(llmClient, tokenTracker);
+
+  const chefBioService = new ChefBioService(tokenTracker);
+  const restaurantDiscoveryService = new RestaurantDiscoveryService(tokenTracker, maxRestaurants);
+  const showDiscoveryService = new ShowDiscoveryService(tokenTracker);
+  const blurbEnrichmentService = new BlurbEnrichmentService(tokenTracker);
+  const statusVerificationService = new StatusVerificationService(tokenTracker);
   const showDescriptionService = new ShowDescriptionService(tokenTracker, showRepo);
   const narrativeService = new NarrativeService(tokenTracker);
-  
+
   let totalTokensUsed: TokenUsage = { prompt: 0, completion: 0, total: 0 };
 
   async function enrichChefBioOnly(
@@ -61,11 +59,11 @@ export function createLLMEnricher(
     options: { season?: string; result?: string } = {}
   ): Promise<ChefBioResult> {
     const result = await chefBioService.enrichBio(chefId, chefName, showName, options);
-    
+
     totalTokensUsed.prompt += result.tokensUsed.prompt;
     totalTokensUsed.completion += result.tokensUsed.completion;
     totalTokensUsed.total += result.tokensUsed.total;
-    
+
     return result;
   }
 
@@ -74,14 +72,22 @@ export function createLLMEnricher(
     restaurantName: string,
     chefName: string,
     city: string,
-    state?: string
+    state?: string,
+    googlePlaceId?: string | null
   ): Promise<RestaurantStatusResult> {
-    const result = await statusVerificationService.verifyStatus(restaurantId, restaurantName, chefName, city, state);
-    
+    const result = await statusVerificationService.verifyStatus(
+      restaurantId,
+      restaurantName,
+      chefName,
+      city,
+      state,
+      googlePlaceId
+    );
+
     totalTokensUsed.prompt += result.tokensUsed.prompt;
     totalTokensUsed.completion += result.tokensUsed.completion;
     totalTokensUsed.total += result.tokensUsed.total;
-    
+
     return result;
   }
 
@@ -92,11 +98,11 @@ export function createLLMEnricher(
     options: { season?: string; result?: string } = {}
   ): Promise<RestaurantOnlyResult> {
     const result = await restaurantDiscoveryService.findRestaurants(chefId, chefName, showName, options);
-    
+
     totalTokensUsed.prompt += result.tokensUsed.prompt;
     totalTokensUsed.completion += result.tokensUsed.completion;
     totalTokensUsed.total += result.tokensUsed.total;
-    
+
     return result;
   }
 
@@ -124,10 +130,17 @@ export function createLLMEnricher(
     chefName: string,
     city: string,
     state?: string,
-    options: { dryRun?: boolean; minConfidence?: number } = {}
+    options: { dryRun?: boolean; minConfidence?: number; googlePlaceId?: string | null } = {}
   ): Promise<RestaurantStatusResult> {
     const minConfidence = options.minConfidence ?? 0.7;
-    const result = await verifyRestaurantStatus(restaurantId, restaurantName, chefName, city, state);
+    const result = await verifyRestaurantStatus(
+      restaurantId,
+      restaurantName,
+      chefName,
+      city,
+      state,
+      options.googlePlaceId
+    );
 
     if (!result.success || options.dryRun) {
       return result;
@@ -205,13 +218,13 @@ export function createLLMEnricher(
   }
 
   function estimateCost(): number {
-    const inputCostPer1M = 0.25;
-    const outputCostPer1M = 2.00;
-    
+    const inputCostPer1M = 0.15;
+    const outputCostPer1M = 0.6;
+
     return (totalTokensUsed.prompt / 1_000_000) * inputCostPer1M +
            (totalTokensUsed.completion / 1_000_000) * outputCostPer1M;
   }
-  
+
   function getModelName(): string {
     return modelName;
   }
@@ -225,7 +238,7 @@ export function createLLMEnricher(
     chefContext: any
   ): Promise<{ success: boolean; narrative: string | null; tokensUsed: TokenUsage; error?: string }> {
     const result = await narrativeService.generateChefNarrative(chefId, chefContext);
-    
+
     totalTokensUsed.prompt += result.tokensUsed.prompt;
     totalTokensUsed.completion += result.tokensUsed.completion;
     totalTokensUsed.total += result.tokensUsed.total;
@@ -241,7 +254,7 @@ export function createLLMEnricher(
         };
       }
     }
-    
+
     return result;
   }
 
@@ -250,7 +263,7 @@ export function createLLMEnricher(
     restaurantContext: any
   ): Promise<{ success: boolean; narrative: string | null; tokensUsed: TokenUsage; error?: string }> {
     const result = await narrativeService.generateRestaurantNarrative(restaurantId, restaurantContext);
-    
+
     totalTokensUsed.prompt += result.tokensUsed.prompt;
     totalTokensUsed.completion += result.tokensUsed.completion;
     totalTokensUsed.total += result.tokensUsed.total;
@@ -266,7 +279,7 @@ export function createLLMEnricher(
         };
       }
     }
-    
+
     return result;
   }
 
@@ -275,7 +288,7 @@ export function createLLMEnricher(
     chefName: string
   ): Promise<{ success: boolean; shows: TVShowBasic[]; tokensUsed: TokenUsage; error?: string }> {
     const result = await showDiscoveryService.findShowsBasic(chefId, chefName);
-    
+
     totalTokensUsed.prompt += result.tokensUsed.prompt;
     totalTokensUsed.completion += result.tokensUsed.completion;
     totalTokensUsed.total += result.tokensUsed.total;
@@ -293,7 +306,7 @@ export function createLLMEnricher(
     shows: TVShowBasic[]
   ): Promise<{ success: boolean; blurbs: any[]; tokensUsed: TokenUsage; error?: string }> {
     const result = await blurbEnrichmentService.generateBlurbs(chefName, shows);
-    
+
     totalTokensUsed.prompt += result.tokensUsed.prompt;
     totalTokensUsed.completion += result.tokensUsed.completion;
     totalTokensUsed.total += result.tokensUsed.total;
@@ -312,9 +325,9 @@ export function createLLMEnricher(
     options: { includeBlurbs?: boolean } = {}
   ): Promise<{ success: boolean; showsSaved: number; showsSkipped: number; tokensUsed: TokenUsage; error?: string }> {
     const includeBlurbs = options.includeBlurbs ?? true;
-    
+
     const discoveryResult = await showDiscoveryService.findShowsBasic(chefId, chefName);
-    
+
     totalTokensUsed.prompt += discoveryResult.tokensUsed.prompt;
     totalTokensUsed.completion += discoveryResult.tokensUsed.completion;
     totalTokensUsed.total += discoveryResult.tokensUsed.total;
@@ -334,11 +347,11 @@ export function createLLMEnricher(
 
     if (includeBlurbs && showsToSave.length > 0) {
       const blurbResult = await blurbEnrichmentService.generateBlurbs(chefName, showsToSave);
-      
+
       totalTokensUsed.prompt += blurbResult.tokensUsed.prompt;
       totalTokensUsed.completion += blurbResult.tokensUsed.completion;
       totalTokensUsed.total += blurbResult.tokensUsed.total;
-      
+
       totalTokens.prompt += blurbResult.tokensUsed.prompt;
       totalTokens.completion += blurbResult.tokensUsed.completion;
       totalTokens.total += blurbResult.tokensUsed.total;
@@ -346,7 +359,7 @@ export function createLLMEnricher(
       if (blurbResult.success && blurbResult.blurbs.length > 0) {
         showsToSave = showsToSave.map(show => {
           const blurb = blurbResult.blurbs.find(
-            b => b.showName === show.showName && 
+            b => b.showName === show.showName &&
                  (b.season === show.season || (!b.season && !show.season))
           );
           return blurb ? { ...show, performanceBlurb: blurb.performanceBlurb } : show;
@@ -374,7 +387,7 @@ export function createLLMEnricher(
     cityContext: any
   ): Promise<{ success: boolean; narrative: string | null; tokensUsed: TokenUsage; error?: string }> {
     const result = await narrativeService.generateCityNarrative(cityId, cityContext);
-    
+
     totalTokensUsed.prompt += result.tokensUsed.prompt;
     totalTokensUsed.completion += result.tokensUsed.completion;
     totalTokensUsed.total += result.tokensUsed.total;
@@ -390,7 +403,7 @@ export function createLLMEnricher(
         };
       }
     }
-    
+
     return result;
   }
 
@@ -402,11 +415,11 @@ export function createLLMEnricher(
   }): Promise<WorkflowResult> {
     const workflow = new RefreshStaleChefWorkflow(supabase, { model: modelName, maxRestaurants });
     const result = await workflow.execute(input);
-    
+
     totalTokensUsed.prompt += result.totalCost.tokens.prompt;
     totalTokensUsed.completion += result.totalCost.tokens.completion;
     totalTokensUsed.total += result.totalCost.tokens.total;
-    
+
     return result;
   }
 
@@ -420,11 +433,11 @@ export function createLLMEnricher(
   }): Promise<WorkflowResult> {
     const workflow = new RestaurantStatusSweepWorkflow(supabase, { model: modelName });
     const result = await workflow.execute(input);
-    
+
     totalTokensUsed.prompt += result.totalCost.tokens.prompt;
     totalTokensUsed.completion += result.totalCost.tokens.completion;
     totalTokensUsed.total += result.totalCost.tokens.total;
-    
+
     return result;
   }
 
@@ -437,11 +450,11 @@ export function createLLMEnricher(
   }): Promise<WorkflowResult> {
     const workflow = new PartialUpdateWorkflow(supabase, { model: modelName, maxRestaurants });
     const result = await workflow.execute(input);
-    
+
     totalTokensUsed.prompt += result.totalCost.tokens.prompt;
     totalTokensUsed.completion += result.totalCost.tokens.completion;
     totalTokensUsed.total += result.totalCost.tokens.total;
-    
+
     return result;
   }
 
@@ -456,11 +469,11 @@ export function createLLMEnricher(
   }): Promise<WorkflowResult> {
     const workflow = new ManualChefAdditionWorkflow(supabase, { model: modelName, maxRestaurants });
     const result = await workflow.execute(input);
-    
+
     totalTokensUsed.prompt += result.totalCost.tokens.prompt;
     totalTokensUsed.completion += result.totalCost.tokens.completion;
     totalTokensUsed.total += result.totalCost.tokens.total;
-    
+
     return result;
   }
 
@@ -470,11 +483,11 @@ export function createLLMEnricher(
     network: string | null
   ): Promise<ShowDescriptionResult> {
     const result = await showDescriptionService.generateShowDescription(showId, showName, network);
-    
+
     totalTokensUsed.prompt += result.tokensUsed.prompt;
     totalTokensUsed.completion += result.tokensUsed.completion;
     totalTokensUsed.total += result.tokensUsed.total;
-    
+
     return result;
   }
 
@@ -491,12 +504,16 @@ export function createLLMEnricher(
     }
   ): Promise<ShowDescriptionResult> {
     const result = await showDescriptionService.generateSeasonDescription(showId, season, context);
-    
+
     totalTokensUsed.prompt += result.tokensUsed.prompt;
     totalTokensUsed.completion += result.tokensUsed.completion;
     totalTokensUsed.total += result.tokensUsed.total;
-    
+
     return result;
+  }
+
+  function getSynthesisTierInfo() {
+    return getTierInfo();
   }
 
   return {
@@ -516,6 +533,7 @@ export function createLLMEnricher(
     estimateCost,
     resetTokenCounter,
     getModelName,
+    getSynthesisTierInfo,
     workflows: {
       refreshStaleChef: runRefreshStaleChefWorkflow,
       restaurantStatusSweep: runRestaurantStatusSweepWorkflow,

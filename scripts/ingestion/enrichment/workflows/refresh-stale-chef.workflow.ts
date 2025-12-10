@@ -11,8 +11,8 @@ import { NarrativeService } from '../services/narrative-service';
 import { ChefRepository } from '../repositories/chef-repository';
 import { RestaurantRepository } from '../repositories/restaurant-repository';
 import { ShowRepository } from '../repositories/show-repository';
-import { LLMClient } from '../shared/llm-client';
 import { TokenTracker } from '../shared/token-tracker';
+import { configure as configureSynthesis } from '../shared/synthesis-client';
 
 export interface RefreshStaleChefInput {
   chefId: string;
@@ -62,7 +62,7 @@ export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput
     });
 
     this.supabase = supabase;
-    const llmClient = new LLMClient({ model: options.model || 'gpt-5-mini' });
+    configureSynthesis({ accuracyModel: options.model || 'gpt-4o-mini' });
     const tokenTracker = TokenTracker.getInstance();
     const maxRestaurants = options.maxRestaurants || 10;
 
@@ -70,10 +70,10 @@ export class RefreshStaleChefWorkflow extends BaseWorkflow<RefreshStaleChefInput
     this.restaurantRepo = new RestaurantRepository(supabase);
     this.showRepo = new ShowRepository(supabase);
     
-    this.chefBioService = new ChefBioService(llmClient, tokenTracker);
-    this.restaurantDiscoveryService = new RestaurantDiscoveryService(llmClient, tokenTracker, maxRestaurants);
-    this.showDiscoveryService = new ShowDiscoveryService(llmClient, tokenTracker);
-    this.statusVerificationService = new StatusVerificationService(llmClient, tokenTracker);
+    this.chefBioService = new ChefBioService(tokenTracker);
+    this.restaurantDiscoveryService = new RestaurantDiscoveryService(tokenTracker, maxRestaurants);
+    this.showDiscoveryService = new ShowDiscoveryService(tokenTracker);
+    this.statusVerificationService = new StatusVerificationService(tokenTracker);
     this.showDescriptionService = new ShowDescriptionService(tokenTracker, this.showRepo);
     this.narrativeService = new NarrativeService(tokenTracker);
   }

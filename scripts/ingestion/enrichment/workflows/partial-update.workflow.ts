@@ -10,8 +10,8 @@ import { ChefRepository } from '../repositories/chef-repository';
 import { RestaurantRepository } from '../repositories/restaurant-repository';
 import { ShowRepository } from '../repositories/show-repository';
 import { CityRepository } from '../repositories/city-repository';
-import { LLMClient } from '../shared/llm-client';
 import { TokenTracker } from '../shared/token-tracker';
+import { configure as configureSynthesis } from '../shared/synthesis-client';
 
 export type PartialUpdateMode = 'shows' | 'restaurants' | 'chef-narrative' | 'restaurant-narrative' | 'city-narrative';
 
@@ -54,7 +54,7 @@ export class PartialUpdateWorkflow extends BaseWorkflow<PartialUpdateInput, Part
     });
 
     this.supabase = supabase;
-    const llmClient = new LLMClient({ model: options.model || 'gpt-5-mini' });
+    configureSynthesis({ accuracyModel: options.model || 'gpt-4o-mini' });
     const tokenTracker = TokenTracker.getInstance();
     const maxRestaurants = options.maxRestaurants || 10;
 
@@ -63,9 +63,9 @@ export class PartialUpdateWorkflow extends BaseWorkflow<PartialUpdateInput, Part
     this.showRepo = new ShowRepository(supabase);
     this.cityRepo = new CityRepository(supabase);
     
-    this.showDiscoveryService = new ShowDiscoveryService(llmClient, tokenTracker);
+    this.showDiscoveryService = new ShowDiscoveryService(tokenTracker);
     this.showDescriptionService = new ShowDescriptionService(tokenTracker, this.showRepo);
-    this.restaurantDiscoveryService = new RestaurantDiscoveryService(llmClient, tokenTracker, maxRestaurants);
+    this.restaurantDiscoveryService = new RestaurantDiscoveryService(tokenTracker, maxRestaurants);
     this.narrativeService = new NarrativeService(tokenTracker);
   }
 

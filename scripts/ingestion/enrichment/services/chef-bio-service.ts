@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { LLMClient } from '../shared/llm-client';
 import { TokenTracker, TokenUsage } from '../shared/token-tracker';
-import { parseAndValidate, enumWithCitationStrip, stripCitations } from '../shared/result-parser';
-import { withRetry } from '../shared/retry-handler';
+import { enumWithCitationStrip, stripCitations } from '../shared/result-parser';
+import { searchBio, combineSearchResultsCompact, SearchResult } from '../shared/search-client';
+import { synthesize } from '../shared/synthesis-client';
 
 const ChefBioSchema = z.object({
   miniBio: z.string().transform(val => stripCitations(val) || val),
@@ -21,22 +21,21 @@ export interface ChefBioResult {
   error?: string;
 }
 
-const BIO_SYSTEM_PROMPT = `You are a culinary industry expert. Search the web for biographical information about this chef.
+const BIO_SYSTEM_PROMPT = `You are a culinary industry expert extracting biographical information from search results.
 
-Your task: Find accurate, up-to-date information about the chef including:
+Your task: Extract accurate information about the chef from the provided search data:
 1. A brief bio (2-3 sentences about their career and culinary style)
 2. James Beard Award status if any (winner, nominated, semifinalist)
 3. Notable culinary awards (Michelin Guide recognition, World's 50 Best, AAA Five Diamond, etc.)
 
-IMPORTANT: Focus ONLY on biographical info and awards. Do NOT search for restaurants or TV shows.
+IMPORTANT: Only use information from the provided search results. Do NOT make up facts.
 
 Guidelines:
 - Be conservative - if unsure about a detail, omit it
-- Only include prestigious, verifiable awards
+- Only include prestigious, verifiable awards mentioned in the search results
 - Be specific with award names and years if available
 
 CRITICAL: Respond with ONLY valid JSON. No explanatory text.
-CRITICAL: Do NOT include citation numbers or brackets (no [1], [source], etc.)
 
 Response format:
 {
@@ -47,7 +46,6 @@ Response format:
 
 export class ChefBioService {
   constructor(
-    private llmClient: LLMClient,
     private tokenTracker: TokenTracker
   ) {}
 
@@ -57,49 +55,154 @@ export class ChefBioService {
     showName: string,
     options: { season?: string; result?: string } = {}
   ): Promise<ChefBioResult> {
-    let prompt = `Research chef ${chefName} who appeared on ${showName}`;
-    
-    if (options.season) {
-      prompt += ` (${options.season})`;
-    }
-    if (options.result) {
-      prompt += ` as ${options.result}`;
-    }
-    
-    prompt += `.\n\nFind their professional bio (2-3 sentences), James Beard Award status, and notable culinary awards.`;
+    console.log(`   📝 Enriching bio for ${chefName}`);
 
     try {
-      const result = await withRetry(
-        () => this.llmClient.generateWithWebSearch(
-          BIO_SYSTEM_PROMPT,
-          prompt,
-          { maxTokens: 4000, searchContextSize: 'low', useResponseModel: true }
-        ),
-        `enrich bio for ${chefName}`
-      );
+      const searchResult = await searchBio(chefName, chefId);
+      const searchContext = combineSearchResultsCompact([searchResult], 8000);
 
-      const tokensUsed: TokenUsage = result.usage;
-      this.tokenTracker.trackUsage(tokensUsed);
-
-      if (!result.text || result.text.trim() === '') {
-        throw new Error('LLM returned empty response');
+      if (!searchContext || searchContext.length < 100) {
+        console.log(`      ⚠️  Insufficient search results for ${chefName}`);
+        return {
+          chefId,
+          chefName,
+          miniBio: null,
+          jamesBeardStatus: null,
+          notableAwards: null,
+          tokensUsed: { prompt: 0, completion: 0, total: 0 },
+          success: false,
+          error: 'Insufficient search results',
+        };
       }
 
-      const validated = parseAndValidate(result.text, ChefBioSchema);
+      let prompt = `Extract biographical information for chef "${chefName}" who appeared on ${showName}`;
+      if (options.season) prompt += ` (${options.season})`;
+      if (options.result) prompt += ` as ${options.result}`;
+      prompt += `.
+
+SEARCH RESULTS:
+${searchContext}
+
+Based on the search results above, extract:
+1. A 2-3 sentence bio about their career
+2. James Beard Award status (winner/nominated/semifinalist) if mentioned
+3. Notable culinary awards if mentioned
+
+Return ONLY JSON.`;
+
+      const result = await synthesize('accuracy', BIO_SYSTEM_PROMPT, prompt, ChefBioSchema);
+
+      this.tokenTracker.trackUsage(result.usage);
+
+      if (!result.success || !result.data) {
+        return {
+          chefId,
+          chefName,
+          miniBio: null,
+          jamesBeardStatus: null,
+          notableAwards: null,
+          tokensUsed: result.usage,
+          success: false,
+          error: result.error,
+        };
+      }
 
       return {
         chefId,
         chefName,
-        miniBio: validated.miniBio,
-        jamesBeardStatus: validated.jamesBeardStatus ?? null,
-        notableAwards: validated.notableAwards ?? null,
-        tokensUsed,
+        miniBio: result.data.miniBio,
+        jamesBeardStatus: result.data.jamesBeardStatus ?? null,
+        notableAwards: result.data.notableAwards ?? null,
+        tokensUsed: result.usage,
         success: true,
       };
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       console.error(`   ❌ Bio enrichment error for "${chefName}": ${msg}`);
-      
+
+      return {
+        chefId,
+        chefName,
+        miniBio: null,
+        jamesBeardStatus: null,
+        notableAwards: null,
+        tokensUsed: { prompt: 0, completion: 0, total: 0 },
+        success: false,
+        error: msg,
+      };
+    }
+  }
+
+  async enrichBioFromCache(
+    chefId: string,
+    chefName: string,
+    showName: string,
+    cachedSearch: SearchResult,
+    options: { season?: string; result?: string } = {}
+  ): Promise<ChefBioResult> {
+    console.log(`   📝 Synthesizing bio for ${chefName} (from cache)`);
+
+    try {
+      const searchContext = combineSearchResultsCompact([cachedSearch], 8000);
+
+      if (!searchContext || searchContext.length < 100) {
+        return {
+          chefId,
+          chefName,
+          miniBio: null,
+          jamesBeardStatus: null,
+          notableAwards: null,
+          tokensUsed: { prompt: 0, completion: 0, total: 0 },
+          success: false,
+          error: 'Insufficient cached search results',
+        };
+      }
+
+      let prompt = `Extract biographical information for chef "${chefName}" who appeared on ${showName}`;
+      if (options.season) prompt += ` (${options.season})`;
+      if (options.result) prompt += ` as ${options.result}`;
+      prompt += `.
+
+SEARCH RESULTS:
+${searchContext}
+
+Based on the search results above, extract:
+1. A 2-3 sentence bio about their career
+2. James Beard Award status (winner/nominated/semifinalist) if mentioned
+3. Notable culinary awards if mentioned
+
+Return ONLY JSON.`;
+
+      const result = await synthesize('accuracy', BIO_SYSTEM_PROMPT, prompt, ChefBioSchema);
+
+      this.tokenTracker.trackUsage(result.usage);
+
+      if (!result.success || !result.data) {
+        return {
+          chefId,
+          chefName,
+          miniBio: null,
+          jamesBeardStatus: null,
+          notableAwards: null,
+          tokensUsed: result.usage,
+          success: false,
+          error: result.error,
+        };
+      }
+
+      return {
+        chefId,
+        chefName,
+        miniBio: result.data.miniBio,
+        jamesBeardStatus: result.data.jamesBeardStatus ?? null,
+        notableAwards: result.data.notableAwards ?? null,
+        tokensUsed: result.usage,
+        success: true,
+      };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`   ❌ Bio synthesis error for "${chefName}": ${msg}`);
+
       return {
         chefId,
         chefName,

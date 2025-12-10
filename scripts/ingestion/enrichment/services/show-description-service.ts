@@ -1,7 +1,7 @@
-import { LLMClient } from '../shared/llm-client';
 import { TokenTracker, TokenUsage } from '../shared/token-tracker';
-import { withRetry } from '../shared/retry-handler';
 import { ShowRepository } from '../repositories/show-repository';
+import { searchTavily, TavilyResult } from '../shared/tavily-client';
+import { synthesizeRaw } from '../shared/synthesis-client';
 
 export interface ShowDescriptionResult {
   success: boolean;
@@ -71,25 +71,43 @@ export class ShowDescriptionService {
     network: string | null
   ): Promise<ShowDescriptionResult> {
     try {
-      const { SHOW_DESCRIPTION_SYSTEM_PROMPT, buildShowDescriptionPrompt } = await import('../../../../src/lib/narratives/prompts');
+      const query = `${showName} TV show format history impact`;
+      console.log(`      🔍 Searching: "${query}"`);
       
-      const prompt = buildShowDescriptionPrompt({ name: showName, network });
-      
-      const client = new LLMClient({ model: 'gpt-4.1-mini' });
-      const result = await withRetry(
-        () => client.generateWithWebSearch(
-          SHOW_DESCRIPTION_SYSTEM_PROMPT,
-          prompt,
-          { maxTokens: 500, maxSteps: 20, searchContextSize: 'low' }
-        ),
-        `generate show description for ${showName}`
-      );
+      const searchResponse = await searchTavily(query, {
+        entityType: 'show',
+        maxResults: 5,
+      });
+
+      const searchContext = searchResponse.results
+        .map((r: TavilyResult) => `[${r.title}]\n${r.content}`)
+        .join('\n\n');
+
+      const systemPrompt = `You write concise SEO-friendly descriptions for TV cooking competition show pages.
+Write 2-3 sentences that:
+- Describe the show format and what makes it unique
+- Mention the network and premiere year if known
+- Appeal to fans looking to explore chefs from this show
+
+Be factual and engaging. No fluff or filler phrases.`;
+
+      const userPrompt = `Write a brief SEO description for the TV show "${showName}"${network ? ` on ${network}` : ''}.
+
+Research context:
+${searchContext}
+
+Write 2-3 sentences only. No headers or formatting.`;
+
+      const result = await synthesizeRaw('creative', systemPrompt, userPrompt, {
+        maxTokens: 200,
+        temperature: 0.7,
+      });
 
       const tokensUsed: TokenUsage = result.usage;
       this.tokenTracker.trackUsage(tokensUsed);
 
-      if (!result.text || result.text.trim() === '') {
-        throw new Error('LLM returned empty description');
+      if (!result.success || !result.text || result.text.trim() === '') {
+        throw new Error(result.error || 'LLM returned empty description');
       }
 
       const description = result.text.trim();
@@ -125,25 +143,54 @@ export class ShowDescriptionService {
     context: SeasonContext
   ): Promise<ShowDescriptionResult> {
     try {
-      const { SEASON_DESCRIPTION_SYSTEM_PROMPT, buildSeasonDescriptionPrompt } = await import('../../../../src/lib/narratives/prompts');
+      const query = `${context.showName} season ${season} contestants winner`;
+      console.log(`      🔍 Searching: "${query}"`);
       
-      const prompt = buildSeasonDescriptionPrompt(context);
+      const searchResponse = await searchTavily(query, {
+        entityType: 'show',
+        maxResults: 3,
+      });
+
+      const searchContext = searchResponse.results
+        .map((r: TavilyResult) => `[${r.title}]\n${r.content}`)
+        .join('\n\n');
+
+      const systemPrompt = `You write concise SEO-friendly descriptions for TV cooking competition season pages.
+Write 1-2 sentences that:
+- Mention the season number and any notable theme/location
+- Reference the winner if known
+- Create interest in exploring the chefs from this season
+
+Be factual and engaging. No fluff.`;
+
+      const winnerInfo = context.winner 
+        ? `The winner was ${context.winner.name}.` 
+        : '';
       
-      const client = new LLMClient({ model: 'gpt-4.1-mini' });
-      const result = await withRetry(
-        () => client.generateWithWebSearch(
-          SEASON_DESCRIPTION_SYSTEM_PROMPT,
-          prompt,
-          { maxTokens: 400, maxSteps: 15, searchContextSize: 'low' }
-        ),
-        `generate season description for ${context.showName} ${season}`
-      );
+      const statsInfo = context.chefCount > 0 
+        ? `This season has ${context.chefCount} chef${context.chefCount > 1 ? 's' : ''} in our database.`
+        : '';
+
+      const userPrompt = `Write a brief SEO description for Season ${context.season} of ${context.showName}${context.network ? ` on ${context.network}` : ''}.
+
+${winnerInfo}
+${statsInfo}
+
+Research context:
+${searchContext}
+
+Write 1-2 sentences only. No headers or formatting.`;
+
+      const result = await synthesizeRaw('creative', systemPrompt, userPrompt, {
+        maxTokens: 150,
+        temperature: 0.7,
+      });
 
       const tokensUsed: TokenUsage = result.usage;
       this.tokenTracker.trackUsage(tokensUsed);
 
-      if (!result.text || result.text.trim() === '') {
-        throw new Error('LLM returned empty description');
+      if (!result.success || !result.text || result.text.trim() === '') {
+        throw new Error(result.error || 'LLM returned empty description');
       }
 
       const description = result.text.trim();

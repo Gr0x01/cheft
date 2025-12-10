@@ -5,8 +5,14 @@ let _supabase: SupabaseClient | null = null;
 
 function getSupabase(): SupabaseClient {
   if (!_supabase) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl) {
+      throw new Error('NEXT_PUBLIC_SUPABASE_URL environment variable is required');
+    }
+    if (!supabaseKey) {
+      throw new Error('SUPABASE_SERVICE_ROLE_KEY environment variable is required');
+    }
     _supabase = createClient(supabaseUrl, supabaseKey);
   }
   return _supabase;
@@ -27,15 +33,16 @@ export interface TavilyResponse {
 }
 
 export interface CacheOptions {
-  entityType: 'chef' | 'restaurant';
+  entityType: 'chef' | 'restaurant' | 'show';
   entityId?: string;
   entityName?: string;
   ttlDays?: number;
 }
 
-const DEFAULT_TTL_DAYS = {
+const DEFAULT_TTL_DAYS: Record<CacheOptions['entityType'], number> = {
   chef: 90,
   restaurant: 30,
+  show: 180,
 };
 
 function hashQuery(query: string): string {

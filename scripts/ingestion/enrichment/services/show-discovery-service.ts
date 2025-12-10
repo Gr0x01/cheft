@@ -1,18 +1,20 @@
 import { z } from 'zod';
-import { LLMClient } from '../shared/llm-client';
 import { TokenTracker, TokenUsage } from '../shared/token-tracker';
 import { enumWithCitationStrip, extractJsonFromText } from '../shared/result-parser';
-import { withRetry } from '../shared/retry-handler';
+import { searchShows, combineSearchResultsCompact, SearchResult } from '../shared/search-client';
+import { synthesize } from '../shared/synthesis-client';
 
 const TVShowBasicSchema = z.object({
   showName: z.string(),
   season: z.string().nullable().optional(),
-  result: enumWithCitationStrip(['winner', 'finalist', 'contestant', 'judge'] as const),
-}).passthrough();
+  result: enumWithCitationStrip(['winner', 'finalist', 'contestant', 'judge'] as const).nullable().default('contestant'),
+});
 
 const TVShowWithBlurbSchema = TVShowBasicSchema.extend({
   performanceBlurb: z.string().nullable().optional(),
 });
+
+const ShowsArraySchema = z.array(TVShowBasicSchema);
 
 export type TVShowBasic = z.infer<typeof TVShowBasicSchema>;
 export type TVShowWithBlurb = z.infer<typeof TVShowWithBlurbSchema>;
@@ -33,50 +35,15 @@ export interface FullShowDiscoveryResult extends ShowDiscoveryResult {
   tvShows?: TVShowWithBlurb[];
 }
 
-const BASIC_DISCOVERY_PROMPT = `You are a TV cooking show data extractor. Your job is to search the web and extract EVERY TV cooking competition appearance for a chef.
+const SHOW_DISCOVERY_PROMPT = `You are a TV cooking show data extractor. Extract ALL TV cooking competition appearances from the provided search results.
 
 CRITICAL RULES:
-1. Search multiple times with different queries to find all appearances
-2. After searching, list EVERY show mentioned in ANY search result
-3. Do NOT summarize or filter - include ALL shows found
-4. Many chefs appear on 5-10+ different shows
-5. Return the complete list as JSON array
+1. Extract EVERY show mentioned in the search results
+2. Do NOT summarize or filter - include ALL shows found
+3. Many chefs appear on 5-10+ different shows
+4. Return the complete list as JSON array
 
-Your output must be ONLY a JSON array, no other text.`;
-
-export class ShowDiscoveryService {
-  constructor(
-    private llmClient: LLMClient,
-    private tokenTracker: TokenTracker
-  ) {}
-
-  async findShowsBasic(
-    chefId: string,
-    chefName: string
-  ): Promise<BasicShowDiscoveryResult> {
-    try {
-      const prompt = `Extract ALL TV cooking competition appearances for chef "${chefName}".
-
-Step 1: Search "${chefName} Top Chef"
-Step 2: Search "${chefName} Tournament of Champions" 
-Step 3: Search "${chefName} TV cooking shows"
-Step 4: Search "${chefName} Food Network appearances"
-
-After searching, extract EVERY show mentioned in the search results. Include:
-- Top Chef (any season)
-- Tournament of Champions
-- Beat Bobby Flay  
-- Chopped
-- Iron Chef / Iron Chef America / Iron Chef Gauntlet
-- Guy's Grocery Games
-- Hell's Kitchen
-- MasterChef
-- Next Iron Chef
-- Top Chef Masters
-- Any other cooking competition
-
-For EACH show found, output:
-{"showName": "exact name", "season": "number or year", "result": "winner|finalist|contestant|judge"}
+Your output must be ONLY a JSON array, no other text.
 
 SEASON FORMATTING (CRITICAL - FOLLOW EXACTLY):
 - If season number exists, use ONLY the number (e.g., "15" NOT "Season 15")
@@ -87,30 +54,79 @@ SEASON FORMATTING (CRITICAL - FOLLOW EXACTLY):
 - Keep it simple: just numbers or years
 - If unknown, use null
 
-Output ONLY a JSON array. Example:
-[{"showName": "Top Chef", "season": "14", "result": "winner"}, {"showName": "Chopped", "season": "28", "result": "winner"}, {"showName": "Beat Bobby Flay", "season": "2024", "result": "contestant"}]`;
+Output format:
+[{"showName": "Top Chef", "season": "14", "result": "winner"}, ...]`;
 
-      const result = await withRetry(
-        () => this.llmClient.generateWithWebSearch(
-          BASIC_DISCOVERY_PROMPT,
-          prompt,
-          { maxTokens: 16000, maxSteps: 15 }
-        ),
-        `discover shows for ${chefName}`
-      );
+export class ShowDiscoveryService {
+  constructor(
+    private tokenTracker: TokenTracker
+  ) {}
 
-      const tokensUsed: TokenUsage = result.usage;
-      this.tokenTracker.trackUsage(tokensUsed);
+  async findShowsBasic(
+    chefId: string,
+    chefName: string
+  ): Promise<BasicShowDiscoveryResult> {
+    console.log(`   📺 Discovering shows for ${chefName}`);
 
-      if (!result.text || result.text.trim() === '') {
-        console.error(`   ❌ Empty response from LLM for "${chefName}"`);
-        throw new Error('LLM returned empty response');
+    try {
+      const searchResults = await searchShows(chefName, chefId);
+      const searchContext = combineSearchResultsCompact(searchResults, 12000);
+
+      if (!searchContext || searchContext.length < 100) {
+        console.log(`      ⚠️  Insufficient search results for ${chefName}`);
+        return {
+          success: false,
+          showsSaved: 0,
+          showsSkipped: 0,
+          tokensUsed: { prompt: 0, completion: 0, total: 0 },
+          error: 'Insufficient search results',
+        };
       }
 
-      const jsonText = extractJsonFromText(result.text);
-      const parsed = JSON.parse(jsonText);
-      const normalized = Array.isArray(parsed) ? parsed : [parsed];
-      const tvShows = z.array(TVShowBasicSchema).parse(normalized);
+      const prompt = `Extract ALL TV cooking competition appearances for chef "${chefName}" from these search results.
+
+SEARCH RESULTS:
+${searchContext}
+
+Based on the search results above, extract EVERY TV show mentioned. Include:
+- Top Chef (any season)
+- Tournament of Champions
+- Beat Bobby Flay
+- Chopped
+- Iron Chef / Iron Chef America / Iron Chef Gauntlet
+- Guy's Grocery Games
+- Hell's Kitchen
+- MasterChef
+- Next Iron Chef
+- Top Chef Masters
+- Any other cooking competition
+
+For EACH show found, output:
+{"showName": "exact name", "season": "number or year or null", "result": "winner|finalist|contestant|judge"}
+
+Output ONLY a JSON array.`;
+
+      const result = await synthesize('accuracy', SHOW_DISCOVERY_PROMPT, prompt, ShowsArraySchema, {
+        maxTokens: 8000,
+      });
+
+      this.tokenTracker.trackUsage(result.usage);
+
+      if (!result.success || !result.data) {
+        return {
+          success: false,
+          showsSaved: 0,
+          showsSkipped: 0,
+          tokensUsed: result.usage,
+          error: result.error,
+        };
+      }
+
+      const tvShows: TVShowBasic[] = result.data.map(show => ({
+        showName: show.showName,
+        season: show.season,
+        result: (show.result ?? 'contestant') as TVShowBasic['result'],
+      }));
 
       console.log(`      📋 Found ${tvShows.length} shows for ${chefName}`);
       tvShows.forEach(show => {
@@ -121,13 +137,93 @@ Output ONLY a JSON array. Example:
         success: true,
         showsSaved: 0,
         showsSkipped: 0,
-        tokensUsed,
+        tokensUsed: result.usage,
         tvShows,
       };
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       console.error(`   ❌ Show discovery error for "${chefName}": ${msg}`);
-      
+
+      return {
+        success: false,
+        showsSaved: 0,
+        showsSkipped: 0,
+        tokensUsed: { prompt: 0, completion: 0, total: 0 },
+        error: msg,
+      };
+    }
+  }
+
+  async findShowsBasicFromCache(
+    chefId: string,
+    chefName: string,
+    cachedSearches: SearchResult[]
+  ): Promise<BasicShowDiscoveryResult> {
+    console.log(`   📺 Extracting shows for ${chefName} (from cache)`);
+
+    try {
+      const searchContext = combineSearchResultsCompact(cachedSearches, 12000);
+
+      if (!searchContext || searchContext.length < 100) {
+        return {
+          success: false,
+          showsSaved: 0,
+          showsSkipped: 0,
+          tokensUsed: { prompt: 0, completion: 0, total: 0 },
+          error: 'Insufficient cached search results',
+        };
+      }
+
+      const prompt = `Extract ALL TV cooking competition appearances for chef "${chefName}" from these search results.
+
+SEARCH RESULTS:
+${searchContext}
+
+Based on the search results above, extract EVERY TV show mentioned.
+
+For EACH show found, output:
+{"showName": "exact name", "season": "number or year or null", "result": "winner|finalist|contestant|judge"}
+
+Output ONLY a JSON array.`;
+
+      const result = await synthesize('accuracy', SHOW_DISCOVERY_PROMPT, prompt, ShowsArraySchema, {
+        maxTokens: 8000,
+      });
+
+      this.tokenTracker.trackUsage(result.usage);
+
+      if (!result.success || !result.data) {
+        return {
+          success: false,
+          showsSaved: 0,
+          showsSkipped: 0,
+          tokensUsed: result.usage,
+          error: result.error,
+        };
+      }
+
+      const tvShows: TVShowBasic[] = result.data.map(show => ({
+        showName: show.showName,
+        season: show.season,
+        result: (show.result ?? 'contestant') as TVShowBasic['result'],
+      }));
+
+      console.log(`      📋 Found ${tvShows.length} shows for ${chefName}`);
+      tvShows.forEach(show => {
+        console.log(`         - ${show.showName}${show.season ? ' S' + show.season : ''} (${show.result || 'contestant'})`);
+      });
+
+      return {
+        success: true,
+        showsSaved: 0,
+        showsSkipped: 0,
+        tokensUsed: result.usage,
+        tvShows,
+      };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`   ❌ Show extraction error for "${chefName}": ${msg}`);
+
       return {
         success: false,
         showsSaved: 0,
@@ -149,76 +245,29 @@ Output ONLY a JSON array. Example:
     chefId: string,
     chefName: string
   ): Promise<FullShowDiscoveryResult> {
-    try {
-      const prompt = `Extract ALL TV cooking competition appearances for chef "${chefName}".
+    const basicResult = await this.findShowsBasic(chefId, chefName);
 
-Step 1: Search "${chefName} Top Chef"
-Step 2: Search "${chefName} Tournament of Champions"
-Step 3: Search "${chefName} TV cooking shows"
-Step 4: Search "${chefName} Food Network appearances"
-
-After searching, extract EVERY show mentioned in the search results with performance details.
-
-For EACH show found, output:
-{"showName": "exact name", "season": "number or year", "result": "winner|finalist|contestant|judge", "performanceBlurb": "1-2 sentence summary"}
-
-SEASON FORMATTING (CRITICAL - FOLLOW EXACTLY):
-- If season number exists, use ONLY the number (e.g., "15" NOT "Season 15")
-- If episode number exists, use ONLY the number (e.g., "28" NOT "Episode 28")
-- If only year is known, use the 4-digit year (e.g., "2024")
-- If multiple years, use first year only (e.g., "2016" NOT "2016-2022")
-- DO NOT include words like "Season", "Episode", "various"
-- Keep it simple: just numbers or years
-- If unknown, use null
-
-Output ONLY a JSON array. Example:
-[{"showName": "Top Chef", "season": "14", "result": "winner", "performanceBlurb": "Won Season 14 in Charleston."}, {"showName": "Chopped", "season": "28", "result": "winner", "performanceBlurb": "Dominated with creative dessert in finale."}, {"showName": "Beat Bobby Flay", "season": "2024", "result": "contestant", "performanceBlurb": "Competed in seafood challenge."}]`;
-
-      const result = await withRetry(
-        () => this.llmClient.generateWithWebSearch(
-          BASIC_DISCOVERY_PROMPT,
-          prompt,
-          { maxTokens: 16000, maxSteps: 15 }
-        ),
-        `enrich shows for ${chefName}`
-      );
-
-      const tokensUsed: TokenUsage = result.usage;
-      this.tokenTracker.trackUsage(tokensUsed);
-
-      if (!result.text || result.text.trim() === '') {
-        console.error(`   ❌ Empty response from LLM for "${chefName}"`);
-        throw new Error('LLM returned empty response');
-      }
-
-      const jsonText = extractJsonFromText(result.text);
-      const parsed = JSON.parse(jsonText);
-      const normalized = Array.isArray(parsed) ? parsed : [parsed];
-      const tvShows = z.array(TVShowWithBlurbSchema).parse(normalized);
-
-      console.log(`      📋 Found ${tvShows.length} shows for ${chefName}`);
-      tvShows.forEach(show => {
-        console.log(`         - ${show.showName}${show.season ? ' S' + show.season : ''} (${show.result || 'contestant'})`);
-      });
-
+    if (!basicResult.success || !basicResult.tvShows) {
       return {
-        success: true,
-        showsSaved: 0,
-        showsSkipped: 0,
-        tokensUsed,
-        tvShows,
-      };
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      console.error(`   ❌ Shows enrichment error for "${chefName}": ${msg}`);
-      
-      return {
-        success: false,
-        showsSaved: 0,
-        showsSkipped: 0,
-        tokensUsed: { prompt: 0, completion: 0, total: 0 },
-        error: msg,
+        success: basicResult.success,
+        showsSaved: basicResult.showsSaved,
+        showsSkipped: basicResult.showsSkipped,
+        tokensUsed: basicResult.tokensUsed,
+        error: basicResult.error,
       };
     }
+
+    const tvShows: TVShowWithBlurb[] = basicResult.tvShows.map(show => ({
+      ...show,
+      performanceBlurb: null,
+    }));
+
+    return {
+      success: true,
+      showsSaved: 0,
+      showsSkipped: 0,
+      tokensUsed: basicResult.tokensUsed,
+      tvShows,
+    };
   }
 }
