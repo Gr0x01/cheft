@@ -14,11 +14,14 @@ Status: Pre-Launch - Ready for Show Expansion
 ## Enrichment System v2 Complete
 The enrichment system has been fully refactored and hardened:
 - **Search**: All web searches through Tavily API with caching (search-client.ts, tavily-client.ts)
-- **Synthesis**: Two-tier model - accuracy (gpt-4o-mini) for facts, creative (local Qwen3) for prose (synthesis-client.ts)
+- **Synthesis**: Two-tier model - accuracy (gpt-4o-mini) for facts, creative (local Qwen3 with `/no_think`) for prose
+- **Wikipedia Cache**: Shows fetched once from Wikipedia, reused for all contestants (~50% cost savings)
 - **Status**: Google Places API checked first, Tavily fallback
-- **Workflows**: All 4 workflows updated, all 7 services migrated
+- **Workflows**: All 4 workflows updated, all 8 services migrated
 - **Code review**: A- grade, critical null safety and env var validation issues fixed
 - **Dead code**: Old LLMClient files archived to scripts/archive/enricher-v1/
+
+**New: Wikipedia Show Cache** - `show_source_cache` table stores Wikipedia content per show (never expires). `add-show.ts` fetches once and passes context to all chef enrichments.
 
 See `memory-bank/architecture/enrichment-reference.md` for quick reference.
 
@@ -72,9 +75,10 @@ Current chef_shows links vs expected:
 4. **Enable shows** - Only after proper data coverage
 
 ## Key Scripts
-- `scripts/add-show.ts` - Add show with contestants (uses enricher v2)
+- `scripts/add-show.ts` - Add show with contestants (uses Wikipedia cache + enricher v2)
 - `scripts/enrich-google-places.ts` - Backfill Google Place IDs
 - `scripts/michelin/scrape-wikipedia-michelin.ts` - Refresh Michelin data
+- `scripts/test-enricher.ts` - Smoke test for enrichment components
 
 ## Show Config Format
 Location: `shows/*.json`

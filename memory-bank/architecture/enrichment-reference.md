@@ -1,5 +1,5 @@
 ---
-Last-Updated: 2025-12-09
+Last-Updated: 2025-12-10
 Maintainer: RB
 Status: Active
 ---
@@ -8,15 +8,23 @@ Status: Active
 
 ## What It Is
 
-LLM-powered data discovery system for chef/restaurant enrichment. Uses Tavily for web search (cached) and tiered LLM synthesis (accuracy vs creative).
+LLM-powered data discovery system for chef/restaurant enrichment. Uses Wikipedia cache for show data, Tavily for chef-specific searches, and tiered LLM synthesis (accuracy vs creative).
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
+│                      WIKIPEDIA CACHE (Static Show Data)                     │
+│  show_source_cache table → fetched once per show, never expires            │
+│  Contains: all contestants, seasons, results, restaurants                   │
+│  Cost: $0 (direct Wikipedia API)                                            │
+└─────────────────────────────────────┬───────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
 │                           SEARCH LAYER (Tavily)                             │
-│  All web searches → tavily-client.ts → cached in search_cache table         │
-│  Cost: ~$0.01-0.02 per query set                                            │
+│  Chef-specific searches only (bio, restaurants) → search_cache (TTL)       │
+│  Cost: ~$0.01 per query                                                     │
 └─────────────────────────────────────┬───────────────────────────────────────┘
                                       │
                                       ▼
@@ -33,7 +41,7 @@ LLM-powered data discovery system for chef/restaurant enrichment. Uses Tavily fo
               ▼                                               ▼
 ┌─────────────────────────────┐               ┌─────────────────────────────┐
 │     TIER 1: ACCURACY        │               │     TIER 2: CREATIVE        │
-│  gpt-4o-mini (always)       │               │  Local Qwen3 (if avail)     │
+│  gpt-4o-mini (always)       │               │  Local Qwen3 /no_think      │
 │                             │               │  Fallback: gpt-4o-mini      │
 │  Used for:                  │               │                             │
 │  - Chef bios (facts)        │               │  Used for:                  │
@@ -54,6 +62,7 @@ scripts/ingestion/enrichment/
 ├── services/         # Business logic
 │   ├── chef-bio-service.ts
 │   ├── show-discovery-service.ts
+│   ├── show-source-service.ts      # Wikipedia cache for shows
 │   ├── restaurant-discovery-service.ts
 │   ├── blurb-enrichment-service.ts
 │   ├── status-verification-service.ts
@@ -85,12 +94,14 @@ scripts/ingestion/enrichment/
 | Task | Method | Source File |
 |------|--------|-------------|
 | Add new chef | `workflows.manualChefAddition` | `manual-chef-addition.workflow.ts` |
+| Add show with contestants | `add-show.ts --config` | Uses Wikipedia cache for all chefs |
 | Refresh old data | `workflows.refreshStaleChef` | `refresh-stale-chef.workflow.ts` |
 | Backfill TV shows | `enrichShowsOnly(chefId, name)` | `show-discovery-service.ts` |
 | Check restaurant status | `workflows.restaurantStatusSweep` | `restaurant-status-sweep.workflow.ts` |
 | Find restaurants | `findAndSaveRestaurants(...)` | `restaurant-discovery-service.ts` |
 | Generate narratives | `workflows.partialUpdate` | `partial-update.workflow.ts` |
 | Generate show SEO | `generateShowDescription(...)` | `show-description-service.ts` |
+| Fetch show Wikipedia | `ShowSourceService.getOrFetchShowSource()` | `show-source-service.ts` |
 
 ## Setup
 
@@ -150,6 +161,7 @@ const context = combineSearchResultsCompact(results, 12000);
 ```
 
 **Cache TTLs:**
+- Wikipedia show cache: **Never expires** (static after season ends)
 - Chef data: 90 days
 - Restaurant data: 30 days
 - Show data: 180 days
@@ -218,12 +230,22 @@ LM_STUDIO_URL=http://10.2.0.10:1234
 
 ## Cost Model
 
+### With Wikipedia Cache (Recommended)
+Per show import using `add-show.ts`:
+- Wikipedia fetch: $0 (direct API, no LLM)
+- Per chef (bio + restaurants + shows from cache): ~$0.03-0.04
+- **Total for 28-chef show: ~$0.84-1.12**
+
+### Without Cache (Legacy per-chef search)
 Per chef (full enrichment):
 - Bio search + synthesis: ~$0.012
 - Shows (4 queries): ~$0.023
 - Restaurants (4 queries): ~$0.025
 - Blurbs (creative, local): ~$0.01 (or $0 if local)
 - **Total: ~$0.06-0.07 per chef**
+- **Total for 28-chef show: ~$1.68-1.96**
+
+**Savings with Wikipedia cache: ~50%**
 
 ---
 
@@ -244,6 +266,38 @@ Per chef (full enrichment):
 supabase/migrations/030_michelin_reference_table.sql
 scripts/michelin/scrape-wikipedia-michelin.ts
 ```
+
+---
+
+## Wikipedia Show Cache
+
+### How It Works
+1. `add-show.ts` fetches Wikipedia once per show via `ShowSourceService`
+2. Content is cached in `show_source_cache` table (never expires)
+3. Wikipedia context is passed to each chef's enrichment workflow
+4. Show discovery uses cached context instead of Tavily searches
+
+### ShowSourceService API
+```typescript
+import { ShowSourceService } from './ingestion/enrichment/services/show-source-service';
+
+const showSourceService = new ShowSourceService(supabase);
+
+// Get cached or fetch fresh
+const showSource = await showSourceService.getOrFetchShowSource('top-chef-masters');
+// Returns: { showSlug, wikipediaUrl, wikipediaContent, contestants[], fetchedAt }
+
+// Build context for LLM
+const context = showSourceService.buildContextForLLM(showSource, chefName);
+```
+
+### Supported Shows
+Wikipedia URLs configured in `show-source-service.ts`:
+- `top-chef`, `top-chef-masters`, `tournament-of-champions`
+- `iron-chef-america`, `hells-kitchen`, `masterchef`
+- `chopped`, `the-bear`, `chefs-table`
+
+To add a show, add entry to `WIKIPEDIA_SHOW_URLS` in `show-source-service.ts`.
 
 ---
 
