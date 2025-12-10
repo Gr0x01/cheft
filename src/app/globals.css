@@ -1077,6 +1077,54 @@ body {
   color: var(--accent-primary);
 }
 
+/* Simple popup for lightweight map pins */
+.popup-simple {
+  padding: 12px 14px;
+  min-width: 180px;
+}
+
+.popup-simple-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+  line-height: 1.2;
+}
+
+.popup-simple-chef {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin: 0 0 6px 0;
+}
+
+.popup-simple-location {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 0 0 10px 0;
+}
+
+.popup-simple-price {
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
+.popup-simple-link {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--accent-primary);
+  text-decoration: none;
+  display: inline-block;
+}
+
+.popup-simple-link:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 1024px) {
   .search-wrapper {
     width: 240px;

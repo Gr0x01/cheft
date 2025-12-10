@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useDeferredValue } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { RestaurantWithDetails } from '@/lib/types';
+import { RestaurantWithDetails, MapPin } from '@/lib/types';
 import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCompact';
 import { ChefCard } from '@/components/chef/ChefCard';
 import { Header } from '@/components/ui/Header';
@@ -29,7 +29,7 @@ interface HomePageProps {
   shows: Show[];
 }
 
-const RestaurantMap = dynamic(() => import('@/components/RestaurantMap'), { 
+const RestaurantMapPins = dynamic(() => import('@/components/RestaurantMapPins'), { 
   ssr: false,
   loading: () => (
     <div className="map-loading">
@@ -47,11 +47,29 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef, shows 
   const [hoveredRestaurant, setHoveredRestaurant] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(20);
   const [restaurants, setRestaurants] = useState<RestaurantWithDetails[]>([]);
+  const [mapPins, setMapPins] = useState<MapPin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMapLoading, setIsMapLoading] = useState(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const deferredSearchQuery = useDeferredValue(searchQuery);
   
   const featuredChefs = initialFeaturedChefs;
+
+  useEffect(() => {
+    async function fetchMapPins() {
+      try {
+        const response = await fetch('/api/restaurants/map-pins');
+        if (!response.ok) throw new Error('Failed to fetch map pins');
+        const data = await response.json();
+        setMapPins(data);
+      } catch (error) {
+        console.error('Error loading map pins:', error);
+      } finally {
+        setIsMapLoading(false);
+      }
+    }
+    fetchMapPins();
+  }, []);
 
   useEffect(() => {
     async function fetchRestaurants() {
@@ -94,6 +112,25 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef, shows 
 
     return filtered;
   }, [deferredSearchQuery, selectedShow, selectedPriceRange, restaurants]);
+
+  const filteredPins = useMemo(() => {
+    let filtered = mapPins;
+
+    if (deferredSearchQuery) {
+      const query = deferredSearchQuery.toLowerCase();
+      filtered = filtered.filter(pin =>
+        pin.name.toLowerCase().includes(query) ||
+        pin.chef_name.toLowerCase().includes(query) ||
+        pin.city.toLowerCase().includes(query)
+      );
+    }
+
+    if (selectedPriceRange !== 'all') {
+      filtered = filtered.filter(pin => pin.price_tier === selectedPriceRange);
+    }
+
+    return filtered;
+  }, [deferredSearchQuery, selectedPriceRange, mapPins]);
 
   const winnerRestaurants = useMemo(() => {
     const winners = restaurants.filter(r => {
@@ -336,12 +373,10 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef, shows 
             </select>
           </div>
           
-          <RestaurantMap 
-            restaurants={filteredRestaurants}
-            selectedRestaurant={selectedRestaurant}
-            hoveredRestaurantId={hoveredRestaurant}
-            onRestaurantSelect={handleRestaurantClick}
-            isLoading={isLoading}
+          <RestaurantMapPins 
+            pins={filteredPins}
+            selectedPinId={selectedRestaurant?.id}
+            isLoading={isMapLoading}
           />
         </section>
       </main>

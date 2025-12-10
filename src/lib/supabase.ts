@@ -107,6 +107,38 @@ export interface RestaurantWithChef extends Restaurant {
   };
 }
 
+// RPC response types
+export interface FeaturedChefRpcRow {
+  id: string;
+  name: string;
+  slug: string;
+  photo_url: string | null;
+  mini_bio: string | null;
+  james_beard_status: string | null;
+  chef_shows: Array<{
+    id: string;
+    season: string | null;
+    result: string | null;
+    is_primary: boolean;
+    show: { id: string; name: string; slug: string };
+  }>;
+  restaurant_count: number;
+}
+
+export interface MapPinRpcRow {
+  id: string;
+  slug: string;
+  name: string;
+  lat: number;
+  lng: number;
+  city: string;
+  state: string | null;
+  chef_name: string;
+  chef_slug: string;
+  price_tier: string | null;
+  status: string;
+}
+
 // Database helper functions
 export const db = {
   // Get all shows
@@ -304,48 +336,23 @@ export const db = {
   },
 
   // Get featured chefs (chefs with photos and restaurants, randomized)
-  async getFeaturedChefs(limit: number = 12, excludeChefId?: string) {
+  // Uses RPC to avoid N+1 query problem (was causing connection exhaustion)
+  async getFeaturedChefs(limit: number = 12, excludeChefId?: string): Promise<FeaturedChefRpcRow[]> {
     const client = getSupabaseClient();
-    const { data, error } = await client
-      .from('chefs')
-      .select(`
-        id,
-        name,
-        slug,
-        photo_url,
-        mini_bio,
-        james_beard_status,
-        chef_shows(
-          *,
-          show:shows(*)
-        )
-      `)
-      .not('photo_url', 'is', null)
-      .limit(100);
+    const { data, error } = await client.rpc('get_featured_chefs_with_counts');
     
     if (error) throw error;
     
-    const chefsWithRestaurantCount = await Promise.all(
-      (data || []).map(async (chef: any) => {
-        const { count } = await client
-          .from('restaurants')
-          .select('id', { count: 'exact', head: true })
-          .eq('chef_id', chef.id)
-          .eq('is_public', true);
-        
-        return {
-          ...chef,
-          restaurant_count: count || 0
-        };
-      })
-    );
-    
-    let eligible = chefsWithRestaurantCount.filter(chef => chef.restaurant_count >= 2);
+    let eligible: FeaturedChefRpcRow[] = ((data as FeaturedChefRpcRow[] | null) || []).map((chef) => ({
+      ...chef,
+      chef_shows: chef.chef_shows || []
+    }));
     
     if (excludeChefId) {
-      eligible = eligible.filter(chef => chef.id !== excludeChefId);
+      eligible = eligible.filter((chef) => chef.id !== excludeChefId);
     }
     
+    // Shuffle for randomization
     for (let i = eligible.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [eligible[i], eligible[j]] = [eligible[j], eligible[i]];

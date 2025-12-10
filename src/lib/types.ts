@@ -135,6 +135,20 @@ export interface MapBounds {
   west: number;
 }
 
+export interface MapPin {
+  id: string;
+  slug: string;
+  name: string;
+  lat: number;
+  lng: number;
+  city: string;
+  state: string | null;
+  chef_name: string;
+  chef_slug: string;
+  price_tier: string | null;
+  status: string;
+}
+
 export interface MapMarker {
   id: string;
   position: {
