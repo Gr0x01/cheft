@@ -47,6 +47,19 @@ export default async function RestaurantsPage() {
           result,
           is_primary
         )
+      ),
+      chefs:restaurant_chefs (
+        is_primary,
+        chef:chefs (
+          id,
+          name,
+          slug,
+          james_beard_status,
+          chef_shows (
+            result,
+            is_primary
+          )
+        )
       )
     `)
     .eq('is_public', true)
@@ -71,6 +84,7 @@ export default async function RestaurantsPage() {
     photo_urls: r.photo_urls,
     michelin_stars: r.michelin_stars,
     chef: r.chef,
+    chefs: (r as any).chefs,
   }));
 
   const cityMap = new Map<string, { state: string | null; count: number }>();

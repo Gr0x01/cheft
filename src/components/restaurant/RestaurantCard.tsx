@@ -161,13 +161,13 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
           )}
         </div>
 
-        {restaurant.chef && (
+        {chefNames && (
           <p 
             className="mt-3 font-ui text-sm font-medium truncate"
             style={{ color: 'var(--text-secondary)' }}
           >
-            by {restaurant.chef.name}
-            {chefAchievements.isShowWinner && (
+            by {chefNames}
+            {isShowWinner && (
               <span 
                 className="ml-2 font-mono text-[10px] tracking-wider px-1.5 py-0.5"
                 style={{ background: 'var(--accent-success)', color: 'white' }}
@@ -176,7 +176,7 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
                 WINNER
               </span>
             )}
-            {chefAchievements.isJBWinner && (
+            {isJBWinner && (
               <span 
                 className="ml-1 font-mono text-[10px] tracking-wider px-1.5 py-0.5"
                 style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', color: '#78350f' }}

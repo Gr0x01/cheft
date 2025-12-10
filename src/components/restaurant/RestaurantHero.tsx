@@ -11,6 +11,18 @@ import { GoogleMapsLogo } from '@/components/icons/GoogleMapsLogo';
 import { ReportIssueButton } from '../feedback/ReportIssueButton';
 import { ExternalLinkTracker } from '@/components/analytics/ExternalLinkTracker';
 
+interface ChefInfo {
+  name: string;
+  slug: string;
+  photo_url?: string | null;
+  james_beard_status?: 'semifinalist' | 'nominated' | 'winner' | null;
+  chef_shows?: Array<{
+    show?: { name: string } | null;
+    result?: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
+    is_primary?: boolean;
+  }>;
+}
+
 interface RestaurantHeroProps {
   breadcrumbItems?: Array<{ label: string; href?: string }>;
   restaurantId?: string;
@@ -32,18 +44,22 @@ interface RestaurantHeroProps {
     website_url?: string | null;
     maps_url?: string | null;
     updated_at?: string;
-    chef?: {
-      name: string;
-      slug: string;
-      photo_url?: string | null;
-      james_beard_status?: 'semifinalist' | 'nominated' | 'winner' | null;
-      chef_shows?: Array<{
-        show?: { name: string } | null;
-        result?: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
-        is_primary?: boolean;
-      }>;
-    } | null;
+    chef?: ChefInfo | null;
+    chefs?: Array<{ chef?: ChefInfo | null; is_primary?: boolean; role?: string | null }>;
   };
+}
+
+function getAllChefs(restaurant: RestaurantHeroProps['restaurant']): Array<{ chef: ChefInfo; is_primary: boolean; role?: string | null }> {
+  if (restaurant.chefs && restaurant.chefs.length > 0) {
+    return restaurant.chefs
+      .filter(rc => rc.chef)
+      .map(rc => ({ chef: rc.chef!, is_primary: rc.is_primary || false, role: rc.role }))
+      .sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0));
+  }
+  if (restaurant.chef) {
+    return [{ chef: restaurant.chef, is_primary: true }];
+  }
+  return [];
 }
 
 export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, restaurantName }: RestaurantHeroProps) {
@@ -51,8 +67,9 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   
   const status = getRestaurantStatus(restaurant.status);
-  const primaryShow = restaurant.chef?.chef_shows?.find(cs => cs.is_primary) || restaurant.chef?.chef_shows?.[0];
-  const chefAchievements = restaurant.chef ? getChefAchievements(restaurant.chef) : { isShowWinner: false, isJBWinner: false, isJBNominee: false, isJBSemifinalist: false };
+  const allChefs = getAllChefs(restaurant);
+  const primaryChef = allChefs.find(c => c.is_primary)?.chef || allChefs[0]?.chef;
+  const primaryShow = primaryChef?.chef_shows?.find(cs => cs.is_primary) || primaryChef?.chef_shows?.[0];
   
   
   const photos = (restaurant.photo_urls || []).filter(Boolean);
@@ -359,83 +376,100 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
           )}
         </div>
 
-        {restaurant.chef && (
+        {allChefs.length > 0 && (
           <div 
             className="mt-10 pt-8 border-t"
             style={{ borderColor: 'rgba(255,255,255,0.1)' }}
           >
             <p className="font-mono text-[10px] tracking-widest mb-4" style={{ color: 'var(--accent-primary)' }}>
-              THE CHEF
+              {allChefs.length > 1 ? 'THE CHEFS' : 'THE CHEF'}
             </p>
-            <Link
-              href={`/chefs/${restaurant.chef.slug}`}
-              className="group/chef flex items-center gap-4"
-            >
-              <div 
-                className="w-16 h-16 relative overflow-hidden flex-shrink-0"
-                style={{ border: '2px solid var(--accent-primary)' }}
-              >
-                {getStorageUrl('chef-photos', restaurant.chef.photo_url) ? (
-                  <Image
-                    src={getStorageUrl('chef-photos', restaurant.chef.photo_url)!}
-                    alt={`${restaurant.chef.name} profile photo`}
-                    fill
-                    className="object-cover"
-                    sizes="64px"
-                  />
-                ) : (
-                  <div 
-                    className="absolute inset-0 flex items-center justify-center"
-                    style={{ background: 'var(--slate-700)' }}
+            <div className={allChefs.length > 1 ? 'grid grid-cols-1 sm:grid-cols-2 gap-4' : ''}>
+              {allChefs.map(({ chef, role }) => {
+                const chefAchievements = getChefAchievements(chef);
+                const chefPrimaryShow = chef.chef_shows?.find(cs => cs.is_primary) || chef.chef_shows?.[0];
+                const isMultiChef = allChefs.length > 1;
+                return (
+                  <Link
+                    key={chef.slug}
+                    href={`/chefs/${chef.slug}`}
+                    className={`group/chef flex items-center gap-4 ${isMultiChef ? 'p-3 -m-3 rounded hover:bg-white/5 transition-colors' : ''}`}
                   >
-                    <span className="font-display text-2xl font-bold text-white/30">
-                      {restaurant.chef.name.charAt(0)}
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div>
-                <h3 
-                  className="font-display text-xl font-bold text-white group-hover/chef:text-[var(--accent-primary)] transition-colors"
-                >
-                  {restaurant.chef.name}
-                </h3>
-                <div className="mt-1 flex items-center gap-2 flex-wrap">
-                  {primaryShow?.show?.name && (
-                    <span className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                      {primaryShow.show.name}
-                    </span>
-                  )}
-                  {chefAchievements.isShowWinner && (
-                    <span 
-                      className="font-mono text-[10px] tracking-wider px-2 py-0.5"
-                      style={{ background: 'var(--accent-success)', color: 'white' }}
-                      aria-label="Show winner"
+                    <div 
+                      className="w-16 h-16 relative overflow-hidden flex-shrink-0"
+                      style={{ border: '2px solid var(--accent-primary)' }}
                     >
-                      WINNER
-                    </span>
-                  )}
-                  {chefAchievements.isJBWinner && (
-                    <span 
-                      className="font-mono text-[10px] tracking-wider px-2 py-0.5 flex items-center gap-1"
-                      style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)', color: '#ffffff' }}
-                      aria-label="James Beard Award winner"
-                    >
-                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="#fbbf24" aria-hidden="true">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                      </svg>
-                      JAMES BEARD
-                    </span>
-                  )}
-                </div>
-              </div>
-              <span 
-                className="ml-auto font-mono text-xs font-semibold tracking-wide opacity-0 group-hover/chef:opacity-100 transition-opacity"
-                style={{ color: 'var(--accent-primary)' }}
-              >
-                VIEW PROFILE →
-              </span>
-            </Link>
+                      {getStorageUrl('chef-photos', chef.photo_url) ? (
+                        <Image
+                          src={getStorageUrl('chef-photos', chef.photo_url)!}
+                          alt={`${chef.name} profile photo`}
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                        />
+                      ) : (
+                        <div 
+                          className="absolute inset-0 flex items-center justify-center"
+                          style={{ background: 'var(--slate-700)' }}
+                        >
+                          <span className="font-display text-2xl font-bold text-white/30">
+                            {chef.name.charAt(0)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 
+                        className="font-display text-xl font-bold text-white group-hover/chef:text-[var(--accent-primary)] transition-colors truncate"
+                      >
+                        {chef.name}
+                      </h3>
+                      <div className="mt-1 flex items-center gap-2 flex-wrap">
+                        {role && !['owner', 'co-owner', 'partner'].includes(role) && (
+                          <span className="font-mono text-[10px] tracking-wider px-1.5 py-0.5" style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}>
+                            {role.replace('_', ' ').toUpperCase()}
+                          </span>
+                        )}
+                        {chefPrimaryShow?.show?.name && (
+                          <span className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                            {chefPrimaryShow.show.name}
+                          </span>
+                        )}
+                        {chefAchievements.isShowWinner && (
+                          <span 
+                            className="font-mono text-[10px] tracking-wider px-2 py-0.5"
+                            style={{ background: 'var(--accent-success)', color: 'white' }}
+                            aria-label="Show winner"
+                          >
+                            WINNER
+                          </span>
+                        )}
+                        {chefAchievements.isJBWinner && (
+                          <span 
+                            className="font-mono text-[10px] tracking-wider px-2 py-0.5 flex items-center gap-1"
+                            style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)', color: '#ffffff' }}
+                            aria-label="James Beard Award winner"
+                          >
+                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="#fbbf24" aria-hidden="true">
+                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            JAMES BEARD
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {!isMultiChef && (
+                      <span 
+                        className="ml-auto font-mono text-xs font-semibold tracking-wide opacity-0 group-hover/chef:opacity-100 transition-opacity"
+                        style={{ color: 'var(--accent-primary)' }}
+                      >
+                        VIEW PROFILE →
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

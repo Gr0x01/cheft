@@ -18,6 +18,28 @@ interface RestaurantPageProps {
   params: Promise<{ slug: string }>;
 }
 
+interface ChefData {
+  id: string;
+  name: string;
+  slug: string;
+  photo_url: string | null;
+  james_beard_status: 'semifinalist' | 'nominated' | 'winner' | null;
+  chef_shows: Array<{
+    id: string;
+    season: string | null;
+    result: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
+    is_primary: boolean;
+    show: { name: string; slug: string; is_public: boolean | null } | null;
+  }>;
+  restaurants: SiblingRestaurant[];
+}
+
+interface RestaurantChefData {
+  chef: ChefData | null;
+  is_primary: boolean;
+  role: string | null;
+}
+
 interface RestaurantData {
   id: string;
   name: string;
@@ -41,21 +63,8 @@ interface RestaurantData {
   phone: string | null;
   michelin_stars: number | null;
   updated_at: string;
-  chef: {
-    id: string;
-    name: string;
-    slug: string;
-    photo_url: string | null;
-    james_beard_status: 'semifinalist' | 'nominated' | 'winner' | null;
-    chef_shows: Array<{
-      id: string;
-      season: string | null;
-      result: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
-      is_primary: boolean;
-      show: { name: string; slug: string; is_public: boolean | null } | null;
-    }>;
-    restaurants: SiblingRestaurant[];
-  } | null;
+  chef: ChefData | null;
+  chefs: RestaurantChefData[];
 }
 
 interface SiblingRestaurant {
@@ -144,6 +153,34 @@ async function getRestaurant(slug: string): Promise<RestaurantData | null> {
           status,
           google_rating
         )
+      ),
+      chefs:restaurant_chefs (
+        is_primary,
+        role,
+        chef:chefs (
+          id,
+          name,
+          slug,
+          photo_url,
+          james_beard_status,
+          chef_shows (
+            id,
+            season,
+            result,
+            is_primary,
+            show:shows (name, slug, is_public)
+          ),
+          restaurants!restaurants_chef_id_fkey (
+            id,
+            name,
+            slug,
+            city,
+            state,
+            price_tier,
+            status,
+            google_rating
+          )
+        )
       )
     `)
     .eq('slug', slug)
@@ -228,7 +265,10 @@ export async function generateMetadata({ params }: RestaurantPageProps): Promise
     };
   }
 
-  const chefName = restaurant.chef?.name || 'TV Chef';
+  const chefNames = restaurant.chefs?.length > 0 
+    ? restaurant.chefs.filter(rc => rc.chef).map(rc => rc.chef!.name).join(' & ')
+    : restaurant.chef?.name || 'TV Chef';
+  const chefName = chefNames || 'TV Chef';
   const ratingText = restaurant.google_rating ? ` ⭐ ${restaurant.google_rating}` : '';
   const priceText = restaurant.price_tier ? ` ${restaurant.price_tier}` : '';
 
@@ -278,10 +318,23 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
     notFound();
   }
 
-  const otherRestaurants = restaurant.chef?.restaurants
-    .filter(r => r.id !== restaurant.id)
+  const allChefs = restaurant.chefs?.length > 0 
+    ? restaurant.chefs.filter(rc => rc.chef).map(rc => rc.chef!)
+    : restaurant.chef ? [restaurant.chef] : [];
+  
+  const primaryChef = restaurant.chefs?.find(rc => rc.is_primary)?.chef || allChefs[0];
+  
+  const otherRestaurantsMap = new Map<string, SiblingRestaurant>();
+  allChefs.forEach(chef => {
+    chef.restaurants?.forEach(r => {
+      if (r.id !== restaurant.id && !otherRestaurantsMap.has(r.id)) {
+        otherRestaurantsMap.set(r.id, r);
+      }
+    });
+  });
+  const otherRestaurants = Array.from(otherRestaurantsMap.values())
     .sort((a, b) => (b.google_rating || 0) - (a.google_rating || 0))
-    .slice(0, 6) || [];
+    .slice(0, 6);
 
   const stateRestaurants = await getStateRestaurants(restaurant.state, restaurant.id);
   const stateSlug = await getStateSlug(restaurant.state);
@@ -437,7 +490,7 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
               <div className="max-w-6xl mx-auto px-4">
                 <div className="flex items-baseline gap-4 mb-8">
                   <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                    More from {restaurant.chef?.name}
+                    More from {allChefs.length > 1 ? 'the Chefs' : primaryChef?.name || 'the Chef'}
                   </h2>
                   <span className="font-mono text-sm" style={{ color: 'var(--text-muted)' }}>
                     {otherRestaurants.length} OTHER LOCATION{otherRestaurants.length !== 1 ? 'S' : ''}
