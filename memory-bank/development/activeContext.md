@@ -15,13 +15,13 @@ Status: Pre-Launch - Ready for Show Expansion
 The enrichment system has been fully refactored and hardened:
 - **Search**: All web searches through Tavily API with caching (search-client.ts, tavily-client.ts)
 - **Synthesis**: Two-tier model - accuracy (gpt-4o-mini) for facts, creative (local Qwen3 with `/no_think`) for prose
-- **Wikipedia Cache**: Shows fetched once from Wikipedia, reused for all contestants (~50% cost savings)
+- **Wikipedia Cache**: Shows fetched once from Wikipedia, reused for all contestants
+- **Flex Tier**: OpenAI calls use `X-Model-Tier: flex` for 50% cost savings
 - **Status**: Google Places API checked first, Tavily fallback
 - **Workflows**: All 4 workflows updated, all 8 services migrated
 - **Code review**: A- grade, critical null safety and env var validation issues fixed
-- **Dead code**: Old LLMClient files archived to scripts/archive/enricher-v1/
 
-**New: Wikipedia Show Cache** - `show_source_cache` table stores Wikipedia content per show (never expires). `add-show.ts` fetches once and passes context to all chef enrichments.
+**Cost Optimizations**: Wikipedia cache + Flex tier = ~75% savings (~$0.42-0.56 per 28-chef show vs ~$1.68-1.96 legacy).
 
 See `memory-bank/architecture/enrichment-reference.md` for quick reference.
 

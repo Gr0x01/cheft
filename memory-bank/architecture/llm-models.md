@@ -44,7 +44,7 @@ OpenAI offers multiple pricing tiers. **For enrichment, use Flex or Batch for 50
 | **Flex** | **50% off** | ~1-5 min | Background scripts, enrichment |
 | **Batch** | **50% off** | Up to 24h | Bulk backfills, overnight jobs |
 
-**Recommendation**: Use **Flex** for `add-show.ts` and enrichment scripts. Same 50% savings as Batch but faster turnaround.
+**Status**: ✅ **Flex tier is ACTIVE** in `synthesis-client.ts` via `X-Model-Tier: flex` header. All enrichment calls automatically use Flex pricing.
 
 ---
 

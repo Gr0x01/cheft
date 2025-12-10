@@ -230,14 +230,16 @@ LM_STUDIO_URL=http://10.2.0.10:1234
 
 ## Cost Model
 
-### With Wikipedia Cache (Recommended)
+**Flex Tier Active**: All OpenAI calls use Flex pricing (50% off standard) via `X-Model-Tier: flex` header.
+
+### With Wikipedia Cache + Flex (Current)
 Per show import using `add-show.ts`:
 - Wikipedia fetch: $0 (direct API, no LLM)
-- Per chef (bio + restaurants + shows from cache): ~$0.03-0.04
-- **Total for 28-chef show: ~$0.84-1.12**
+- Per chef (bio + restaurants + shows from cache): ~$0.015-0.02
+- **Total for 28-chef show: ~$0.42-0.56**
 
-### Without Cache (Legacy per-chef search)
-Per chef (full enrichment):
+### Without Optimizations (Legacy)
+Per chef (full enrichment, standard pricing):
 - Bio search + synthesis: ~$0.012
 - Shows (4 queries): ~$0.023
 - Restaurants (4 queries): ~$0.025
@@ -245,7 +247,7 @@ Per chef (full enrichment):
 - **Total: ~$0.06-0.07 per chef**
 - **Total for 28-chef show: ~$1.68-1.96**
 
-**Savings with Wikipedia cache: ~50%**
+**Combined savings (Wikipedia cache + Flex): ~75%**
 
 ---
 
