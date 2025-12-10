@@ -8,7 +8,7 @@ Status: Active
 
 ## What It Is
 
-LLM-powered data discovery system for chef/restaurant enrichment. Uses Wikipedia cache for show data, Tavily for chef-specific searches, and tiered LLM synthesis (accuracy vs creative).
+LLM-powered data discovery system for chef/restaurant enrichment. Uses Wikipedia cache for show data, Tavily for chef-specific searches, and OpenAI for all LLM synthesis.
 
 ## Architecture
 
@@ -24,6 +24,7 @@ LLM-powered data discovery system for chef/restaurant enrichment. Uses Wikipedia
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                           SEARCH LAYER (Tavily)                             │
 │  Chef-specific searches only (bio, restaurants) → search_cache (TTL)       │
+│  Rate limit: 100 RPM → max 25 concurrent chefs (4 searches each)           │
 │  Cost: ~$0.01 per query                                                     │
 └─────────────────────────────────────┬───────────────────────────────────────┘
                                       │
@@ -36,21 +37,23 @@ LLM-powered data discovery system for chef/restaurant enrichment. Uses Wikipedia
                           │  - expires_at (TTL)   │
                           └───────────┬───────────┘
                                       │
-              ┌───────────────────────┴───────────────────────┐
-              │                                               │
-              ▼                                               ▼
-┌─────────────────────────────┐               ┌─────────────────────────────┐
-│     TIER 1: ACCURACY        │               │     TIER 2: CREATIVE        │
-│  gpt-4o-mini (always)       │               │  Local Qwen3 /no_think      │
-│                             │               │  Fallback: gpt-4o-mini      │
-│  Used for:                  │               │                             │
-│  - Chef bios (facts)        │               │  Used for:                  │
-│  - Show discovery (names)   │               │  - Blurbs (prose)           │
-│  - Restaurant ownership     │               │  - Status (classification)  │
-│                             │               │  - Narratives (prose)       │
-│  Cost: ~$0.002-0.005/call   │               │  Cost: $0 local             │
-└─────────────────────────────┘               └─────────────────────────────┘
+                                      ▼
+                    ┌─────────────────────────────────┐
+                    │       OpenAI gpt-4o-mini        │
+                    │   (Flex tier: 50% discount)     │
+                    │                                 │
+                    │   Rate limit: 10,000 RPM (T5)   │
+                    │   Cost: ~$0.002-0.005/call      │
+                    └─────────────────────────────────┘
 ```
+
+## Parallelization
+
+The `add-show.ts` script uses **p-queue** for concurrent processing:
+- **20 concurrent chefs** by default (configurable via `CONCURRENCY` constant)
+- Bottleneck is Tavily at 100 RPM (4 searches/chef = 25 max concurrent)
+- OpenAI Tier 5 = 10,000 RPM (not a bottleneck)
+- **28-chef show processes in ~2-3 minutes** instead of 25+ sequential
 
 ## Location
 
@@ -232,13 +235,14 @@ LM_STUDIO_URL=http://10.2.0.10:1234
 
 **Flex Tier Active**: All OpenAI calls use Flex pricing (50% off standard) via `X-Model-Tier: flex` header.
 
-### With Wikipedia Cache + Flex (Current)
+### Current (Wikipedia Cache + Flex + OpenAI Only)
 Per show import using `add-show.ts`:
 - Wikipedia fetch: $0 (direct API, no LLM)
 - Per chef (bio + restaurants + shows from cache): ~$0.015-0.02
 - **Total for 28-chef show: ~$0.42-0.56**
+- **Time: ~2-3 minutes** (20 concurrent)
 
-### Without Optimizations (Legacy)
+### Legacy (Sequential + Local LLM)
 Per chef (full enrichment, standard pricing):
 - Bio search + synthesis: ~$0.012
 - Shows (4 queries): ~$0.023
@@ -246,8 +250,9 @@ Per chef (full enrichment, standard pricing):
 - Blurbs (creative, local): ~$0.01 (or $0 if local)
 - **Total: ~$0.06-0.07 per chef**
 - **Total for 28-chef show: ~$1.68-1.96**
+- **Time: ~25-30 minutes** (sequential)
 
-**Combined savings (Wikipedia cache + Flex): ~75%**
+**Combined savings (Wikipedia cache + Flex + parallel): ~75% cost, ~90% time**
 
 ---
 

@@ -14,14 +14,13 @@ Status: Pre-Launch - Ready for Show Expansion
 ## Enrichment System v2 Complete
 The enrichment system has been fully refactored and hardened:
 - **Search**: All web searches through Tavily API with caching (search-client.ts, tavily-client.ts)
-- **Synthesis**: Two-tier model - accuracy (gpt-4o-mini) for facts, creative (local Qwen3 with `/no_think`) for prose
+- **Synthesis**: OpenAI gpt-4o-mini with Flex tier for all calls (local LLM disabled by default)
 - **Wikipedia Cache**: Shows fetched once from Wikipedia, reused for all contestants
 - **Flex Tier**: OpenAI calls use `X-Model-Tier: flex` for 50% cost savings
+- **Parallelization**: p-queue with 20 concurrent workers (Tavily 100 RPM is bottleneck)
 - **Status**: Google Places API checked first, Tavily fallback
-- **Workflows**: All 4 workflows updated, all 8 services migrated
-- **Code review**: A- grade, critical null safety and env var validation issues fixed
 
-**Cost Optimizations**: Wikipedia cache + Flex tier = ~75% savings (~$0.42-0.56 per 28-chef show vs ~$1.68-1.96 legacy).
+**Performance**: 28-chef show in ~2-3 minutes (was 25+ sequential), ~$0.50 cost.
 
 See `memory-bank/architecture/enrichment-reference.md` for quick reference.
 
@@ -38,7 +37,7 @@ See `memory-bank/architecture/enrichment-reference.md` for quick reference.
 ### Shows Ready to Enable (configs created, data incomplete)
 | Show | Config File | Chefs to Add | Status |
 |------|-------------|--------------|--------|
-| Top Chef Masters | `shows/top-chef-masters.json` | 28 | Config ready, needs enrichment |
+| Top Chef Masters | `shows/top-chef-masters.json` | 28 | ✅ LIVE - 39 chefs, 125 restaurants |
 
 ### Shows Needing Research + Config
 - Top Chef Canada (12 seasons)

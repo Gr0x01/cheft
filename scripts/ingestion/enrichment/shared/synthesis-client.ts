@@ -18,12 +18,14 @@ export interface SynthesisConfig {
   accuracyModel?: string;
   creativeModel?: string;
   localUrl?: string;
+  skipLocal?: boolean;
 }
 
 const DEFAULT_CONFIG: Required<SynthesisConfig> = {
   accuracyModel: 'gpt-4o-mini',
   creativeModel: 'qwen3-8b',
   localUrl: '',
+  skipLocal: true,
 };
 
 const PRICING: Record<string, { input: number; output: number }> = {
@@ -128,7 +130,7 @@ export async function synthesize<T>(
   let model: string;
   let client: OpenAI;
 
-  if (tier === 'accuracy') {
+  if (tier === 'accuracy' || _config.skipLocal) {
     model = _config.accuracyModel;
     client = getOpenAIClient();
   } else {
@@ -144,7 +146,6 @@ export async function synthesize<T>(
     }
   }
 
-  const tierLabel = useLocal ? '🖥️  Local' : '☁️  OpenAI';
   const finalUserPrompt = useLocal ? `/no_think\n${userPrompt}` : userPrompt;
 
   let lastError: string = '';
@@ -164,7 +165,10 @@ export async function synthesize<T>(
       });
 
       const elapsed = Date.now() - start;
-      console.log(`      ${tierLabel} (${model}): ${elapsed}ms`);
+      // Reduce log noise - only log if slow (>5s)
+      if (elapsed > 5000) {
+        console.log(`      ⚠️  Slow LLM call (${model}): ${elapsed}ms`);
+      }
 
       let text = response.choices[0]?.message?.content || '';
       
@@ -237,7 +241,7 @@ export async function synthesizeRaw(
   let model: string;
   let client: OpenAI;
 
-  if (tier === 'accuracy') {
+  if (tier === 'accuracy' || _config.skipLocal) {
     model = _config.accuracyModel;
     client = getOpenAIClient();
   } else {
@@ -253,7 +257,6 @@ export async function synthesizeRaw(
     }
   }
 
-  const tierLabel = useLocal ? '🖥️  Local' : '☁️  OpenAI';
   const finalUserPrompt = useLocal ? `/no_think\n${userPrompt}` : userPrompt;
 
   try {

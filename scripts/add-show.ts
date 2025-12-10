@@ -1,9 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
+import PQueue from 'p-queue';
 import { createLLMEnricher } from './ingestion/processors/llm-enricher';
 import { ShowSourceService } from './ingestion/enrichment/services/show-source-service';
 
 dotenv.config({ path: '.env.local' });
+
+const CONCURRENCY = 20;
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -229,11 +232,11 @@ async function main() {
   console.log(`   Cached contestants: ${showSource.contestants.length}`);
   console.log(`   Wikipedia content: ${wikipediaContext.length} chars\n`);
   
-  for (const contestant of config.contestants) {
-    console.log(`\n${'─'.repeat(50)}`);
-    console.log(`👤 Processing: ${contestant.name} (Season ${contestant.season}, ${contestant.result})`);
-    console.log(`${'─'.repeat(50)}`);
-    
+  const queue = new PQueue({ concurrency: CONCURRENCY });
+  const startTime = Date.now();
+  let processed = 0;
+  
+  const processContestant = async (contestant: Contestant) => {
     const slug = slugify(contestant.name);
     const { data: existing } = await supabase
       .from('chefs')
@@ -242,8 +245,6 @@ async function main() {
       .single();
     
     if (existing) {
-      console.log(`   ⏭️  Already exists, skipping enrichment`);
-      
       const { data: hasShow } = await supabase
         .from('chef_shows')
         .select('id')
@@ -258,11 +259,12 @@ async function main() {
           season: contestant.season,
           result: contestant.result,
         });
-        console.log(`   ✅ Linked to show`);
       }
       
       chefsSkipped++;
-      continue;
+      processed++;
+      console.log(`[${processed}/${config.contestants.length}] ⏭️  ${contestant.name} (exists)`);
+      return;
     }
     
     const { data: newChef, error: insertError } = await supabase
@@ -272,11 +274,10 @@ async function main() {
       .single();
     
     if (insertError || !newChef) {
-      console.error(`   ❌ Failed to create chef: ${insertError?.message}`);
-      continue;
+      processed++;
+      console.log(`[${processed}/${config.contestants.length}] ❌ ${contestant.name}: ${insertError?.message}`);
+      return;
     }
-    
-    console.log(`   ✅ Created chef record`);
     
     try {
       const result = await enricher.workflows.manualChefAddition({
@@ -289,20 +290,30 @@ async function main() {
       });
       
       if (result.success) {
-        console.log(`   ✅ Bio: ${result.bioCreated ? 'Yes' : 'No'}`);
-        console.log(`   📺 Shows: ${result.totalShows}`);
-        console.log(`   🍽️  Restaurants: ${result.totalRestaurants}`);
         chefsAdded++;
+        processed++;
+        console.log(`[${processed}/${config.contestants.length}] ✅ ${contestant.name} (${result.totalRestaurants} restaurants)`);
       } else {
-        console.error(`   ❌ Enrichment failed: ${result.error}`);
+        processed++;
+        console.log(`[${processed}/${config.contestants.length}] ❌ ${contestant.name}: ${result.error}`);
       }
       
       totalCost += enricher.estimateCost();
       enricher.resetTokenCounter();
     } catch (error) {
-      console.error(`   ❌ Error: ${error}`);
+      processed++;
+      console.log(`[${processed}/${config.contestants.length}] ❌ ${contestant.name}: ${error}`);
     }
-  }
+  };
+  
+  console.log(`🚀 Processing ${config.contestants.length} contestants (${CONCURRENCY} concurrent)...\n`);
+  
+  await Promise.all(
+    config.contestants.map(c => queue.add(() => processContestant(c)))
+  );
+  
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(`\n⏱️  Completed in ${elapsed}s`);
   
   await generateShowSEO(enricher, showId, config.showName, config.network);
   await generateSeasonSEO(enricher, showId, config.showName, config.network);
