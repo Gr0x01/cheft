@@ -27,9 +27,9 @@ const DEFAULT_CONFIG: Required<SynthesisConfig> = {
 };
 
 const PRICING: Record<string, { input: number; output: number }> = {
-  'gpt-5-mini': { input: 0.25, output: 2.0 },
-  'gpt-4o-mini': { input: 0.15, output: 0.6 },
-  'gpt-4.1-mini': { input: 0.40, output: 1.6 },
+  'gpt-5-mini': { input: 0.125, output: 1.0 },
+  'gpt-4o-mini': { input: 0.075, output: 0.30 },
+  'gpt-4.1-mini': { input: 0.20, output: 0.80 },
   'qwen3-8b': { input: 0, output: 0 },
   'qwen/qwen3-8b': { input: 0, output: 0 },
 };
@@ -53,7 +53,10 @@ function getOpenAIClient(): OpenAI {
     if (!apiKey) {
       throw new Error('OPENAI_API_KEY environment variable is required');
     }
-    _openaiClient = new OpenAI({ apiKey });
+    _openaiClient = new OpenAI({
+      apiKey,
+      defaultHeaders: { 'X-Model-Tier': 'flex' },
+    });
   }
   return _openaiClient;
 }
