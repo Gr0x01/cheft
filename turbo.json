@@ -1,5 +1,20 @@
 {
   "$schema": "https://turborepo.com/schema.json",
+  "globalEnv": [
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "NEXT_PUBLIC_POSTHOG_KEY",
+    "NEXT_PUBLIC_POSTHOG_HOST",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "DATABASE_URL",
+    "OPENAI_API_KEY",
+    "NOMINATIM_USER_AGENT",
+    "GOOGLE_PLACES_API_KEY",
+    "GOOGLE_CUSTOM_SEARCH_API_KEY",
+    "GOOGLE_SEARCH_ENGINE_ID",
+    "CRON_SECRET",
+    "TAVILY_API_KEY"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
