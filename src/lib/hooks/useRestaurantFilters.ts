@@ -108,7 +108,16 @@ export function useRestaurantFilters() {
   };
 }
 
-export function filterRestaurants(restaurants: RestaurantData[], filters: RestaurantFilters): RestaurantData[] {
+export interface StateOption {
+  name: string;
+  abbreviation: string;
+}
+
+export function filterRestaurants(
+  restaurants: RestaurantData[], 
+  filters: RestaurantFilters,
+  states?: StateOption[]
+): RestaurantData[] {
   let result = [...restaurants];
 
   if (filters.q) {
@@ -125,7 +134,11 @@ export function filterRestaurants(restaurants: RestaurantData[], filters: Restau
   }
 
   if (filters.state) {
-    result = result.filter(r => r.state === filters.state);
+    const stateMatch = states?.find(s => s.name === filters.state);
+    result = result.filter(r => 
+      r.state === filters.state || 
+      (stateMatch && r.state === stateMatch.abbreviation)
+    );
   }
 
   if (filters.price) {

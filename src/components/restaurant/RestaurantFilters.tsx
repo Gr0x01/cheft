@@ -40,10 +40,10 @@ export function RestaurantFilters({ cities = [], states = [], restaurants, total
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const filtered = filterRestaurants(restaurants, filters);
+    const filtered = filterRestaurants(restaurants, filters, states);
     setFilteredRestaurants(filtered);
     onFilteredRestaurantsChange(filtered);
-  }, [restaurants, filters, onFilteredRestaurantsChange]);
+  }, [restaurants, filters, states, onFilteredRestaurantsChange]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
