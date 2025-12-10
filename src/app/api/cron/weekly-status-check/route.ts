@@ -99,19 +99,50 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    let batchSize = ENRICHMENT_CONFIG.WEEKLY_STATUS.MAX_BATCH_SIZE;
+    const restaurantsByChef = new Map<string, { ids: string[]; names: string[]; maxPriority: number }>();
+    for (const r of restaurants) {
+      if (!r.chef_id || !isValidUUID(r.chef_id)) continue;
+      
+      const existing = restaurantsByChef.get(r.chef_id);
+      if (existing) {
+        existing.ids.push(r.id);
+        existing.names.push(r.name);
+        existing.maxPriority = Math.max(existing.maxPriority, r.verification_priority || 50);
+      } else {
+        restaurantsByChef.set(r.chef_id, {
+          ids: [r.id],
+          names: [r.name],
+          maxPriority: r.verification_priority || 50,
+        });
+      }
+    }
+
+    if (restaurantsByChef.size === 0) {
+      console.warn(`[WeeklyStatus] No valid chef_ids found in ${restaurants.length} restaurants`);
+      return NextResponse.json({
+        success: true,
+        jobsCreated: 0,
+        restaurantsQueued: 0,
+        chefsQueued: 0,
+        message: 'No restaurants with valid chef associations found',
+      });
+    }
+
     const remainingBudget = budgetUsd - spentUsd;
     const estimatedCostPerJob = ENRICHMENT_CONFIG.COST_ESTIMATES.STATUS_CHECK;
     const maxJobsByBudget = Math.floor(remainingBudget / estimatedCostPerJob);
     
-    const jobsToCreate = Math.min(restaurants.length, batchSize, maxJobsByBudget);
-    const selectedRestaurants = restaurants.slice(0, jobsToCreate);
+    const chefEntries = Array.from(restaurantsByChef.entries())
+      .sort((a, b) => b[1].maxPriority - a[1].maxPriority)
+      .slice(0, Math.min(ENRICHMENT_CONFIG.WEEKLY_STATUS.MAX_BATCH_SIZE, maxJobsByBudget));
 
-    console.log(`[WeeklyStatus] Selected ${selectedRestaurants.length} restaurants for verification (budget allows ${maxJobsByBudget})`);
+    console.log(`[WeeklyStatus] Grouped ${restaurants.length} restaurants into ${chefEntries.length} chef jobs (budget allows ${maxJobsByBudget})`);
 
+    const totalRestaurants = chefEntries.reduce((sum, [, data]) => sum + data.ids.length, 0);
     const results = {
       jobsCreated: 0,
-      restaurantsChecked: selectedRestaurants.length,
+      restaurantsQueued: totalRestaurants,
+      chefsQueued: chefEntries.length,
       budgetStatus: {
         budgetUsd,
         spentUsd,
@@ -121,7 +152,7 @@ export async function GET(request: NextRequest) {
       errors: [] as string[],
     };
 
-    for (const restaurant of selectedRestaurants) {
+    for (const [chefId, data] of chefEntries) {
       try {
         const checkResult = await checkBudgetAvailable(
           supabase, 
@@ -133,37 +164,33 @@ export async function GET(request: NextRequest) {
           break;
         }
 
-        if (!restaurant.chef_id || !isValidUUID(restaurant.chef_id)) {
-          console.warn(`[WeeklyStatus] Restaurant ${restaurant.name} has invalid chef_id, skipping`);
-          continue;
-        }
-
         const { data: job, error: jobError } = await supabase
           .from('enrichment_jobs')
           .insert({
-            chef_id: restaurant.chef_id,
+            chef_id: chefId,
             status: 'queued',
             enrichment_type: ENRICHMENT_TYPE.WEEKLY_STATUS,
             triggered_by: 'cron',
-            priority_score: restaurant.verification_priority || 50,
+            priority_score: data.maxPriority,
+            metadata: { restaurant_ids: data.ids },
           })
           .select('id')
           .single();
 
         if (jobError || !job) {
           const errorMsg = jobError?.message || 'Unknown error creating job';
-          console.error(`[WeeklyStatus] Failed to create job for ${restaurant.name}:`, errorMsg);
-          results.errors.push(`${restaurant.name}: ${errorMsg}`);
+          console.error(`[WeeklyStatus] Failed to create job:`, errorMsg);
+          results.errors.push(`Chef ${chefId}: ${errorMsg}`);
           continue;
         }
 
         results.jobsCreated++;
-        console.log(`[WeeklyStatus] Queued status check for ${restaurant.name} in ${restaurant.city}`);
+        console.log(`[WeeklyStatus] Queued status check for ${data.ids.length} restaurants: ${data.names.join(', ')}`);
 
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
-        console.error(`[WeeklyStatus] Failed to queue ${restaurant.name}:`, errorMsg);
-        results.errors.push(`${restaurant.name}: ${errorMsg}`);
+        console.error(`[WeeklyStatus] Failed to queue chef ${chefId}:`, errorMsg);
+        results.errors.push(`Chef ${chefId}: ${errorMsg}`);
       }
     }
 
@@ -172,7 +199,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       ...results,
-      message: `Weekly status check: created ${results.jobsCreated} verification jobs`,
+      message: `Weekly status check: created ${results.jobsCreated} jobs for ${results.restaurantsQueued} restaurants`,
     });
 
   } catch (error) {
