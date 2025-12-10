@@ -325,6 +325,7 @@ export interface Database {
           tokens_used: Json | null;
           cost_usd: number | null;
           priority_score: number | null;
+          metadata: Json | null;
         };
         Insert: {
           id?: string;
@@ -350,6 +351,7 @@ export interface Database {
           tokens_used?: Json | null;
           cost_usd?: number | null;
           priority_score?: number | null;
+          metadata?: Json | null;
         };
         Update: {
           id?: string;
@@ -375,6 +377,7 @@ export interface Database {
           tokens_used?: Json | null;
           cost_usd?: number | null;
           priority_score?: number | null;
+          metadata?: Json | null;
         };
         Relationships: [
           {

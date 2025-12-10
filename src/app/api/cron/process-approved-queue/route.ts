@@ -35,6 +35,7 @@ interface EnrichmentJobWithChef {
   enrichment_type: string;
   retry_count: number;
   last_retry_at: string | null;
+  metadata: { restaurant_ids?: string[] } | null;
   chefs: ChefWithShows;
 }
 
@@ -186,7 +187,7 @@ export async function GET(request: NextRequest) {
 
     const { data: queuedJobs, error: jobsError } = await supabase
       .from('enrichment_jobs')
-      .select('id, chef_id, enrichment_type, retry_count, last_retry_at, chefs!inner(name, chef_shows(shows(name), season, result))')
+      .select('id, chef_id, enrichment_type, retry_count, last_retry_at, metadata, chefs!inner(name, chef_shows(shows(name), season, result))')
       .or(
         `and(status.eq.queued,or(locked_until.is.null,locked_until.lt.${now.toISOString()})),` +
         `and(status.eq.failed,retry_count.eq.0,or(last_retry_at.is.null,last_retry_at.lt.${fiveMinutesAgo.toISOString()})),` +
@@ -231,10 +232,12 @@ export async function GET(request: NextRequest) {
           let workflowResult;
           
           if (job.enrichment_type === ENRICHMENT_TYPE.WEEKLY_STATUS || job.enrichment_type === ENRICHMENT_TYPE.MANUAL_STATUS) {
-            workflowResult = await llmEnricher.workflows.restaurantStatusSweep({
-              criteria: { chefId: job.chef_id },
-              limit: 10,
-            });
+            const restaurantIds = job.metadata?.restaurant_ids;
+            workflowResult = await llmEnricher.workflows.restaurantStatusSweep(
+              restaurantIds && restaurantIds.length > 0
+                ? { restaurantIds }
+                : { criteria: { chefId: job.chef_id }, limit: 10 }
+            );
           } else if (job.enrichment_type === ENRICHMENT_TYPE.MONTHLY_REFRESH) {
             workflowResult = await llmEnricher.workflows.refreshStaleChef({
               chefId: job.chef_id,
