@@ -6,6 +6,16 @@ import { getLocationLink } from '@/lib/utils/location';
 import { MichelinStar } from '../icons/MichelinStar';
 import { Donut } from 'lucide-react';
 
+interface ChefInfo {
+  name: string;
+  slug: string;
+  james_beard_status?: 'semifinalist' | 'nominated' | 'winner' | null;
+  chef_shows?: Array<{
+    result?: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
+    is_primary?: boolean;
+  }>;
+}
+
 interface RestaurantCardProps {
   restaurant: {
     id: string;
@@ -21,23 +31,35 @@ interface RestaurantCardProps {
     google_review_count?: number | null;
     photo_urls?: string[] | null;
     michelin_stars?: number | null;
-    chef?: {
-      name: string;
-      slug: string;
-      james_beard_status?: 'semifinalist' | 'nominated' | 'winner' | null;
-      chef_shows?: Array<{
-        result?: 'winner' | 'finalist' | 'contestant' | 'judge' | null;
-        is_primary?: boolean;
-      }>;
-    } | null;
+    chef?: ChefInfo | null;
+    chefs?: Array<{ chef?: ChefInfo | null; is_primary?: boolean }>;
   };
   index?: number;
+}
+
+function getChefNames(restaurant: RestaurantCardProps['restaurant']): { names: string; hasWinner: boolean; hasJBWinner: boolean } {
+  const allChefs: ChefInfo[] = [];
+  
+  if (restaurant.chefs && restaurant.chefs.length > 0) {
+    const sorted = [...restaurant.chefs].sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0));
+    sorted.forEach(rc => { if (rc.chef) allChefs.push(rc.chef); });
+  } else if (restaurant.chef) {
+    allChefs.push(restaurant.chef);
+  }
+  
+  if (allChefs.length === 0) return { names: '', hasWinner: false, hasJBWinner: false };
+  
+  const names = allChefs.map(c => c.name).join(' & ');
+  const hasWinner = allChefs.some(c => getChefAchievements(c).isShowWinner);
+  const hasJBWinner = allChefs.some(c => getChefAchievements(c).isJBWinner);
+  
+  return { names, hasWinner, hasJBWinner };
 }
 
 export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
   const isPriority = index < 4;
   const status = getRestaurantStatus(restaurant.status);
-  const chefAchievements = restaurant.chef ? getChefAchievements(restaurant.chef) : { isShowWinner: false, isJBWinner: false, isJBNominee: false, isJBSemifinalist: false };
+  const { names: chefNames, hasWinner: isShowWinner, hasJBWinner: isJBWinner } = getChefNames(restaurant);
   
   const photoUrl = getStorageUrl('restaurant-photos', restaurant.photo_urls?.[0]);
   const locationLink = getLocationLink(restaurant.state, restaurant.country);

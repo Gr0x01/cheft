@@ -6,9 +6,11 @@ const ALLOWED_RESTAURANT_FIELDS = [
   'name', 'slug', 'address', 'city', 'state', 'country', 'zip',
   'lat', 'lng', 'phone', 'website_url', 'maps_url',
   'cuisine_tags', 'price_tier', 'description',
-  'status', 'is_public', 'is_flagship',
+  'status', 'is_public', 'is_flagship', 'protected',
   'google_place_id', 'google_rating', 'google_review_count',
   'photo_urls', 'michelin_stars', 'restaurant_narrative',
+  'chef_id', 'chef_role', 'reservation_url', 'signature_dishes',
+  'year_opened', 'hours', 'vibe_tags', 'dietary_options', 'awards', 'gift_card_url',
 ];
 
 function sanitizeUpdates(updates: Record<string, unknown>, allowedFields: string[]): Record<string, unknown> {

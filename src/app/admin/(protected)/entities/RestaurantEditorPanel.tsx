@@ -219,6 +219,7 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
         name: formData.name,
         slug: formData.slug,
         chef_id: formData.chef_id,
+        chef_role: formData.chef_role,
         address: formData.address,
         city: formData.city,
         state: formData.state,
@@ -234,8 +235,19 @@ export const RestaurantEditorPanel = forwardRef<RestaurantEditorHandle, Restaura
         google_review_count: formData.google_review_count,
         maps_url: formData.maps_url,
         website_url: formData.website_url,
+        phone: formData.phone,
         michelin_stars: formData.michelin_stars,
         protected: formData.protected,
+        description: formData.description,
+        restaurant_narrative: formData.restaurant_narrative,
+        reservation_url: formData.reservation_url,
+        signature_dishes: formData.signature_dishes,
+        year_opened: formData.year_opened,
+        hours: formData.hours,
+        vibe_tags: formData.vibe_tags,
+        dietary_options: formData.dietary_options,
+        awards: formData.awards,
+        gift_card_url: formData.gift_card_url,
       };
       
       const response = await fetch('/api/admin/restaurants/update', {

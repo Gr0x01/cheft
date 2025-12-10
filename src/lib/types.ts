@@ -32,6 +32,15 @@ export interface Chef {
   chef_shows?: ChefShow[];
 }
 
+export interface RestaurantChef {
+  id: string;
+  restaurant_id: string;
+  chef_id: string;
+  role: 'owner' | 'co-owner' | 'partner' | 'executive_chef' | 'consultant' | null;
+  is_primary: boolean;
+  chef?: Chef;
+}
+
 export interface Restaurant {
   id: string;
   name: string;
@@ -56,6 +65,7 @@ export interface Restaurant {
   google_review_count?: number | null;
   michelin_stars?: number | null;
   chef?: Chef;
+  chefs?: RestaurantChef[];
 }
 
 export interface RestaurantEmbedding {

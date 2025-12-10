@@ -431,6 +431,48 @@ export interface Database {
           },
         ];
       };
+      restaurant_chefs: {
+        Row: {
+          id: string;
+          restaurant_id: string;
+          chef_id: string;
+          role: "owner" | "co-owner" | "partner" | "executive_chef" | "consultant" | null;
+          is_primary: boolean | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          restaurant_id: string;
+          chef_id: string;
+          role?: "owner" | "co-owner" | "partner" | "executive_chef" | "consultant" | null;
+          is_primary?: boolean | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          restaurant_id?: string;
+          chef_id?: string;
+          role?: "owner" | "co-owner" | "partner" | "executive_chef" | "consultant" | null;
+          is_primary?: boolean | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_chefs_restaurant_id_fkey";
+            columns: ["restaurant_id"];
+            isOneToOne: false;
+            referencedRelation: "restaurants";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "restaurant_chefs_chef_id_fkey";
+            columns: ["chef_id"];
+            isOneToOne: false;
+            referencedRelation: "chefs";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       restaurant_embeddings: {
         Row: {
           id: string;
