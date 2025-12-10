@@ -273,7 +273,9 @@ export async function synthesizeRaw(
     });
 
     const elapsed = Date.now() - start;
-    console.log(`      ${tierLabel} (${model}): ${elapsed}ms`);
+    if (elapsed > 5000) {
+      console.log(`      ⚠️  Slow LLM call (${model}): ${elapsed}ms`);
+    }
 
     let text = response.choices[0]?.message?.content || '';
     
