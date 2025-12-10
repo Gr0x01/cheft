@@ -234,6 +234,80 @@ Output ONLY a JSON array.`;
     }
   }
 
+  async findShowsFromWikipediaContext(
+    chefId: string,
+    chefName: string,
+    wikipediaContext: string,
+    knownShow?: { showName: string; season: string; result: string }
+  ): Promise<BasicShowDiscoveryResult> {
+    console.log(`   📺 Extracting shows for ${chefName} (from Wikipedia cache)`);
+
+    try {
+      if (!wikipediaContext || wikipediaContext.length < 100) {
+        console.log(`      ⚠️  Insufficient Wikipedia context, falling back to search`);
+        return this.findShowsBasic(chefId, chefName);
+      }
+
+      const knownShowHint = knownShow 
+        ? `\n\nKNOWN APPEARANCE (verify and include):\n- ${knownShow.showName} Season ${knownShow.season} (${knownShow.result})`
+        : '';
+
+      const prompt = `Extract ALL TV cooking competition appearances for chef "${chefName}" from this Wikipedia context.
+${knownShowHint}
+
+WIKIPEDIA CONTEXT:
+${wikipediaContext.substring(0, 15000)}
+
+Based on the context above, extract EVERY TV show where ${chefName} appeared.
+Look for mentions of:
+- Top Chef (any version/season)
+- Tournament of Champions  
+- Beat Bobby Flay
+- Chopped
+- Iron Chef / Iron Chef America
+- Any other cooking competition
+
+For EACH show found, output:
+{"showName": "exact name", "season": "number or null", "result": "winner|finalist|contestant|judge"}
+
+Output ONLY a JSON array.`;
+
+      const result = await synthesize('accuracy', SHOW_DISCOVERY_PROMPT, prompt, ShowsArraySchema, {
+        maxTokens: 4000,
+      });
+
+      this.tokenTracker.trackUsage(result.usage);
+
+      if (!result.success || !result.data) {
+        console.log(`      ⚠️  LLM extraction failed, falling back to search`);
+        return this.findShowsBasic(chefId, chefName);
+      }
+
+      const tvShows: TVShowBasic[] = result.data.map(show => ({
+        showName: show.showName,
+        season: show.season,
+        result: (show.result ?? 'contestant') as TVShowBasic['result'],
+      }));
+
+      console.log(`      📋 Found ${tvShows.length} shows for ${chefName} (from Wikipedia)`);
+      tvShows.forEach(show => {
+        console.log(`         - ${show.showName}${show.season ? ' S' + show.season : ''} (${show.result || 'contestant'})`);
+      });
+
+      return {
+        success: true,
+        showsSaved: 0,
+        showsSkipped: 0,
+        tokensUsed: result.usage,
+        tvShows,
+      };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`   ❌ Wikipedia show extraction error for "${chefName}": ${msg}`);
+      return this.findShowsBasic(chefId, chefName);
+    }
+  }
+
   async findAllShows(
     chefId: string,
     chefName: string

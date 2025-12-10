@@ -21,6 +21,7 @@ export interface ManualChefAdditionInput {
   initialShowResult?: string;
   skipNarrative?: boolean;
   dryRun?: boolean;
+  wikipediaContext?: string;
 }
 
 export interface ManualChefAdditionOutput {
@@ -195,7 +196,18 @@ export class ManualChefAdditionWorkflow extends BaseWorkflow<ManualChefAdditionI
 
     const showsStep = this.startStep('Discover all TV show appearances');
     try {
-      const result = await this.showDiscoveryService.findAllShows(input.chefId, input.chefName);
+      const result = input.wikipediaContext
+        ? await this.showDiscoveryService.findShowsFromWikipediaContext(
+            input.chefId,
+            input.chefName,
+            input.wikipediaContext,
+            {
+              showName: input.initialShowName,
+              season: input.initialShowSeason || '1',
+              result: input.initialShowResult || 'contestant',
+            }
+          )
+        : await this.showDiscoveryService.findAllShows(input.chefId, input.chefName);
 
       if (!result.success) {
         throw new Error(result.error || 'Show discovery failed');

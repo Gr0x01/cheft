@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import { createLLMEnricher } from './ingestion/processors/llm-enricher';
+import { ShowSourceService } from './ingestion/enrichment/services/show-source-service';
 
 dotenv.config({ path: '.env.local' });
 
@@ -216,9 +217,17 @@ async function main() {
   }
   
   const enricher = createLLMEnricher(supabase, { model: 'gpt-4o-mini' });
+  const showSourceService = new ShowSourceService(supabase);
   let totalCost = 0;
   let chefsAdded = 0;
   let chefsSkipped = 0;
+  
+  const showSlug = slugify(config.showName);
+  console.log(`\n📚 Fetching Wikipedia cache for ${config.showName}...`);
+  const showSource = await showSourceService.getOrFetchShowSource(showSlug);
+  const wikipediaContext = showSource.wikipediaContent || '';
+  console.log(`   Cached contestants: ${showSource.contestants.length}`);
+  console.log(`   Wikipedia content: ${wikipediaContext.length} chars\n`);
   
   for (const contestant of config.contestants) {
     console.log(`\n${'─'.repeat(50)}`);
@@ -276,6 +285,7 @@ async function main() {
         initialShowName: config.showName,
         initialShowSeason: contestant.season,
         initialShowResult: contestant.result,
+        wikipediaContext,
       });
       
       if (result.success) {
