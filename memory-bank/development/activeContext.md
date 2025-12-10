@@ -1,15 +1,34 @@
 ---
 Last-Updated: 2025-12-10
 Maintainer: RB
-Status: Pre-Launch - Ready for Show Expansion
+Status: Pre-Launch - Show Enrichment In Progress (Blocked)
 ---
 
 # Active Context: Chefs
 
 ## Current Status
 - **Phase**: Pre-Launch
-- **Mode**: Ready to expand show coverage
-- **Focus**: Add Top Chef Masters and other shows
+- **Mode**: Show enrichment in progress
+- **Focus**: Top Chef Canada + Top Chef Just Desserts
+- **Blocker**: Supabase connection timeout (Error 522) - infrastructure issue
+
+## Enrichment Progress (Dec 10, 2025)
+
+### ✅ Completed
+| Show | Config | Chefs | Restaurants | Status |
+|------|--------|-------|-------------|--------|
+| Top Chef Masters | `shows/top-chef-masters.json` | 83 chefs (all existed) | 1,237 total | ✅ Complete |
+
+### 🚧 Pending (Configs Ready)
+| Show | Config | Contestants | Status |
+|------|--------|-------------|--------|
+| Top Chef Canada | `shows/top-chef-canada.json` | 37 | Config ready, enrichment blocked by Supabase outage |
+| Top Chef Just Desserts | `shows/top-chef-just-desserts.json` | 23 | Config ready, waiting for Canada to complete |
+
+### Configs Created via Tavily/Wikipedia
+Both configs verified against Wikipedia sources:
+- **Top Chef Canada**: 12 seasons, winners + finalists from S1-S6, winners only S7-S12
+- **Top Chef Just Desserts**: 2 seasons, all finalists + notable contestants
 
 ## Enrichment System v2 Complete
 The enrichment system has been fully refactored and hardened:
@@ -26,52 +45,23 @@ See `memory-bank/architecture/enrichment-reference.md` for quick reference.
 
 ---
 
-## Show Coverage Analysis (Dec 9, 2025)
-
-### Currently Public Shows (5 core)
-- Top Chef (main) + 14 season variants
-- Top Chef Masters
-- Tournament of Champions + All-Star Christmas
-- Holiday Baking Championship
-
-### Shows Ready to Enable (configs created, data incomplete)
-| Show | Config File | Chefs to Add | Status |
-|------|-------------|--------------|--------|
-| Top Chef Masters | `shows/top-chef-masters.json` | 28 | ✅ LIVE - 39 chefs, 125 restaurants |
-
-### Shows Needing Research + Config
-- Top Chef Canada (12 seasons)
-- Top Chef: Just Desserts (2 seasons)
-- Top Chef Duels (1 season)
-- Halloween Baking Championship (11 seasons)
-- Other Top Chef international variants
-
-### Gap Analysis
-Current chef_shows links vs expected:
-- Top Chef Masters: 11 links, need ~28 more
-- Top Chef Canada: 5 links, need ~50+ more
-- Holiday Baking: 6 links, need ~20+ (only those with restaurants)
-- Halloween Baking: 1 link, need ~10+ (only those with restaurants)
-
----
-
 ## Current Data Summary
-- **Chefs**: 300 total (100% bios, 88% photos)
-- **Restaurants**: 1,036 locations (98.5% Google Places)
+- **Chefs**: 409 total (100% bios, 88% photos)
+- **Restaurants**: 1,237 locations (Google Places enrichment: 45/49 done, 4 not found)
 - **Cities**: 162+ city pages
 - **Public Shows**: 5 core (Top Chef, Top Chef Masters, TOC, Holiday Baking)
 
 ## Infrastructure Status
 - **Production**: Live on Vercel
-- **Database**: Supabase PostgreSQL
+- **Database**: Supabase PostgreSQL (⚠️ experiencing 522 timeouts as of Dec 10)
 - **Analytics**: PostHog with session replay
-- **Enrichment**: Needs cleanup before expansion
+- **Enrichment**: System working, blocked by infrastructure
 
-## Next Steps (In Order)
-1. ~~**Fix enrichment system**~~ - ✅ Complete, code reviewed
-2. **Test with Top Chef Masters** - Use `shows/top-chef-masters.json` as pilot
-3. **Expand to other shows** - Create configs, run enrichment
-4. **Enable shows** - Only after proper data coverage
+## Next Steps (When Supabase Recovers)
+1. **Run Canada enrichment**: `npx tsx scripts/add-show.ts --config shows/top-chef-canada.json`
+2. **Run Desserts enrichment**: `npx tsx scripts/add-show.ts --config shows/top-chef-just-desserts.json`
+3. **Google Places backfill**: `npx tsx scripts/enrich-google-places.ts`
+4. **Enable shows in UI** - Only after proper data coverage
 
 ## Key Scripts
 - `scripts/add-show.ts` - Add show with contestants (uses Wikipedia cache + enricher v2)

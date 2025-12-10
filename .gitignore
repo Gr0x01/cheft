@@ -79,3 +79,6 @@ docker-compose.override.yml
 
 # MCP configuration (contains secrets)
 .mcp.json
+
+# Build artifacts
+tsconfig.tsbuildinfo

@@ -1,0 +1,30 @@
+{
+  "showName": "Top Chef: Just Desserts",
+  "network": "Bravo",
+  "contestants": [
+    { "name": "Yigit Pura", "season": "1", "result": "winner" },
+    { "name": "Morgan Wilson", "season": "1", "result": "finalist" },
+    { "name": "Danielle Keene", "season": "1", "result": "finalist" },
+    { "name": "Zac Young", "season": "1", "result": "contestant" },
+    { "name": "Eric Wolitzky", "season": "1", "result": "contestant" },
+    { "name": "Erika Davis", "season": "1", "result": "contestant" },
+    { "name": "Heather Hurlbert", "season": "1", "result": "contestant" },
+    { "name": "Heather Chittum", "season": "1", "result": "contestant" },
+    { "name": "Malika Ameen", "season": "1", "result": "contestant" },
+    { "name": "Seth Caro", "season": "1", "result": "contestant" },
+    { "name": "Tim Nugent", "season": "1", "result": "contestant" },
+
+    { "name": "Chris Hanmer", "season": "2", "result": "winner" },
+    { "name": "Matthew Petersen", "season": "2", "result": "finalist" },
+    { "name": "Sally Camacho", "season": "2", "result": "finalist" },
+    { "name": "Orlando Santos", "season": "2", "result": "contestant" },
+    { "name": "Carlos Enriquez", "season": "2", "result": "contestant" },
+    { "name": "Katzie Guy-Hamilton", "season": "2", "result": "contestant" },
+    { "name": "Megan Ketover", "season": "2", "result": "contestant" },
+    { "name": "Rebecca Masson", "season": "2", "result": "contestant" },
+    { "name": "Amanda Rockman", "season": "2", "result": "contestant" },
+    { "name": "Craig Poirier", "season": "2", "result": "contestant" },
+    { "name": "Nelson Paz", "season": "2", "result": "contestant" },
+    { "name": "Vanarin Kuch", "season": "2", "result": "contestant" }
+  ]
+}

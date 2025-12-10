@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { Breadcrumbs } from '../seo/Breadcrumbs';
+import { MichelinStar } from '../icons/MichelinStar';
 
 interface Stat {
   value: number | string | null;
@@ -59,8 +60,12 @@ export function PageHero({ title, subtitle, stats, breadcrumbItems, children }: 
                   )}
                   <div className="text-center">
                     <div className="font-mono text-3xl font-bold text-white">{stat.value}</div>
-                    <div className="font-mono text-[10px] tracking-widest" style={{ color: 'var(--accent-primary)' }}>
-                      {stat.label}
+                    <div className="font-mono text-[10px] tracking-widest flex items-center justify-center gap-1" style={{ color: 'var(--accent-primary)' }}>
+                      {stat.label === 'MICHELIN' ? (
+                        <>MICHELIN <MichelinStar size={10} /></>
+                      ) : (
+                        stat.label
+                      )}
                     </div>
                   </div>
                 </div>

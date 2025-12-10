@@ -1,0 +1,54 @@
+{
+  "showName": "Top Chef Canada",
+  "network": "Food Network Canada",
+  "contestants": [
+    { "name": "Dale MacKay", "season": "1", "result": "winner" },
+    { "name": "Rob Rossi", "season": "1", "result": "finalist" },
+    { "name": "Connie DeSousa", "season": "1", "result": "contestant" },
+    { "name": "Andrea Nicholson", "season": "1", "result": "contestant" },
+    { "name": "Todd Perrin", "season": "1", "result": "contestant" },
+
+    { "name": "Carl Heinrich", "season": "2", "result": "winner" },
+    { "name": "Trevor Bird", "season": "2", "result": "finalist" },
+    { "name": "Jonathan Korecki", "season": "2", "result": "contestant" },
+    { "name": "Trista Sheen", "season": "2", "result": "contestant" },
+    { "name": "Curtis Luk", "season": "2", "result": "contestant" },
+
+    { "name": "Matthew Stowe", "season": "3", "result": "winner" },
+    { "name": "Danny Smiles", "season": "3", "result": "finalist" },
+    { "name": "Jonathan Goodyear", "season": "3", "result": "contestant" },
+    { "name": "Nicole Gomes", "season": "3", "result": "contestant" },
+    { "name": "Dennis Tay", "season": "3", "result": "contestant" },
+
+    { "name": "Rene Rodriguez", "season": "4", "result": "winner" },
+    { "name": "Terry Salmond", "season": "4", "result": "finalist" },
+    { "name": "Rich Francis", "season": "4", "result": "contestant" },
+
+    { "name": "Nicole Gomes", "season": "5", "result": "winner" },
+    { "name": "Dustin Gallagher", "season": "5", "result": "finalist" },
+    { "name": "Trevor Bird", "season": "5", "result": "contestant" },
+    { "name": "Jesse Vergen", "season": "5", "result": "contestant" },
+    { "name": "Dennis Tay", "season": "5", "result": "contestant" },
+    { "name": "Connie DeSousa", "season": "5", "result": "contestant" },
+    { "name": "Curtis Luk", "season": "5", "result": "contestant" },
+
+    { "name": "Ross Larkin", "season": "6", "result": "winner" },
+    { "name": "Mark Singson", "season": "6", "result": "finalist" },
+
+    { "name": "Paul Moran", "season": "7", "result": "winner" },
+
+    { "name": "Francis Blais", "season": "8", "result": "winner" },
+
+    { "name": "Erika Kerbelnik", "season": "9", "result": "winner" },
+
+    { "name": "Tre Sanderson", "season": "10", "result": "winner" },
+
+    { "name": "Chanthy Yen", "season": "11", "result": "winner" },
+    { "name": "Lisa Ahier", "season": "11", "result": "contestant" },
+    { "name": "Shane Chartrand", "season": "11", "result": "contestant" },
+    { "name": "Ruby Gatt", "season": "11", "result": "contestant" },
+    { "name": "Haan Palcu-Chang", "season": "11", "result": "contestant" },
+
+    { "name": "Coulson Armstrong", "season": "12", "result": "winner" }
+  ]
+}

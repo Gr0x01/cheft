@@ -249,7 +249,7 @@ export default async function WinnersPage({ params }: WinnersPageProps) {
   const statsArray = [
     { value: winnersWithRestaurants.length, label: 'WINNERS' },
     { value: winnersWithRestaurants.length, label: 'RESTAURANTS' },
-    ...(michelinCount > 0 ? [{ value: michelinCount, label: 'MICHELIN ★' }] : []),
+    ...(michelinCount > 0 ? [{ value: michelinCount, label: 'MICHELIN' }] : []),
   ];
 
   return (
