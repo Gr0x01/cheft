@@ -102,6 +102,10 @@ export function estimateCost(usage: TokenUsage, model: string): number {
   return (usage.prompt / 1_000_000) * rates.input + (usage.completion / 1_000_000) * rates.output;
 }
 
+function stripQwenThinking(text: string): string {
+  return text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+}
+
 export async function synthesize<T>(
   tier: SynthesisTier,
   systemPrompt: string,
@@ -138,6 +142,7 @@ export async function synthesize<T>(
   }
 
   const tierLabel = useLocal ? '🖥️  Local' : '☁️  OpenAI';
+  const finalUserPrompt = useLocal ? `/no_think\n${userPrompt}` : userPrompt;
 
   let lastError: string = '';
 
@@ -149,7 +154,7 @@ export async function synthesize<T>(
         model,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
+          { role: 'user', content: finalUserPrompt },
         ],
         max_tokens: maxTokens,
         temperature,
@@ -158,7 +163,12 @@ export async function synthesize<T>(
       const elapsed = Date.now() - start;
       console.log(`      ${tierLabel} (${model}): ${elapsed}ms`);
 
-      const text = response.choices[0]?.message?.content || '';
+      let text = response.choices[0]?.message?.content || '';
+      
+      if (useLocal) {
+        text = stripQwenThinking(text);
+      }
+      
       const usage: TokenUsage = {
         prompt: response.usage?.prompt_tokens || 0,
         completion: response.usage?.completion_tokens || 0,
@@ -241,6 +251,7 @@ export async function synthesizeRaw(
   }
 
   const tierLabel = useLocal ? '🖥️  Local' : '☁️  OpenAI';
+  const finalUserPrompt = useLocal ? `/no_think\n${userPrompt}` : userPrompt;
 
   try {
     const start = Date.now();
@@ -249,7 +260,7 @@ export async function synthesizeRaw(
       model,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
+        { role: 'user', content: finalUserPrompt },
       ],
       max_tokens: maxTokens,
       temperature,
@@ -258,7 +269,12 @@ export async function synthesizeRaw(
     const elapsed = Date.now() - start;
     console.log(`      ${tierLabel} (${model}): ${elapsed}ms`);
 
-    const text = response.choices[0]?.message?.content || '';
+    let text = response.choices[0]?.message?.content || '';
+    
+    if (useLocal) {
+      text = stripQwenThinking(text);
+    }
+    
     const usage: TokenUsage = {
       prompt: response.usage?.prompt_tokens || 0,
       completion: response.usage?.completion_tokens || 0,
