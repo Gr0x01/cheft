@@ -1,5 +1,5 @@
 ---
-Last-Updated: 2025-12-05
+Last-Updated: 2025-12-10
 Maintainer: RB
 Status: Active
 ---
@@ -34,7 +34,21 @@ We use a **two-model hybrid approach** for web search enrichment:
 - **gpt-5-nano**: Ultra-low-cost option for simple status checks
 - **gpt-4.1-mini**: Higher quality fallback if needed
 
-## OpenAI Pricing Table (Effective 2025-12-03)
+## OpenAI Pricing Tiers
+
+OpenAI offers multiple pricing tiers. **For enrichment, use Flex or Batch for 50% savings.**
+
+| Tier | Discount | Latency | Use Case |
+|------|----------|---------|----------|
+| **Standard** | - | Real-time | User-facing, interactive |
+| **Flex** | **50% off** | ~1-5 min | Background scripts, enrichment |
+| **Batch** | **50% off** | Up to 24h | Bulk backfills, overnight jobs |
+
+**Recommendation**: Use **Flex** for `add-show.ts` and enrichment scripts. Same 50% savings as Batch but faster turnaround.
+
+---
+
+## Standard Pricing (Effective 2025-12-03)
 
 All prices are per 1M tokens in USD.
 
@@ -58,11 +72,11 @@ All prices are per 1M tokens in USD.
 | `gpt-4.1-mini` | $0.40 | $0.10 | $1.60 | Cost-effective GPT-4 |
 | `gpt-4.1-nano` | $0.10 | $0.025 | $0.40 | Ultra-low-cost GPT-4 |
 
-### GPT-4o Family (Legacy)
+### GPT-4o Family (Current Production)
 | Model | Input | Cached Input | Output | Notes |
 |-------|-------|--------------|--------|-------|
 | `gpt-4o` | $2.50 | $1.25 | $10.00 | Optimized GPT-4 |
-| `gpt-4o-mini` | $0.15 | $0.075 | $0.60 | Small optimized |
+| `gpt-4o-mini` | $0.15 | $0.075 | $0.60 | **CURRENT ENRICHMENT MODEL** ⭐ |
 | `gpt-4o-2024-05-13` | $5.00 | - | $15.00 | Specific snapshot |
 
 ### O-Series (Reasoning Models)
@@ -77,6 +91,39 @@ All prices are per 1M tokens in USD.
 | `o3-deep-research` | $10.00 | $2.50 | $40.00 | Deep research tasks |
 | `o4-mini` | $1.10 | $0.275 | $4.40 | Latest mini reasoning |
 | `o4-mini-deep-research` | $2.00 | $0.50 | $8.00 | Latest deep research |
+
+---
+
+## Flex/Batch Pricing (50% Off Standard)
+
+For background enrichment tasks. All prices per 1M tokens.
+
+### Key Models for Enrichment
+| Model | Input | Cached Input | Output | Notes |
+|-------|-------|--------------|--------|-------|
+| `gpt-5.1` | $0.625 | $0.0625 | $5.00 | Flex/Batch flagship |
+| `gpt-5` | $0.625 | $0.0625 | $5.00 | Flex/Batch flagship |
+| `gpt-5-mini` | $0.125 | $0.0125 | $1.00 | Flex/Batch mini |
+| `gpt-5-nano` | $0.025 | $0.0025 | $0.20 | Flex/Batch nano |
+| `gpt-4o-mini` | **$0.075** | - | **$0.30** | **RECOMMENDED FOR ENRICHMENT** ⭐ |
+| `gpt-4.1-mini` | $0.20 | - | $0.80 | Flex/Batch 4.1 mini |
+| `gpt-4.1-nano` | $0.05 | - | $0.20 | Flex/Batch 4.1 nano |
+
+### Batch-Only Models
+| Model | Input | Cached Input | Output | Notes |
+|-------|-------|--------------|--------|-------|
+| `gpt-5-pro` | $7.50 | - | $60.00 | Batch only |
+| `gpt-4o` | $1.25 | - | $5.00 | Batch only |
+| `gpt-4o-2024-05-13` | $2.50 | - | $7.50 | Batch only |
+| `o1` | $7.50 | - | $30.00 | Batch only |
+| `o1-pro` | $75.00 | - | $300.00 | Batch only |
+| `o3-pro` | $10.00 | - | $40.00 | Batch only |
+| `o3` | $1.00 | - | $4.00 | Batch only |
+| `o3-deep-research` | $5.00 | - | $20.00 | Batch only |
+| `o4-mini` | $0.55 | - | $2.20 | Batch only |
+| `o4-mini-deep-research` | $1.00 | - | $4.00 | Batch only |
+| `o3-mini` | $0.55 | - | $2.20 | Batch only |
+| `o1-mini` | $0.55 | - | $2.20 | Batch only |
 
 ### Specialized Models
 | Model | Input | Cached Input | Output | Notes |
@@ -211,5 +258,17 @@ For experimental work and cost-free testing, a local LLM is available:
 
 ---
 
-**Last Pricing Update**: 2025-12-03
+## Future Optimization: Batch API
+
+For bulk operations (100+ chefs), the Batch API offers:
+- Same 50% pricing as Flex
+- Async processing (results within 24h)
+- Higher rate limits
+- Ideal for overnight backfills
+
+**Implementation**: Not yet implemented. When needed, queue requests to `/v1/batches` endpoint.
+
+---
+
+**Last Pricing Update**: 2025-12-10
 **Next Review Date**: 2026-01-01 (quarterly review recommended)
