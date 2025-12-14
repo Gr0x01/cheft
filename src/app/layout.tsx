@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import PlausibleProvider from "next-plausible";
 import { PostHogProvider } from "@/components/PostHogProvider";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -59,6 +60,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://upload.wikimedia.org" />
       </head>
       <body className="antialiased">
+        <GoogleAnalytics />
         <PostHogProvider>{children}</PostHogProvider>
       </body>
     </html>

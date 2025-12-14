@@ -1,12 +1,32 @@
 ---
-Last-Updated: 2025-12-07
+Last-Updated: 2025-12-14
 Maintainer: RB
 Status: Active
 ---
 
-# PostHog Analytics Setup
+# Analytics Setup
 
 ## Overview
+The project uses multiple analytics platforms for different purposes:
+- **Google Analytics (GA4)**: Required for ad platforms like Mediavine
+- **Plausible Analytics**: Lightweight, privacy-focused page view tracking
+- **PostHog**: Product analytics and session replay for user behavior insights
+
+## Google Analytics (GA4)
+
+### Configuration
+- **Measurement ID**: G-256751L3L2
+- **Implementation**: `src/components/GoogleAnalytics.tsx`
+- **Integration**: Added to `src/app/layout.tsx`
+
+GA4 provides comprehensive tracking required for monetization platforms like Mediavine. Standard pageview tracking is automatic via the gtag.js script.
+
+## Plausible Analytics
+
+Simple, privacy-focused analytics via the `next-plausible` package. Configured in layout.tsx with domain "cheft.app".
+
+## PostHog Analytics
+
 PostHog provides product analytics and session replay for understanding user behavior. Session replay is **disabled on admin routes** (`/admin/*`) for privacy.
 
 ## Installation
