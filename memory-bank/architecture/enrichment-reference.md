@@ -24,7 +24,7 @@ LLM-powered data discovery system for chef/restaurant enrichment. Uses Wikipedia
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                           SEARCH LAYER (Tavily)                             │
 │  Chef-specific searches only (bio, restaurants) → search_cache (TTL)       │
-│  Rate limit: 100 RPM → max 25 concurrent chefs (4 searches each)           │
+│  Rate limit: 1000 RPM (production) → max 250 concurrent (4 searches each)  │
 │  Cost: ~$0.01 per query                                                     │
 └─────────────────────────────────────┬───────────────────────────────────────┘
                                       │
@@ -50,10 +50,10 @@ LLM-powered data discovery system for chef/restaurant enrichment. Uses Wikipedia
 ## Parallelization
 
 The `add-show.ts` script uses **p-queue** for concurrent processing:
-- **20 concurrent chefs** by default (configurable via `CONCURRENCY` constant)
-- Bottleneck is Tavily at 100 RPM (4 searches/chef = 25 max concurrent)
+- **100 concurrent chefs** (configurable via `CONCURRENCY` constant in add-show.ts)
+- Tavily production: 1000 RPM (4 searches/chef = 250 max concurrent)
 - OpenAI Tier 5 = 10,000 RPM (not a bottleneck)
-- **28-chef show processes in ~2-3 minutes** instead of 25+ sequential
+- **32-chef show processes in <30 seconds** with production Tavily API
 
 ## Location
 

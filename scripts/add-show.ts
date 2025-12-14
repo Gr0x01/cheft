@@ -6,7 +6,7 @@ import { ShowSourceService } from './ingestion/enrichment/services/show-source-s
 
 dotenv.config({ path: '.env.local' });
 
-const CONCURRENCY = 20;
+const CONCURRENCY = 100; // Tavily production: 1000 RPM (4 searches/chef = 250 max)
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

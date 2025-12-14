@@ -36,10 +36,10 @@ The enrichment system has been fully refactored and hardened:
 - **Synthesis**: OpenAI gpt-4o-mini with Flex tier for all calls (local LLM disabled by default)
 - **Wikipedia Cache**: Shows fetched once from Wikipedia, reused for all contestants
 - **Flex Tier**: OpenAI calls use `X-Model-Tier: flex` for 50% cost savings
-- **Parallelization**: p-queue with 20 concurrent workers (Tavily 100 RPM is bottleneck)
+- **Parallelization**: p-queue with 100 concurrent workers (Tavily production 1000 RPM)
 - **Status**: Google Places API checked first, Tavily fallback
 
-**Performance**: 28-chef show in ~2-3 minutes (was 25+ sequential), ~$0.50 cost.
+**Performance**: 32-chef show in <30 seconds with production Tavily, ~$0.50 cost.
 
 See `memory-bank/architecture/enrichment-reference.md` for quick reference.
 
