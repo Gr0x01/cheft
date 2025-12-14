@@ -15,7 +15,7 @@ The project uses multiple analytics platforms for different purposes:
 ## Google Analytics (GA4)
 
 ### Configuration
-- **Measurement ID**: G-256751L3L2
+- **Measurement ID**: G-X1GKSMV9NX
 - **Implementation**: `src/components/GoogleAnalytics.tsx`
 - **Integration**: Added to `src/app/layout.tsx`
 
