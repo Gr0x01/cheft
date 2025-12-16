@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { db } from '@/lib/supabase';
 import HomePage from './HomePage';
 import { WebSiteSchema } from '@/components/seo/SchemaOrg';
+import { getFooterData } from '@/lib/footer-data';
 
 export const revalidate = 3600;
 
@@ -28,10 +29,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page() {
-  const [stats, featuredChef, shows] = await Promise.all([
+  const [stats, featuredChef, shows, footerData] = await Promise.all([
     db.getStats(),
     db.getFeaturedChef(),
-    db.getShowsWithCounts()
+    db.getShowsWithCounts(),
+    getFooterData(),
   ]);
 
   const chefsData = await db.getFeaturedChefs(12, featuredChef?.id);
@@ -45,11 +47,12 @@ export default async function Page() {
         description={`Discover ${stats.restaurants} restaurants owned by Top Chef, Iron Chef, and Tournament of Champions winners and contestants.`}
         searchUrl={`${baseUrl}/restaurants?q={search_term_string}`}
       />
-      <HomePage 
+      <HomePage
         initialFeaturedChefs={chefsData}
         stats={stats}
         featuredChef={featuredChef}
         shows={shows}
+        footerData={footerData}
       />
     </>
   );

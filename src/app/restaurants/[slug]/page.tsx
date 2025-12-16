@@ -614,37 +614,7 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
             </section>
           )}
 
-          <section 
-            className="py-8 border-t"
-            style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
-          >
-            <div className="max-w-6xl mx-auto px-4 flex flex-col items-center gap-4">
-              {restaurant.google_rating && (
-                <p 
-                  className="font-mono text-[10px] text-center tracking-wide"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  Ratings and reviews powered by Google Maps
-                </p>
-              )}
-              <div className="flex items-center gap-6">
-                <Link
-                  href="/about"
-                  className="font-mono text-[11px] tracking-wider transition-colors hover:text-[var(--accent-primary)]"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  ABOUT
-                </Link>
-                <Link
-                  href="/privacy"
-                  className="font-mono text-[11px] tracking-wider transition-colors hover:text-[var(--accent-primary)]"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  PRIVACY
-                </Link>
-              </div>
-            </div>
-          </section>
+          <Footer />
         </main>
       </div>
     </>

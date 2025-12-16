@@ -7,7 +7,8 @@ import { RestaurantWithDetails, MapPin } from '@/lib/types';
 import { RestaurantCardCompact } from '@/components/restaurant/RestaurantCardCompact';
 import { ChefCard } from '@/components/chef/ChefCard';
 import { Header } from '@/components/ui/Header';
-import { Footer } from '@/components/ui/Footer';
+import { SuperFooterClient } from '@/components/ui/Footer';
+import type { FooterData } from '@/lib/footer-data';
 import { FeaturedChefHero } from '@/components/chef/FeaturedChefHero';
 import { DiscoveryRow } from '@/components/home/DiscoveryRow';
 import { ShowsShowcase } from '@/components/home/ShowsShowcase';
@@ -27,6 +28,7 @@ interface HomePageProps {
   stats: { restaurants: number; chefs: number; cities: number };
   featuredChef: any | null;
   shows: Show[];
+  footerData: FooterData;
 }
 
 const RestaurantMapPins = dynamic(() => import('@/components/RestaurantMapPins'), { 
@@ -39,7 +41,7 @@ const RestaurantMapPins = dynamic(() => import('@/components/RestaurantMapPins')
   )
 });
 
-export default function Home({ initialFeaturedChefs, stats, featuredChef, shows }: HomePageProps) {
+export default function Home({ initialFeaturedChefs, stats, featuredChef, shows, footerData }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedShow, setSelectedShow] = useState<string>('all');
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
@@ -400,7 +402,7 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef, shows 
         </div>
       </section>
 
-      <Footer />
+      <SuperFooterClient data={footerData} />
     </div>
   );
 }
