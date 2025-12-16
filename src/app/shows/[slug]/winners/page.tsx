@@ -254,7 +254,7 @@ export default async function WinnersPage({ params }: WinnersPageProps) {
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
-      <Header />
+      <Header currentPage="shows" />
       <PageHero
         title={`${show.name} Winners`}
         subtitle="Where Champions Cook Today"

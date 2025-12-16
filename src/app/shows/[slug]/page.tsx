@@ -55,7 +55,8 @@ export default async function ShowPage({ params }: ShowPageProps) {
   let show;
   try {
     show = await db.getShow(slug);
-  } catch {
+  } catch (error) {
+    console.error('getShow error for slug:', slug, error);
     notFound();
   }
 
@@ -152,7 +153,7 @@ export default async function ShowPage({ params }: ShowPageProps) {
         }))}
       />
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
-      <Header />
+      <Header currentPage="shows" />
       <PageHero
         title={show.name}
         subtitle={show.network}

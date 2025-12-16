@@ -177,7 +177,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
         }))}
       />
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
-      <Header />
+      <Header currentPage="shows" />
       <PageHero
         title={seasonName}
         subtitle={seasonData.name}

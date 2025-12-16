@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 interface HeaderProps {
-  currentPage?: 'chefs' | 'restaurants' | 'cities' | 'countries' | 'about' | 'home';
+  currentPage?: 'chefs' | 'restaurants' | 'cities' | 'countries' | 'shows' | 'about' | 'home';
 }
 
 export function Header({ currentPage }: HeaderProps) {
@@ -84,23 +84,39 @@ export function Header({ currentPage }: HeaderProps) {
           >
             CHEFS
           </Link>
-          <Link 
-            href="/restaurants" 
+          <Link
+            href="/restaurants"
             className={`font-mono text-xs tracking-wider transition-colors ${
-              currentPage === 'restaurants' 
-                ? 'font-semibold' 
+              currentPage === 'restaurants'
+                ? 'font-semibold'
                 : 'hover:text-[var(--accent-primary)]'
             }`}
-            style={{ 
-              color: currentPage === 'restaurants' 
-                ? 'var(--accent-primary)' 
-                : 'var(--text-muted)' 
+            style={{
+              color: currentPage === 'restaurants'
+                ? 'var(--accent-primary)'
+                : 'var(--text-muted)'
             }}
             aria-current={currentPage === 'restaurants' ? 'page' : undefined}
           >
             RESTAURANTS
           </Link>
-          <Link 
+          <Link
+            href="/shows"
+            className={`font-mono text-xs tracking-wider transition-colors ${
+              currentPage === 'shows'
+                ? 'font-semibold'
+                : 'hover:text-[var(--accent-primary)]'
+            }`}
+            style={{
+              color: currentPage === 'shows'
+                ? 'var(--accent-primary)'
+                : 'var(--text-muted)'
+            }}
+            aria-current={currentPage === 'shows' ? 'page' : undefined}
+          >
+            SHOWS
+          </Link>
+          <Link
             href="/about" 
             className={`font-mono text-xs tracking-wider transition-colors ${
               currentPage === 'about' 
@@ -166,13 +182,13 @@ export function Header({ currentPage }: HeaderProps) {
               >
                 CHEFS
               </Link>
-              <Link 
+              <Link
                 href="/restaurants"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`px-4 py-4 font-mono text-sm tracking-wider transition-colors border-b ${
                   currentPage === 'restaurants' ? 'font-semibold' : ''
                 }`}
-                style={{ 
+                style={{
                   color: currentPage === 'restaurants' ? 'var(--accent-primary)' : 'var(--text-muted)',
                   borderColor: 'var(--border-light)'
                 }}
@@ -180,13 +196,27 @@ export function Header({ currentPage }: HeaderProps) {
               >
                 RESTAURANTS
               </Link>
-              <Link 
+              <Link
+                href="/shows"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`px-4 py-4 font-mono text-sm tracking-wider transition-colors border-b ${
+                  currentPage === 'shows' ? 'font-semibold' : ''
+                }`}
+                style={{
+                  color: currentPage === 'shows' ? 'var(--accent-primary)' : 'var(--text-muted)',
+                  borderColor: 'var(--border-light)'
+                }}
+                aria-current={currentPage === 'shows' ? 'page' : undefined}
+              >
+                SHOWS
+              </Link>
+              <Link
                 href="/about"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`px-4 py-4 font-mono text-sm tracking-wider transition-colors ${
                   currentPage === 'about' ? 'font-semibold' : ''
                 }`}
-                style={{ 
+                style={{
                   color: currentPage === 'about' ? 'var(--accent-primary)' : 'var(--text-muted)'
                 }}
                 aria-current={currentPage === 'about' ? 'page' : undefined}

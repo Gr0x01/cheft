@@ -24,7 +24,7 @@ export default async function ShowsPage() {
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)', paddingTop: '64px' }}>
-      <Header />
+      <Header currentPage="shows" />
       <PageHero
         title="TV Cooking Shows"
         subtitle="Browse restaurants by the TV shows that made these chefs famous. From Top Chef winners to Iron Chef competitors, find where the stars are cooking today."
