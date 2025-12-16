@@ -614,7 +614,11 @@ export default async function ChefPage({ params }: ChefPageProps) {
 
           {/* Two-Column Story + Sidebar */}
           {chef.career_narrative && (
-            <section className="py-16" style={{ background: 'var(--bg-secondary)' }}>
+            <article
+              className="py-16"
+              style={{ background: 'var(--bg-secondary)' }}
+              aria-label={`Career narrative for ${chef.name}`}
+            >
               <div className="max-w-6xl mx-auto px-4">
                 <div className="grid lg:grid-cols-3 gap-12">
                   {/* Main Story Column */}
@@ -625,14 +629,40 @@ export default async function ChefPage({ params }: ChefPageProps) {
                           const sanitized = sanitizeNarrative(chef.career_narrative!);
                           const paragraphs = sanitized.split('\n\n').filter(p => p.trim());
                           if (paragraphs.length === 0) return null;
+
+                          // SEO-optimized headings for 3-part narrative
+                          const showName = primaryShow?.show?.name
+                            ? sanitizeNarrative(primaryShow.show.name)
+                            : null;
+                          const headingIds = ['culinary-roots', 'rise-to-fame', 'where-to-dine'];
+                          const headings = [
+                            'Culinary Roots',
+                            showName ? `Rise to Fame on ${showName}` : 'Rise to Fame',
+                            'Where to Dine Today'
+                          ];
+
                           return paragraphs.map((paragraph, index) => (
-                            <p 
+                            <section
                               key={index}
-                              className="font-ui text-lg leading-relaxed mb-6 last:mb-0"
-                              style={{ color: 'var(--text-primary)', lineHeight: '1.9' }}
+                              className="mb-8 last:mb-0"
+                              aria-labelledby={index < headingIds.length ? headingIds[index] : undefined}
                             >
-                              {paragraph}
-                            </p>
+                              {index < headings.length && (
+                                <h2
+                                  id={headingIds[index]}
+                                  className="font-display text-2xl font-bold mb-4"
+                                  style={{ color: 'var(--text-primary)' }}
+                                >
+                                  {headings[index]}
+                                </h2>
+                              )}
+                              <p
+                                className="font-ui text-lg leading-relaxed"
+                                style={{ color: 'var(--text-primary)', lineHeight: '1.9' }}
+                              >
+                                {paragraph}
+                              </p>
+                            </section>
                           ));
                         } catch {
                           return null;
@@ -783,7 +813,7 @@ export default async function ChefPage({ params }: ChefPageProps) {
                   </aside>
                 </div>
               </div>
-            </section>
+            </article>
           )}
 
           {/* Cooking Shows Section */}

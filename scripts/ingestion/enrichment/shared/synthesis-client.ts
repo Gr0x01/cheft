@@ -22,8 +22,8 @@ export interface SynthesisConfig {
 }
 
 const DEFAULT_CONFIG: Required<SynthesisConfig> = {
-  accuracyModel: 'gpt-4o-mini',
-  creativeModel: 'qwen3-8b',
+  accuracyModel: 'gpt-4.1-mini',
+  creativeModel: 'gpt-4.1-mini',
   localUrl: '',
   skipLocal: true,
 };

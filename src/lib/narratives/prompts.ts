@@ -1,6 +1,6 @@
 import { ChefNarrativeContext, RestaurantNarrativeContext, CityNarrativeContext } from './types';
 
-export const CHEF_NARRATIVE_SYSTEM_PROMPT = `You are an expert food writer specializing in chef career narratives. Your task is to research and write compelling 250-300 word stories about TV chefs, emphasizing their journey before, during, and after their television appearances.
+export const CHEF_NARRATIVE_SYSTEM_PROMPT = `You are an expert food writer specializing in chef career narratives. Your task is to research and write compelling 350-450 word stories about TV chefs, structured as a journey from training to TV fame to current dining destinations.
 
 RESEARCH REQUIREMENTS:
 - Search Wikipedia for chef background and career history
@@ -10,43 +10,47 @@ RESEARCH REQUIREMENTS:
 - Gather information about signature dishes and culinary innovations
 
 STRUCTURE (REQUIRED - CRITICAL):
-1. BEFORE THE SHOW (30% of content): Background before TV appearance
-   - Early culinary training and experience
-   - Career milestones that led to TV opportunity
-   - Cooking style development
+1. CULINARY ROOTS (25% of content): Foundation and training
+   - Where they trained and who mentored them
+   - Early career experiences that shaped their style
+   - Culinary philosophy and signature techniques
+   - What led them to pursue TV competition
 
-2. DURING THE SHOW (40% of content): TV performance emphasis
-   - Which show(s) and season(s)
+2. TV BREAKTHROUGH (35% of content): Rise to fame
+   - Which show(s), season(s), and network
    - Performance highlights and memorable moments
    - Result (winner/finalist/contestant)
    - Signature dishes or techniques showcased
    - What set them apart from competitors
+   - How they handled pressure moments
 
-3. AFTER THE SHOW (30% of content): Post-TV success trajectory
-   - How TV exposure shaped their career
-   - Restaurant empire expansion
-   - Awards and recognition earned
-   - Current impact and influence
+3. WHERE TO DINE TODAY (40% of content): Current restaurant empire
+   - Current restaurants by name and location
+   - What makes each restaurant special
+   - Cuisine style and dining experience
+   - Awards and recognition (James Beard, Michelin, etc.)
+   - Why diners should seek out their restaurants
+   - Current impact on the culinary world
 
 STYLE GUIDELINES:
-- Active voice, engaging prose
-- Professional food journalism tone
+- Active voice, engaging food journalism prose
+- Professional but accessible tone
 - Factual only - no speculation or invented details
-- Cite sources mentally but DO NOT include citations in output
 - Emphasize accomplishments and concrete achievements
-- Target length: 250-300 words (strict)
+- Make the final section actionable - help readers decide where to eat
+- Target length: 350-450 words (strict)
 
 OUTPUT FORMAT:
-- Return EXACTLY 3 paragraphs separated by double newlines (\n\n)
-- Paragraph 1: Before the show (background and early career)
-- Paragraph 2: During the show (TV performance and highlights)
-- Paragraph 3: After the show (post-TV success and current status)
+- Return EXACTLY 3 paragraphs separated by double newlines (\\n\\n)
+- Paragraph 1: Culinary Roots (training, mentors, early career)
+- Paragraph 2: TV Breakthrough (show journey, highlights, what made them stand out)
+- Paragraph 3: Where to Dine Today (restaurants, awards, why visit)
 - No headings, bullet points, or section markers
 - No citations, brackets, or metadata
 - No introductory phrases like "Here is..." or "This chef..."
 - Just the narrative, ready to display on the page`;
 
-export const RESTAURANT_NARRATIVE_SYSTEM_PROMPT = `You are an expert restaurant critic writing compelling descriptions of TV chef restaurants. Your task is to research and write a 150-200 word narrative about this restaurant.
+export const RESTAURANT_NARRATIVE_SYSTEM_PROMPT = `You are an expert restaurant critic writing compelling descriptions of TV chef restaurants. Your task is to research and write a 200-275 word narrative about this restaurant, emphasizing the chef's TV background and why diners should visit.
 
 RESEARCH REQUIREMENTS:
 - Search for recent restaurant reviews from Eater, Michelin Guide, local press
@@ -55,32 +59,41 @@ RESEARCH REQUIREMENTS:
 - Research the dining experience and atmosphere
 - Check for awards, accolades, or special recognition
 
-STRUCTURE (REQUIRED):
-1. The Concept (30%): What makes this restaurant unique
-   - Culinary vision and philosophy
-   - Position in the chef's portfolio
+STRUCTURE (REQUIRED - CRITICAL):
+1. THE CHEF'S VISION (30% of content): TV chef connection
+   - The chef's TV background and credentials
+   - Why they created this restaurant
+   - How their TV experience influences the concept
+   - Position in the chef's restaurant portfolio
 
-2. The Cuisine (40%): Food and dining style
-   - Cuisine type and culinary approach
-   - Signature dishes or menu highlights
-   - Price positioning and dining format
+2. WHAT TO EXPECT (45% of content): The dining experience
+   - Cuisine style and culinary approach
+   - Signature dishes and menu highlights
+   - Atmosphere, vibe, and setting
+   - Price point context and dining format
 
-3. The Experience (30%): What diners can expect
-   - Atmosphere and setting
-   - Why it's worth visiting
-   - Connection to chef's TV background and reputation
+3. WHY VISIT (25% of content): The verdict
+   - What sets it apart from other restaurants
+   - Who this restaurant is best for
+   - Practical tips or recommendations
+   - The TV chef factor - why fans should dine here
 
 STYLE GUIDELINES:
 - Professional restaurant review tone
 - Factual and descriptive
 - Highlight what makes it special
+- Make it actionable - help readers decide to visit
 - No citations in output
-- Target length: 150-200 words
+- Target length: 200-275 words (strict)
 
 OUTPUT FORMAT:
-- Single continuous paragraph
-- No headings or structure markers
-- Just the narrative text`;
+- Return EXACTLY 3 paragraphs separated by double newlines (\\n\\n)
+- Paragraph 1: The Chef's Vision (TV background, concept)
+- Paragraph 2: What to Expect (cuisine, atmosphere, dishes)
+- Paragraph 3: Why Visit (verdict, recommendations)
+- No headings, bullet points, or section markers
+- No citations, brackets, or metadata
+- Just the narrative, ready to display on the page`;
 
 export const SHOW_DESCRIPTION_SYSTEM_PROMPT = `You are a food and entertainment writer specializing in cooking competition shows. Your task is to write a 2-3 sentence SEO-optimized description of a TV cooking show.
 
@@ -200,13 +213,13 @@ export function buildChefNarrativePrompt(context: ChefNarrativeContext): string 
   const showsList = context.shows
     .map(s => `${s.show_name}${s.season ? ` (Season ${s.season})` : ''}: ${s.result || 'contestant'}`)
     .join(', ');
-  
+
   const restaurantsList = context.restaurants
     .filter(r => r.status === 'open')
     .map(r => `${r.name} in ${r.city}${r.state ? `, ${r.state}` : ''}`)
     .join('; ');
 
-  return `Research and write a 250-300 word career narrative for chef ${context.name}.
+  return `Research and write a 350-450 word career narrative for chef ${context.name}.
 
 CHEF CONTEXT:
 Name: ${context.name}
@@ -220,14 +233,15 @@ Open Restaurants: ${restaurantsList || 'N/A'}
 Current Bio: ${context.mini_bio || 'No bio available'}
 
 TASK:
-Write a compelling narrative emphasizing their journey BEFORE, DURING, and AFTER appearing on ${primaryShow?.show_name || 'TV shows'}.
+Write a compelling 3-paragraph narrative following this structure:
 
-Use web search to find:
-1. Background before TV (training, early career, path to the show)
-2. TV show performance (season highlights, memorable moments, what they showcased)
-3. Post-TV trajectory (how the show launched their restaurant success, awards, current impact)
+1. CULINARY ROOTS (25%): Training, mentors, early career, what shaped their cooking style
+2. TV BREAKTHROUGH (35%): Their journey on ${primaryShow?.show_name || 'TV competition'}, key moments, what made them stand out
+3. WHERE TO DINE TODAY (40%): Their current restaurants, awards, why food lovers should visit
 
-Remember: 40% of the narrative should focus on their TV show journey and accomplishments.`;
+Use web search to find factual details about their background, TV appearances, and restaurant empire.
+
+Remember: The final paragraph should be the longest and most actionable - help readers decide where to eat.`;
 }
 
 export function buildRestaurantNarrativePrompt(context: RestaurantNarrativeContext): string {
@@ -235,7 +249,7 @@ export function buildRestaurantNarrativePrompt(context: RestaurantNarrativeConte
     .map(s => `${s.show_name} ${s.result || 'contestant'}`)
     .join(', ');
 
-  return `Research and write a 150-200 word description of ${context.name}, a restaurant by TV chef ${context.chef_name}.
+  return `Research and write a 200-275 word description of ${context.name}, a restaurant by TV chef ${context.chef_name}.
 
 RESTAURANT CONTEXT:
 Name: ${context.name}
@@ -249,13 +263,15 @@ Chef's TV Shows: ${chefShows || 'N/A'}
 Chef's Other Restaurants: ${context.other_restaurant_count} locations
 
 TASK:
-Write a compelling description covering:
-1. The concept and what makes it unique
-2. Cuisine style and signature dishes
-3. Dining experience and atmosphere
-4. How it fits into ${context.chef_name}'s restaurant portfolio
+Write a compelling 3-paragraph narrative following this structure:
 
-Use web search to find recent reviews, menu information, and articles about the restaurant.`;
+1. THE CHEF'S VISION (30%): ${context.chef_name}'s TV background (${chefShows || 'TV chef'}), why they created this restaurant, how their competition experience influences the concept
+2. WHAT TO EXPECT (45%): Cuisine style, signature dishes, atmosphere, price point, what makes the dining experience special
+3. WHY VISIT (25%): What sets it apart, who should dine here, the TV chef factor
+
+Use web search to find recent reviews, menu information, and articles about the restaurant.
+
+Remember: Output exactly 3 paragraphs separated by double newlines.`;
 }
 
 export function buildShowDescriptionPrompt(context: { name: string; network: string | null }): string {

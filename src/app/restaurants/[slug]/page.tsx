@@ -406,106 +406,170 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
             restaurantName={restaurant.name}
           />
 
-          {/* About This Restaurant - Narrative */}
-          {restaurant.restaurant_narrative && (
-            <section 
+          {/* Main Content + Aside Layout */}
+          {(restaurant.restaurant_narrative || (restaurant.lat && restaurant.lng) || otherRestaurants.length > 0) && (
+            <article
               className="py-12 border-t"
               style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
+              aria-label={`About ${restaurant.name}`}
             >
               <div className="max-w-6xl mx-auto px-4">
-                <h2 className="font-display text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
-                  About This Restaurant
-                </h2>
-                <p 
-                  className="font-ui text-lg leading-relaxed max-w-4xl"
-                  style={{ color: 'var(--text-primary)', lineHeight: '1.8' }}
-                >
-                  {sanitizeNarrative(restaurant.restaurant_narrative)}
-                </p>
-              </div>
-            </section>
-          )}
+                <div className={`grid gap-8 lg:gap-12 ${restaurant.restaurant_narrative ? 'md:grid-cols-3' : ''}`}>
+                  {/* Main Content - Narrative */}
+                  {restaurant.restaurant_narrative && (
+                    <div className="md:col-span-2">
+                      {(() => {
+                        try {
+                          const sanitized = sanitizeNarrative(restaurant.restaurant_narrative);
+                          const paragraphs = sanitized.split('\n\n').filter(p => p.trim());
+                          if (paragraphs.length === 0) return null;
 
-          {restaurant.lat && restaurant.lng && (
-            <section className="py-12 border-t" style={{ borderColor: 'var(--border-light)' }}>
-              <div className="max-w-6xl mx-auto px-4">
-                <h2 className="font-display text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
-                  Location
-                </h2>
-                <div 
-                  className="h-64 sm:h-80 overflow-hidden"
-                  style={{ border: '2px solid var(--border-light)' }}
-                >
-                  <MiniMapWrapper 
-                    lat={restaurant.lat} 
-                    lng={restaurant.lng} 
-                    name={restaurant.name}
-                  />
-                </div>
-                <div className="mt-4 flex flex-wrap gap-4">
-                  {restaurant.maps_url && (
-                    <a
-                      href={restaurant.maps_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 font-mono text-sm font-semibold px-4 py-2 transition-colors"
-                      style={{ 
-                        background: 'var(--accent-primary)', 
-                        color: 'white'
-                      }}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      GET DIRECTIONS
-                    </a>
+                          // SEO-optimized headings for 3-part restaurant narrative
+                          const chefName = primaryChef?.name
+                            ? sanitizeNarrative(primaryChef.name)
+                            : 'The Chef';
+                          const restaurantName = sanitizeNarrative(restaurant.name);
+                          const headingIds = ['chefs-vision', 'what-to-expect', 'why-visit'];
+                          const headings = [
+                            `${chefName}'s ${restaurantName}`,
+                            'What to Expect',
+                            'Why Visit'
+                          ];
+
+                          // If only 1 paragraph (old format), show with generic heading
+                          if (paragraphs.length === 1) {
+                            return (
+                              <section aria-labelledby="about-restaurant">
+                                <h2
+                                  id="about-restaurant"
+                                  className="font-display text-2xl font-bold mb-6"
+                                  style={{ color: 'var(--text-primary)' }}
+                                >
+                                  About This Restaurant
+                                </h2>
+                                <p
+                                  className="font-ui text-lg leading-relaxed"
+                                  style={{ color: 'var(--text-primary)', lineHeight: '1.8' }}
+                                >
+                                  {paragraphs[0]}
+                                </p>
+                              </section>
+                            );
+                          }
+
+                          // Multi-paragraph format with H2 headings
+                          return paragraphs.map((paragraph, index) => (
+                            <section
+                              key={index}
+                              className="mb-8 last:mb-0"
+                              aria-labelledby={index < headingIds.length ? headingIds[index] : undefined}
+                            >
+                              {index < headings.length && (
+                                <h2
+                                  id={headingIds[index]}
+                                  className="font-display text-2xl font-bold mb-4"
+                                  style={{ color: 'var(--text-primary)' }}
+                                >
+                                  {headings[index]}
+                                </h2>
+                              )}
+                              <p
+                                className="font-ui text-lg leading-relaxed"
+                                style={{ color: 'var(--text-primary)', lineHeight: '1.8' }}
+                              >
+                                {paragraph}
+                              </p>
+                            </section>
+                          ));
+                        } catch {
+                          return null;
+                        }
+                      })()}
+                    </div>
                   )}
-                  {restaurant.website_url && (
-                    <a
-                      href={restaurant.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 font-mono text-sm font-semibold px-4 py-2 transition-colors"
-                      style={{ 
-                        background: 'var(--bg-secondary)', 
-                        color: 'var(--text-primary)',
-                        border: '2px solid var(--border-light)'
-                      }}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                      </svg>
-                      VISIT WEBSITE
-                    </a>
+
+                  {/* Aside - Map + More from Chef */}
+                  {((restaurant.lat && restaurant.lng) || otherRestaurants.length > 0) && (
+                    <aside className={restaurant.restaurant_narrative ? 'md:col-span-1' : 'max-w-md mx-auto w-full'}>
+                      <div className="md:sticky md:top-24 space-y-6">
+                        {/* Mini Map */}
+                        {restaurant.lat && restaurant.lng && (
+                          <div>
+                            <div
+                              className="h-48 overflow-hidden"
+                              style={{ border: '2px solid var(--border-light)' }}
+                            >
+                              <MiniMapWrapper
+                                lat={restaurant.lat}
+                                lng={restaurant.lng}
+                                name={restaurant.name}
+                              />
+                            </div>
+                            <div className="mt-3 flex flex-col gap-2">
+                              {restaurant.maps_url && (
+                                <a
+                                  href={restaurant.maps_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center justify-center gap-2 font-mono text-sm font-semibold px-4 py-2 transition-colors"
+                                  style={{
+                                    background: 'var(--accent-primary)',
+                                    color: 'white'
+                                  }}
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  </svg>
+                                  GET DIRECTIONS
+                                </a>
+                              )}
+                              {restaurant.website_url && (
+                                <a
+                                  href={restaurant.website_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center justify-center gap-2 font-mono text-sm font-semibold px-4 py-2 transition-colors"
+                                  style={{
+                                    background: 'var(--bg-primary)',
+                                    color: 'var(--text-primary)',
+                                    border: '2px solid var(--border-light)'
+                                  }}
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                                  </svg>
+                                  VISIT WEBSITE
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* More from Chef */}
+                        {otherRestaurants.length > 0 && (
+                          <div>
+                            <div className="flex items-baseline gap-2 mb-4">
+                              <h2 className="font-display text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                                More from {allChefs.length > 1 ? 'the Chefs' : primaryChef?.name || 'the Chef'}
+                              </h2>
+                              <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
+                                {otherRestaurants.length}
+                              </span>
+                            </div>
+                            <div className="space-y-3">
+                              {otherRestaurants.slice(0, 4).map(r => (
+                                <RestaurantMiniCard key={r.id} restaurant={r} bordered />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </aside>
                   )}
                 </div>
               </div>
-            </section>
-          )}
-
-          {otherRestaurants.length > 0 && (
-            <section 
-              className="py-12 border-t"
-              style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}
-            >
-              <div className="max-w-6xl mx-auto px-4">
-                <div className="flex items-baseline gap-4 mb-8">
-                  <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                    More from {allChefs.length > 1 ? 'the Chefs' : primaryChef?.name || 'the Chef'}
-                  </h2>
-                  <span className="font-mono text-sm" style={{ color: 'var(--text-muted)' }}>
-                    {otherRestaurants.length} OTHER LOCATION{otherRestaurants.length !== 1 ? 'S' : ''}
-                  </span>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {otherRestaurants.map(r => (
-                    <RestaurantMiniCard key={r.id} restaurant={r} bordered />
-                  ))}
-                </div>
-              </div>
-            </section>
+            </article>
           )}
 
           {stateRestaurants.length > 0 && restaurant.state && (
