@@ -180,7 +180,7 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef, shows,
         <div className="hero-container">
           <div className="hero-content">
             <h1 className="hero-title">
-              Find Chef-Driven Restaurants
+              Restaurants by TV's Top Chefs
             </h1>
             <p className="hero-subtitle">
               Top Chef, Tournament of Champions, James Beard winners, and more
