@@ -1,0 +1,30 @@
+{
+  "showName": "The Final Table",
+  "network": "Netflix",
+  "contestants": [
+    { "name": "Timothy Hollingsworth", "season": "1", "result": "winner" },
+    { "name": "Darren MacLean", "season": "1", "result": "finalist" },
+    { "name": "Shane Osborn", "season": "1", "result": "finalist" },
+    { "name": "Mark Best", "season": "1", "result": "finalist" },
+    { "name": "Charles Michel", "season": "1", "result": "contestant" },
+    { "name": "Rodrigo Pacheco", "season": "1", "result": "contestant" },
+    { "name": "Esdras Ochoa", "season": "1", "result": "contestant" },
+    { "name": "Rafa Gil", "season": "1", "result": "contestant" },
+    { "name": "Aaron Bludorn", "season": "1", "result": "contestant" },
+    { "name": "Graham Campbell", "season": "1", "result": "contestant" },
+    { "name": "Manuel Berganza", "season": "1", "result": "contestant" },
+    { "name": "Benjamin Bensoussan", "season": "1", "result": "contestant" },
+    { "name": "Monique Fiso", "season": "1", "result": "contestant" },
+    { "name": "Amninder Sandhu", "season": "1", "result": "contestant" },
+    { "name": "Alex Haupt", "season": "1", "result": "contestant" },
+    { "name": "Ash Heeger", "season": "1", "result": "contestant" },
+    { "name": "Jessica Lorigo", "season": "1", "result": "contestant" },
+    { "name": "Johnny Spero", "season": "1", "result": "contestant" },
+    { "name": "Shin Takagi", "season": "1", "result": "contestant" },
+    { "name": "Ronald Hsu", "season": "1", "result": "contestant" },
+    { "name": "Collin Brown", "season": "1", "result": "contestant" },
+    { "name": "Colibrí Jiménez", "season": "1", "result": "contestant" },
+    { "name": "James Knappett", "season": "1", "result": "contestant" },
+    { "name": "Angel Vazquez", "season": "1", "result": "contestant" }
+  ]
+}

@@ -168,11 +168,8 @@ export class ManualChefAdditionWorkflow extends BaseWorkflow<ManualChefAdditionI
         }
       );
 
-      if (!result.success) {
-        throw new Error(result.error || 'Bio enrichment failed');
-      }
-
-      if (!input.dryRun && result.miniBio) {
+      // Bio enrichment is non-fatal - continue even if it fails or returns null
+      if (result.success && !input.dryRun && result.miniBio) {
         const updateResult = await this.chefRepo.updateBioAndAwards(
           input.chefId,
           result.miniBio,
@@ -180,18 +177,21 @@ export class ManualChefAdditionWorkflow extends BaseWorkflow<ManualChefAdditionI
           result.notableAwards
         );
 
-        if (!updateResult.success) {
-          throw new Error(`Failed to save bio: ${updateResult.error}`);
+        if (updateResult.success) {
+          output.bioCreated = true;
+        } else {
+          console.log(`      ⚠️  Failed to save bio: ${updateResult.error}`);
         }
-
-        output.bioCreated = true;
+      } else if (!result.success) {
+        console.log(`      ⚠️  Bio enrichment failed: ${result.error || 'Unknown error'}`);
       }
 
       this.completeStep(bioStep, result.tokensUsed, { bioCreated: output.bioCreated });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.failStep(bioStep, errorMessage);
-      throw error;
+      // Don't throw - continue with show/restaurant discovery
+      console.log(`      ⚠️  Bio step failed but continuing: ${errorMessage}`);
     }
 
     const showsStep = this.startStep('Discover all TV show appearances');

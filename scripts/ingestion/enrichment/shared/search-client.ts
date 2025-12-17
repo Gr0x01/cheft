@@ -31,7 +31,10 @@ export interface CacheStats {
 }
 
 const SEARCH_QUERIES = {
-  bio: (name: string) => `${name} chef biography Wikipedia James Beard Michelin star awards`,
+  bio: (name: string, showContext?: string) =>
+    showContext
+      ? `"${name}" chef ${showContext} biography career restaurants`
+      : `"${name}" chef biography Wikipedia James Beard Michelin star awards`,
   shows: (name: string) => [
     `${name} Top Chef`,
     `${name} Tournament of Champions`,
@@ -82,8 +85,8 @@ async function executeSearch(
   };
 }
 
-export async function searchBio(chefName: string, chefId?: string): Promise<SearchResult> {
-  const query = SEARCH_QUERIES.bio(chefName);
+export async function searchBio(chefName: string, chefId?: string, showContext?: string): Promise<SearchResult> {
+  const query = SEARCH_QUERIES.bio(chefName, showContext);
   return executeSearch(query, 'bio', chefId, chefName);
 }
 

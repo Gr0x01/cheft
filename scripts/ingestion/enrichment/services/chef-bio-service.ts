@@ -5,7 +5,7 @@ import { searchBio, combineSearchResultsCompact, SearchResult } from '../shared/
 import { synthesize } from '../shared/synthesis-client';
 
 const ChefBioSchema = z.object({
-  miniBio: z.string().transform(val => stripCitations(val) || val),
+  miniBio: z.string().nullable().transform(val => val ? (stripCitations(val) || val) : null),
   jamesBeardStatus: enumWithCitationStrip(['winner', 'nominated', 'semifinalist'] as const),
   notableAwards: z.array(z.string()).nullable().optional(),
 }).passthrough();
@@ -58,7 +58,9 @@ export class ChefBioService {
     console.log(`   📝 Enriching bio for ${chefName}`);
 
     try {
-      const searchResult = await searchBio(chefName, chefId);
+      // Include show context for disambiguation (helps with common names)
+      const showContext = showName ? `"${showName}"` : undefined;
+      const searchResult = await searchBio(chefName, chefId, showContext);
       const searchContext = combineSearchResultsCompact([searchResult], 8000);
 
       if (!searchContext || searchContext.length < 100) {

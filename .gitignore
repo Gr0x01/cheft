@@ -53,6 +53,7 @@ Thumbs.db
 # Temporary files
 temp/
 .tmp/
+tmp/
 
 # Database
 *.db
