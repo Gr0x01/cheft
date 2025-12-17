@@ -1,0 +1,69 @@
+{
+  "showName": "Chef's Table",
+  "network": "Netflix",
+  "contestants": [
+    { "name": "Massimo Bottura", "season": "1" },
+    { "name": "Dan Barber", "season": "1" },
+    { "name": "Francis Mallmann", "season": "1" },
+    { "name": "Niki Nakayama", "season": "1" },
+    { "name": "Ben Shewry", "season": "1" },
+    { "name": "Magnus Nilsson", "season": "1" },
+
+    { "name": "Grant Achatz", "season": "2" },
+    { "name": "Alex Atala", "season": "2" },
+    { "name": "Dominique Crenn", "season": "2" },
+    { "name": "Enrique Olvera", "season": "2" },
+    { "name": "Ana Roš", "season": "2" },
+    { "name": "Gaggan Anand", "season": "2" },
+
+    { "name": "Jeong Kwan", "season": "3" },
+    { "name": "Vladimir Mukhin", "season": "3" },
+    { "name": "Nancy Silverton", "season": "3" },
+    { "name": "Ivan Orkin", "season": "3" },
+    { "name": "Tim Raue", "season": "3" },
+    { "name": "Virgilio Martínez", "season": "3" },
+
+    { "name": "Christina Tosi", "season": "Pastry" },
+    { "name": "Corrado Assenza", "season": "Pastry" },
+    { "name": "Jordi Roca", "season": "Pastry" },
+    { "name": "Will Goldfarb", "season": "Pastry" },
+
+    { "name": "Cristina Martinez", "season": "5" },
+    { "name": "Bo Songvisava", "season": "5" },
+    { "name": "Musa Dağdeviren", "season": "5" },
+    { "name": "Albert Adrià", "season": "5" },
+
+    { "name": "Mashama Bailey", "season": "6" },
+    { "name": "Dario Cecchini", "season": "6" },
+    { "name": "Asma Khan", "season": "6" },
+    { "name": "Sean Brock", "season": "6" },
+
+    { "name": "Nok Suntaranon", "season": "7" },
+    { "name": "Kwame Onwuachi", "season": "7" },
+    { "name": "Ángel León", "season": "7" },
+    { "name": "Norma Listman", "season": "7" },
+    { "name": "Saqib Keval", "season": "7" },
+    { "name": "Evan Funke", "season": "7" },
+    { "name": "Guirong Wei", "season": "7" },
+
+    { "name": "Michel Troisgros", "season": "France" },
+    { "name": "Adeline Grattard", "season": "France" },
+    { "name": "Alexandre Couillon", "season": "France" },
+    { "name": "Alain Passard", "season": "France" },
+
+    { "name": "Tootsie Tomanetz", "season": "BBQ" },
+    { "name": "Lennox Hastie", "season": "BBQ" },
+    { "name": "Rosalia Chay Chuc", "season": "BBQ" },
+    { "name": "Rodney Scott", "season": "BBQ" },
+
+    { "name": "Chris Bianco", "season": "Pizza" },
+    { "name": "Gabriele Bonci", "season": "Pizza" },
+    { "name": "Franco Pepe", "season": "Pizza" },
+    { "name": "Ann Kim", "season": "Pizza" },
+
+    { "name": "Jamie Oliver", "season": "Legends" },
+    { "name": "José Andrés", "season": "Legends" },
+    { "name": "Thomas Keller", "season": "Legends" },
+    { "name": "Alice Waters", "season": "Legends" }
+  ]
+}
