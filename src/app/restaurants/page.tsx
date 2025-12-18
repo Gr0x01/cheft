@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   title: 'TV Chef Restaurants - 500+ Locations Nationwide | Cheft',
   description:
     'Browse 500+ restaurants from Top Chef, Iron Chef, and other cooking competition winners and contestants. Filter by city, price, Michelin stars, and more.',
+  alternates: {
+    canonical: '/restaurants',
+  },
   openGraph: {
     title: 'TV Chef Restaurants - 500+ Locations Nationwide | Cheft',
     description:

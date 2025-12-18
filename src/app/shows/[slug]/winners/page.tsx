@@ -50,6 +50,9 @@ export async function generateMetadata({ params }: WinnersPageProps): Promise<Me
     return {
       title: `${show.name} Winners & Their Restaurants | TV Chef Directory`,
       description: `Discover where all ${winnersWithRestaurants.length} ${show.name} winners are cooking today. Find their flagship restaurants, locations, and Michelin stars.`,
+      alternates: {
+        canonical: `/shows/${slug}/winners`,
+      },
       openGraph: {
         title: `${show.name} Winners | Where Champions Cook`,
         description: `${winnersWithRestaurants.length} winners • Find their restaurants`,

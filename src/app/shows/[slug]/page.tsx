@@ -26,6 +26,9 @@ export async function generateMetadata({ params }: ShowPageProps): Promise<Metad
     return {
       title: `${show.name} Chefs & Restaurants | TV Chef Directory`,
       description: `Discover ${chefCount} chefs from ${show.name} and their ${restaurantCount} restaurants. Find where ${show.name} winners and contestants are cooking today.`,
+      alternates: {
+        canonical: `/shows/${slug}`,
+      },
       openGraph: {
         title: `${show.name} | TV Chef Restaurants`,
         description: `${chefCount} chefs • ${restaurantCount} restaurants`,

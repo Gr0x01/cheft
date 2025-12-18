@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: 'About - What is Cheft? | Cheft',
   description:
     'Learn about Cheft - a curated map of restaurants from Top Chef, Iron Chef, Tournament of Champions, and other chef-driven competitions.',
+  alternates: {
+    canonical: '/about',
+  },
   openGraph: {
     title: 'About - What is Cheft? | Cheft',
     description:

@@ -15,6 +15,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: 'Cheft | TV Chef Restaurant Map - Find Top Chef & Iron Chef Restaurants',
     description,
+    alternates: {
+      canonical: '/',
+    },
     openGraph: {
       title: 'Cheft | TV Chef Restaurant Map',
       description: shortDescription,

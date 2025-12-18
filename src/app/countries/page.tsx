@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   title: 'Browse by Country - TV Chef Restaurants Worldwide | Cheft',
   description:
     'Explore TV chef restaurants around the world. Find restaurants from Chef\'s Table, Iron Chef, and other international cooking shows.',
+  alternates: {
+    canonical: '/countries',
+  },
   openGraph: {
     title: 'Browse by Country - TV Chef Restaurants Worldwide | Cheft',
     description:

@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   title: 'Chefs - Top Chef, Iron Chef & More | Cheft',
   description:
     'Browse 230+ chefs from Top Chef, Iron Chef, Tournament of Champions, and other cooking competitions. Filter by show, winners, James Beard awards, and more.',
+  alternates: {
+    canonical: '/chefs',
+  },
   openGraph: {
     title: 'Chefs - Top Chef, Iron Chef & More | Cheft',
     description:

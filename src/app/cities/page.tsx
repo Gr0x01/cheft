@@ -14,6 +14,9 @@ export const metadata: Metadata = {
   title: 'All Cities - TV Chef Restaurants Nationwide | Cheft',
   description:
     'Browse 162 cities with TV chef restaurants from Top Chef, Iron Chef, and other cooking competitions. Find chef-driven dining in your city.',
+  alternates: {
+    canonical: '/cities',
+  },
   openGraph: {
     title: 'All Cities - TV Chef Restaurants Nationwide | Cheft',
     description:

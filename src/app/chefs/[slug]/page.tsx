@@ -190,6 +190,9 @@ export async function generateMetadata({ params }: ChefPageProps): Promise<Metad
   return {
     title: `${chef.name} - ${showInfo}${resultInfo} | Cheft`,
     description,
+    alternates: {
+      canonical: `/chefs/${slug}`,
+    },
     openGraph: {
       title: `${chef.name} - ${showInfo}${resultInfo}`,
       description,

@@ -45,6 +45,9 @@ export async function generateMetadata({ params }: StatePageProps): Promise<Meta
   return {
     title,
     description,
+    alternates: {
+      canonical: `/states/${slug}`,
+    },
     openGraph: { title, description, type: 'website' },
   };
 }

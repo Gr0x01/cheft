@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: 'Privacy Policy | Cheft',
   description:
     'Privacy policy for Cheft - learn how we collect, use, and protect your data.',
+  alternates: {
+    canonical: '/privacy',
+  },
   openGraph: {
     title: 'Privacy Policy | Cheft',
     description:

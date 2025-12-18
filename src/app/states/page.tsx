@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   title: 'Browse by State - TV Chef Restaurants Across America | Cheft',
   description:
     'Explore TV chef restaurants in all 50 US states. Find Top Chef, Iron Chef, and other cooking competition restaurants near you.',
+  alternates: {
+    canonical: '/states',
+  },
   openGraph: {
     title: 'Browse by State - TV Chef Restaurants Across America | Cheft',
     description:

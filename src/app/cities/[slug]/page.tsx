@@ -51,6 +51,9 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
   return {
     title,
     description,
+    alternates: {
+      canonical: `/cities/${slug}`,
+    },
     openGraph: { title, description, type: 'website' },
   };
 }

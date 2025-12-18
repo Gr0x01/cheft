@@ -280,6 +280,9 @@ export async function generateMetadata({ params }: RestaurantPageProps): Promise
   return {
     title: `${restaurant.name} by ${chefName} - ${restaurant.city} | Cheft`,
     description,
+    alternates: {
+      canonical: `/restaurants/${slug}`,
+    },
     openGraph: {
       title: `${restaurant.name} by ${chefName}`,
       description,

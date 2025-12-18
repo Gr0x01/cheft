@@ -10,6 +10,9 @@ export const revalidate = 604800;
 export const metadata: Metadata = {
   title: 'TV Cooking Shows | Chef Restaurants by Show',
   description: 'Browse restaurants by TV cooking shows including Top Chef, Iron Chef, Tournament of Champions, and more. Find where your favorite TV chefs cook.',
+  alternates: {
+    canonical: '/shows',
+  },
   openGraph: {
     title: 'TV Cooking Shows | Find Chef Restaurants',
     description: 'Discover restaurants from Top Chef, Iron Chef, Tournament of Champions, and other popular cooking competitions.',

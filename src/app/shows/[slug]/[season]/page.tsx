@@ -66,9 +66,12 @@ export async function generateMetadata({ params }: SeasonPageProps): Promise<Met
 
     return {
       title: `${seasonData.name} ${seasonName} | Chefs & Restaurants`,
-      description: winner 
+      description: winner
         ? `${seasonData.name} ${seasonName} winner ${winner.chef.name} and ${chefCount - 1} other contestants. Find their ${restaurantCount} restaurants.`
         : `${chefCount} chefs from ${seasonData.name} ${seasonName} and their ${restaurantCount} restaurants.`,
+      alternates: {
+        canonical: `/shows/${slug}/${season}`,
+      },
       openGraph: {
         title: `${seasonData.name} ${seasonName}`,
         description: `${chefCount} chefs • ${restaurantCount} restaurants`,
