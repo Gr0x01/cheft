@@ -174,21 +174,38 @@ export async function generateMetadata({ params }: ChefPageProps): Promise<Metad
     return { title: 'Chef Not Found | Cheft' };
   }
 
-  const primaryShow = chef.chef_shows?.find(cs => cs.is_primary) || chef.chef_shows?.[0];
-  const showInfo = primaryShow?.show?.name || 'TV Chef';
-  const resultInfo = primaryShow?.result === 'winner' ? ' Winner' : '';
-  const restaurantCount = chef.restaurants?.length || 0;
+  // Sort shows by result quality - prioritize wins over other appearances
+  const resultOrder: Record<string, number> = { winner: 0, finalist: 1, judge: 2, contestant: 3 };
+  const sortedShows = [...(chef.chef_shows || [])].sort((a, b) => {
+    return (resultOrder[a.result || 'contestant'] ?? 4) - (resultOrder[b.result || 'contestant'] ?? 4);
+  });
+  const bestShow = sortedShows.find(cs => cs.is_primary) || sortedShows[0];
+
+  const showInfo = bestShow?.show?.name || 'TV Chef';
+  const resultInfo = bestShow?.result === 'winner' ? ' Winner' : bestShow?.result === 'finalist' ? ' Finalist' : '';
+
+  // Check for Michelin and James Beard credentials
+  const hasMichelin = chef.restaurants?.some(r => r.michelin_stars && r.michelin_stars > 0) || false;
+  const michelinText = hasMichelin ? ' | Michelin' : '';
+  const jbText = !hasMichelin && chef.james_beard_status === 'winner' ? ' | JB Award'
+    : !hasMichelin && chef.james_beard_status === 'nominated' ? ' | JB Nominee'
+    : '';
+
+  // Build title with credentials (Michelin takes priority over JB for space)
+  const title = `${chef.name} - ${showInfo}${resultInfo}${michelinText || jbText} | Cheft`;
+
+  // Build description with awards
+  const awards: string[] = [];
+  if (hasMichelin) awards.push('Michelin-starred chef');
+  if (chef.james_beard_status === 'winner') awards.push('James Beard Award winner');
+  else if (chef.james_beard_status === 'nominated') awards.push('James Beard nominee');
 
   const description = chef.mini_bio
     ? chef.mini_bio.substring(0, 160)
-    : `${chef.name} is a ${showInfo}${resultInfo}. ${
-        restaurantCount > 0
-          ? `Owner of ${restaurantCount} restaurant${restaurantCount !== 1 ? 's' : ''}.`
-          : ''
-      }`;
+    : `${chef.name} is a ${showInfo}${resultInfo}.${awards.length > 0 ? ' ' + awards.join(', ') + '.' : ''}`;
 
   return {
-    title: `${chef.name} - ${showInfo}${resultInfo} | Cheft`,
+    title,
     description,
     alternates: {
       canonical: `/chefs/${slug}`,

@@ -266,19 +266,27 @@ export async function generateMetadata({ params }: RestaurantPageProps): Promise
     };
   }
 
-  const chefNames = restaurant.chefs?.length > 0 
+  const chefNames = restaurant.chefs?.length > 0
     ? restaurant.chefs.filter(rc => rc.chef).map(rc => rc.chef!.name).join(' & ')
     : restaurant.chef?.name || 'TV Chef';
   const chefName = chefNames || 'TV Chef';
-  const ratingText = restaurant.google_rating ? ` ⭐ ${restaurant.google_rating}` : '';
+
+  // Add Michelin badge to title (brand recognition)
+  const michelinText = restaurant.michelin_stars && restaurant.michelin_stars > 0 ? ' - Michelin' : '';
+
+  // Keep price tier for searcher expectations
   const priceText = restaurant.price_tier ? ` ${restaurant.price_tier}` : '';
 
+  // Build description with Michelin mention
+  const michelinDesc = restaurant.michelin_stars && restaurant.michelin_stars > 0 ? 'Michelin-starred restaurant. ' : '';
   const description = restaurant.description
     ? restaurant.description.substring(0, 160)
-    : `${restaurant.name} by ${chefName} in ${restaurant.city}${restaurant.state ? `, ${restaurant.state}` : ''}.${ratingText}${priceText}`;
+    : `${restaurant.name} by ${chefName} in ${restaurant.city}${restaurant.state ? `, ${restaurant.state}` : ''}. ${michelinDesc}${priceText}`.trim();
+
+  const title = `${restaurant.name} by ${chefName}${michelinText} - ${restaurant.city} | Cheft`;
 
   return {
-    title: `${restaurant.name} by ${chefName} - ${restaurant.city} | Cheft`,
+    title,
     description,
     alternates: {
       canonical: `/restaurants/${slug}`,
