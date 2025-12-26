@@ -1,5 +1,5 @@
 ---
-Last-Updated: 2025-12-07
+Last-Updated: 2025-12-26
 Maintainer: RB
 Status: Defined
 ---
@@ -44,7 +44,7 @@ Modern web stack optimized for rapid development and minimal operational overhea
 ### Development Environment
 - **Package Manager**: npm (comes with Node.js, simple and reliable)
 - **Version Control**: Git
-- **CI/CD**: Vercel automated deployments + GitHub Actions (for tests)
+- **CI/CD**: Vercel automated deployments (preview + production)
 - **Environment**: Local development with Next.js dev server + Supabase local
 
 ### Specialized Tools
@@ -64,6 +64,40 @@ Modern web stack optimized for rapid development and minimal operational overhea
   - Scraper: `npm run michelin:scrape` (run yearly when stars announced, ~November)
   - No LLM cost - pure HTML parsing from Wikipedia tables
   - Coverage: USA, Canada, UK, France, Germany, Italy, Spain, Japan, and 50+ more countries
+
+### Scheduled Automation
+- **Platform**: Vercel Cron (native Next.js integration)
+- **Configuration**: `vercel.json` (single source of truth)
+- **Authentication**: All cron endpoints protected with `CRON_SECRET` header
+- **Active Jobs**:
+  - `process-approved-queue`: Every 5 minutes - Processes approved changes from admin review queue
+  - `monthly-refresh`: 1st of month at 2am UTC - Full data refresh for stale chef records
+  - `weekly-status-check`: Sunday at 3am UTC - Verifies restaurant open/closed status
+- **Monitoring**: Vercel Dashboard → Cron section shows execution logs
+- **Manual Triggers**: Emergency fallback via authenticated API calls (see Emergency Procedures below)
+
+### Emergency Procedures
+If Vercel cron jobs fail or need immediate execution:
+
+```bash
+# Set your CRON_SECRET from Vercel environment variables
+export CRON_SECRET="your-cron-secret-here"
+export BASE_URL="https://www.cheft.app"
+
+# Manually trigger monthly refresh
+curl -X GET "$BASE_URL/api/cron/monthly-refresh" \
+  -H "Authorization: Bearer $CRON_SECRET"
+
+# Manually trigger weekly status check
+curl -X GET "$BASE_URL/api/cron/weekly-status-check" \
+  -H "Authorization: Bearer $CRON_SECRET"
+
+# Manually trigger approved queue processing
+curl -X GET "$BASE_URL/api/cron/process-approved-queue" \
+  -H "Authorization: Bearer $CRON_SECRET"
+```
+
+**Note**: GitHub Actions previously handled these jobs but was removed (Dec 2025) in favor of Vercel-native cron. All environment variables are managed in Vercel, eliminating secret duplication.
 
 ## Architecture Decisions
 
@@ -121,12 +155,15 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# OpenAI  
+# OpenAI
 OPENAI_API_KEY=your_openai_key
 
 # Analytics
 NEXT_PUBLIC_POSTHOG_KEY=your_posthog_project_api_key
 NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+
+# Cron Jobs
+CRON_SECRET=your_secret_for_authenticating_cron_endpoints
 
 # Optional: External APIs
 NOMINATIM_USER_AGENT=your_app_name_for_geocoding
@@ -135,6 +172,7 @@ NOMINATIM_USER_AGENT=your_app_name_for_geocoding
 ## Deployment Architecture
 - **Frontend**: Static generation + ISR where possible on Vercel Edge
 - **API Routes**: Vercel serverless functions (Node.js runtime)
+- **Scheduled Jobs**: Vercel Cron (configured in `vercel.json`)
 - **Database**: Supabase managed PostgreSQL with global CDN
 - **Assets**: Vercel CDN for static assets
 - **Monitoring**: Vercel Analytics + Supabase monitoring dashboard
