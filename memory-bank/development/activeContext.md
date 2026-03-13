@@ -1,34 +1,29 @@
 ---
-Last-Updated: 2025-12-10
+Last-Updated: 2026-03-14
 Maintainer: RB
-Status: Pre-Launch - Show Enrichment In Progress (Blocked)
+Status: Pre-Launch - Show Enrichment Complete
 ---
 
 # Active Context: Chefs
 
 ## Current Status
 - **Phase**: Pre-Launch
-- **Mode**: Show enrichment in progress
-- **Focus**: Top Chef Canada + Top Chef Just Desserts
-- **Blocker**: Supabase connection timeout (Error 522) - infrastructure issue
+- **Mode**: Show enrichment complete
+- **Focus**: Final polish before launch
 
-## Enrichment Progress (Dec 10, 2025)
+## Enrichment Progress
 
 ### ✅ Completed
 | Show | Config | Chefs | Restaurants | Status |
 |------|--------|-------|-------------|--------|
 | Top Chef Masters | `shows/top-chef-masters.json` | 83 chefs (all existed) | 1,237 total | ✅ Complete |
+| Top Chef: Charlotte (S23) | `shows/top-chef-charlotte.json` | 15 chefs | 15 restaurants | ✅ Complete (4 missing Google Places) |
 
 ### 🚧 Pending (Configs Ready)
 | Show | Config | Contestants | Status |
 |------|--------|-------------|--------|
-| Top Chef Canada | `shows/top-chef-canada.json` | 37 | Config ready, enrichment blocked by Supabase outage |
-| Top Chef Just Desserts | `shows/top-chef-just-desserts.json` | 23 | Config ready, waiting for Canada to complete |
-
-### Configs Created via Tavily/Wikipedia
-Both configs verified against Wikipedia sources:
-- **Top Chef Canada**: 12 seasons, winners + finalists from S1-S6, winners only S7-S12
-- **Top Chef Just Desserts**: 2 seasons, all finalists + notable contestants
+| Top Chef Canada | `shows/top-chef-canada.json` | 37 | Config ready |
+| Top Chef Just Desserts | `shows/top-chef-just-desserts.json` | 23 | Config ready |
 
 ## Enrichment System v2 Complete
 The enrichment system has been fully refactored and hardened:
@@ -46,8 +41,8 @@ See `memory-bank/architecture/enrichment-reference.md` for quick reference.
 ---
 
 ## Current Data Summary
-- **Chefs**: 409 total (100% bios, 88% photos)
-- **Restaurants**: 1,237 locations (Google Places enrichment: 45/49 done, 4 not found)
+- **Chefs**: ~420 total (100% bios, most have photos — S23 chefs do not)
+- **Restaurants**: ~1,250 locations
 - **Cities**: 162+ city pages
 - **Public Shows**: 5 core (Top Chef, Top Chef Masters, TOC, Holiday Baking)
 
@@ -57,7 +52,7 @@ See `memory-bank/architecture/enrichment-reference.md` for quick reference.
 - **Analytics**: PostHog with session replay
 - **Enrichment**: System working, blocked by infrastructure
 
-## Next Steps (When Supabase Recovers)
+## Next Steps
 1. **Run Canada enrichment**: `npx tsx scripts/add-show.ts --config shows/top-chef-canada.json`
 2. **Run Desserts enrichment**: `npx tsx scripts/add-show.ts --config shows/top-chef-just-desserts.json`
 3. **Google Places backfill**: `npx tsx scripts/enrich-google-places.ts`

@@ -27,8 +27,9 @@ Status: Phase 3 Complete
 | 9 | Geographic Pages | Dec 7 | ✅ States + Countries navigation |
 | 10 | Tavily Enrichment | Dec 7 | ✅ Hybrid web search system |
 | 11 | Admin Shows Page | Dec 8 | ✅ Harvest trigger for show data |
+| 12 | Top Chef Charlotte (S23) | Mar 14 | ✅ 15 chefs + 15 restaurants enriched |
 
-## Current Status (as of Dec 8, 2025)
+## Current Status (as of Mar 14, 2026)
 
 **Production Site**: Live on Vercel with 700+ SEO-optimized pages
 - 238 chefs (100% bios, 88% photos)
@@ -38,7 +39,7 @@ Status: Phase 3 Complete
 - 10+ country pages
 - Full admin panel with entity editors, enrichment tools, show management
 
-**Tech Stack**: Next.js 14, Supabase, Tailwind CSS, Leaflet maps, PostHog analytics, Schema.org SEO
+**Tech Stack**: Next.js 16, Supabase, Tailwind CSS, Leaflet maps, PostHog analytics, Schema.org SEO
 
 **Enrichment**: Tavily hybrid + OpenAI LLM with staging/review workflow
 

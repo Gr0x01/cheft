@@ -1,0 +1,21 @@
+{
+  "showName": "Top Chef: Charlotte",
+  "network": "Bravo",
+  "contestants": [
+    { "name": "Sieger Bayer", "season": "23", "result": "contestant" },
+    { "name": "Jaspratap Bindra", "season": "23", "result": "contestant" },
+    { "name": "Sherry Cardoso", "season": "23", "result": "contestant" },
+    { "name": "Brittany Cochran", "season": "23", "result": "contestant" },
+    { "name": "Oscar Diaz", "season": "23", "result": "contestant" },
+    { "name": "Brandon Dearden", "season": "23", "result": "contestant" },
+    { "name": "Jonathan Dearden", "season": "23", "result": "contestant" },
+    { "name": "Duyen Ha", "season": "23", "result": "contestant" },
+    { "name": "Jennifer Lee Jackson", "season": "23", "result": "contestant" },
+    { "name": "Anthony Jones", "season": "23", "result": "contestant" },
+    { "name": "Day Anais Joseph", "season": "23", "result": "contestant" },
+    { "name": "Laurence Louie", "season": "23", "result": "contestant" },
+    { "name": "Rhoda Magbitang", "season": "23", "result": "contestant" },
+    { "name": "Justin Tootla", "season": "23", "result": "contestant" },
+    { "name": "Nana Araba Wilmot", "season": "23", "result": "contestant" }
+  ]
+}

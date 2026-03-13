@@ -11,14 +11,14 @@ Modern web stack optimized for rapid development and minimal operational overhea
 
 ### Backend
 - **Runtime**: Node.js 18+ (via Next.js API routes)
-- **Framework**: Next.js 14+ (App Router)
+- **Framework**: Next.js 16+ (App Router)
 - **Database**: Supabase (PostgreSQL with vector extensions)
 - **Storage**: Supabase Storage (for chef/restaurant photos)
 - **Authentication**: Supabase Auth (for admin tools)
 - **LLM**: OpenAI API (primary: gpt-5-mini for enrichment, see [llm-models.md](./llm-models.md) for complete model reference and pricing)
 
 ### Frontend
-- **Framework**: Next.js 14+ with React 18
+- **Framework**: Next.js 16+ with React 18
 - **State Management**: React Context + useState/useReducer (simple state, no external store needed initially)
 - **Styling**: Tailwind CSS
 - **Maps**: Leaflet.js with OpenStreetMap (free alternative to Google Maps)
