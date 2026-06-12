@@ -1,7 +1,7 @@
 ---
-Last-Updated: 2026-03-14
+Last-Updated: 2026-06-12
 Maintainer: RB
-Status: Pre-Launch - Show Enrichment Complete
+Status: Pre-Launch - Final Polish
 ---
 
 # Active Context: Chefs
@@ -10,6 +10,22 @@ Status: Pre-Launch - Show Enrichment Complete
 - **Phase**: Pre-Launch
 - **Mode**: Show enrichment complete
 - **Focus**: Final polish before launch
+
+## Recent Fix: Restaurant Photos (Jun 2026)
+Broke ~49% of restaurant images. Root cause: Google Places (New) photo URLs
+(`lh3.../place-photos/...`) are ephemeral and expire (403). They were stored
+raw in `photo_urls` instead of being downloaded to storage.
+
+- **Fixed at source**: `enrich-google-places.ts` now downloads photos to the
+  `restaurant-photos` Supabase bucket (stable URLs). See `enrichment-reference.md`.
+- **Backfilled**: ~1,190 restaurants repaired → **0 expired URLs remain**;
+  1,191 now serve self-hosted Supabase photos (~$61 Google Places cost).
+- **Resilience**: `ImageWithFallback` degrades dead images to the Donut
+  placeholder across all surfaces (cards, gallery, popups, mini/preview).
+- **Repair tool**: `scripts/fix-broken-restaurant-photos.ts`
+  (`--first-only` / `--relookup` / `--dry-run` / `--limit`).
+- **Tail**: 55 restaurants still hold legacy `lh3.../places/...` URLs (stable,
+  return 200) — optional to self-host later, not broken.
 
 ## Enrichment Progress
 

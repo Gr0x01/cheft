@@ -1,5 +1,5 @@
 ---
-Last-Updated: 2025-12-09
+Last-Updated: 2026-06-12
 Maintainer: RB
 Status: Phase 3 Complete
 ---
@@ -28,6 +28,7 @@ Status: Phase 3 Complete
 | 10 | Tavily Enrichment | Dec 7 | ✅ Hybrid web search system |
 | 11 | Admin Shows Page | Dec 8 | ✅ Harvest trigger for show data |
 | 12 | Top Chef Charlotte (S23) | Mar 14 | ✅ 15 chefs + 15 restaurants enriched |
+| 13 | Restaurant Photo Self-Hosting | Jun 12 | ✅ ~1,190 repaired, 0 expired URLs; photos now in Supabase storage |
 
 ## Current Status (as of Mar 14, 2026)
 
