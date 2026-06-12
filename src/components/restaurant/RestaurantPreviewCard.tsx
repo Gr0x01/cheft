@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import Image from 'next/image';
+import { ImageWithFallback } from './ImageWithFallback';
 
 interface RestaurantPreviewCardProps {
   restaurant: {
@@ -38,24 +38,23 @@ export function RestaurantPreviewCard({ restaurant, index = 0 }: RestaurantPrevi
           background: 'var(--slate-200)',
         }}
       >
-        {photoUrl ? (
-          <Image
-            src={photoUrl}
-            alt={restaurant.name}
-            fill
-            className="object-cover transition-transform duration-300 group-hover/preview:scale-110"
-            sizes="80px"
-          />
-        ) : (
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, var(--slate-100) 0%, var(--slate-200) 100%)' }}
-          >
-            <span className="font-display text-2xl font-bold" style={{ color: 'var(--slate-300)' }}>
-              {restaurant.name.charAt(0)}
-            </span>
-          </div>
-        )}
+        <ImageWithFallback
+          src={photoUrl}
+          alt={restaurant.name}
+          fill
+          className="object-cover transition-transform duration-300 group-hover/preview:scale-110"
+          sizes="80px"
+          fallback={
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, var(--slate-100) 0%, var(--slate-200) 100%)' }}
+            >
+              <span className="font-display text-2xl font-bold" style={{ color: 'var(--slate-300)' }}>
+                {restaurant.name.charAt(0)}
+              </span>
+            </div>
+          }
+        />
         
         {isClosed && (
           <div

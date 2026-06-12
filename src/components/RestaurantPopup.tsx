@@ -1,9 +1,9 @@
 'use client';
 
 import type { RestaurantWithDetails } from '@/lib/types';
-import Image from 'next/image';
 import { getStorageUrl } from '@/lib/utils/storage';
 import { getRestaurantStatus, getChefAchievements } from '@/lib/utils/restaurant';
+import { ImageWithFallback } from '@/components/restaurant/ImageWithFallback';
 
 interface RestaurantPopupProps {
   restaurant: RestaurantWithDetails;
@@ -19,7 +19,7 @@ export default function RestaurantPopup({ restaurant }: RestaurantPopupProps) {
     <div className="popup-enhanced">
       {photoUrl && (
         <div className="popup-image-section">
-          <Image
+          <ImageWithFallback
             src={photoUrl}
             alt={restaurant.name}
             width={280}
@@ -27,6 +27,7 @@ export default function RestaurantPopup({ restaurant }: RestaurantPopupProps) {
             className="popup-image"
             loading="lazy"
             sizes="280px"
+            fallback={<div className="popup-image" style={{ background: 'var(--slate-200)' }} />}
           />
           <div className="popup-image-overlay" />
         </div>

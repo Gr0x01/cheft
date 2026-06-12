@@ -4,9 +4,20 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Breadcrumbs } from '../seo/Breadcrumbs';
-import { getRestaurantStatus, getChefAchievements, validateImageUrl } from '@/lib/utils/restaurant';
+import { getRestaurantStatus, getChefAchievements } from '@/lib/utils/restaurant';
 import { getStorageUrl } from '@/lib/utils/storage';
+import { ImageWithFallback } from './ImageWithFallback';
 import { PhotoGalleryModal } from './PhotoGalleryModal';
+import { Donut } from 'lucide-react';
+
+const galleryFallback = (
+  <div
+    className="absolute inset-0 flex items-center justify-center"
+    style={{ background: 'var(--slate-800)' }}
+  >
+    <Donut className="w-10 h-10" style={{ color: 'var(--accent-primary)' }} strokeWidth={1.5} />
+  </div>
+);
 import { GoogleMapsLogo } from '@/components/icons/GoogleMapsLogo';
 import { ReportIssueButton } from '../feedback/ReportIssueButton';
 import { ExternalLinkTracker } from '@/components/analytics/ExternalLinkTracker';
@@ -271,18 +282,19 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
                   }}
                   aria-label="View photo gallery"
                 >
-                  <Image
-                    src={getStorageUrl('restaurant-photos', photos[0])!}
+                  <ImageWithFallback
+                    src={getStorageUrl('restaurant-photos', photos[0])}
                     alt={restaurant.name}
                     fill
                     className="object-cover transition-transform group-hover:scale-105"
                     sizes="(max-width: 1024px) 100vw, 420px"
                     priority
+                    fallback={galleryFallback}
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                 </button>
               )}
-              
+
               {photoCount === 2 && (
                 <div className="grid grid-rows-2 gap-2 h-80">
                   {photos.slice(0, 2).map((photo, i) => (
@@ -293,13 +305,14 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
                       style={{ border: '2px solid var(--accent-primary)' }}
                       aria-label={`View photo ${i + 1}`}
                     >
-                      <Image
-                        src={getStorageUrl('restaurant-photos', photo)!}
+                      <ImageWithFallback
+                        src={getStorageUrl('restaurant-photos', photo)}
                         alt={`${restaurant.name} - Photo ${i + 1}`}
                         fill
                         className="object-cover transition-transform group-hover:scale-105"
                         sizes="(max-width: 1024px) 100vw, 420px"
                         priority={i === 0}
+                        fallback={galleryFallback}
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                     </button>
@@ -315,13 +328,14 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
                     style={{ border: '2px solid var(--accent-primary)' }}
                     aria-label="View photo 1"
                   >
-                    <Image
-                      src={getStorageUrl('restaurant-photos', photos[0])!}
+                    <ImageWithFallback
+                      src={getStorageUrl('restaurant-photos', photos[0])}
                       alt={`${restaurant.name} - Photo 1`}
                       fill
                       className="object-cover transition-transform group-hover:scale-105"
                       sizes="(max-width: 1024px) 100vw, 420px"
                       priority
+                      fallback={galleryFallback}
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                   </button>
@@ -334,12 +348,13 @@ export function RestaurantHero({ restaurant, breadcrumbItems, restaurantId, rest
                         style={{ border: '2px solid var(--accent-primary)' }}
                         aria-label={`View photo ${i + 2}`}
                       >
-                        <Image
-                          src={getStorageUrl('restaurant-photos', photo)!}
+                        <ImageWithFallback
+                          src={getStorageUrl('restaurant-photos', photo)}
                           alt={`${restaurant.name} - Photo ${i + 2}`}
                           fill
                           className="object-cover transition-transform group-hover:scale-105"
                           sizes="(max-width: 1024px) 50vw, 210px"
+                          fallback={galleryFallback}
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                         {i === 3 && photoCount > 5 && (
