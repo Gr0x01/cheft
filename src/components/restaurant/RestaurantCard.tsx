@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import Image from 'next/image';
-import { getRestaurantStatus, getChefAchievements, validateImageUrl } from '@/lib/utils/restaurant';
+import { getRestaurantStatus, getChefAchievements } from '@/lib/utils/restaurant';
 import { getStorageUrl } from '@/lib/utils/storage';
 import { getLocationLink } from '@/lib/utils/location';
 import { MichelinStar } from '../icons/MichelinStar';
 import { Donut } from 'lucide-react';
+import { ImageWithFallback } from './ImageWithFallback';
 
 interface ChefInfo {
   name: string;
@@ -56,6 +56,40 @@ function getChefNames(restaurant: RestaurantCardProps['restaurant']): { names: s
   return { names, hasWinner, hasJBWinner };
 }
 
+function PhotoPlaceholder({ isClosed }: { isClosed: boolean }) {
+  return (
+    <div
+      className="absolute inset-0 flex items-center justify-center"
+      style={{ background: 'var(--slate-900)' }}
+    >
+      <div
+        className="absolute inset-0 opacity-5"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }}
+      />
+      <Donut
+        className="relative w-16 h-16"
+        style={{ color: 'var(--accent-primary)' }}
+        strokeWidth={1.5}
+      />
+      {isClosed && (
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.7)' }}
+        >
+          <span
+            className="font-mono text-lg font-bold tracking-widest"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            CLOSED
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
   const isPriority = index < 4;
   const status = getRestaurantStatus(restaurant.status);
@@ -75,62 +109,31 @@ export function RestaurantCard({ restaurant, index = 0 }: RestaurantCardProps) {
         style={{ background: status.isClosed ? 'var(--text-muted)' : 'var(--accent-primary)' }}
       />
 
-      {photoUrl ? (
-        <div className="relative w-full h-48 overflow-hidden bg-gray-100" data-closed={status.isClosed ? "true" : undefined}>
-          <Image
-            src={photoUrl}
-            alt={restaurant.name}
-            fill
-            className="restaurant-card-image object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-            priority={isPriority}
-            quality={60}
-          />
-          
-          {restaurant.michelin_stars && restaurant.michelin_stars > 0 && (
-            <div className="absolute top-3 right-3">
-              <div 
-                className="flex items-center gap-1 px-2 py-1"
-                style={{ background: '#D3072B' }}
-              >
-                {Array.from({ length: restaurant.michelin_stars }).map((_, i) => (
-                  <MichelinStar key={i} size={12} className="text-white" />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div 
-          className="relative w-full h-48 overflow-hidden flex items-center justify-center"
-          style={{ background: 'var(--slate-900)' }}
-        >
-          <div 
-            className="absolute inset-0 opacity-5"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }}
-          />
-          <Donut 
-            className="relative w-16 h-16" 
-            style={{ color: 'var(--accent-primary)' }}
-            strokeWidth={1.5}
-          />
-          {status.isClosed && (
-            <div 
-              className="absolute inset-0 flex items-center justify-center"
-              style={{ background: 'rgba(0,0,0,0.7)' }}
+      <div className="relative w-full h-48 overflow-hidden bg-gray-100" data-closed={status.isClosed ? "true" : undefined}>
+        <ImageWithFallback
+          src={photoUrl}
+          alt={restaurant.name}
+          fill
+          className="restaurant-card-image object-cover transition-transform duration-300 group-hover:scale-105"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+          priority={isPriority}
+          quality={60}
+          fallback={<PhotoPlaceholder isClosed={status.isClosed} />}
+        />
+
+        {photoUrl && restaurant.michelin_stars && restaurant.michelin_stars > 0 && (
+          <div className="absolute top-3 right-3">
+            <div
+              className="flex items-center gap-1 px-2 py-1"
+              style={{ background: '#D3072B' }}
             >
-              <span 
-                className="font-mono text-lg font-bold tracking-widest"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                CLOSED
-              </span>
+              {Array.from({ length: restaurant.michelin_stars }).map((_, i) => (
+                <MichelinStar key={i} size={12} className="text-white" />
+              ))}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       <div className={`p-5 pl-6 ${status.isClosed ? 'opacity-60' : ''}`}>
         <div className="flex justify-between items-start gap-3">

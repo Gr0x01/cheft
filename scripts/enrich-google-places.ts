@@ -1,6 +1,7 @@
 import { config } from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { createGooglePlacesService } from './ingestion/services/google-places';
+import { createImageStorageService } from './ingestion/services/image-storage';
 
 config({ path: '.env.local' });
 
@@ -10,6 +11,7 @@ const googleApiKey = process.env.GOOGLE_PLACES_API_KEY!;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 const placesService = createGooglePlacesService({ apiKey: googleApiKey });
+const imageStorage = createImageStorageService(supabase);
 
 async function enrichPlaces(limit: number = 300) {
   console.log('\n🗺️  Google Places Enrichment\n');
@@ -55,13 +57,28 @@ async function enrichPlaces(limit: number = 300) {
       // Get detailed place info with photos
       const details = await placesService.getPlaceDetails(place.placeId, { includePhotos: true });
 
-      // Extract photo URLs
-      const photoUrls = await Promise.all(
-        (details.photos || []).slice(0, 5).map(photo => 
+      // Resolve Google photo URLs, then download the bytes into Supabase
+      // storage. Google's resolved photo URLs are ephemeral and expire (403),
+      // so we must persist the images ourselves rather than store the links.
+      const resolvedPhotoUrls = await Promise.all(
+        (details.photos || []).slice(0, 5).map(photo =>
           placesService.getPhotoUrl(photo.name, 1200)
         )
       );
-      const validPhotoUrls = photoUrls.filter(url => url !== null) as string[];
+      const validResolvedUrls = resolvedPhotoUrls.filter((url): url is string => url !== null);
+
+      const validPhotoUrls: string[] = [];
+      for (let p = 0; p < validResolvedUrls.length; p++) {
+        const upload = await imageStorage.downloadAndUploadRestaurantPhoto(
+          rest.id,
+          rest.name,
+          validResolvedUrls[p],
+          p
+        );
+        if (upload.success) {
+          validPhotoUrls.push(upload.publicUrl);
+        }
+      }
 
       // Map business status to our status
       const statusMap: Record<string, 'open' | 'closed' | undefined> = {
@@ -107,8 +124,9 @@ async function enrichPlaces(limit: number = 300) {
       // Rate limiting - 100 requests per second
       await new Promise(resolve => setTimeout(resolve, 150));
 
-    } catch (error: any) {
-      console.log(`  ❌ Error: ${error.message}\n`);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.log(`  ❌ Error: ${msg}\n`);
       failCount++;
     }
   }

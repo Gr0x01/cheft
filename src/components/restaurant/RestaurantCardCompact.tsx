@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { getRestaurantStatus, getChefAchievements } from '@/lib/utils/restaurant';
 import { getStorageUrl } from '@/lib/utils/storage';
 import { Donut } from 'lucide-react';
+import { ImageWithFallback } from './ImageWithFallback';
 
 interface RestaurantCardCompactProps {
   restaurant: {
@@ -40,21 +40,20 @@ export function RestaurantCardCompact({ restaurant, index = 0, asButton = false 
   const content = (
     <>
       <div className="compact-image-wrapper" data-closed={status.isClosed ? "true" : undefined}>
-        {photoUrl ? (
-          <Image
-            src={photoUrl}
-            alt={restaurant.name}
-            width={80}
-            height={80}
-            className="compact-image"
-            loading="lazy"
-            sizes="80px"
-          />
-        ) : (
-          <div className="compact-image-placeholder">
-            <Donut className="compact-icon" strokeWidth={1.5} />
-          </div>
-        )}
+        <ImageWithFallback
+          src={photoUrl}
+          alt={restaurant.name}
+          width={80}
+          height={80}
+          className="compact-image"
+          loading="lazy"
+          sizes="80px"
+          fallback={
+            <div className="compact-image-placeholder">
+              <Donut className="compact-icon" strokeWidth={1.5} />
+            </div>
+          }
+        />
       </div>
 
       <div className={`compact-content ${status.isClosed ? 'opacity-60' : ''}`}>

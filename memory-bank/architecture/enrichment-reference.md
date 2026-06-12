@@ -1,5 +1,5 @@
 ---
-Last-Updated: 2025-12-10
+Last-Updated: 2026-06-11
 Maintainer: RB
 Status: Active
 ---
@@ -217,6 +217,25 @@ console.log(`Tokens: ${result.tokensUsed.total}`);
 2. **Permission errors** → Use `SUPABASE_SERVICE_ROLE_KEY` not anon key
 3. **High costs** → Use workflow `scope` parameter to limit operations, or `dryRun: true`
 4. **Local LLM not used** → Set `LM_STUDIO_URL` env var, ensure model is loaded
+
+## Restaurant Photos — ALWAYS download to Supabase storage
+
+Google Places photo URLs are **ephemeral and expire** (403 after a while). The
+resolved redirect URLs come in two forms:
+- `lh3.googleusercontent.com/place-photos/...` — **new API, expires** ❌
+- `lh3.googleusercontent.com/places/...` — legacy, stable for now
+
+**Never store Google's resolved photo URL directly in `restaurants.photo_urls`.**
+Always download the bytes and upload to the `restaurant-photos` Supabase bucket
+via `image-storage.ts` `downloadAndUploadRestaurantPhoto()`. `media-enricher.ts`
+and `enrich-google-places.ts` both do this. Stored URLs then look like
+`…supabase.co/storage/v1/object/public/restaurant-photos/<id>/…` and never expire.
+
+- **Repair script**: `scripts/fix-broken-restaurant-photos.ts` re-fetches photos
+  for restaurants holding expired `/place-photos/` URLs (use `--first-only` to
+  limit to card-visible images, `--dry-run` to preview). ~$0.05/restaurant.
+- **UI resilience**: `components/restaurant/ImageWithFallback.tsx` degrades a
+  dead image to the Donut placeholder instead of a broken-image icon.
 
 ## Environment Variables
 
