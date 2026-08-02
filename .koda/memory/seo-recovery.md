@@ -189,16 +189,15 @@ context and providers, since global-error replaces the root layout.
 
 1. **Confirm Plausible still records and resubmit the sitemap** in Search Console now that
    the crawlability recovery build is live.
-2. **Deploy the next recovery commit.** `/suggest` now replaces the 404 with a noindexed
+2. **Deploy the next recovery commits.** `/suggest` now replaces the 404 with a noindexed
    email utility page. The header now exposes crawlable `/cities`, `/states`, and `/countries`
-   links through a desktop Locations menu and direct mobile links. Both are locally verified.
-3. **Sitemap gaps** — `/cities` missing from static routes; the `restaurant_count >= 3`
-   filter excludes ~122 real city pages; show/season `lastModified` is build time, not
-   content time, which trains Google to distrust every `lastmod` in the file.
-4. **Homepage wastes its equity** — client-side Leaflet map, only ~4 restaurant links in HTML.
-5. No OG image anywhere; no `revalidate` on the two detail routes, so entities beyond the
+   links through a desktop Locations menu and direct mobile links. The sitemap now includes
+   `/cities`, includes every city with a restaurant (127 detail pages), and omits unsupported
+   show/season `lastmod` values. Local sitemap: 2,211 URLs. All are locally verified.
+3. **Homepage wastes its equity** — client-side Leaflet map, only ~4 restaurant links in HTML.
+4. No OG image anywhere; no `revalidate` on the two detail routes, so entities beyond the
    `generateStaticParams` caps (500 restaurants / 200 chefs) cache indefinitely.
-6. **1,417 404s** still unidentified — needs the URL list exported from the Search Console
+5. **1,417 404s** still unidentified — needs the URL list exported from the Search Console
    Pages report.
 
 Full original audit findings, including what's already good, live in this note's history.

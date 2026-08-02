@@ -21,11 +21,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       supabase
         .from('cities')
         .select('slug, updated_at')
-        .gte('restaurant_count', 3)
+        .gt('restaurant_count', 0)
         .order('updated_at', { ascending: false }),
       supabase
         .from('shows')
-        .select('id, slug, created_at, parent_show_id')
+        .select('id, slug, parent_show_id')
         .order('name'),
       (supabase as any)
         .from('states')
@@ -90,6 +90,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${BASE_URL}/cities`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
       url: `${BASE_URL}/shows`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
@@ -146,7 +152,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const showRoutes: MetadataRoute.Sitemap = indexableShows.map((show) => ({
       url: `${BASE_URL}/shows/${show.slug}`,
-      lastModified: new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     }));
@@ -155,7 +160,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .filter((season: any) => indexableShowSlugs.has(season.show_slug))
       .map((season: any) => ({
         url: `${BASE_URL}/shows/${season.show_slug}/${season.season}`,
-        lastModified: new Date(),
         changeFrequency: 'monthly' as const,
         priority: 0.7,
       }));
@@ -179,6 +183,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       },
       {
         url: `${BASE_URL}/restaurants`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.9,
+      },
+      {
+        url: `${BASE_URL}/cities`,
         lastModified: new Date(),
         changeFrequency: 'weekly',
         priority: 0.9,
