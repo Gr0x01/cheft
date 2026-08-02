@@ -4,9 +4,9 @@ import { testChefs, testSearchQueries } from '../fixtures/test-data';
 test.describe('Restaurant Map', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    
-    // Wait for the page to load completely
-    await page.waitForLoadState('networkidle');
+
+    // Not 'networkidle' — streaming map tiles mean the network never goes quiet.
+    await page.waitForLoadState('load');
   });
 
   test('should display the map container', async ({ page }) => {
@@ -18,9 +18,11 @@ test.describe('Restaurant Map', () => {
       '[class*="map"]'
     ];
 
+    // The mobile layout deliberately hides the desktop map, so only a *visible*
+    // match counts — a hidden one means this viewport simply doesn't show a map.
     let mapFound = false;
     for (const selector of mapSelectors) {
-      const mapElement = page.locator(selector);
+      const mapElement = page.locator(selector).filter({ visible: true });
       if (await mapElement.count() > 0) {
         await expect(mapElement.first()).toBeVisible();
         mapFound = true;
@@ -48,7 +50,7 @@ test.describe('Restaurant Map', () => {
 
     let restaurantListFound = false;
     for (const selector of restaurantSelectors) {
-      const restaurants = page.locator(selector);
+      const restaurants = page.locator(selector).filter({ visible: true });
       if (await restaurants.count() > 0) {
         await expect(restaurants.first()).toBeVisible();
         restaurantListFound = true;
@@ -78,7 +80,7 @@ test.describe('Restaurant Map', () => {
 
     let filterFound = false;
     for (const selector of filterSelectors) {
-      const filter = page.locator(selector);
+      const filter = page.locator(selector).filter({ visible: true });
       if (await filter.count() > 0) {
         // Try to interact with the filter
         if (selector.includes('select')) {
@@ -165,13 +167,19 @@ test.describe('Restaurant Map', () => {
     }
   });
 
-  test('should load without critical errors', async ({ page }) => {
+  // Uses its own page rather than the shared one: beforeEach has already navigated,
+  // and navigating a second time aborts that load's in-flight restaurant fetch, which
+  // the app reports as an error. A fresh page loads once with the listeners attached.
+  test('should load without critical errors', async ({ browser }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
     const errors: string[] = [];
-    
+
     page.on('pageerror', error => {
       errors.push(error.message);
     });
-    
+
     page.on('console', msg => {
       if (msg.type() === 'error') {
         errors.push(msg.text());
@@ -179,8 +187,10 @@ test.describe('Restaurant Map', () => {
     });
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(3000);
+
+    await context.close();
 
     // Filter out known non-critical errors
     const criticalErrors = errors.filter(error => 
@@ -188,6 +198,10 @@ test.describe('Restaurant Map', () => {
       !error.includes('chrome-extension') &&
       !error.includes('baseline-browser-mapping')
     );
+
+    if (criticalErrors.length > 0) {
+      console.log('Critical errors found:', criticalErrors);
+    }
 
     expect(criticalErrors.length).toBe(0);
   });

@@ -52,7 +52,8 @@ test.describe('Homepage', () => {
     });
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    // Not 'networkidle' — streaming map tiles mean the network never goes quiet.
+    await page.waitForLoadState('load');
     await page.waitForTimeout(3000);
     
     await context.close();
