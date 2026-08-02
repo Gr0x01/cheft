@@ -119,12 +119,8 @@ test.describe('Restaurant Map', () => {
     if (await searchInput.count() > 0) {
       const input = searchInput.first();
       
-      // Retry the fill: text typed before React hydrates never reaches component
-      // state, and the first post-hydration render clears the input again.
-      await expect(async () => {
-        await input.fill(testSearchQueries[0]);
-        await expect(input).toHaveValue(testSearchQueries[0], { timeout: 1000 });
-      }).toPass({ timeout: 15000 });
+      await input.fill(testSearchQueries[0]);
+      await expect(input).toHaveValue(testSearchQueries[0]);
       
       // Look for search button or press Enter
       const searchButton = page.locator('button[type="submit"], button[data-testid="search-button"]');

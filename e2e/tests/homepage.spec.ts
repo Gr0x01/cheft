@@ -24,12 +24,8 @@ test.describe('Homepage', () => {
 
     if (await searchInput.count() > 0) {
       await expect(searchInput.first()).toBeVisible();
-      // Retry the fill: text typed before React hydrates never reaches component
-      // state, and the first post-hydration render clears the input again.
-      await expect(async () => {
-        await searchInput.first().fill('pizza');
-        await expect(searchInput.first()).toHaveValue('pizza', { timeout: 1000 });
-      }).toPass({ timeout: 15000 });
+      await searchInput.first().fill('pizza');
+      await expect(searchInput.first()).toHaveValue('pizza');
     }
   });
 
