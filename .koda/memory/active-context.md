@@ -18,12 +18,11 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 
 ## Next step
 
-- Deploy the complete SEO batch: 299 legacy redirects, homepage Popular Restaurants links,
-  the OG image fallback, and weekly detail-page revalidation. Plausible is confirmed working.
+- Resubmit the sitemap and start Search Console validation for the repaired 404s. The complete
+  SEO code batch is live and production-verified; Plausible is confirmed working.
 
 ## Post-deploy checks
 
-- Resubmit the sitemap and start Search Console validation for the repaired 404s.
 - Watch `/restaurants` Core Web Vitals after making all restaurant links server-rendered;
   paginate or cap the first page if its added weight causes a regression.
 

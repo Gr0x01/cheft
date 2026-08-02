@@ -10,9 +10,11 @@ Maintainer: RB
 Diagnosis and fix work started 2026-08-02, prompted by traffic being lower than expected
 after months live.
 
-**Deploy state as of 2026-08-02:** the recovery build is live. A production fetch confirmed
-1,293 unique restaurant links in `/restaurants` HTML and 2,123 URLs in the sitemap. Migrations
-047 and 048 were applied directly to production Supabase and are idempotent.
+**Deploy state as of 2026-08-02:** the complete recovery batch is live. Production checks
+confirmed 1,293 unique restaurant links in `/restaurants` HTML, 2,123 sitemap URLs, homepage
+restaurant links, the generated OG image and metadata, and representative restaurant, chef,
+city, and show legacy redirects. Migrations 047 and 048 were applied directly to production
+Supabase and are idempotent.
 
 ## The measurement
 
@@ -201,13 +203,9 @@ context and providers, since global-error replaces the root layout.
 
 ## Still open, in priority order
 
-1. **Homepage restaurant links are fixed locally, awaiting deployment.** A server-fetched
-   Popular Restaurants row adds 12 visible detail links without server-rendering the full map
-   directory. Browser verification found 16 unique restaurant links in the raw homepage HTML
-   (12 new plus 4 existing); typecheck and focused review pass.
-2. **Deploy the 299 legacy redirects** after local route verification, then start Search
-   Console validation for the Not found (404) issue.
-3. **Resubmit the sitemap** after deployment. Plausible was confirmed working by RB on
-   2026-08-02.
+1. **Resubmit the sitemap** and start Search Console validation for the Not found (404) issue.
+   Plausible was confirmed working by RB on 2026-08-02.
+2. **Monitor `/restaurants` Core Web Vitals.** It now renders all cards server-side; paginate
+   or cap the first page if the added weight causes a regression.
 
 Full original audit findings, including what's already good, live in this note's history.
