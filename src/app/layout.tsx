@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import PlausibleProvider from "next-plausible";
+import { PlausibleAnalytics } from "@/components/PlausibleAnalytics";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import "./globals.css";
@@ -26,11 +26,8 @@ export const metadata: Metadata = {
       follow: true,
     },
   },
-  other: {
-    // Block AI training/scraping bots
-    'robots': 'noai, noimageai',
-    'google-site-verification': 'index, follow, noai',
-  },
+  // noai/noimageai ship as an X-Robots-Tag header from middleware.ts — emitting a second
+  // `robots` meta here collided with the structured `robots` field above.
   openGraph: {
     title: "Cheft | Find restaurants owned by your favorite TV chefs",
     description: "Discover restaurants from Top Chef, Iron Chef, Tournament of Champions winners and contestants.",
@@ -54,12 +51,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <PlausibleProvider domain="cheft.app" />
         <link rel="preconnect" href="https://clktrvyieegouggrpfaj.supabase.co" />
         <link rel="dns-prefetch" href="https://lh3.googleusercontent.com" />
         <link rel="dns-prefetch" href="https://upload.wikimedia.org" />
       </head>
       <body className="antialiased">
+        <PlausibleAnalytics />
         <GoogleAnalytics />
         <PostHogProvider>{children}</PostHogProvider>
       </body>

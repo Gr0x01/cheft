@@ -15,15 +15,12 @@ export function InstagramEmbed({ postUrl, className = '' }: InstagramEmbedProps)
 
   const match = postUrl.match(/^https:\/\/www\.instagram\.com\/(p|reel)\/([A-Za-z0-9_-]+)\/?\??.*$/);
   const postId = match?.[2];
-  
-  if (!postId || !/^[A-Za-z0-9_-]+$/.test(postId)) {
-    return null;
-  }
+  const isValidPost = Boolean(postId && /^[A-Za-z0-9_-]+$/.test(postId));
 
   const sanitizedUrl = `https://www.instagram.com/p/${postId}/`;
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !isValidPost) return;
 
     let scriptElement: HTMLScriptElement | null = null;
     let timeoutId: NodeJS.Timeout;
@@ -66,7 +63,11 @@ export function InstagramEmbed({ postUrl, className = '' }: InstagramEmbedProps)
         scriptElement.parentNode.removeChild(scriptElement);
       }
     };
-  }, [postUrl]);
+  }, [postUrl, isValidPost]);
+
+  if (!isValidPost) {
+    return null;
+  }
 
   if (hasError) {
     return (
