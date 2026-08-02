@@ -111,11 +111,23 @@ It looks like a publish flag. It isn't, and acting on it breaks live traffic pag
 An attempt to make the show/season/winners pages 404 on `!is_public` was written and reverted
 after testing showed it 404'd Beat Bobby Flay and Chopped.
 
-Two live consequences of the stale flag, both still open and both **RB's editorial call**:
-`get_shows_with_counts` filters on it, so Chopped, Beat Bobby Flay and Iron Chef America are
-**missing from the `/shows` index entirely** — three of the biggest shows on the site are
-orphaned from internal linking. `generateStaticParams` filters on it too, so they are never
-prerendered.
+**Cause, confirmed:** the column DEFAULTs to `false`, and all 165 unpublished shows were
+created in one bulk ingest (2025-12-01..17). Only 27 were ever flipped by hand. The flag
+records "nobody got round to it", not curation.
+
+**Fixed 2026-08-02** by `supabase/migrations/047_publish_substantial_shows.sql`, which
+published the 48 shows meeting the same ≥3-chef bar the app uses for indexing (one-way; it
+unpublishes nothing, and carries its own rollback slug list). Results:
+
+- `shows.is_public` true: 27 → 75.
+- `/shows` index: 10 → **51 shows**, now including Chopped, Beat Bobby Flay, Iron Chef
+  America, Hell's Kitchen and MasterChef, which were previously orphaned from all internal
+  linking despite earning traffic.
+- `generateStaticParams` prerenders 75 shows instead of 27.
+- Sitemap unchanged at 2,123 — it keys on chef count, not this flag, by design.
+
+New shows from future ingests will still default to `false`. Either re-run this migration
+periodically or change the column default; not yet decided.
 
 ## Shipped: chef count, not is_public, decides indexing
 
@@ -160,10 +172,10 @@ context and providers, since global-error replaces the root layout.
 
 ## Still open, in priority order
 
-1. **Fix the stale `is_public` data** (see the warning above) so Chopped, Beat Bobby Flay and
-   Iron Chef America stop being orphaned from `/shows` and start being prerendered. Editorial
-   call: either correct the flag per show, or stop using it for the index and prerender lists
-   the way indexing no longer uses it. Thin-page noindexing itself is now shipped.
+1. **Decide what stops `is_public` going stale again** — new ingests still default to false,
+   so substantial shows will silently drop out of `/shows` and prerendering over time. Either
+   re-run migration 047 after each ingest, flip the column default, or set the flag during
+   ingestion. The backlog itself is cleared.
 2. **Orphaned shows** — `/shows` index links only 10 of ~187. Add `/cities`, `/states`,
    `/countries` to the header nav too (currently footer-only).
 3. **`/suggest` 404s** — linked from 89 state/country hub pages; no such route exists.
