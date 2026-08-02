@@ -20,6 +20,45 @@ whose initial indexing wave finished and then found nothing new to crawl.
 Engagement is healthy; discovery is the problem. Organic entries land on chef/restaurant/city
 detail pages, which are genuinely good (500–800 words, strong JSON-LD, unique canonicals).
 
+## Search Console confirms it: 16% of pages are indexed
+
+Search Console **is** verified for cheft.app. Figures from the 2026-08-02 export:
+
+- **693 indexed / 3,625 not indexed** — a 16% indexation rate, and the ceiling on everything
+  else. Indexed is **growing, not stalled**: 354 → 693 over 2026-05-03 → 07-23. Impressions
+  2,289 → 2,974. 3,872 search clicks over the quarter.
+- Core Web Vitals: 135 Good on mobile and desktop, 0 poor. Breadcrumbs and review snippets
+  are both being picked up.
+
+Reasons the 3,625 aren't indexed:
+
+| Reason | Pages | Read |
+|---|---|---|
+| Crawled – currently not indexed | **1,616** | Fetched, judged not worth indexing — a *quality* verdict |
+| Not found (404) | **1,417** | Historical URL churn; Google is aging these out |
+| Discovered – currently not indexed | 512 | Never crawled — crawl budget / discovery |
+| Page with redirect | 57 | |
+| Soft 404 | 16 | 200 responses with no real content |
+| Duplicate / other | 7 | |
+
+**"Crawled – currently not indexed" is the largest bucket, so thin content outranks
+crawlability as the problem.** The 512 discovered-not-crawled is the part the browse-page fix
+addresses directly.
+
+Checked and ruled out as 404 sources:
+
+- Query-param filter URLs — "Alternate page with proper canonical tag" is **0**, so Google
+  isn't crawling them at all.
+- Non-public shows — the `is_public` filter lives only in `generateStaticParams`, not in
+  `db.getShow()`, so all 192 shows return **200**. They aren't 404s. See the `is_public`
+  warning below before acting on that flag.
+- A `/city/` → `/cities/` style route rename — no singular routes ever existed in git history.
+- The current sitemap — 50 URLs sampled across every type, all 200.
+
+So the 1,417 are old slugs from re-slugged or deleted entities. There is **no slug-redirect
+handling anywhere**, so every re-slug leaves a permanent 404. Identifying them needs the URL
+list exported from the Search Console Pages report; the CSV export only gives counts.
+
 ## Root cause: browse pages had zero crawlable links
 
 `useSearchParams()` in the filter hooks de-opts its whole Suspense subtree to client
@@ -56,6 +95,45 @@ Both users were removed in favour of plain server-rendered `<script>` tags:
   the component hand-rolls exactly what the provider emitted, so the proxy still works.
   **Paths must stay in sync with those rewrites**: script `/js/script.js`, API `/proxy/api/event`.
 
+## `shows.is_public` is stale — never gate indexing on it
+
+It looks like a publish flag. It isn't, and acting on it breaks live traffic pages:
+
+| Show | Chefs | `is_public` | Visitors (90d) |
+|---|---|---|---|
+| Chopped | 68 | **false** | 22 |
+| Beat Bobby Flay | 59 | **false** | 83 |
+| Iron Chef America | 42 | **false** | 23 |
+| Guy's Grocery Games | 38 | **false** | 19 |
+| 24 in 24: Last Chef Standing | 16 | **false** | 62 |
+| Top Chef Charlotte | **0** | true | 7 |
+
+An attempt to make the show/season/winners pages 404 on `!is_public` was written and reverted
+after testing showed it 404'd Beat Bobby Flay and Chopped.
+
+Two live consequences of the stale flag, both still open and both **RB's editorial call**:
+`get_shows_with_counts` filters on it, so Chopped, Beat Bobby Flay and Iron Chef America are
+**missing from the `/shows` index entirely** — three of the biggest shows on the site are
+orphaned from internal linking. `generateStaticParams` filters on it too, so they are never
+prerendered.
+
+## Shipped: chef count, not is_public, decides indexing
+
+Show pages are a grid of chefs, so chef count is the honest proxy for content depth.
+`src/lib/showIndexing.ts` holds the threshold (`MIN_INDEXABLE_SHOW_CHEFS = 3`).
+
+Distribution: 3 shows with 0 chefs, 123 with 1–2, 31 with 3–5, 18 with 6–15, 17 with 16+.
+So **126 of 192 shows are thin**. Threshold validated against 90 days of PostHog: every show
+earning meaningful traffic has ≥5 chefs, so a cut at 3 keeps margin.
+
+- Show page emits `robots: noindex, follow` below the threshold — out of the index, still
+  crawlable, still passing equity to the chef pages it links.
+- Sitemap submits only shows at or above it, and only their seasons. A show page also lists
+  its child shows' chefs, so those count toward the parent.
+- Sitemap went 2,282 → 2,123 URLs (126 shows + 33 seasons dropped). Verified `test-show`,
+  `chef-hunter`, `top-chef-charlotte` are noindexed and absent; Chopped, Beat Bobby Flay and
+  Tournament of Champions still indexable and present.
+
 ## Known blocker: `_global-error` won't prerender
 
 `npm run build` fails on `/_global-error` with the same useContext error. Ruled out by
@@ -82,10 +160,10 @@ context and providers, since global-error replaces the root layout.
 
 ## Still open, in priority order
 
-1. **~180 thin show pages** — e.g. `/shows/chef-hunter` has ~20 unique words. All submitted
-   in the sitemap, including non-public shows and a live `/shows/test-show`. A large block of
-   near-duplicate thin pages depresses sitewide quality. Prune, consolidate, or noindex; and
-   filter `sitemap.ts` by `is_public` (it doesn't, though `generateStaticParams` does).
+1. **Fix the stale `is_public` data** (see the warning above) so Chopped, Beat Bobby Flay and
+   Iron Chef America stop being orphaned from `/shows` and start being prerendered. Editorial
+   call: either correct the flag per show, or stop using it for the index and prerender lists
+   the way indexing no longer uses it. Thin-page noindexing itself is now shipped.
 2. **Orphaned shows** — `/shows` index links only 10 of ~187. Add `/cities`, `/states`,
    `/countries` to the header nav too (currently footer-only).
 3. **`/suggest` 404s** — linked from 89 state/country hub pages; no such route exists.
@@ -93,8 +171,7 @@ context and providers, since global-error replaces the root layout.
    filter excludes ~122 real city pages; show/season `lastModified` is build time, not
    content time, which trains Google to distrust every `lastmod` in the file.
 5. **Homepage wastes its equity** — client-side Leaflet map, only ~4 restaurant links in HTML.
-6. **Is Google Search Console verified?** Unanswered, and we're blind on indexing without it.
-7. No OG image anywhere; no `revalidate` on the two detail routes, so entities beyond the
+6. No OG image anywhere; no `revalidate` on the two detail routes, so entities beyond the
    `generateStaticParams` caps (500 restaurants / 200 chefs) cache indefinitely.
 
 Full original audit findings, including what's already good, live in this note's history.
