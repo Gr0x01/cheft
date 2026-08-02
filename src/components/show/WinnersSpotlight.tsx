@@ -199,15 +199,13 @@ export function WinnersSpotlight({ winners, showName, showSlug }: WinnersSpotlig
               {showName} champions and their flagship restaurants
             </p>
           </div>
-          {winnersWithRestaurants.length > 6 && (
-            <Link 
-              href={`/shows/${showSlug}/winners`}
-              className="hidden sm:flex items-center gap-1.5 font-mono text-[11px] font-semibold tracking-wider hover:gap-2.5 transition-all"
-              style={{ color: 'var(--accent-primary)' }}
-            >
-              SEE ALL {winnersWithRestaurants.length} WINNERS <ChevronRight className="w-3 h-3" />
-            </Link>
-          )}
+          <Link
+            href={`/shows/${showSlug}/winners`}
+            className="hidden sm:flex items-center gap-1.5 font-mono text-[11px] font-semibold tracking-wider hover:gap-2.5 transition-all"
+            style={{ color: 'var(--accent-primary)' }}
+          >
+            SEE ALL {winnersWithRestaurants.length} WINNERS <ChevronRight className="w-3 h-3" />
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

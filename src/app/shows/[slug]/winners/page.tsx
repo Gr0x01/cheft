@@ -10,6 +10,7 @@ import { PageHero } from '@/components/ui/PageHero';
 import { Footer } from '@/components/ui/Footer';
 import { getStorageUrl } from '@/lib/utils/storage';
 import { MichelinStar } from '@/components/icons/MichelinStar';
+import { isWinnersPageWorthIndexing } from '@/lib/winnerIndexing';
 
 export const revalidate = 604800;
 
@@ -53,6 +54,9 @@ export async function generateMetadata({ params }: WinnersPageProps): Promise<Me
       alternates: {
         canonical: `/shows/${slug}/winners`,
       },
+      ...(isWinnersPageWorthIndexing(winnersWithRestaurants.length)
+        ? {}
+        : { robots: { index: false, follow: true } }),
       openGraph: {
         title: `${show.name} Winners | Where Champions Cook`,
         description: `${winnersWithRestaurants.length} winners • Find their restaurants`,

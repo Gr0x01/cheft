@@ -190,6 +190,11 @@ context and providers, since global-error replaces the root layout.
 
 ## Also fixed
 
+- Winners roundup pages now use a shared ≥3-current-restaurant-winners indexing threshold.
+  Every non-empty roundup is internally linked from its show page, but only substantial public
+  show roundups are submitted in the sitemap; one- and two-winner pages are `noindex, follow`.
+- Sitemap `lastmod` values are no longer fabricated as the current time. Directory routes omit
+  the field, and entity routes include it only when a real `updated_at` value exists.
 - Removed a bogus `google-site-verification` meta whose content was `"index, follow, noai"` —
   not a token. Would have broken HTML-tag verification in Search Console.
 - Removed a second `robots` meta that conflicted with the structured `robots` field. The
