@@ -18,6 +18,8 @@ interface RestaurantPageProps {
   params: Promise<{ slug: string }>;
 }
 
+export const revalidate = 604800;
+
 interface ChefData {
   id: string;
   name: string;
@@ -295,13 +297,13 @@ export async function generateMetadata({ params }: RestaurantPageProps): Promise
       title: `${restaurant.name} by ${chefName}`,
       description,
       type: 'website',
-      images: restaurant.photo_urls?.[0] ? [restaurant.photo_urls[0]] : undefined,
+      images: [restaurant.photo_urls?.[0] || '/opengraph-image'],
     },
     twitter: {
       card: 'summary_large_image',
       title: `${restaurant.name} by ${chefName}`,
       description,
-      images: restaurant.photo_urls?.[0] ? [restaurant.photo_urls[0]] : undefined,
+      images: [restaurant.photo_urls?.[0] || '/opengraph-image'],
     },
   };
 }

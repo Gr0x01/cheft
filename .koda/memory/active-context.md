@@ -18,11 +18,17 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 
 ## Next step
 
-- Commit and deploy the 299 high-confidence legacy redirects alongside the homepage
-  Popular Restaurants row; then confirm Plausible and resubmit the sitemap. See [[seo-recovery]].
+- Deploy the complete SEO batch: 299 legacy redirects, homepage Popular Restaurants links,
+  the OG image fallback, and weekly detail-page revalidation. Plausible is confirmed working.
 
-## After that
-- Remaining SEO backlog: OG image and `revalidate` on detail routes — itemised in [[seo-recovery]].
+## Post-deploy checks
+
+- Resubmit the sitemap and start Search Console validation for the repaired 404s.
+- Watch `/restaurants` Core Web Vitals after making all restaurant links server-rendered;
+  paginate or cap the first page if its added weight causes a regression.
+
+## After SEO
+
 - Two show configs are enriched-ready but unrun (Top Chef Canada, Just Desserts) — see
   [[show-enrichment-status]].
 

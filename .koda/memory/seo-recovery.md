@@ -194,18 +194,20 @@ context and providers, since global-error replaces the root layout.
   `noai, noimageai` directives still ship as an `X-Robots-Tag` header from middleware.
 - Two rules-of-hooks violations: conditional `useState`/`useMemo` in `ShowPageClient`'s
   `SeasonLinks`, and a `useEffect` after an early return in `InstagramEmbed`.
+- Added a generated 1200×630 branded OG image as the site-wide social fallback. Chef and
+  restaurant photos remain preferred where available; photo-less detail pages use the fallback.
+- Chef and restaurant detail pages now revalidate weekly, matching the directory pages, so
+  entities beyond the static-generation caps no longer cache indefinitely.
 
 ## Still open, in priority order
 
-1. **Confirm Plausible still records and resubmit the sitemap** in Search Console now that
-   the crawlability recovery build is live.
-2. **Homepage restaurant links are fixed locally, awaiting deployment.** A server-fetched
+1. **Homepage restaurant links are fixed locally, awaiting deployment.** A server-fetched
    Popular Restaurants row adds 12 visible detail links without server-rendering the full map
    directory. Browser verification found 16 unique restaurant links in the raw homepage HTML
    (12 new plus 4 existing); typecheck and focused review pass.
-3. **Deploy the 299 legacy redirects** after local route verification, then start Search
+2. **Deploy the 299 legacy redirects** after local route verification, then start Search
    Console validation for the Not found (404) issue.
-4. No OG image anywhere; no `revalidate` on the two detail routes, so entities beyond the
-   `generateStaticParams` caps (500 restaurants / 200 chefs) cache indefinitely.
+3. **Resubmit the sitemap** after deployment. Plausible was confirmed working by RB on
+   2026-08-02.
 
 Full original audit findings, including what's already good, live in this note's history.

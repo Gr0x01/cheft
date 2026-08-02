@@ -35,11 +35,20 @@ export const metadata: Metadata = {
     locale: "en_US",
     siteName: "Cheft",
     url: baseUrl,
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'Cheft — Find restaurants owned by your favorite TV chefs',
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Cheft | Find restaurants owned by your favorite TV chefs",
     description: "Discover restaurants from Top Chef, Iron Chef, Tournament of Champions winners and contestants.",
+    images: ['/opengraph-image'],
   },
 };
 

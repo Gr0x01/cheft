@@ -22,6 +22,8 @@ interface ChefPageProps {
   params: Promise<{ slug: string }>;
 }
 
+export const revalidate = 604800;
+
 interface ChefData {
   id: string;
   name: string;
@@ -215,13 +217,13 @@ export async function generateMetadata({ params }: ChefPageProps): Promise<Metad
       title: `${chef.name} - ${showInfo}${resultInfo}`,
       description,
       type: 'profile',
-      images: chef.photo_url ? [chef.photo_url] : undefined,
+      images: [chef.photo_url || '/opengraph-image'],
     },
     twitter: {
       card: 'summary',
       title: `${chef.name} - ${showInfo}${resultInfo}`,
       description,
-      images: chef.photo_url ? [chef.photo_url] : undefined,
+      images: [chef.photo_url || '/opengraph-image'],
     },
   };
 }
