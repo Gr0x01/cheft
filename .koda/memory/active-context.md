@@ -29,9 +29,10 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 
 ## Post-deploy checks
 
-- **Re-run PageSpeed** — mobile went 39 → 80 and desktop 68 → 71, then marker clustering
-  shipped after that measurement and cut homepage DOM from 6,518 to ~1,620 nodes. Desktop
-  should be the one that moves. Field data (CrUX) is already green on both.
+- **Re-run PageSpeed on mobile.** Desktop is done at **96** (was 68). Mobile sat at 76 with
+  TBT 0ms but FCP 3.2s / LCP 4.8s — traced to a render-blocking Google Fonts `@import` and
+  fixed by moving to `next/font`, which deployed after that measurement. Field data (CrUX) is
+  green on both regardless.
 - Sitemap, redirects, thin/substantial location metadata and the new city pages were all
   spot-checked live on 2026-08-02 — see [[seo-recovery]] for the figures.
 - Watch `/restaurants` Core Web Vitals. Re-measure before doing pagination work — the payload

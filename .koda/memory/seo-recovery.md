@@ -342,6 +342,24 @@ Two things found while doing it:
 the file and cache-busting the URL both failed; only a restart picked up new rules. Cost real
 time chasing a "CSS not applying" bug that was purely Turbopack caching.
 
+### Third measurement: desktop 96, mobile 76
+
+Clustering took **desktop 71 → 96**. Mobile moved 80 → 76, which is run-to-run noise: nothing
+that ships to mobile changed between those two runs except one digit in the stats row (the map
+is never mounted there). Mobile's detail explains the rest — **TBT 0ms, CLS 0**, so the JS work
+is finished; what remained was **FCP 3.2s / LCP 4.8s**, pure paint timing.
+
+Cause: `globals.css` opened with `@import url('https://fonts.googleapis.com/...')`. A CSS
+`@import` of a third-party sheet serialises three round trips before text can paint — fetch
+globals.css, discover the import, resolve googleapis, then resolve gstatic for 100KB of fonts —
+and it is render-blocking. The mobile LCP element is a *text* paragraph, so it waited on all of it.
+
+**Fixed with `next/font/google`** in `layout.tsx` (Crimson Pro / JetBrains Mono / Space Grotesk,
+exposed as `--font-crimson-pro` etc. and consumed by `--font-display|mono|ui` in globals.css).
+Next self-hosts them at build time, inlines the `@font-face` rules and preloads. Verified live:
+**zero requests to fonts.g\***, all three same-origin, and render-blocking is now only the app's
+own CSS. **Don't reintroduce a font `@import`** — use `next/font`.
+
 ### Original diagnosis (mobile 39 / desktop 68)
 
 RB's PageSpeed run against production, after the payload fix deployed. The failing metrics are
