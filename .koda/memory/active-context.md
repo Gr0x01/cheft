@@ -19,21 +19,22 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 
 ## Next step
 
-- **Deployed and production-verified 2026-08-02** — sitemap, redirects, robots metadata and
-  city scoping all confirmed live; detail in [[seo-recovery]].
-- **RB to do, in Search Console:** resubmit the sitemap and start validation for the
-  Not found (404) issue. Both need his login; they're the last step of the recovery.
+- **First batch is deployed and production-verified.** A **second batch is committed but not
+  pushed**: the homepage perf work, the city backfill, the ≥3 location threshold and the
+  `is_primary` fixes. Push, production-check, then re-run PageSpeed.
+- **Migrations 053–055 are already applied to production Supabase** — the data is live ahead of
+  the code. Until the code deploys, the site is serving the old ≥1 location threshold against
+  the new 414-row `cities` table, so thin city pages are briefly indexable. Deploy soon.
+- **RB to do, in Search Console, only after that:** resubmit the sitemap and start validation
+  for the Not found (404) issue.
 
 ## Post-deploy checks
 
-- **Homepage Lighthouse fixes are done but uncommitted/undeployed.** Mobile 39 / desktop 68 was
-  client-side cost: winners row now server-rendered, mobile makes zero API calls on load, map
-  only mounts on desktop. Also fixed a pre-hydration search-input wipe found along the way.
-  e2e 55/55 green. Commit, push, then re-run PageSpeed. Detail in [[seo-recovery]] under
-  "Homepage Lighthouse".
-- Watch `/restaurants` Core Web Vitals after making all restaurant links server-rendered.
-  Re-measure before doing pagination work — the homepage payload fix (45.9MB → 2.5MB, see
-  [[seo-recovery]]) may have already resolved it.
+- Re-run PageSpeed on the homepage; mobile 39 / desktop 68 predates every client-side fix.
+- Spot-check the new city pages, the eight city redirects, and that thin cities are
+  `noindex, follow` while 3+ ones are indexed.
+- Watch `/restaurants` Core Web Vitals. Re-measure before doing pagination work — the payload
+  fix (45.9MB → 2.5MB) may have already resolved it.
 
 ## After SEO
 
@@ -41,10 +42,6 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
   [[show-enrichment-status]].
 
 ## Open questions
-- **`chef_shows.is_primary` is false on all 1,298 rows**, so the winner badge never renders and
-  "primary show" is an arbitrary pick for the 51.5% of chefs on more than one show — which the
-  homepage show filter then filters on. Backfill the flag, or drop the code's dependence on it?
-  Detail and counts in [[seo-recovery]].
 - **Chef photo coverage is 14%** (63/464) after the Aug 2 2026 Wikimedia backfill. Wikipedia is tapped out — the other 401 have no article. Decide before launch whether initials/Instagram fallback is good enough, or budget for licensed headshots. See [[enrichment-reference]].
 
 ## Orientation

@@ -248,35 +248,63 @@ restaurants → chefs → chef_shows → shows, so every restaurant row carried 
 
 Very likely the same weight behind the `/restaurants` Core Web Vitals concern below.
 
-## `chef_shows.is_primary` is false on every row — same trap as `is_public`
+## 37% of restaurants had no city page — fixed 2026-08-02
 
-Verified against production: **all 1,298 `chef_shows` rows have `is_primary = false`**, none
-true, while 194 are winner rows. Consequences, all pre-existing and all still live:
+The `cities` table was populated once by migration 024 and never refreshed; `sync_city_counts`
+only updates counts on existing rows, it never inserts. So every city that gained restaurants
+afterwards simply had no page: **478 of 1,293 public restaurants (37%) matched no city row**,
+including Scottsdale (15 restaurants), Fort Worth (14), Toronto (8) and Valencia (6).
 
-- `getChefAchievements` computes `isShowWinner` as `is_primary && result === 'winner'`, so the
-  **winner badge never renders** on a restaurant card. 131 chefs have won something.
-- `transformRestaurants` derives `primary_show` as `chef_shows.find(is_primary) ?? chef_shows[0]`,
-  so it falls back to an **arbitrarily ordered** row. **229 of 445 chefs (51.5%) appear on more
-  than one show**, so for half the roster "primary show" is whichever row came back first.
-- The homepage show filter compares `chef.primary_show.name` to the selected show, so filtering
-  by e.g. Top Chef silently misses chefs whose arbitrary first row is a different show.
+`053_backfill_city_coverage.sql` and `054_merge_city_name_variants.sql` fixed it:
 
-Not fixed — deciding which show is primary is a data call, and [[show-enrichment-status]] plus
-the `is_public` lesson above both warn against acting on a stale flag without checking traffic
-first. Needs RB's decision: backfill `is_primary`, or change the code to stop depending on it.
+- Normalized the location data city rows key on — `USA`→`US`, full state names→codes, ten
+  plainly-foreign cities still stored as `country = 'US'`, and `state` dropped outside
+  US/CA/MX where it was recorded four different ways for London alone.
+- Added a `city_slug(name, state)` SQL function. **Use it instead of inlining a regexp** —
+  migration 024's expression left a trailing hyphen when a city had no state (`amman-`) and
+  turned accents into separators (`montr-al-qc`).
+- Merged punctuation variants (`St. Helena` vs the stored `St Helena`) and deleted a duplicate
+  `washington-d-c-dc` that was splitting the site's most-visited city page.
 
-## Six malformed city slugs
+Result: **478 orphaned restaurants → 14** (all placeholder values like `unknown` and
+`Multiple locations`, deliberately excluded). City rows 162 → 414.
 
-Found during the 2026-08-02 production check. Four are live and in the sitemap:
-`amman-`, `angers-`, `bangkok-` (trailing hyphen, because the city has no state) and
-`montr-al-qc` (accent damage — Montréal, the same breakage just fixed on chef slugs).
-Two more are noindexed at 0 restaurants: `cheltenham-` and `val-ncia-`, both of which also
-carry **`country = 'US'` wrongly** (they're UK and Spain); migration 051 missed them because
-it inferred country from restaurants and these have none.
+**Location pages now need 3 restaurants to be indexed** (`MIN_INDEXABLE_LOCATION_RESTAURANTS`
+in `src/lib/locationIndexing.ts`, matching `MIN_INDEXABLE_SHOW_CHEFS`). 291 of the new rows
+hold one or two, and submitting those would feed the Crawled-not-indexed bucket. Validated
+against 90 days of PostHog first, the same way the show threshold was: **no location page with
+fewer than three restaurants cleared 8 views**, while every high-traffic one has at least
+three. The sitemap keys on the same constant — keep the two in sync.
 
-Not fixed. Renaming live indexed URLs is exactly the churn that produced the 1,417 404s, and
-these four pages cover only 7 restaurants between them, so the redirect cost likely outweighs
-the gain. RB's call — the argument for doing it is consistency with the chef slug fix.
+Also: the homepage "Popular Cities" links used bare slugs (`san-francisco`), so they hit
+redirects — and **`/cities/san-francisco` was a hard 404 linked straight off the homepage**.
+They now point at the real `-state` slugs.
+
+## `chef_shows.is_primary` was false on every row — fixed 2026-08-02
+
+Every one of the 1,298 `chef_shows` rows had `is_primary = false` — never set on any of them,
+while 194 were winner rows. So `find(cs => cs.is_primary) || chef_shows[0]`, the pattern used
+in ~30 places, fell through to arbitrary row order everywhere, and **229 of 445 chefs (51.5%)
+are on more than one show**.
+
+`055_backfill_chef_shows_is_primary.sql` ranks each chef's appearances by result
+(winner → finalist → contestant → judge), then show size, then name, and flags exactly one per
+chef. All 131 chefs who won something now have their win as primary.
+
+Two bugs it was masking, both fixed in code:
+
+- `getChefAchievements` required `is_primary && result === 'winner'`, so the **winner badge
+  never rendered at all**. Winning any show earns it — 445 restaurants have a winning chef.
+- The homepage show filter compared against `primary_show` only, hiding most of each show's
+  roster. Matching any appearance takes Top Chef from 400 restaurants to **808**.
+
+Note the write path in `api/cron/process-approved-queue` sets `is_primary: true`
+unconditionally on insert, so a chef's second show would also arrive flagged. Not currently a
+problem (it creates one row per new chef) but it will drift again if that changes.
+
+The six malformed city slugs found in the same pass (`amman-`, `angers-`, `bangkok-`,
+`montr-al-qc`, `cheltenham-`, `val-ncia-`) were fixed by migration 053 above, with permanent
+redirects in `legacyRedirects.json`.
 
 ## Homepage Lighthouse: mobile 39 / desktop 68 (2026-08-02, post-deploy)
 
@@ -314,15 +342,21 @@ pre-existing with a stash, and Vercel builds fine, so it's a local-env quirk, no
 
 ## Still open, in priority order
 
-1. **Resubmit the sitemap** and start Search Console validation for the Not found (404)
+1. **Deploy the second batch**, then production-check it: the new city pages, the ≥3 location
+   threshold, the eight city redirects, winner badges, and the homepage perf work.
+2. **Re-run PageSpeed on the homepage** once that is live — the mobile 39 / desktop 68 above
+   was measured before any of the client-side fixes.
+3. **Then resubmit the sitemap** and start Search Console validation for the Not found (404)
    issue. Both are RB-only actions in the Search Console UI. Plausible was confirmed working
    by RB on 2026-08-02.
-2. **Monitor `/restaurants` Core Web Vitals.** It now renders all cards server-side; paginate
-   or cap the first page if the added weight causes a regression. Re-measure after the 45MB
-   payload fix before doing any of that work — it may already be resolved.
-3. **Decide what to do about `chef_shows.is_primary`** (above).
-4. **Decide whether to rename the four malformed city slugs** (above).
+4. **Monitor `/restaurants` Core Web Vitals.** It renders all cards server-side; paginate or
+   cap the first page if the added weight causes a regression.
 5. `cuisine_tags` is populated on **1 of 1,293** restaurants, but the cards render it and the
    homepage search filters on it. Enrichment gap, not a code bug.
+6. 14 restaurants still have no city page because their location is a placeholder
+   (`unknown`, `Various`, `Multiple locations`, `Hawaii` and `New Jersey` as city names,
+   `Boston (Logan Airport)`). Needs data entry, not code.
+7. `cities.country` mixes ISO codes with full names — Amman is `Jordan`, not `JO`. Harmless
+   today; would matter if country pages are ever keyed on the code.
 
 Full original audit findings, including what's already good, live in this note's history.
