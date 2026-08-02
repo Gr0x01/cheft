@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import type { RestaurantWithDetails } from '@/lib/types';
 
 // Supabase client configuration for frontend
 // IMPORTANT: Only uses anonymous key - never expose service role key to client
@@ -174,6 +175,30 @@ export const db = {
     
     if (error) throw error;
     return transformRestaurants(data);
+  },
+
+  // A small, stable set for crawlable homepage links. Keep the full directory client-loaded.
+  async getPopularRestaurants(limit: number = 12): Promise<RestaurantWithDetails[]> {
+    const client = getSupabaseClient();
+    const { data, error } = await client
+      .from('restaurants')
+      .select(`
+        *,
+        chef:chefs(
+          *,
+          chef_shows(
+            *,
+            show:shows(*)
+          )
+        )
+      `)
+      .eq('is_public', true)
+      .eq('status', 'open')
+      .order('google_review_count', { ascending: false, nullsFirst: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return transformRestaurants(data) as unknown as RestaurantWithDetails[];
   },
 
   // Get restaurants by city

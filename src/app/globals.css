@@ -1308,6 +1308,18 @@ body {
   border-bottom: 1px solid var(--border-light);
 }
 
+.homepage-popular-restaurants .discovery-row {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 48px 16px;
+}
+
+.homepage-popular-restaurants .discovery-row-header,
+.homepage-popular-restaurants .discovery-row-scroll {
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .discovery-row-header {
   display: flex;
   justify-content: space-between;

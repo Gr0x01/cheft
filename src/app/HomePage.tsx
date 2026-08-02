@@ -29,6 +29,7 @@ interface HomePageProps {
   featuredChef: any | null;
   shows: Show[];
   footerData: FooterData;
+  popularRestaurants: RestaurantWithDetails[];
 }
 
 const RestaurantMapPins = dynamic(() => import('@/components/RestaurantMapPins'), { 
@@ -41,7 +42,7 @@ const RestaurantMapPins = dynamic(() => import('@/components/RestaurantMapPins')
   )
 });
 
-export default function Home({ initialFeaturedChefs, stats, featuredChef, shows, footerData }: HomePageProps) {
+export default function Home({ initialFeaturedChefs, stats, featuredChef, shows, footerData, popularRestaurants }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedShow, setSelectedShow] = useState<string>('all');
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
@@ -382,6 +383,14 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef, shows,
           />
         </section>
       </main>
+
+      <div className="homepage-popular-restaurants">
+        <DiscoveryRow
+          title="Popular Restaurants"
+          restaurants={popularRestaurants}
+          viewAllHref="/restaurants"
+        />
+      </div>
 
       <ShowsShowcase shows={shows} />
 

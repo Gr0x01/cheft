@@ -18,14 +18,11 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 
 ## Next step
 
-- Deploy commits `4bf4c56`, `dd1b828`, and `746f8da`: `/suggest`, crawlable Locations nav,
-  and sitemap coverage (2,123 → 2,211 URLs). All are locally verified; none is deployed.
-- After deployment, confirm Plausible records, resubmit the sitemap in Search Console, then
-  improve homepage crawlable links. See [[seo-recovery]].
+- Deploy the locally verified homepage Popular Restaurants row, then confirm
+  Plausible records and resubmit the 2,211-URL sitemap in Search Console. See [[seo-recovery]].
 
 ## After that
-- Remaining SEO backlog: homepage rendering,
-  OG image, `revalidate` on detail routes — itemised and prioritised in [[seo-recovery]].
+- Remaining SEO backlog: OG image and `revalidate` on detail routes — itemised in [[seo-recovery]].
 - Two show configs are enriched-ready but unrun (Top Chef Canada, Just Desserts) — see
   [[show-enrichment-status]].
 

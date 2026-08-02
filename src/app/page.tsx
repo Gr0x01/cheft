@@ -32,11 +32,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page() {
-  const [stats, featuredChef, shows, footerData] = await Promise.all([
+  const [stats, featuredChef, shows, footerData, popularRestaurants] = await Promise.all([
     db.getStats(),
     db.getFeaturedChef(),
     db.getShowsWithCounts(),
     getFooterData(),
+    db.getPopularRestaurants(),
   ]);
 
   const chefsData = await db.getFeaturedChefs(12, featuredChef?.id);
@@ -56,6 +57,7 @@ export default async function Page() {
         featuredChef={featuredChef}
         shows={shows}
         footerData={footerData}
+        popularRestaurants={popularRestaurants}
       />
     </>
   );
