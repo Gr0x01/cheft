@@ -220,6 +220,50 @@ export const db = {
     return transformRestaurants(data) as unknown as RestaurantWithDetails[];
   },
 
+  // Winners pool for the homepage "Competition Winners" row, server-rendered so mobile
+  // doesn't wait on the client restaurant fetch to paint. Returns a pool rather than the
+  // final 12 so the caller can still shuffle for variety without loading all 1,293 rows.
+  async getWinnerRestaurants(poolSize: number = 60): Promise<RestaurantWithDetails[]> {
+    const client = getSupabaseClient();
+    const { data, error } = await client
+      .from('restaurants')
+      .select(`
+        id,
+        name,
+        slug,
+        city,
+        state,
+        status,
+        price_tier,
+        cuisine_tags,
+        photo_urls,
+        google_rating,
+        michelin_stars,
+        chef:chefs!inner(
+          id,
+          name,
+          slug,
+          james_beard_status,
+          chef_shows!inner(
+            is_primary,
+            result,
+            season,
+            season_name,
+            show:shows(id, name, slug)
+          )
+        )
+      `)
+      .eq('is_public', true)
+      .eq('status', 'open')
+      .eq('chef.chef_shows.result', 'winner')
+      .order('michelin_stars', { ascending: false, nullsFirst: false })
+      .order('google_review_count', { ascending: false, nullsFirst: false })
+      .limit(poolSize);
+
+    if (error) throw error;
+    return transformRestaurants(data as unknown as RawRestaurant[]) as unknown as RestaurantWithDetails[];
+  },
+
   // Get restaurants by city
   async getRestaurantsByCity(city: string) {
     const client = getSupabaseClient();

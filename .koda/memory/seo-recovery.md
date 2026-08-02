@@ -278,6 +278,30 @@ Not fixed. Renaming live indexed URLs is exactly the churn that produced the 1,4
 these four pages cover only 7 restaurants between them, so the redirect cost likely outweighs
 the gain. RB's call — the argument for doing it is consistency with the chef slug fix.
 
+## Homepage Lighthouse: mobile 39 / desktop 68 (2026-08-02, post-deploy)
+
+RB's PageSpeed run against production, after the payload fix deployed. The failing metrics are
+mobile LCP **8.4s**, mobile TBT **1,560ms**, desktop TBT **940ms**. FCP/Speed Index/CLS are
+fine on desktop; the network layer is fine everywhere — verified same day: `/api/restaurants`
+is 325KB gzipped in 0.3s, homepage HTML 100KB gzipped. The cost is all client-side JavaScript:
+
+- `HomePage.tsx` is one big `'use client'` component. On load it fetches **both**
+  `/api/restaurants` (2.5MB uncompressed JSON, all 1,293 rows) and `/api/restaurants/map-pins`,
+  regardless of viewport.
+- On mobile, the discovery content (Competition Winners row) renders only after the full
+  restaurant fetch resolves and 2.5MB of JSON is parsed — on Lighthouse's slow-4G/Moto G
+  emulation that lands ~8s in, which is the 8.4s LCP.
+- The desktop map layout stays in the React tree on mobile (hidden by CSS only), so the map
+  bundle and pins hydrate on phones that never see them. That plus the JSON parse plus
+  whole-page hydration is the TBT.
+
+Proposed smallest fixes, not yet approved or applied:
+1. Compute the winners row server-side (like `popularRestaurants` already is) and defer the
+   `/api/restaurants` fetch until the user actually searches — mobile LCP then rides the
+   server-rendered HTML (~FCP).
+2. Mount the map + pins fetch only when the map is actually visible (viewport check), so
+   mobile stops paying for desktop's map.
+
 ## Still open, in priority order
 
 1. **Resubmit the sitemap** and start Search Console validation for the Not found (404)

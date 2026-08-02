@@ -30,7 +30,11 @@ interface HomePageProps {
   shows: Show[];
   footerData: FooterData;
   popularRestaurants: RestaurantWithDetails[];
+  winnerRestaurants: RestaurantWithDetails[];
 }
+
+// Must match the .desktop-map-layout breakpoint in globals.css
+const DESKTOP_MEDIA_QUERY = '(min-width: 769px)';
 
 const RestaurantMapPins = dynamic(() => import('@/components/RestaurantMapPins'), { 
   ssr: false,
@@ -42,7 +46,7 @@ const RestaurantMapPins = dynamic(() => import('@/components/RestaurantMapPins')
   )
 });
 
-export default function Home({ initialFeaturedChefs, stats, featuredChef, shows, footerData, popularRestaurants }: HomePageProps) {
+export default function Home({ initialFeaturedChefs, stats, featuredChef, shows, footerData, popularRestaurants, winnerRestaurants }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedShow, setSelectedShow] = useState<string>('all');
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
@@ -51,14 +55,36 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef, shows,
   const [visibleCount, setVisibleCount] = useState(20);
   const [restaurants, setRestaurants] = useState<RestaurantWithDetails[]>([]);
   const [mapPins, setMapPins] = useState<MapPin[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isMapLoading, setIsMapLoading] = useState(true);
+  const [isDesktop, setIsDesktop] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
+  const hasFetchedRestaurants = useRef(false);
   const deferredSearchQuery = useDeferredValue(searchQuery);
-  
+
   const featuredChefs = initialFeaturedChefs;
 
+  // Adopt anything typed before hydration finished — the controlled inputs would
+  // otherwise wipe it on the first post-hydration render.
   useEffect(() => {
+    const typed = [searchInputRef.current, mobileSearchInputRef.current]
+      .find(el => el && el.value)?.value;
+    if (typed) setSearchQuery(typed);
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(DESKTOP_MEDIA_QUERY);
+    setIsDesktop(mediaQuery.matches);
+    const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mediaQuery.addEventListener('change', onChange);
+    return () => mediaQuery.removeEventListener('change', onChange);
+  }, []);
+
+  // The map and its pins only exist on desktop; phones hide the map layout via
+  // CSS, so mobile skips the map bundle and both fetches entirely.
+  useEffect(() => {
+    if (!isDesktop || mapPins.length > 0) return;
     async function fetchMapPins() {
       try {
         const response = await fetch('/api/restaurants/map-pins');
@@ -72,10 +98,17 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef, shows,
       }
     }
     fetchMapPins();
-  }, []);
+  }, [isDesktop, mapPins.length]);
+
+  // The full list feeds the desktop sidebar and search. Mobile browsing content
+  // is server-rendered, so only fetch it once someone can actually use it.
+  const needsRestaurants = isDesktop || searchQuery.length > 0;
 
   useEffect(() => {
+    if (!needsRestaurants || hasFetchedRestaurants.current) return;
+    hasFetchedRestaurants.current = true;
     async function fetchRestaurants() {
+      setIsLoading(true);
       try {
         const response = await fetch('/api/restaurants');
         if (!response.ok) throw new Error('Failed to fetch restaurants');
@@ -88,7 +121,7 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef, shows,
       }
     }
     fetchRestaurants();
-  }, []);
+  }, [needsRestaurants]);
 
   const filteredRestaurants = useMemo(() => {
     let filtered = restaurants;
@@ -134,27 +167,6 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef, shows,
 
     return filtered;
   }, [deferredSearchQuery, selectedPriceRange, mapPins]);
-
-  const winnerRestaurants = useMemo(() => {
-    const winners = restaurants.filter(r => {
-      const isWinner = r.chef?.chef_shows?.some(cs => cs.result === 'winner');
-      return isWinner && r.status === 'open';
-    });
-    
-    const michelin = winners.filter(r => r.michelin_stars && r.michelin_stars > 0);
-    const nonMichelin = winners.filter(r => !r.michelin_stars || r.michelin_stars === 0);
-    
-    const shuffle = <T,>(arr: T[]): T[] => {
-      const shuffled = [...arr];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      return shuffled;
-    };
-    
-    return [...shuffle(michelin), ...shuffle(nonMichelin)].slice(0, 12);
-  }, [restaurants]);
 
   const popularCities = [
     { name: 'New York', slug: 'new-york' },
@@ -215,6 +227,7 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef, shows,
           <div className="mobile-search-wrapper">
             <Search className="mobile-search-icon" />
             <input
+              ref={mobileSearchInputRef}
               type="text"
               placeholder="Search restaurants, chefs, cities..."
               value={searchQuery}
@@ -230,7 +243,7 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef, shows,
             <div className="mobile-results-header">
               <span className="mobile-results-accent" />
               <h2 className="mobile-results-title">
-                {filteredRestaurants.length} result{filteredRestaurants.length !== 1 ? 's' : ''}
+                {isLoading ? 'Searching…' : `${filteredRestaurants.length} result${filteredRestaurants.length !== 1 ? 's' : ''}`}
               </h2>
             </div>
             <div className="mobile-results-grid">
@@ -257,20 +270,11 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef, shows,
               </div>
             </div>
 
-            {!isLoading && (
-              <DiscoveryRow 
-                title="Competition Winners" 
-                restaurants={winnerRestaurants}
-                viewAllHref="/restaurants"
-              />
-            )}
-
-            {isLoading && (
-              <div className="mobile-loading">
-                <div className="map-loading-spinner"></div>
-                <span>Loading restaurants...</span>
-              </div>
-            )}
+            <DiscoveryRow
+              title="Competition Winners"
+              restaurants={winnerRestaurants}
+              viewAllHref="/restaurants"
+            />
           </div>
         </div>
       </div>
@@ -376,11 +380,13 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef, shows,
             </select>
           </div>
           
-          <RestaurantMapPins 
-            pins={filteredPins}
-            selectedPinId={selectedRestaurant?.id}
-            isLoading={isMapLoading}
-          />
+          {isDesktop && (
+            <RestaurantMapPins
+              pins={filteredPins}
+              selectedPinId={selectedRestaurant?.id}
+              isLoading={isMapLoading}
+            />
+          )}
         </section>
       </main>
 
