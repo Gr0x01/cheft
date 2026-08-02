@@ -23,15 +23,12 @@ function PinMarker({
   isSelected: boolean;
   onSelect: (pin: MapPin) => void;
 }) {
-  const [isMounted, setIsMounted] = useState(false);
   const isClosed = pin.status === 'closed';
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
+  // No isMounted guard: this component is only ever imported with ssr: false, so it
+  // never renders on the server. Gating on mount state cost a useState and a useEffect
+  // per pin — over a thousand of each on a full map.
   const markerIcon = useMemo(() => {
-    if (!isMounted) return null;
     return new DivIcon({
       className: 'custom-marker',
       html: `
@@ -45,12 +42,10 @@ function PinMarker({
       iconAnchor: [6, 6],
       popupAnchor: [0, -8]
     });
-  }, [isMounted, isSelected, isClosed]);
-
-  if (!markerIcon) return null;
+  }, [isSelected, isClosed]);
 
   return (
-    <Marker 
+    <Marker
       position={[pin.lat, pin.lng] as LatLngTuple}
       icon={markerIcon}
       eventHandlers={{

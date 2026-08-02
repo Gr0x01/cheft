@@ -454,7 +454,9 @@ export const db = {
     const [restaurantsResult, chefsResult, citiesResult] = await Promise.all([
       client.from('restaurants').select('id', { count: 'exact', head: true }).eq('is_public', true),
       client.from('chefs').select('id', { count: 'exact', head: true }),
-      client.from('cities').select('id', { count: 'exact', head: true })
+      // Only cities you can actually browse — some rows exist with no public
+      // restaurants, and counting those overstates the headline stat.
+      client.from('cities').select('id', { count: 'exact', head: true }).gt('restaurant_count', 0)
     ]);
     
     return {
