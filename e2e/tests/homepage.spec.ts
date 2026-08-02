@@ -6,7 +6,7 @@ test.describe('Homepage', () => {
   });
 
   test('should load the homepage', async ({ page }) => {
-    await expect(page).toHaveTitle(/TV Chef Map/);
+    await expect(page).toHaveTitle(/Cheft/);
   });
 
   test('should display the main navigation', async ({ page }) => {
@@ -15,8 +15,12 @@ test.describe('Homepage', () => {
 
   test('should have a search functionality', async ({ page }) => {
     // Look for search input
-    const searchInput = page.locator('input[type="search"], input[placeholder*="search" i]');
-    
+    // The page ships separate mobile and desktop search inputs, only one of which
+    // the current viewport reveals — match on visibility rather than DOM order.
+    const searchInput = page
+      .locator('input[type="search"], input[placeholder*="search" i]')
+      .filter({ visible: true });
+
     if (await searchInput.count() > 0) {
       await expect(searchInput.first()).toBeVisible();
       await searchInput.first().fill('pizza');

@@ -108,9 +108,11 @@ test.describe('Restaurant Map', () => {
 
   test('should handle search functionality', async ({ page }) => {
     // Look for search input
+    // The page ships separate mobile and desktop search inputs, only one of which
+    // the current viewport reveals — match on visibility rather than DOM order.
     const searchInput = page.locator(
       'input[type="search"], input[placeholder*="search" i], input[data-testid="search"]'
-    );
+    ).filter({ visible: true });
 
     if (await searchInput.count() > 0) {
       const input = searchInput.first();
