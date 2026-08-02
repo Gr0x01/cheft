@@ -53,7 +53,7 @@ export default async function StatesPage() {
   const totalChefs = allStates.reduce((sum, s) => sum + s.chef_count, 0);
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://cheft.app';
-  const schemaItems = allStates.map((state, index) => ({
+  const schemaItems = statesWithRestaurants.map((state, index) => ({
     name: state.name,
     url: `${baseUrl}/states/${state.slug}`,
     position: index + 1,

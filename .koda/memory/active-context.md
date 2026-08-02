@@ -18,8 +18,8 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 
 ## Next step
 
-- Finish the duplicate-chef, empty-geography and stale-city-count cleanup in [[seo-recovery]],
-  deploy it, then resubmit the sitemap and validate the repaired 404s in Search Console.
+- Deploy and production-check the final cleanup in [[seo-recovery]], then resubmit the sitemap
+  and validate the repaired 404s in Search Console; all four data migrations are already live.
 
 ## Post-deploy checks
 
@@ -33,7 +33,6 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 
 ## Open questions
 - **Chef photo coverage is 14%** (63/464) after the Aug 2 2026 Wikimedia backfill. Wikipedia is tapped out — the other 401 have no article. Decide before launch whether initials/Instagram fallback is good enough, or budget for licensed headshots. See [[enrichment-reference]].
-- **Duplicate chef rows are live** — José Andrés and Albert Adrià each matched twice during the backfill, i.e. they exist twice in `chefs`. `duplicate_candidates` holds 123 rows; `npm run merge-duplicate-chefs` exists but hasn't been run recently.
 
 ## Orientation
 - Commands, admin URLs, and the add-a-show runbook: [[runbook]]

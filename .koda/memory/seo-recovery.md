@@ -190,6 +190,19 @@ context and providers, since global-error replaces the root layout.
 
 ## Also fixed
 
+- The six accent-damaged chef duplicates were merged into their clean profiles in production,
+  preserving all show appearances; six permanent redirects cover the retired slugs. Source
+  migration 049 also coalesces every mergeable chef field before deletion. Production migration:
+  `20260802151000_pre_submission_seo_cleanup`.
+- Empty cities, states, countries and ultra-thin chef profiles now use `noindex, follow` and stay
+  out of the sitemap. Saqib Keval and Norma Listman are the only current chefs meeting the thin
+  rule; their pages remain available for future enrichment.
+- City counts now stay synchronized after restaurant writes and match on city + state + country.
+  Country defaults were normalized, Canadian/foreign province codes repaired, and the Portland,
+  Maine and Portland, Oregon inventories are isolated correctly. Production migrations:
+  `20260802152500_scope_city_counts` and `20260802154000_fix_foreign_city_countries` (source
+  migrations 050 and 051). Country edits also trigger a resync via production migration
+  `20260802155000_sync_cities_on_country_change` (source migration 052).
 - Winners roundup pages now use a shared ≥3-current-restaurant-winners indexing threshold.
   Every non-empty roundup is internally linked from its show page, but only substantial public
   show roundups are submitted in the sitemap; one- and two-winner pages are `noindex, follow`.
@@ -208,27 +221,11 @@ context and providers, since global-error replaces the root layout.
 
 ## Still open, in priority order
 
-1. **Merge six exact duplicate chef pairs before resubmitting.** A second-pass sitemap audit
-   found duplicate pages for Ana Roš, Ángel León, Virgilio Martínez, Musa Dağdeviren, Albert
-   Adrià and José Andrés. In each pair, an older malformed accent slug is thin while the clean
-   slug holds the substantive profile. Merge the records and permanently redirect the six old
-   slugs; deleting them without redirects would recreate the 404 problem.
-2. **Stop submitting empty geography pages.** The sitemap currently contains five states
-   (Alaska, Kansas, Nebraska, West Virginia, Wyoming) and 14 countries with zero public
-   restaurants. Their detail pages return 200 with empty-state copy and are internally linked
-   from the “All” lists. Remove them from the sitemap and use `noindex, follow` while empty;
-   keep the pages available to people.
-3. **Repair stale city counts.** `cities.restaurant_count` has no ongoing sync and disagrees
-   with the public restaurant data for 77 cities. Nine valid city pages are missing from the
-   sitemap because their stored count is zero (Tysons, Wolfeboro, Bozeman, Carmel, Indianapolis,
-   Irving, Jacksonville, Rio Grande and Santa Barbara); many visible titles and descriptions
-   also undercount restaurants. Add a repeatable count sync and run it once before submission.
-4. **Review the two remaining ultra-thin Chef's Table profiles.** Saqib Keval and Norma Listman
-   have a show appearance but no public restaurant, bio, narrative or current position. Enrich
-   them or temporarily `noindex, follow`; do not remove them merely for being incomplete.
-5. **Then resubmit the sitemap** and start Search Console validation for the Not found (404)
+1. **Deploy and production-check this final cleanup**, including the six chef redirects, empty
+   geography/chef robots metadata, city scoping and the 2,204-URL sitemap.
+2. **Then resubmit the sitemap** and start Search Console validation for the Not found (404)
    issue. Plausible was confirmed working by RB on 2026-08-02.
-6. **Monitor `/restaurants` Core Web Vitals.** It now renders all cards server-side; paginate
+3. **Monitor `/restaurants` Core Web Vitals.** It now renders all cards server-side; paginate
    or cap the first page if the added weight causes a regression.
 
 Full original audit findings, including what's already good, live in this note's history.

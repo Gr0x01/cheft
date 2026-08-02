@@ -8,6 +8,7 @@ import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
 import { ChefCard } from '@/components/chef/ChefCard';
 import { ItemListSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
 import { Footer } from '@/components/ui/Footer';
+import { isLocationWorthIndexing } from '@/lib/locationIndexing';
 
 interface CountryPageProps {
   params: Promise<{ slug: string }>;
@@ -48,6 +49,9 @@ export async function generateMetadata({ params }: CountryPageProps): Promise<Me
     alternates: {
       canonical: `/countries/${slug}`,
     },
+    ...(isLocationWorthIndexing(country.restaurant_count)
+      ? {}
+      : { robots: { index: false, follow: true } }),
     openGraph: { title, description, type: 'website' },
   };
 }

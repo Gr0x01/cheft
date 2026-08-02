@@ -1,5 +1,35 @@
 [
   {
+    "source": "/chefs/ana-ro",
+    "destination": "/chefs/ana-ros",
+    "permanent": true
+  },
+  {
+    "source": "/chefs/ngel-le-n",
+    "destination": "/chefs/angel-leon",
+    "permanent": true
+  },
+  {
+    "source": "/chefs/virgilio-mart-nez",
+    "destination": "/chefs/virgilio-martinez",
+    "permanent": true
+  },
+  {
+    "source": "/chefs/musa-da-deviren",
+    "destination": "/chefs/musa-dagdeviren",
+    "permanent": true
+  },
+  {
+    "source": "/chefs/albert-adri",
+    "destination": "/chefs/albert-adria",
+    "permanent": true
+  },
+  {
+    "source": "/chefs/jos-andr-s",
+    "destination": "/chefs/jose-andres",
+    "permanent": true
+  },
+  {
     "source": "/chefs/joseph-joe-sasto-iii",
     "destination": "/chefs/joe-sasto",
     "permanent": true

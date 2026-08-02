@@ -8,6 +8,7 @@ import { PageHero } from '@/components/ui/PageHero';
 import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
 import { ChefCard } from '@/components/chef/ChefCard';
 import { ItemListSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
+import { isLocationWorthIndexing } from '@/lib/locationIndexing';
 
 interface StatePageProps {
   params: Promise<{ slug: string }>;
@@ -48,6 +49,9 @@ export async function generateMetadata({ params }: StatePageProps): Promise<Meta
     alternates: {
       canonical: `/states/${slug}`,
     },
+    ...(isLocationWorthIndexing(state.restaurant_count)
+      ? {}
+      : { robots: { index: false, follow: true } }),
     openGraph: { title, description, type: 'website' },
   };
 }

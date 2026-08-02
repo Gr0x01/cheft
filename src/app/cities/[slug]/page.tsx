@@ -8,6 +8,7 @@ import { ChefCard } from '@/components/chef/ChefCard';
 import { PageHero } from '@/components/ui/PageHero';
 import { sanitizeNarrative } from '@/lib/sanitize';
 import { CityPageClient } from './CityPageClient';
+import { isLocationWorthIndexing } from '@/lib/locationIndexing';
 
 interface CityPageProps {
   params: Promise<{ slug: string }>;
@@ -27,7 +28,7 @@ interface ChefWithRestaurants {
     is_primary?: boolean;
     show: { name: string };
   }>;
-  restaurants: Array<{ id: string; city: string }>;
+  restaurants: Array<{ id: string; city: string; state: string | null }>;
   restaurant_count?: number;
 }
 
@@ -54,6 +55,9 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
     alternates: {
       canonical: `/cities/${slug}`,
     },
+    ...(isLocationWorthIndexing(city.restaurant_count || 0)
+      ? {}
+      : { robots: { index: false, follow: true } }),
     openGraph: { title, description, type: 'website' },
   };
 }
@@ -87,7 +91,7 @@ export default async function CityPage({ params }: CityPageProps) {
     notFound();
   }
 
-  const { data: restaurants } = await supabase
+  let restaurantsQuery = supabase
     .from('restaurants')
     .select(`
       id,
@@ -114,10 +118,19 @@ export default async function CityPage({ params }: CityPageProps) {
       )
     `)
     .eq('city', city.name)
-    .eq('is_public', true)
+    .eq('is_public', true);
+
+  restaurantsQuery = city.state
+    ? restaurantsQuery.eq('state', city.state)
+    : restaurantsQuery.is('state', null);
+  restaurantsQuery = city.country
+    ? restaurantsQuery.eq('country', city.country)
+    : restaurantsQuery.is('country', null);
+
+  const { data: restaurants } = await restaurantsQuery
     .order('google_rating', { ascending: false, nullsFirst: false });
 
-  const { data: chefs } = await supabase
+  let chefsQuery = supabase
     .from('chefs')
     .select(`
       id,
@@ -135,11 +148,23 @@ export default async function CityPage({ params }: CityPageProps) {
       ),
       restaurants!restaurants_chef_id_fkey!inner (
         id,
-        city
+        city,
+        state,
+        country,
+        is_public
       )
     `)
     .eq('restaurants.city', city.name)
-    .order('name');
+    .eq('restaurants.is_public', true);
+
+  chefsQuery = city.state
+    ? chefsQuery.eq('restaurants.state', city.state)
+    : chefsQuery.is('restaurants.state', null);
+  chefsQuery = city.country
+    ? chefsQuery.eq('restaurants.country', city.country)
+    : chefsQuery.is('restaurants.country', null);
+
+  const { data: chefs } = await chefsQuery.order('name');
 
   const uniqueChefs = chefs?.reduce((acc, chef) => {
     if (!acc.find((c) => c.id === chef.id)) {

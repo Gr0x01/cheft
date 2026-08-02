@@ -2,6 +2,7 @@ import { MetadataRoute } from 'next';
 import { createStaticClient } from '@/lib/supabase/static';
 import { isShowWorthIndexing } from '@/lib/showIndexing';
 import { isWinnersPageWorthIndexing } from '@/lib/winnerIndexing';
+import { isChefWorthIndexing } from '@/lib/chefIndexing';
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://cheft.app';
 
@@ -12,11 +13,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const [chefsResult, restaurantsResult, citiesResult, showsResult, statesResult, countriesResult] = await Promise.all([
       supabase
         .from('chefs')
-        .select('slug, updated_at')
+        .select('id, slug, updated_at, mini_bio, career_narrative')
         .order('updated_at', { ascending: false }),
       supabase
         .from('restaurants')
-        .select('slug, updated_at')
+        .select('slug, updated_at, chef_id')
         .eq('is_public', true)
         .order('updated_at', { ascending: false }),
       supabase
@@ -31,10 +32,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       (supabase as any)
         .from('states')
         .select('slug, updated_at')
+        .gt('restaurant_count', 0)
         .order('name'),
       (supabase as any)
         .from('countries')
         .select('slug, updated_at')
+        .gt('restaurant_count', 0)
         .order('name'),
     ]);
 
@@ -132,7 +135,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  const chefRoutes: MetadataRoute.Sitemap = chefs.map((chef) => ({
+  const publicRestaurantChefIds = new Set(restaurants.map((restaurant) => restaurant.chef_id));
+  const indexableChefs = chefs.filter((chef) => isChefWorthIndexing({
+    hasBio: Boolean(chef.mini_bio),
+    hasNarrative: Boolean(chef.career_narrative),
+    hasPublicRestaurant: publicRestaurantChefIds.has(chef.id),
+  }));
+
+  const chefRoutes: MetadataRoute.Sitemap = indexableChefs.map((chef) => ({
     url: `${BASE_URL}/chefs/${chef.slug}`,
     ...(chef.updated_at ? { lastModified: new Date(chef.updated_at) } : {}),
     changeFrequency: 'monthly' as const,

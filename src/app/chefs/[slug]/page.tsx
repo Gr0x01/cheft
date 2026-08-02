@@ -17,6 +17,7 @@ import { MichelinStar } from '@/components/icons/MichelinStar';
 import { RestaurantMiniCard } from '@/components/restaurant/RestaurantMiniCard';
 import { ChefPageView } from '@/components/analytics/PostHogPageView';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { isChefWorthIndexing } from '@/lib/chefIndexing';
 
 interface ChefPageProps {
   params: Promise<{ slug: string }>;
@@ -60,6 +61,7 @@ interface ChefData {
     google_review_count: number | null;
     photo_urls: string[] | null;
     michelin_stars?: number | null;
+    is_public: boolean | null;
   }>;
 }
 
@@ -104,7 +106,8 @@ async function getChef(slug: string): Promise<ChefData | null> {
           google_rating,
           google_review_count,
           photo_urls,
-          michelin_stars
+          michelin_stars,
+          is_public
         )
       `)
       .eq('slug', slug)
@@ -186,6 +189,11 @@ export async function generateMetadata({ params }: ChefPageProps): Promise<Metad
 
   const showInfo = bestShow?.show?.name || 'TV Chef';
   const resultInfo = bestShow?.result === 'winner' ? ' Winner' : bestShow?.result === 'finalist' ? ' Finalist' : '';
+  const isIndexable = isChefWorthIndexing({
+    hasBio: Boolean(chef.mini_bio),
+    hasNarrative: Boolean(chef.career_narrative),
+    hasPublicRestaurant: chef.restaurants.some((restaurant) => restaurant.is_public === true),
+  });
 
   // Check for Michelin and James Beard credentials
   const hasMichelin = chef.restaurants?.some(r => r.michelin_stars && r.michelin_stars > 0) || false;
@@ -213,6 +221,7 @@ export async function generateMetadata({ params }: ChefPageProps): Promise<Metad
     alternates: {
       canonical: `/chefs/${slug}`,
     },
+    ...(isIndexable ? {} : { robots: { index: false, follow: true } }),
     openGraph: {
       title: `${chef.name} - ${showInfo}${resultInfo}`,
       description,
