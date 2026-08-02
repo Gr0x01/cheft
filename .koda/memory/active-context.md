@@ -26,10 +26,11 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 
 ## Post-deploy checks
 
-- **Homepage Lighthouse (Aug 2, post-deploy): mobile 39 / desktop 68.** Not a network problem —
-  `/api/restaurants` is confirmed fast in production. The bottleneck is client-side: mobile
-  content waits on the full restaurant-list fetch, and the map hydrates even on mobile where
-  it's hidden. Diagnosis and proposed fixes in [[seo-recovery]] under "Homepage Lighthouse".
+- **Homepage Lighthouse fixes are done but uncommitted/undeployed.** Mobile 39 / desktop 68 was
+  client-side cost: winners row now server-rendered, mobile makes zero API calls on load, map
+  only mounts on desktop. Also fixed a pre-hydration search-input wipe found along the way.
+  e2e 55/55 green. Commit, push, then re-run PageSpeed. Detail in [[seo-recovery]] under
+  "Homepage Lighthouse".
 - Watch `/restaurants` Core Web Vitals after making all restaurant links server-rendered.
   Re-measure before doing pagination work — the homepage payload fix (45.9MB → 2.5MB, see
   [[seo-recovery]]) may have already resolved it.

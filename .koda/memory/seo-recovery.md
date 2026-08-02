@@ -295,12 +295,22 @@ is 325KB gzipped in 0.3s, homepage HTML 100KB gzipped. The cost is all client-si
   bundle and pins hydrate on phones that never see them. That plus the JSON parse plus
   whole-page hydration is the TBT.
 
-Proposed smallest fixes, not yet approved or applied:
-1. Compute the winners row server-side (like `popularRestaurants` already is) and defer the
-   `/api/restaurants` fetch until the user actually searches — mobile LCP then rides the
-   server-rendered HTML (~FCP).
-2. Mount the map + pins fetch only when the map is actually visible (viewport check), so
-   mobile stops paying for desktop's map.
+**Fixed 2026-08-02** (RB approved), not yet deployed — re-measure PageSpeed after deploy:
+1. Winners row is now server-rendered: `db.getWinnerRestaurants()` pulls a top-60-by-reviews
+   pool of open winner restaurants (michelin first), `page.tsx` shuffles within tiers and
+   passes 12 down as a prop. Behavior change: the row reshuffles once per ISR hour, not per
+   visit, and draws from that pool rather than all winners.
+2. `HomePage` gates on a `matchMedia('(min-width: 769px)')` check that must stay in sync with
+   the `.desktop-map-layout` breakpoint in `globals.css`. Mobile now makes **zero** API calls
+   on load; the `/api/restaurants` fetch fires on first search keystroke (or on desktop at
+   mount), and the map component + pins fetch mount only on desktop.
+3. Found while fixing: **text typed into the search box before React hydration got silently
+   wiped** on the first post-hydration render (pre-existing — reproduced on the old code in
+   webkit; the old e2e pass was timing luck). Fixed by a mount effect that adopts any
+   pre-hydration DOM value from either search input. e2e 55/55 green after.
+
+The local `npm run build` fails prerendering `/_global-error` (`useContext` of null) — verified
+pre-existing with a stash, and Vercel builds fine, so it's a local-env quirk, not shipping code.
 
 ## Still open, in priority order
 

@@ -3,6 +3,7 @@ import { createStaticClient } from '@/lib/supabase/static';
 import { isShowWorthIndexing } from '@/lib/showIndexing';
 import { isWinnersPageWorthIndexing } from '@/lib/winnerIndexing';
 import { isChefWorthIndexing } from '@/lib/chefIndexing';
+import { MIN_INDEXABLE_LOCATION_RESTAURANTS } from '@/lib/locationIndexing';
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://cheft.app';
 
@@ -23,7 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       supabase
         .from('cities')
         .select('slug, updated_at')
-        .gt('restaurant_count', 0)
+        .gte('restaurant_count', MIN_INDEXABLE_LOCATION_RESTAURANTS)
         .order('updated_at', { ascending: false }),
       supabase
         .from('shows')
@@ -32,12 +33,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       (supabase as any)
         .from('states')
         .select('slug, updated_at')
-        .gt('restaurant_count', 0)
+        .gte('restaurant_count', MIN_INDEXABLE_LOCATION_RESTAURANTS)
         .order('name'),
       (supabase as any)
         .from('countries')
         .select('slug, updated_at')
-        .gt('restaurant_count', 0)
+        .gte('restaurant_count', MIN_INDEXABLE_LOCATION_RESTAURANTS)
         .order('name'),
     ]);
 

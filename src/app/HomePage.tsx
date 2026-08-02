@@ -168,15 +168,18 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef, shows,
     return filtered;
   }, [deferredSearchQuery, selectedPriceRange, mapPins]);
 
+  // Slugs must carry the state suffix to match the cities table. Without it these
+  // linked to redirects at best — /cities/san-francisco was a hard 404 straight off
+  // the homepage — and they are the highest-authority internal links on the site.
   const popularCities = [
-    { name: 'New York', slug: 'new-york' },
-    { name: 'Los Angeles', slug: 'los-angeles' },
-    { name: 'Chicago', slug: 'chicago' },
-    { name: 'San Francisco', slug: 'san-francisco' },
-    { name: 'Miami', slug: 'miami' },
-    { name: 'Las Vegas', slug: 'las-vegas' },
-    { name: 'Seattle', slug: 'seattle' },
-    { name: 'Houston', slug: 'houston' },
+    { name: 'New York', slug: 'new-york-ny' },
+    { name: 'Los Angeles', slug: 'los-angeles-ca' },
+    { name: 'Chicago', slug: 'chicago-il' },
+    { name: 'San Francisco', slug: 'san-francisco-ca' },
+    { name: 'Miami', slug: 'miami-fl' },
+    { name: 'Las Vegas', slug: 'las-vegas-nv' },
+    { name: 'Seattle', slug: 'seattle-wa' },
+    { name: 'Houston', slug: 'houston-tx' },
   ];
 
   const handleRestaurantClick = (restaurant: RestaurantWithDetails) => {

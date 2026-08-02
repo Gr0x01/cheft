@@ -1523,5 +1523,45 @@
     "source": "/shows/the-next-food-network-star",
     "destination": "/shows/food-network-star",
     "permanent": true
+  },
+  {
+    "source": "/cities/amman-",
+    "destination": "/cities/amman",
+    "permanent": true
+  },
+  {
+    "source": "/cities/angers-",
+    "destination": "/cities/angers",
+    "permanent": true
+  },
+  {
+    "source": "/cities/bangkok-",
+    "destination": "/cities/bangkok",
+    "permanent": true
+  },
+  {
+    "source": "/cities/cheltenham-",
+    "destination": "/cities/cheltenham",
+    "permanent": true
+  },
+  {
+    "source": "/cities/montr-al-qc",
+    "destination": "/cities/montreal-qc",
+    "permanent": true
+  },
+  {
+    "source": "/cities/val-ncia-",
+    "destination": "/cities/valencia",
+    "permanent": true
+  },
+  {
+    "source": "/cities/washington-d-c-dc",
+    "destination": "/cities/washington-dc",
+    "permanent": true
+  },
+  {
+    "source": "/cities/san-francisco",
+    "destination": "/cities/san-francisco-ca",
+    "permanent": true
   }
 ]
