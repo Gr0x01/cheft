@@ -1,6 +1,6 @@
 ---
 name: seo-recovery
-description: why organic traffic plateaued, the crawlability fix that was applied, and what's still open
+description: why only 16% of pages are indexed, the crawlability and thin-content fixes applied, the next/script and is_public traps, and what's still open
 Last-Updated: 2026-08-02
 Maintainer: RB
 ---
@@ -8,17 +8,26 @@ Maintainer: RB
 # SEO Recovery
 
 Diagnosis and fix work started 2026-08-02, prompted by traffic being lower than expected
-after months live. **Applied locally, not yet deployed.**
+after months live.
+
+**Deploy state as of 2026-08-02:** all code is committed and on `origin/main`, but production
+still serves the old build. Migrations 047 and 048 were applied **directly to production
+Supabase** (via the Supabase MCP), so the database is ahead of the deployed code — a benign
+mismatch, but read [[active-context]] before assuming what's live. Both migrations are
+idempotent, so re-running them through any other pipeline is safe.
 
 ## The measurement
 
 PostHog (project "Cheft", id 261651), 30 days to 2026-08-02: 4,193 visitors / 9,368 views /
 4,475 sessions, bounce 24.6%, avg session 107s. Channel split: 51% Organic Search, 49% Direct.
-Weekly visitors grew Feb→May 2026 then **flatlined at 700–1,300/week** — the shape of a site
-whose initial indexing wave finished and then found nothing new to crawl.
+Weekly visitors grew Feb→May 2026 then **flatlined at 700–1,300/week**.
 
 Engagement is healthy; discovery is the problem. Organic entries land on chef/restaurant/city
 detail pages, which are genuinely good (500–800 words, strong JSON-LD, unique canonicals).
+
+Note the flat *visitors* line does not mean indexing stalled — Search Console shows indexed
+pages nearly doubling over the same period (below). The site is being indexed slowly from a
+small base, not frozen.
 
 ## Search Console confirms it: 16% of pages are indexed
 
@@ -180,8 +189,11 @@ context and providers, since global-error replaces the root layout.
 
 ## Still open, in priority order
 
-1. **Nothing is deployed yet.** Six commits of SEO work are sitting on `main`, unpushed and
-   unverified on Vercel. That gates measuring any of it.
+1. **Verify the deploy.** The code is on `origin/main` but production still serves the old
+   build — live `/restaurants` has 0 crawlable links and the live sitemap still lists 192
+   shows. RB must check the Vercel dashboard (never run the Vercel CLI on this project); a
+   failed build is plausible given the `_global-error` bug above. Nothing here can be
+   measured until this is resolved.
 2. **`/suggest` 404s** — linked from 89 state and country hub pages; no such route exists.
 3. **Header nav** — `/cities`, `/states` and `/countries` are footer-only, though the state
    hubs are the site's strongest crawl path. (The `/shows` index orphaning is fixed: 10 → 51.)
