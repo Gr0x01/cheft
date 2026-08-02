@@ -1,4 +1,6 @@
 ---
+name: enrichment-system
+description: deep guide to the 19-file enrichment architecture and how to extend it
 Last-Updated: 2025-12-05 (evening)
 Maintainer: RB
 Status: Active

@@ -1,4 +1,6 @@
 ---
+name: llm-models
+description: authoritative OpenAI model names and pricing — never change these without asking RB
 Last-Updated: 2025-12-10
 Maintainer: RB
 Status: Active
@@ -252,8 +254,8 @@ For experimental work and cost-free testing, a local LLM is available:
 ## References
 
 - **OpenAI Pricing Page**: https://openai.com/api/pricing/
-- **Enrichment System Docs**: `/memory-bank/projects/enrichment-refresh-system.md`
-- **Tech Stack Overview**: `/memory-bank/architecture/techStack.md`
+- **Enrichment System Docs**: `archive/enrichment-refresh-system.md`
+- **Tech Stack Overview**: [[tech-stack]]
 - **LLM Enricher Implementation**: `scripts/ingestion/processors/llm-enricher.ts`
 
 ---

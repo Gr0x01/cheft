@@ -1,5 +1,7 @@
 ---
-Last-Updated: 2025-12-10
+name: runbook
+description: day-to-day commands, admin panel URLs, and how to add a new TV show
+Last-Updated: 2026-08-02
 Maintainer: RB
 Status: Pre-Launch - Final Polish
 ---
@@ -62,9 +64,9 @@ Use `scripts/add-show.ts` to add a new show with contestants. It handles everyth
 - Mobile responsiveness verification
 
 ## Quick Links
-- [Project Brief](./projectbrief.md)
-- [Tech Stack](../architecture/techStack.md)  
-- [Active Context](../development/activeContext.md)
+- [[project-brief]]
+- [[tech-stack]]
+- [[active-context]]
 
 ## Environment Setup
 1. ✅ Next.js project initialized
@@ -81,11 +83,16 @@ Use `scripts/add-show.ts` to add a new show with contestants. It handles everyth
 12. ✅ Fresh restaurant data via Tavily migration
 
 ## Database Status
-- **Restaurants**: 1,036 TV chef locations
-- **Chefs**: 238 unique contestants/winners  
-- **Coverage**: 162+ cities, 50+ states, 10+ countries
-- **Data Quality**: 98.5% Google Places, ~98% photos
-- **Michelin**: 4,009 reference restaurants from Wikipedia
+Counted directly from the Cheft Supabase project (`clktrvyieegouggrpfaj`) on 2026-08-02.
+Re-count rather than trusting this block if it's more than a few months old.
+
+- **Restaurants**: 1,293 (all public) — 100% Google Places, 96% have photos
+- **Chefs**: 464 — 86% have bios, **5% have photos** (only 22 rows carry `photo_url`)
+- **Shows**: 192 total, 27 public
+- **Coverage**: 162 cities, 51 states, 36 countries
+- **Michelin**: 4,846 reference restaurants from Wikipedia
+
+To re-count: `select count(*) from chefs;` etc., or use `/admin/data`.
 
 ## Admin Panel
 - **Login**: `/admin/login` (Supabase Auth with magic link)

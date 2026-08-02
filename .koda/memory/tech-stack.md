@@ -1,4 +1,6 @@
 ---
+name: tech-stack
+description: Next.js/Supabase/Vercel stack, deploys, and environment references
 Last-Updated: 2025-12-26
 Maintainer: RB
 Status: Defined

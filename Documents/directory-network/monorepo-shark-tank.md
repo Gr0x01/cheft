@@ -3,7 +3,7 @@
 **Last Updated:** 2025-12-10  
 **Status:** Planning  
 **Priority:** High (Next major project after show expansion stabilizes)  
-**Related:** [niche-directory.md](../ideas/niche-directory.md), [shark-tank.md](../ideas/shark-tank.md)
+**Related:** [niche-directory.md](./niche-directory.md), [shark-tank.md](./shark-tank.md)
 
 ---
 

@@ -1,5 +1,7 @@
 ---
-Last-Updated: 2026-06-12
+name: progress
+description: shipped-milestone log — what landed and when
+Last-Updated: 2026-08-02
 Maintainer: RB
 Status: Phase 3 Complete
 ---
@@ -30,15 +32,20 @@ Status: Phase 3 Complete
 | 12 | Top Chef Charlotte (S23) | Mar 14 | ✅ 15 chefs + 15 restaurants enriched |
 | 13 | Restaurant Photo Self-Hosting | Jun 12 | ✅ ~1,190 repaired, 0 expired URLs; photos now in Supabase storage |
 
-## Current Status (as of Mar 14, 2026)
+## Current Status (counted from the database 2026-08-02)
 
 **Production Site**: Live on Vercel with 700+ SEO-optimized pages
-- 238 chefs (100% bios, 88% photos)
-- 560 restaurants (100% Google Places data, 72% photos)
+- 464 chefs (86% bios, 5% photos)
+- 1,293 restaurants (100% Google Places data, 96% photos)
 - 162 city landing pages
-- 50+ state pages
-- 10+ country pages
+- 51 state pages
+- 36 country pages
+- 27 public shows (192 total in the database)
 - Full admin panel with entity editors, enrichment tools, show management
+
+Earlier revisions of this file claimed 238 chefs at 88% photo coverage. The roster
+has since roughly doubled through show enrichment runs, and photo coverage did not
+keep pace — see [[active-context]].
 
 **Tech Stack**: Next.js 16, Supabase, Tailwind CSS, Leaflet maps, PostHog analytics, Schema.org SEO
 
@@ -60,4 +67,4 @@ Status: Phase 3 Complete
 12. ✅ **Tavily Hybrid Enrichment** - Web search + LLM staging
 13. ✅ **Admin Shows Page** - Harvest trigger for show data
 
-(Detailed phase histories archived in `/memory-bank/archive/`)
+(Detailed phase histories archived in `archive/`)

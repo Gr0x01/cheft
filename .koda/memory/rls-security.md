@@ -1,4 +1,6 @@
 ---
+name: rls-security
+description: Supabase Row Level Security — which tables are locked down and how
 Last-Updated: 2025-12-09
 Maintainer: RB
 Status: Implemented

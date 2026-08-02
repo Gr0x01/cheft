@@ -1,5 +1,7 @@
 ---
-Last-Updated: 2026-06-11
+name: enrichment-reference
+description: day-to-day enrichment API, costs, and the never-store-Google-photo-URLs rule
+Last-Updated: 2026-08-02
 Maintainer: RB
 Status: Active
 ---
@@ -236,6 +238,10 @@ and `enrich-google-places.ts` both do this. Stored URLs then look like
   limit to card-visible images, `--dry-run` to preview). ~$0.05/restaurant.
 - **UI resilience**: `components/restaurant/ImageWithFallback.tsx` degrades a
   dead image to the Donut placeholder instead of a broken-image icon.
+- **Known tail** (as of Jun 2026): the Jun 2026 backfill repaired ~1,190
+  restaurants and left **0 expired URLs**, but 55 restaurants still hold legacy
+  `/places/...` URLs. Those return 200 and are not broken — self-hosting them is
+  optional cleanup, not a bug.
 
 ## Environment Variables
 
@@ -329,6 +335,6 @@ To add a show, add entry to `WIKIPEDIA_SHOW_URLS` in `show-source-service.ts`.
 
 ## Read More
 
-- **Detailed Architecture:** `memory-bank/projects/enricher-v2.md`
-- **Design Patterns:** `memory-bank/architecture/patterns.md`
+- **Detailed Architecture:** `archive/enricher-v2.md`
+- **Design Patterns:** [[patterns]]
 - **Main Script:** `scripts/add-show.ts`

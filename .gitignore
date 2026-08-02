@@ -83,3 +83,9 @@ docker-compose.override.yml
 
 # Build artifacts
 tsconfig.tsbuildinfo
+
+# Koda workspace
+# Track project memory in git; keep the local checkpoint store out.
+!.koda/
+.koda/*
+!.koda/memory/

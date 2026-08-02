@@ -1,4 +1,6 @@
 ---
+name: system-design
+description: how the pieces fit together — ingestion through to the public SEO pages
 Last-Updated: 2025-12-09
 Maintainer: RB
 Status: Active Design

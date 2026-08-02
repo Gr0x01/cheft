@@ -1,38 +1,36 @@
 # CLAUDE AI ASSISTANT RULES
 
-## MEMORY BANK – START PROCEDURE
+## PROJECT MEMORY – START PROCEDURE
 
-I am Claude, an expert software engineer whose memory resets between sessions. The memory bank is the single source of truth that gets me back up to speed. Read only what is required, keep it lean, and update it when reality changes.
+I am Claude, an expert software engineer whose memory resets between sessions. Project memory lives in `.koda/memory/` and is what gets me back up to speed. Read only what is required, keep it lean, and update it when reality changes.
 
-### Memory Bank Layout
+### Layout
 ```
-core/           → must-read startup context
-development/    → active engineering focus + operations
-architecture/   → current system map + approved patterns
-archive/        → historical narrative and deprecated guidance
+.koda/memory/MEMORY.md          → the index: one line per note, read this first
+.koda/memory/active-context.md  → where things stand right now (auto-loaded)
+.koda/memory/*.md               → one note per topic, each with name + description frontmatter
+.koda/memory/archive/           → superseded plans and long-form history; optional
 ```
 
-### Core Files (Read In Order)
-YOU MUST READ THESE FILES BEFORE ANYTHING ELSE.
-1. `/memory-bank/core/quickstart.md` – one-page situational awareness + commands
-2. `/memory-bank/core/projectbrief.md` – enduring product promise and scope
-3. `/memory-bank/development/activeContext.md` – current sprint goals + blockers
-4. `/memory-bank/development/progress.md` – quarterly highlights of shipped work
-5. `/memory-bank/architecture/techStack.md` – current stack, deployments, references
+### How to start
+`MEMORY.md` and `active-context.md` load automatically. Every other note is opt-in — read the index, then open only the one or two notes whose hooks are relevant to the task. Do not read the whole directory.
 
-Read additional docs only if needed (`architecture/patterns.md`, `development/daily-log/`, etc.). Long-form history now lives under `memory-bank/archive/` and is optional.
-
-**Enrichment System Reference:**
-- `/memory-bank/architecture/enrichment-reference.md` – Quick reference for LLM enrichment operations (read when working with chef/restaurant data)
-- `/memory-bank/architecture/enrichment-system.md` – Detailed guide for extending the enrichment system
+**Working with chef/restaurant data?** Start with `enrichment-reference.md` (day-to-day API, costs, photo-storage rule); go to `enrichment-system.md` only when extending the pipeline.
 
 ### Documentation Updates
-Update the memory bank when:
+Update project memory when:
 - You finish a feature or change operational flow.
 - Architecture/tooling shifts (new dependency, command, deployment change).
 - You discover a pattern that should guide future work.
 
-Always adjust the metadata header (`Last-Updated`, `Maintainer`) when you edit a living doc.
+Rules that keep it from bloating:
+- **Update the existing note on a topic** rather than adding a parallel one. A work session is not a topic.
+- Keep `active-context.md` to about a page of one-liners. Delete a line the same session its work ships — detail belongs in the topic note.
+- Keep each `MEMORY.md` index line in sync with its note.
+- Always adjust the metadata header (`Last-Updated`, `Maintainer`) when you edit a living doc.
+
+### RB's documents
+RB's own writing — product strategy, plans, memos — lives in `Documents/`, not in `.koda/memory/`. Memory is for engineering knowledge; `Documents/` is for him.
 
 ## BEHAVIORAL RULES
 
@@ -77,7 +75,7 @@ Always adjust the metadata header (`Last-Updated`, `Maintainer`) when you edit a
 ### LLM Model Usage - CRITICAL
 **NEVER change LLM model names or configurations without explicit authorization.**
 
-- The project has a model reference with correct pricing and model names in `/memory-bank/architecture/techStack.md`
+- The project has a model reference with correct pricing and model names in `.koda/memory/llm-models.md` (stack overview in `.koda/memory/tech-stack.md`)
 - Current OpenAI models in use: `gpt-5-mini`, `gpt-5-nano`, etc.
 - **DO NOT** change model configurations based on assumed errors
 - If you believe there's an error in model naming, ASK FIRST before changing anything

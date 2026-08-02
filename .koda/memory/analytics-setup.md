@@ -1,4 +1,6 @@
 ---
+name: analytics-setup
+description: PostHog and Plausible wiring, plus the custom events tracked
 Last-Updated: 2025-12-14
 Maintainer: RB
 Status: Active

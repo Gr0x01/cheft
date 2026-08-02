@@ -1,4 +1,6 @@
 ---
+name: patterns
+description: repository/service/workflow patterns to follow, and the anti-patterns to avoid
 Last-Updated: 2025-12-05
 Maintainer: RB
 Status: Active

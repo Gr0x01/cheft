@@ -1,4 +1,6 @@
 ---
+name: project-brief
+description: what Cheft is, who it's for, and what's in and out of scope
 Last-Updated: 2025-11-30
 Maintainer: RB
 Status: Defined
