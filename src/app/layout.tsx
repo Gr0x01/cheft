@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Crimson_Pro, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { PlausibleAnalytics } from "@/components/PlausibleAnalytics";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
@@ -8,6 +9,30 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
 };
+
+// Self-hosted at build time. These were loaded by an @import of fonts.googleapis.com at the
+// top of globals.css, which serialised three round trips — fetch the CSS, discover the import,
+// resolve googleapis, then resolve gstatic — before any text could paint in the right face.
+const crimsonPro = Crimson_Pro({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-crimson-pro",
+});
+
+const jetBrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-jetbrains-mono",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-space-grotesk",
+});
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://cheft.app';
 
@@ -58,7 +83,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html
+      lang="en"
+      className={`${crimsonPro.variable} ${jetBrainsMono.variable} ${spaceGrotesk.variable}`}
+    >
       <head>
         <link rel="preconnect" href="https://clktrvyieegouggrpfaj.supabase.co" />
         <link rel="dns-prefetch" href="https://lh3.googleusercontent.com" />
