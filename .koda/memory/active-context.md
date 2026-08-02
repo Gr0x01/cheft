@@ -11,9 +11,16 @@ Maintainer: RB
 Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-brief]].
 
 ## Current focus
+- **SEO recovery.** Traffic plateaued ~May 2026 at 700–1,300 visitors/week (PostHog, ~50% organic).
+  Root cause found: browse pages shipped zero crawlable links. Fixed but **not yet deployed** —
+  see [[seo-recovery]] for the diagnosis, the fix list, and what's still open.
 - UI polish, mobile responsiveness, and a clean `npm run test:e2e` pass before launch.
 
 ## Next step
+- **`npm run build` fails locally** on `/_global-error` — a Next 16 bug with no app-level
+  workaround (vercel/next.js#94667), likely Node 24 only; Vercel has been building fine for
+  8 months. Confirm on a Vercel preview deploy before trusting a local red build. Details in [[seo-recovery]].
+- Then: remaining SEO items 2 and 4 (thin show pages, internal linking) in [[seo-recovery]].
 - Two show configs are enriched-ready but unrun (Top Chef Canada, Just Desserts) — see [[show-enrichment-status]].
 
 ## Open questions

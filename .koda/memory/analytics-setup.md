@@ -1,7 +1,7 @@
 ---
 name: analytics-setup
 description: PostHog and Plausible wiring, plus the custom events tracked
-Last-Updated: 2025-12-14
+Last-Updated: 2026-08-02
 Maintainer: RB
 Status: Active
 ---
@@ -21,11 +21,21 @@ The project uses multiple analytics platforms for different purposes:
 - **Implementation**: `src/components/GoogleAnalytics.tsx`
 - **Integration**: Added to `src/app/layout.tsx`
 
-GA4 provides comprehensive tracking required for monetization platforms like Mediavine. Standard pageview tracking is automatic via the gtag.js script.
+GA4 provides comprehensive tracking required for monetization platforms like Mediavine. Standard pageview tracking is automatic via the gtag.js script, loaded from plain `<script>` tags (not `next/script` — see [[seo-recovery]]).
 
 ## Plausible Analytics
 
-Simple, privacy-focused analytics via the `next-plausible` package. Configured in layout.tsx with domain "cheft.app".
+Simple, privacy-focused analytics for domain "cheft.app", rendered by
+`src/components/PlausibleAnalytics.tsx` and mounted in layout.tsx.
+
+**Not** `next-plausible`'s `<PlausibleProvider>` — that renders through `next/script`, which
+crashes static prerendering under Next 16. The component hand-rolls the exact markup the
+provider emitted. `next-plausible` remains a dependency solely for `withPlausibleProxy()` in
+`next.config.ts`, which proxies the script and event endpoint through our own domain to get
+past ad blockers. **The paths in the component must stay in sync with those rewrites:**
+script `/js/script.js`, API `/proxy/api/event`. Renders in production only.
+
+See [[seo-recovery]] for why `next/script` is banned in this codebase.
 
 ## PostHog Analytics
 
