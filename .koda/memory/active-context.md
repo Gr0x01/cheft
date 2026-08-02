@@ -21,12 +21,11 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 - Production deploy verified 2026-08-02: `/restaurants` serves 1,293 crawlable restaurant
   links and the sitemap contains 2,123 URLs. Confirm Plausible still records, then resubmit
   the sitemap in Search Console.
-- `/suggest` replacement page is built and locally verified but not committed/deployed; ship
-  it, then add `/cities`, `/states`, and `/countries` to the header navigation. See
-  [[seo-recovery]].
+- `/suggest` replacement and crawlable Locations header nav are committed and locally
+  verified but not deployed. Deploy them, then address the sitemap gaps. See [[seo-recovery]].
 
 ## After that
-- Remaining SEO backlog: header nav, sitemap gaps, homepage rendering,
+- Remaining SEO backlog: sitemap gaps, homepage rendering,
   OG image, `revalidate` on detail routes — itemised and prioritised in [[seo-recovery]].
 - Two show configs are enriched-ready but unrun (Top Chef Canada, Just Desserts) — see
   [[show-enrichment-status]].

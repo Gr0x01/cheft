@@ -189,17 +189,16 @@ context and providers, since global-error replaces the root layout.
 
 1. **Confirm Plausible still records and resubmit the sitemap** in Search Console now that
    the crawlability recovery build is live.
-2. **Ship `/suggest`.** A static, noindexed utility page now replaces the 404 and opens a
-   pre-filled suggestion email to `info@cheft.app`; locally verified, not yet deployed.
-3. **Header nav** — `/cities`, `/states` and `/countries` are footer-only, though the state
-   hubs are the site's strongest crawl path. (The `/shows` index orphaning is fixed: 10 → 51.)
-4. **Sitemap gaps** — `/cities` missing from static routes; the `restaurant_count >= 3`
+2. **Deploy the next recovery commit.** `/suggest` now replaces the 404 with a noindexed
+   email utility page. The header now exposes crawlable `/cities`, `/states`, and `/countries`
+   links through a desktop Locations menu and direct mobile links. Both are locally verified.
+3. **Sitemap gaps** — `/cities` missing from static routes; the `restaurant_count >= 3`
    filter excludes ~122 real city pages; show/season `lastModified` is build time, not
    content time, which trains Google to distrust every `lastmod` in the file.
-5. **Homepage wastes its equity** — client-side Leaflet map, only ~4 restaurant links in HTML.
-6. No OG image anywhere; no `revalidate` on the two detail routes, so entities beyond the
+4. **Homepage wastes its equity** — client-side Leaflet map, only ~4 restaurant links in HTML.
+5. No OG image anywhere; no `revalidate` on the two detail routes, so entities beyond the
    `generateStaticParams` caps (500 restaurants / 200 chefs) cache indefinitely.
-7. **1,417 404s** still unidentified — needs the URL list exported from the Search Console
+6. **1,417 404s** still unidentified — needs the URL list exported from the Search Console
    Pages report.
 
 Full original audit findings, including what's already good, live in this note's history.
