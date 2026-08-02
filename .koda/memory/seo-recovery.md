@@ -208,9 +208,27 @@ context and providers, since global-error replaces the root layout.
 
 ## Still open, in priority order
 
-1. **Resubmit the sitemap** and start Search Console validation for the Not found (404) issue.
-   Plausible was confirmed working by RB on 2026-08-02.
-2. **Monitor `/restaurants` Core Web Vitals.** It now renders all cards server-side; paginate
+1. **Merge six exact duplicate chef pairs before resubmitting.** A second-pass sitemap audit
+   found duplicate pages for Ana Roš, Ángel León, Virgilio Martínez, Musa Dağdeviren, Albert
+   Adrià and José Andrés. In each pair, an older malformed accent slug is thin while the clean
+   slug holds the substantive profile. Merge the records and permanently redirect the six old
+   slugs; deleting them without redirects would recreate the 404 problem.
+2. **Stop submitting empty geography pages.** The sitemap currently contains five states
+   (Alaska, Kansas, Nebraska, West Virginia, Wyoming) and 14 countries with zero public
+   restaurants. Their detail pages return 200 with empty-state copy and are internally linked
+   from the “All” lists. Remove them from the sitemap and use `noindex, follow` while empty;
+   keep the pages available to people.
+3. **Repair stale city counts.** `cities.restaurant_count` has no ongoing sync and disagrees
+   with the public restaurant data for 77 cities. Nine valid city pages are missing from the
+   sitemap because their stored count is zero (Tysons, Wolfeboro, Bozeman, Carmel, Indianapolis,
+   Irving, Jacksonville, Rio Grande and Santa Barbara); many visible titles and descriptions
+   also undercount restaurants. Add a repeatable count sync and run it once before submission.
+4. **Review the two remaining ultra-thin Chef's Table profiles.** Saqib Keval and Norma Listman
+   have a show appearance but no public restaurant, bio, narrative or current position. Enrich
+   them or temporarily `noindex, follow`; do not remove them merely for being incomplete.
+5. **Then resubmit the sitemap** and start Search Console validation for the Not found (404)
+   issue. Plausible was confirmed working by RB on 2026-08-02.
+6. **Monitor `/restaurants` Core Web Vitals.** It now renders all cards server-side; paginate
    or cap the first page if the added weight causes a regression.
 
 Full original audit findings, including what's already good, live in this note's history.

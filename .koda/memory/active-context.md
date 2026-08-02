@@ -18,8 +18,8 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 
 ## Next step
 
-- Resubmit the sitemap and start Search Console validation for the repaired 404s. The complete
-  SEO code batch is live and production-verified; Plausible is confirmed working.
+- Finish the duplicate-chef, empty-geography and stale-city-count cleanup in [[seo-recovery]],
+  deploy it, then resubmit the sitemap and validate the repaired 404s in Search Console.
 
 ## Post-deploy checks
 
