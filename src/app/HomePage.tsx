@@ -137,8 +137,12 @@ export default function Home({ initialFeaturedChefs, stats, featuredChef, shows,
     }
 
     if (selectedShow !== 'all') {
-      filtered = filtered.filter(restaurant => 
-        restaurant.chef?.primary_show?.name.toLowerCase() === selectedShow.toLowerCase()
+      // Match any appearance, not just the primary one: 229 of 445 chefs are on more than
+      // one show, so filtering on primary_show hid most of a show's actual roster.
+      filtered = filtered.filter(restaurant =>
+        restaurant.chef?.chef_shows?.some(
+          cs => cs.show?.name?.toLowerCase() === selectedShow.toLowerCase()
+        )
       );
     }
 

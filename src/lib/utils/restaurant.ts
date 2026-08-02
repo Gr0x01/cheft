@@ -38,7 +38,9 @@ export function getChefAchievements(chef: {
   }>;
 }): ChefAchievements {
   return {
-    isShowWinner: chef.chef_shows?.some(cs => cs.is_primary && cs.result === 'winner') ?? false,
+    // Winning any show earns the badge — requiring is_primary too meant a chef who won
+    // one show but is better known for another silently lost it.
+    isShowWinner: chef.chef_shows?.some(cs => cs.result === 'winner') ?? false,
     isJBWinner: chef.james_beard_status === 'winner',
     isJBNominee: chef.james_beard_status === 'nominated',
     isJBSemifinalist: chef.james_beard_status === 'semifinalist',
