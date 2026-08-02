@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { withPlausibleProxy } from "next-plausible";
+import legacyRedirects from "./src/data/legacyRedirects.json";
 
 const nextConfig: NextConfig = {
   compiler: {
@@ -7,6 +8,9 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react', 'react-leaflet'],
+  },
+  async redirects() {
+    return legacyRedirects;
   },
   images: {
     formats: ['image/avif', 'image/webp'],

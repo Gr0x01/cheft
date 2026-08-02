@@ -18,8 +18,8 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 
 ## Next step
 
-- Deploy the locally verified homepage Popular Restaurants row, then confirm
-  Plausible records and resubmit the 2,211-URL sitemap in Search Console. See [[seo-recovery]].
+- Commit and deploy the 299 high-confidence legacy redirects alongside the homepage
+  Popular Restaurants row; then confirm Plausible and resubmit the sitemap. See [[seo-recovery]].
 
 ## After that
 - Remaining SEO backlog: OG image and `revalidate` on detail routes — itemised in [[seo-recovery]].
@@ -27,9 +27,6 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
   [[show-enrichment-status]].
 
 ## Open questions
-- **1,417 pages return 404** to Google — old slugs from re-slugged or deleted entities, and
-  there is no slug-redirect handling anywhere in the app. Needs the URL list exported from
-  the Search Console Pages report to act on; the CSV export only gives counts.
 - **Chef photo coverage is 14%** (63/464) after the Aug 2 2026 Wikimedia backfill. Wikipedia is tapped out — the other 401 have no article. Decide before launch whether initials/Instagram fallback is good enough, or budget for licensed headshots. See [[enrichment-reference]].
 - **Duplicate chef rows are live** — José Andrés and Albert Adrià each matched twice during the backfill, i.e. they exist twice in `chefs`. `duplicate_candidates` holds 123 rows; `npm run merge-duplicate-chefs` exists but hasn't been run recently.
 

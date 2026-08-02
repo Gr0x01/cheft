@@ -62,9 +62,19 @@ Checked and ruled out as 404 sources:
 - A `/city/` → `/cities/` style route rename — no singular routes ever existed in git history.
 - The current sitemap — 50 URLs sampled across every type, all 200.
 
-So the 1,417 are old slugs from re-slugged or deleted entities. There is **no slug-redirect
-handling anywhere**, so every re-slug leaves a permanent 404. Identifying them needs the URL
-list exported from the Search Console Pages report; the CSV export only gives counts.
+The issue-detail export supplied 2026-08-02 contains Google's maximum 1,000 examples: 808
+restaurant URLs (539 unique paths), 178 show URLs (117 unique), six cities, two copies of one
+chef URL, four expired Next.js chunks, `/suggest`, and one junk `/$` URL. Host split is 492
+canonical and 508 `www`; `www` now 308-redirects correctly, and 100 of the show paths already
+match current records, so those entries are stale crawl history rather than active failures.
+
+**Legacy redirect fix prepared locally:** 299 exact redirects in
+`src/data/legacyRedirects.json` provide permanent redirects for 275 restaurants matched to
+current records by Google Place ID (273) or exact name + city (2), six former city slugs,
+eight show renames/consolidations, nine legacy Guy's Grocery Games season paths, and Joe
+Sasto's old chef slug. Of the remaining unique restaurant paths, 185 correspond to entities
+no longer in the database and 79 cannot be identified confidently; both groups remain 404
+instead of being sent to irrelevant pages. Raw exports are retained in `data/search-console/`.
 
 ## Root cause: browse pages had zero crawlable links
 
@@ -193,9 +203,9 @@ context and providers, since global-error replaces the root layout.
    Popular Restaurants row adds 12 visible detail links without server-rendering the full map
    directory. Browser verification found 16 unique restaurant links in the raw homepage HTML
    (12 new plus 4 existing); typecheck and focused review pass.
-3. No OG image anywhere; no `revalidate` on the two detail routes, so entities beyond the
+3. **Deploy the 299 legacy redirects** after local route verification, then start Search
+   Console validation for the Not found (404) issue.
+4. No OG image anywhere; no `revalidate` on the two detail routes, so entities beyond the
    `generateStaticParams` caps (500 restaurants / 200 chefs) cache indefinitely.
-4. **1,417 404s** still unidentified — needs the URL list exported from the Search Console
-   Pages report.
 
 Full original audit findings, including what's already good, live in this note's history.

@@ -1,0 +1,1497 @@
+[
+  {
+    "source": "/chefs/joseph-joe-sasto-iii",
+    "destination": "/chefs/joe-sasto",
+    "permanent": true
+  },
+  {
+    "source": "/cities/chicago",
+    "destination": "/cities/chicago-il",
+    "permanent": true
+  },
+  {
+    "source": "/cities/houston",
+    "destination": "/cities/houston-tx",
+    "permanent": true
+  },
+  {
+    "source": "/cities/los-angeles",
+    "destination": "/cities/los-angeles-ca",
+    "permanent": true
+  },
+  {
+    "source": "/cities/miami",
+    "destination": "/cities/miami-fl",
+    "permanent": true
+  },
+  {
+    "source": "/cities/new-york",
+    "destination": "/cities/new-york-ny",
+    "permanent": true
+  },
+  {
+    "source": "/cities/seattle",
+    "destination": "/cities/seattle-wa",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/1-kitchen-nashville-nashville-chris-crary",
+    "destination": "/restaurants/1-kitchen-nashville",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/221-south-oak-telluride-eliza-gavin",
+    "destination": "/restaurants/221-south-oak-telluride",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/24-diner-austin-andrew-curren",
+    "destination": "/restaurants/24-diner-austin",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/610-magnolia-louisville-edward-lee",
+    "destination": "/restaurants/610-magnolia-louisville",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/aba-chicago-chicago",
+    "destination": "/restaurants/aba-chicago",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/aba-chicago-chicago-chris-cj-jacobson",
+    "destination": "/restaurants/aba-chicago",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/adelina-chicago-soo-ahn",
+    "destination": "/restaurants/adalina-chicago",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/agni-columbus-avishar-barua",
+    "destination": "/restaurants/agni-columbus",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/ai-pono-caf-durango-durango-casino-resort-las-vegas",
+    "destination": "/restaurants/ai-pono-cafe-las-vegas",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/ai-pono-caf-las-vegas-eugene-villiatora",
+    "destination": "/restaurants/ai-pono-cafe-las-vegas",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/alee-alee-by-ali-amman",
+    "destination": "/restaurants/alee-amman",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/amada-philadelphia-philadelphia",
+    "destination": "/restaurants/amada-philadelphia",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/animae",
+    "destination": "/restaurants/animae-san-diego",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/animae-san-diego-brian-malarkey",
+    "destination": "/restaurants/animae-san-diego",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/ansanm-milford-chris-viaud",
+    "destination": "/restaurants/ansanm-milford",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/aquagrille-juno-beach-stephen-asprinio",
+    "destination": "/restaurants/aquagrille-juno-beach",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/arlo-grey-austin-kristen-kish",
+    "destination": "/restaurants/arlo-grey-austin",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/auro-calistoga-rogelio-garcia",
+    "destination": "/restaurants/auro-calistoga",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/averde-cary-katsuji-tanabe",
+    "destination": "/restaurants/a-verde-cocina-and-tequila-library-cary",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/bar-charley-washington-adam-harvey",
+    "destination": "/restaurants/bar-charley-washington",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/bar-pina-hartford-tyler-anderson",
+    "destination": "/restaurants/bar-pina-hartford",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/bar-volpe-ristorante-pastificio-boston",
+    "destination": "/restaurants/bar-volpe-boston",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/barvera-barvera-modern-mediterranean-stamford",
+    "destination": "/restaurants/barvera-stamford",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/beauty-the-butcher-coral-gables-jeremy-ford",
+    "destination": "/restaurants/beauty-the-butcher-coral-gables",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/belga-cafe-washington-bart-vandaele",
+    "destination": "/restaurants/belga-caf-washington",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/big-e-egg-sandwich-shop-st-paul-saint-paul",
+    "destination": "/restaurants/big-e-st-paul",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/black-cactus-avalon-jason-cichonski",
+    "destination": "/restaurants/black-cactus-avalon",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/black-lodge-richmond-brittanny-anderson",
+    "destination": "/restaurants/black-lodge-richmond",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/black-market-liquor-bar-studio-city-antonia-lofaso",
+    "destination": "/restaurants/black-market-liquor-bar-studio-city",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/blackbelly-market-restaurant-boulder-boulder",
+    "destination": "/restaurants/blackbelly-market-boulder",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/boca-tucson-maria-mazon",
+    "destination": "/restaurants/boca-tacos-y-tequila-tucson",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/boom-bang-fine-foods-cocktails-henderson-elia-aboumrad",
+    "destination": "/restaurants/boom-bang-fine-foods-cocktails-henderson",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/bramble-house-vashon-lia-bardeen-lira",
+    "destination": "/restaurants/bramble-house-vashon",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/brenner-pass-richmond-brittanny-anderson",
+    "destination": "/restaurants/brenner-pass-richmond",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/broadway-by-amar-santana-laguna-beach-amar-santana",
+    "destination": "/restaurants/broadway-by-amar-santana-laguna-beach",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/btween-sandwich-co-houston-michelle-wallace",
+    "destination": "/restaurants/b-tween-sandwich-co-houston",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/bubble-bath-boston-tiffani-faison",
+    "destination": "/restaurants/bubble-bath-boston",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/bubbles-pearls-wilton-manors-josie-smith-malave",
+    "destination": "/restaurants/bubbles-pearls-wilton-manors",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/buena-onda-fairmount-callowhill-philadelphia-philadelphia",
+    "destination": "/restaurants/buena-onda-philadelphia",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/bureau-de-poste-austin-jo-chan",
+    "destination": "/restaurants/bureau-de-poste-austin",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/burgers-fries-b-f-by-nick-wallace-jackson",
+    "destination": "/restaurants/burger-fries-by-nick-wallace-jackson",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/butterfunk-biscuit-new-york-christopher-chris-scott",
+    "destination": "/restaurants/butterfunk-biscuit-harlem-new-york",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/butterhorn-bismarck-stephanie-miller",
+    "destination": "/restaurants/butterhorn-bismarck",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/bywater-american-bistro-new-orleans-nina-compton",
+    "destination": "/restaurants/bywater-american-bistro-babs-new-orleans",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/cabaret-l-enfer-montreal",
+    "destination": "/restaurants/cabaret-l-enfer-montr-al",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/cal-mare-los-angeles",
+    "destination": "/restaurants/cal-mare-beverly-hills",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/cascabel-restaurant-toluca-lake",
+    "destination": "/restaurants/cascabel-los-angeles",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/cat-cora-s-kitchen-atlanta",
+    "destination": "/restaurants/cat-cora-s-kitchen-atlanta-atlanta",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/catch-catch-modern-seafood-cuisine-wilmington",
+    "destination": "/restaurants/catch-wilmington",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/catch-santa-fe-poke-santa-fe-dakota-weiss",
+    "destination": "/restaurants/notorious-p-o-k-e-santa-fe",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/catch-wilmington-keith-rhodes",
+    "destination": "/restaurants/catch-wilmington",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/catface-cafe-biddeford-mimi-weissenborn",
+    "destination": "/restaurants/catface-caf-biddeford",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/cedar-elm-kenmore-luke-kolpin",
+    "destination": "/restaurants/cedar-elm-kenmore",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/cheese-shoppe-southampton",
+    "destination": "/restaurants/southampton-cheese-shoppe-southampton",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/chef-brians-comfort-kitchen-tucson-brian-hill",
+    "destination": "/restaurants/chef-brian-s-comfort-kitchen-tucson",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/chingu-hawai-i-honolulu",
+    "destination": "/restaurants/chingu-hawaii",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/church-union-charleston-jamie-lynch",
+    "destination": "/restaurants/church-and-union-charleston-charleston",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/church-union-charlotte-jamie-lynch",
+    "destination": "/restaurants/church-and-union-charlotte-charlotte",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/church-union-n-nashville-jamie-lynch",
+    "destination": "/restaurants/church-and-union-nashville-nashville",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/cluck-n-cleaver-beltline-calgary",
+    "destination": "/restaurants/cluck-n-cleaver-calgary",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/cluck-n-cleaver-calgary-nicole-gomes",
+    "destination": "/restaurants/cluck-n-cleaver-calgary",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/coach-house-chicago-zubair-mohajir",
+    "destination": "/restaurants/coach-house-chicago",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/compre-lapin-new-orleans-nina-compton",
+    "destination": "/restaurants/comp-re-lapin-new-orleans",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/d-ambrosi-fine-foods-stow-on-the-wold-stow-on-the-wold",
+    "destination": "/restaurants/d-ambrosi-fine-foods-stow-on-the-wold",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/dalida-san-francisco-laura-ozyilmaz",
+    "destination": "/restaurants/dalida-san-francisco",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/dama-los-angeles-antonia-lofaso",
+    "destination": "/restaurants/dama-los-angeles",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/dambrosi-cheltenham-andrew-dambrosi",
+    "destination": "/restaurants/d-ambrosi-fine-foods-stow-on-the-wold",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/dawa-by-eric-adjepong-washington",
+    "destination": "/restaurants/elmina-washington",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/daybird-los-angeles-mei-lin",
+    "destination": "/restaurants/daybird-los-angeles",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/dive-bar-boston-tiffani-faison",
+    "destination": "/restaurants/dive-bar-boston",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/dive-bar-high-street-place-boston",
+    "destination": "/restaurants/dive-bar-boston",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/dragon-tiger-noodle-co-las-vegas-spring-valley-las-vegas",
+    "destination": "/restaurants/dragon-tiger-noodle-co-las-vegas",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/dragon-tiger-noodle-co-las-vegas-summerlin-boca-park-las-vegas",
+    "destination": "/restaurants/dragon-tiger-noodle-co-las-vegas",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/el-super-pan-atlanta-hector-santiago",
+    "destination": "/restaurants/el-super-pan-atlanta",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/el-super-pan-atlanta-hector-santiago-1",
+    "destination": "/restaurants/el-super-pan-atlanta",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/el-super-pan-ponce-city-market-atlanta",
+    "destination": "/restaurants/el-super-pan-atlanta",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/el-super-pan-the-battery-atlanta-atlanta",
+    "destination": "/restaurants/el-super-pan-smyrna",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/eleven18-event-space-colorado-springs",
+    "destination": "/restaurants/eleven18-colorado-springs",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/ema-chicago-chris-cj-jacobson",
+    "destination": "/restaurants/ema-chicago",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/ember-rye-carlsbad-richard-blais",
+    "destination": "/restaurants/ember-rye-carlsbad",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/ember-rye-park-hyatt-aviara-carlsbad",
+    "destination": "/restaurants/ember-rye-carlsbad",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/f-b-restaurant-saskatoon-dale-mackay",
+    "destination": "/restaurants/f-b-restaurant-saskatoon",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/feel-good-portland-gabriel-pascuzzi",
+    "destination": "/restaurants/feel-good-portland",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/folklore-colorado-springs-brother-luck",
+    "destination": "/restaurants/folklore-colorado-springs",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/folktable-restaurant-sonoma-casey-thompson",
+    "destination": "/restaurants/folktable-sonoma",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/foode-fredericksburg-joy-crump",
+    "destination": "/restaurants/foode-mercantile-fredericksburg",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/fools-errand-boston-tiffani-faison",
+    "destination": "/restaurants/fool-s-errand-boston",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/four-flamingos-a-richard-blais-florida-kitchen-orlando",
+    "destination": "/restaurants/four-flamingos-a-richard-blais-kitchen-orlando",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/four-flamingos-orlando-richard-blais",
+    "destination": "/restaurants/four-flamingos-a-richard-blais-kitchen-orlando",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/fox-and-the-hen-denver-carrie-baird",
+    "destination": "/restaurants/fox-and-the-hen-denver",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/fox-flight-boston-karen-akunowicz",
+    "destination": "/restaurants/fox-flight-by-karen-akunowicz-boston-logan-airport",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/fox-flight-logan-airport-terminal-a-satellite-concourse-boston",
+    "destination": "/restaurants/fox-flight-by-karen-akunowicz-boston-logan-airport",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/freight-house-paducah-sara-bradley",
+    "destination": "/restaurants/freight-house-paducah",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/frenchies-sandwiches-albuquerque-dakota-weiss",
+    "destination": "/restaurants/frenchie-s-dips-and-tots-albuquerque",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/frita-batidos-ann-arbor-ann-arbor",
+    "destination": "/restaurants/eve-the-restaurant-ann-arbor",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/frita-batidos-ann-arbor-eve-aronoff",
+    "destination": "/restaurants/eve-the-restaurant-ann-arbor",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/frita-batidos-brooklyn-domino-park-brooklyn",
+    "destination": "/restaurants/frita-batidos-brooklyn",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/frita-batidos-detroit-eve-aronoff",
+    "destination": "/restaurants/frita-batidos-detroit",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/fritai-new-orleans-charly-pierre",
+    "destination": "/restaurants/fritai-new-orleans",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/garces-trading-company-cira-centre-philadelphia",
+    "destination": "/restaurants/jg-domestic-philadelphia",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/gather-yarmouth-mimi-weissenborn",
+    "destination": "/restaurants/gather-yarmouth",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/girl-and-the-goat-chicago-stephanie-izard",
+    "destination": "/restaurants/girl-and-the-goat-chicago",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/girl-and-the-goat-los-angeles-stephanie-izard",
+    "destination": "/restaurants/girl-the-goat-los-angeles",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/girl-the-goat-chicago-chicago",
+    "destination": "/restaurants/girl-and-the-goat-chicago",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/girl-the-goat-los-angeles-los-angeles",
+    "destination": "/restaurants/girl-the-goat-los-angeles",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/good-hot-fish-asheville-ashleigh-shanti",
+    "destination": "/restaurants/good-hot-fish-asheville",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/good-stuff-eatery-capitol-hill-washington",
+    "destination": "/restaurants/good-stuff-eatery-washington",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/grand-fir-brewing-portland-doug-adams",
+    "destination": "/restaurants/grand-fir-brewing-portland",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/granddam-lexington-paula-endara",
+    "destination": "/restaurants/granddam-lexington",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/greenleaf-milford-chris-viaud",
+    "destination": "/restaurants/greenleaf-milford",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/gunshow-atlanta-kevin-gillespie",
+    "destination": "/restaurants/gunshow-atlanta",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/ha-playa-del-carmen-carlos-gaytan",
+    "destination": "/restaurants/ha-playa-del-carmen",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/hales-blackbrick-tampa-tampa",
+    "destination": "/restaurants/hales-blackbrick-tampa",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/hangry-kitchen-pawtucket-stacy-cogswell-deetz",
+    "destination": "/restaurants/hangry-kitchen-pawtucket",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/hawkeye-huckleberry-lounge-bend-brian-malarkey",
+    "destination": "/restaurants/hawkeye-huckleberry-lounge-bend",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/heirloom-at-the-st-laurent-asbury-park-david-viana",
+    "destination": "/restaurants/heirloom-at-the-st-laurent-asbury-park",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/heirloom-kitchen-old-bridge-david-viana",
+    "destination": "/restaurants/heirloom-kitchen-old-bridge",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/herb-sea-encinitas-brian-malarkey",
+    "destination": "/restaurants/herb-sea-encinitas",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/herb-wood-san-diego-brian-malarkey",
+    "destination": "/restaurants/herb-wood-san-diego",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/highly-likely-los-angeles-kat-turner",
+    "destination": "/restaurants/highly-likely-los-angeles",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/huso-new-york-buddha-lo",
+    "destination": "/restaurants/huso-new-york",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/inman-social-cleveland-wesley-true",
+    "destination": "/restaurants/inman-social-cleveland",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/international-market-im2-nashville",
+    "destination": "/restaurants/international-market-nashville",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/j-n-j-n-by-kin-houston",
+    "destination": "/restaurants/j-n-houston",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/jack-charlies-no-118-new-york-ed-cotton",
+    "destination": "/restaurants/jack-charlie-s-no-118-new-york",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/jackrabbit-filly-north-charleston-shuai-wang",
+    "destination": "/restaurants/jackrabbit-filly-north-charleston",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/jame-el-segundo-jackson-kalb",
+    "destination": "/restaurants/jame-enoteca-el-segundo",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/jemma-pizzeria-pacific-palisades-jackson-kalb",
+    "destination": "/restaurants/jemma-pizzeria-pacific-palisades",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/jn-houston-evelyn-garcia-1-henry-lu",
+    "destination": "/restaurants/j-n-houston",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/joya-s-worthington",
+    "destination": "/restaurants/joya-s-caf-worthington",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/judy-harry-s-asbury-park",
+    "destination": "/restaurants/judy-harry-s-at-the-st-laurent-asbury-park",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/justine-new-orleans-justin-devillier",
+    "destination": "/restaurants/justine-new-orleans",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/kann-portland-gregory-gourdet",
+    "destination": "/restaurants/kann-portland",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/kbc-dothan-kelsey-barnard-clark",
+    "destination": "/restaurants/kbc-dothan",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/kembara-pheonix-angelo-sosa",
+    "destination": "/restaurants/kembara-phoenix",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/king-bbq-north-charleston-shuai-wang",
+    "destination": "/restaurants/king-bbq-north-charleston",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/kiwiana-brooklyn-mark-simmons",
+    "destination": "/restaurants/kiwiana-brooklyn",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/knife-burger-plano-john-tesar",
+    "destination": "/restaurants/knife-steakhouse-dallas",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/knife-italian-the-ritz-carlton-dallas-las-colinas-irving",
+    "destination": "/restaurants/knife-italian-dallas",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/knife-plano-plano-john-tesar",
+    "destination": "/restaurants/knife-steakhouse-dallas",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/knife-spoon-orlando-john-tesar",
+    "destination": "/restaurants/knife-spoon-orlando",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/kobo-pizza-seattle-shota-nakajima",
+    "destination": "/restaurants/k-bo-seattle",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/koko-ni-denver-paul-qui",
+    "destination": "/restaurants/koko-ni-denver",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/kukree-food-truck-seattle",
+    "destination": "/restaurants/kukree-seattle",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/la-belle-helene-charlotte-jamie-lynch",
+    "destination": "/restaurants/la-belle-helene-charlotte",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/la-cocinita-evanston-evanston",
+    "destination": "/restaurants/la-cocinita-evanston",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/la-salita-valncia-begoa-rodrigo",
+    "destination": "/restaurants/farcit-valencia",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/la-zozzona-grand-hyatt-scottsdale-resort-scottsdale",
+    "destination": "/restaurants/la-zozzona-scottsdale",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/le-coq",
+    "destination": "/restaurants/le-coq-la-jolla",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/le-coq-la-jolla-brian-malarkey",
+    "destination": "/restaurants/le-coq-la-jolla",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/lemon-grove-at-the-aster-los-angeles",
+    "destination": "/restaurants/lemon-grove-los-angeles",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/lemon-grove-los-angeles-marcel-vigneron",
+    "destination": "/restaurants/lemon-grove-los-angeles",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/les-petits-prs-angers-samuel-albert",
+    "destination": "/restaurants/les-petits-pr-s-angers",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/lingr-st-petersburg-jeffrey-jew",
+    "destination": "/restaurants/lingr-st-petersburg",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/lita-aberdeen-township-david-viana",
+    "destination": "/restaurants/lita-aberdeen",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/little-goat-diner-chicago-stephanie-izard",
+    "destination": "/restaurants/little-goat-diner-chicago",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/liz-liz-to-go-telluride",
+    "destination": "/restaurants/liz-telluride",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/lost-palm-lexington-paula-endara",
+    "destination": "/restaurants/lost-palm-lexington",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/love-shack-stockyards-fort-worth",
+    "destination": "/restaurants/love-shack-fort-worth",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/m-tempura-durham-savannah-miller",
+    "destination": "/restaurants/m-tempura-durham",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/ma-chicago-chicago",
+    "destination": "/restaurants/ema-chicago",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/mabel-gray-hazel-park-james-rigato",
+    "destination": "/restaurants/mabel-gray-hazel-park",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/mana-leavenworth",
+    "destination": "/restaurants/mana-restaurant-leavenworth",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/mana-restaurant-leavenworth-colin-patterson",
+    "destination": "/restaurants/mana-restaurant-leavenworth",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/maze-bangkok-phattanant-may-thongthong",
+    "destination": "/restaurants/maze-dining-bangkok",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/metzger-bar-butchery-richmond-brittanny-anderson",
+    "destination": "/restaurants/metzger-bar-butchery-richmond",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/midgleys-public-house-stockton-michael-midgley",
+    "destination": "/restaurants/midgley-s-public-house-stockton",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/millwrights-restaurant-simsbury-tyler-anderson",
+    "destination": "/restaurants/millwright-s-restaurant-tavern-simsbury",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/monteverde-restaurant-pastificio-chicago-sarah-grueneberg-1-bailey-sullivan",
+    "destination": "/restaurants/monteverde-restaurant-pastificio-chicago",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/mooncusser-boston-carl-dooley",
+    "destination": "/restaurants/mooncusser-fish-house-boston",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/mp-taverna-irvington-irvington",
+    "destination": "/restaurants/mp-taverna-larchmont",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/ms-chi-cafe-culver-city-shirley-chung",
+    "destination": "/restaurants/ms-chi-cafe-culver-city",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/nami-louisville-edward-lee",
+    "destination": "/restaurants/nami-modern-korean-steakhouse-louisville",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/northern-soul-minneapolis-justin-sutherland",
+    "destination": "/restaurants/northern-soul-minneapolis",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/northern-soul-st-paul-justin-sutherland",
+    "destination": "/restaurants/northern-soul-minneapolis",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/notorious-poke-albuquerque-dakota-weiss",
+    "destination": "/restaurants/the-notorious-p-o-k-e-albuquerque",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/ometeo-tysons-gabe-erales",
+    "destination": "/restaurants/ometeo-tysons",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/ospi-venice-jackson-kalb",
+    "destination": "/restaurants/ospi-dallas-dallas",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/osteria-carmel-fabio-viviani",
+    "destination": "/restaurants/osteria-by-fabio-viviani-carmel",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/pacific-table-fort-worth-fort-worth",
+    "destination": "/restaurants/pacific-table-fort-worth",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/pakpao-thai-design-district-dallas-dallas",
+    "destination": "/restaurants/pakpao-thai-dallas",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/pao-faena-district-miami-beach-paul-qui",
+    "destination": "/restaurants/pao-by-paul-qui-miami-beach",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/parachute-chicago-beverly-kim",
+    "destination": "/restaurants/parachute-chicago",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/parachute-hi-fi-chicago",
+    "destination": "/restaurants/parachute-chicago",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/pasta-bar-encino-phillip-frankland-lee",
+    "destination": "/restaurants/pasta-bar-encino",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/pavillion-wolfeboro-chris-viaud",
+    "destination": "/restaurants/pavilion-wolfeboro",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/peko-peko-avanti-boulder-boulder",
+    "destination": "/restaurants/peko-peko-boulder",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/pig-khaos-duo-new-york-leah-cohen",
+    "destination": "/restaurants/pig-khao-new-york",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/piggyback-by-pig-khao-new-york-leah-cohen",
+    "destination": "/restaurants/piggyback-nyc-new-york",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/pikunico-los-angeles-kuniko-yagi",
+    "destination": "/restaurants/pikunico-los-angeles",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/playa-provisions-playa-del-rey-brooke-williamson",
+    "destination": "/restaurants/playa-provisions-playa-del-rey",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/portico-waterloo-fabio-viviani",
+    "destination": "/restaurants/portico-at-del-lago-resort-and-casino-tyre",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/pounder-pounder-inc-amman",
+    "destination": "/restaurants/pounder-amman",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/pretty-bird-hot-chicken-downtown-salt-lake-city",
+    "destination": "/restaurants/pretty-bird-hot-chicken-salt-lake-city",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/qu-b-rbaro-level-8-moxy-dtla-los-angeles",
+    "destination": "/restaurants/qu-b-rbaro-los-angeles",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/rack-s-fish-house-oyster-bar-delray-beach-delray-beach",
+    "destination": "/restaurants/racks-fish-house-oyster-bar-delray-beach",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/ramen-hood-los-angeles-ilan-hall",
+    "destination": "/restaurants/ramen-hood-los-angeles",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/restaurant-xo-honolulu",
+    "destination": "/restaurants/xo-restaurant-honolulu",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/retro-by-voltaggio-las-vegas-michael-voltaggio",
+    "destination": "/restaurants/retro-by-voltaggio-las-vegas",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/rodney-scott-s-whole-hog-bbq-former-avondale-location-birmingham",
+    "destination": "/restaurants/rodney-scott-s-whole-hog-bbq-birmingham",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/root-bone-hendersonville",
+    "destination": "/restaurants/root-bone-hendersonville-horse-shoe",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/root-bone-indy-indianapolis-janine-booth-5-jeff-mcinnis",
+    "destination": "/restaurants/root-bone-indianapolis",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/root-bone-miami-miami-janine-booth-5-jeff-mcinnis",
+    "destination": "/restaurants/root-bone-miami",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/roots-chicken-shak-addison-addison",
+    "destination": "/restaurants/roots-chicken-shak-addison",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/roots-chicken-shak-austin-austin-tiffany-derry",
+    "destination": "/restaurants/roots-chicken-shak-austin",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/roots-chicken-shak-legacy-hall-plano",
+    "destination": "/restaurants/roots-chicken-shak-plano",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/roots-chicken-shak-main-streat-at-h-e-b-mueller-austin",
+    "destination": "/restaurants/roots-chicken-shak-austin",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/roots-coastal-kitchen-rio-grande-janine-booth-5-jeff-mcinnis",
+    "destination": "/restaurants/roots-coastal-kitchen-rio-grande",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/roots-southern-table-farmers-branch-tiffany-derry",
+    "destination": "/restaurants/roots-southern-table-farmers-branch",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/rosa-blanca-allentown-allentown",
+    "destination": "/restaurants/rosa-blanca-allentown",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/rose-mary-chicago-joseph-flamm",
+    "destination": "/restaurants/rose-mary-chicago",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/santa-rosa-taqueria-washington-spike-mendelsohn",
+    "destination": "/restaurants/santa-rosa-taqueria-washington",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/santo-boulder-boulder",
+    "destination": "/restaurants/santo-boulder",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/santo-boulder-hosea-rosenberg",
+    "destination": "/restaurants/santo-boulder",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/scopa-italian-roots-venice-antonia-lofaso",
+    "destination": "/restaurants/scopa-italian-roots-venice",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/seasonal-montana-bozeman-melissa-harrison",
+    "destination": "/restaurants/seasonal-montana-bozeman",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/seoul-sausage-company-los-angeles",
+    "destination": "/restaurants/seoul-sausage-co-los-angeles",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/shia-shia-restaurant-washington",
+    "destination": "/restaurants/shia-washington",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/shuggie-s-san-francisco",
+    "destination": "/restaurants/shuggie-s-trash-pie-natural-wine-san-francisco",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/siena-tavern-chicago-fabio-viviani",
+    "destination": "/restaurants/siena-tavern-chicago",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/silkies-chicken-champagne-bar-jacksonville-kenny-gilbert",
+    "destination": "/restaurants/silkie-s-chicken-champagne-bar-jacksonville",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/sit-tite-portland-bj-smith",
+    "destination": "/restaurants/sit-tite-portland",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/sobre-mesa-oakland-nelson-german",
+    "destination": "/restaurants/sobre-mesa-oakland",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/society-bbq-hales-society-bbq-miami",
+    "destination": "/restaurants/hales-society-bbq-miami",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/solstice-seasonal-kitchen-bar-irvine-irvine",
+    "destination": "/restaurants/solstice-seasonal-kitchen-irvine",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/sona-tortillas-de-maiz-y-bodega-tucson",
+    "destination": "/restaurants/sona-tortillas-tucson",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/south-pine-morristown-leia-gaccione",
+    "destination": "/restaurants/south-pine-american-eatery-morristown",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/southampton-cheese-shoppe-southampton-nikki-cascone",
+    "destination": "/restaurants/southampton-cheese-shoppe-southampton",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/southern-bistro-sandy-springs-ron-eyester",
+    "destination": "/restaurants/southern-bistro-sandy-springs",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/spice-finch-philadelphia-jennifer-carroll",
+    "destination": "/restaurants/spice-finch-philadelphia",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/stellas-southern-brasserie-greenville-anthony-gray",
+    "destination": "/restaurants/stella-s-southern-bistro-greenville",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/stiltsville-fish-bar",
+    "destination": "/restaurants/stiltsville-fish-bar-miami-beach",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/stubborn-seed-resorts-world-las-vegas-las-vegas",
+    "destination": "/restaurants/stubborn-seed-at-resorts-world-las-vegas-las-vegas",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/succotash-prime-penn-quarter-washington-dc-washington",
+    "destination": "/restaurants/succotash-washington-dc-washington",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/succotash-prime-washington-edward-lee",
+    "destination": "/restaurants/succotash-washington-dc-washington",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/sunny-side-aussie-bites-at-regatta-grove-miami",
+    "destination": "/restaurants/sunny-side-up-coconut-grove",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/sunny-side-up-aussie-bites",
+    "destination": "/restaurants/sunny-side-up-coconut-grove",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/sur-lie-portland-mimi-weissenborn",
+    "destination": "/restaurants/sur-lie-portland",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/sushi-by-scratch-los-angeles-phillip-frankland-lee",
+    "destination": "/restaurants/sushi-bar-sushi-by-scratch-encino-encino",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/sushi-by-scratch-santa-barbara-phillip-frankland-lee",
+    "destination": "/restaurants/sushi-by-scratch-restaurants-montecito",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/talde-noodle-bar-laguardia-terminal-b-queens",
+    "destination": "/restaurants/talde-noodle-bar-new-york",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/talde-noodle-bar-queens-dale-talde",
+    "destination": "/restaurants/talde-noodle-bar-new-york",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/tatiana-new-york-kwame-onwuachi",
+    "destination": "/restaurants/tatiana-by-kwame-onwuachi-new-york-city",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/tavern-costale-st-petersburg-fabio-viviani",
+    "destination": "/restaurants/taverna-costale-st-petersburg",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/tempest-charleston-jamie-lynch",
+    "destination": "/restaurants/tempest-charleston",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/tenderoni-s-high-street-place-boston",
+    "destination": "/restaurants/tenderoni-s-boston",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/terra-by-jeremy-ford-oranjestad",
+    "destination": "/restaurants/terra",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/the-betsy-washington-bart-vandaele",
+    "destination": "/restaurants/the-betsy-dc-washington",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/the-black-sheep-las-vegas-jamie-tran",
+    "destination": "/restaurants/the-black-sheep-las-vegas",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/the-butchers-club-palm-beach-gardens-jeremy-ford",
+    "destination": "/restaurants/the-butcher-s-club-palm-beach-gardens",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/the-dearborn-at-o-hare-terminal-5-chicago",
+    "destination": "/restaurants/the-dearborn-o-hare-terminal-5-chicago",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/the-dearborn-chicago-aaron-cuschieri",
+    "destination": "/restaurants/the-dearborn-o-hare-terminal-5-chicago",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/the-jetty-corona-del-mar-brian-huskey",
+    "destination": "/restaurants/tackle-box-corona-del-mar",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/the-nissan-cafe-jackson-nick-wallace",
+    "destination": "/restaurants/nissan-caf-by-nick-wallace-jackson",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/the-studio-colorado-springs-brother-luck",
+    "destination": "/restaurants/the-studio-colorado-springs",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/tia-carmen-pheonix-angelo-sosa",
+    "destination": "/restaurants/t-a-carmen-phoenix",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/tiffany-s-restaurant-bar-tiffany-s-maui-wailuku",
+    "destination": "/restaurants/tiffany-s-restaurant-bar-wailuku",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/tiffanys-wailuku-sheldon-simeon",
+    "destination": "/restaurants/tiffany-s-restaurant-bar-wailuku",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/tiki-taka-grand-hyatt-scottsdale-resort-scottsdale",
+    "destination": "/restaurants/tiki-taka-scottsdale",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/time-and-tide-new-york-danny-garcia",
+    "destination": "/restaurants/time-and-tide-new-york",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/tin-roof-kahului-sheldon-simeon",
+    "destination": "/restaurants/tin-roof-kahului",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/tin-roof-maui-kahului",
+    "destination": "/restaurants/tin-roof-kahului",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/toups-meatery-new-orleans-isaac-toups",
+    "destination": "/restaurants/toups-meatery-new-orleans",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/trust-bae-new-york-frances-tariga-weshnak",
+    "destination": "/restaurants/trust-bae-new-york",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/tts-spokane-valley-chad-white",
+    "destination": "/restaurants/tt-s-old-iron-brewery-barbecue-spokane-valley",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/tulip-pasta-wine-bar-philadelphia-jason-cichonski",
+    "destination": "/restaurants/tulip-pasta-wine-bar-philadelphia",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/vaca-costa-mesa-costa-mesa",
+    "destination": "/restaurants/vaca-costa-mesa",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/vaga-encinitas-claudette-zepeda-wilkins",
+    "destination": "/restaurants/vaga-restaurant-bar-leucadia",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/vim-and-victor-springfield-spike-mendelsohn",
+    "destination": "/restaurants/vim-victor-springfield",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/voltaggio-brothers-steak-house-oxon-hill-national-harbor",
+    "destination": "/restaurants/voltaggio-brothers-steak-house-oxon-hill",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/vulcania-mammoth-lakes-michael-voltaggio",
+    "destination": "/restaurants/vulcania-mammoth-lakes",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/wander-kitchen-bar-yyc-concourse-c-gate-c50-calgary",
+    "destination": "/restaurants/wander-kitchen-bar-calgary",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/wangs-fried-chicken-brooklyn-sara-nguyen",
+    "destination": "/restaurants/wangs-brooklyn",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/we-the-pizza-capitol-hill-washington",
+    "destination": "/restaurants/we-the-pizza-washington",
+    "permanent": true
+  },
+  {
+    "source": "/restaurants/yangban-los-angeles-katianna-hong",
+    "destination": "/restaurants/yangban-los-angeles",
+    "permanent": true
+  },
+  {
+    "source": "/shows/chefs-table-france",
+    "destination": "/shows/chefs-table",
+    "permanent": true
+  },
+  {
+    "source": "/shows/chefs-table-noodles",
+    "destination": "/shows/chefs-table",
+    "permanent": true
+  },
+  {
+    "source": "/shows/chefs-table-pastry",
+    "destination": "/shows/chefs-table",
+    "permanent": true
+  },
+  {
+    "source": "/shows/chefs-table-pizza",
+    "destination": "/shows/chefs-table",
+    "permanent": true
+  },
+  {
+    "source": "/shows/chopped-chopped-all-stars",
+    "destination": "/shows/chopped-all-stars",
+    "permanent": true
+  },
+  {
+    "source": "/shows/cutthroat-kitchen-all-star-tournament",
+    "destination": "/shows/cutthroat-kitchen-all-stars",
+    "permanent": true
+  },
+  {
+    "source": "/shows/guys-grocery-games",
+    "destination": "/shows/guy-s-grocery-games",
+    "permanent": true
+  },
+  {
+    "source": "/shows/guys-grocery-games/2013",
+    "destination": "/shows/guy-s-grocery-games",
+    "permanent": true
+  },
+  {
+    "source": "/shows/guys-grocery-games/2013-present",
+    "destination": "/shows/guy-s-grocery-games",
+    "permanent": true
+  },
+  {
+    "source": "/shows/guys-grocery-games/2015",
+    "destination": "/shows/guy-s-grocery-games",
+    "permanent": true
+  },
+  {
+    "source": "/shows/guys-grocery-games/2016",
+    "destination": "/shows/guy-s-grocery-games",
+    "permanent": true
+  },
+  {
+    "source": "/shows/guys-grocery-games/2017",
+    "destination": "/shows/guy-s-grocery-games",
+    "permanent": true
+  },
+  {
+    "source": "/shows/guys-grocery-games/2019",
+    "destination": "/shows/guy-s-grocery-games",
+    "permanent": true
+  },
+  {
+    "source": "/shows/guys-grocery-games/2020",
+    "destination": "/shows/guy-s-grocery-games",
+    "permanent": true
+  },
+  {
+    "source": "/shows/guys-grocery-games/23",
+    "destination": "/shows/guy-s-grocery-games/23",
+    "permanent": true
+  },
+  {
+    "source": "/shows/guys-grocery-games/38",
+    "destination": "/shows/guy-s-grocery-games",
+    "permanent": true
+  },
+  {
+    "source": "/shows/the-next-food-network-star",
+    "destination": "/shows/food-network-star",
+    "permanent": true
+  }
+]
