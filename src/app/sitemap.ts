@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { createStaticClient } from '@/lib/supabase/static';
+import { isShowWorthIndexing } from '@/lib/showIndexing';
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://cheft.app';
 
@@ -24,7 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .order('updated_at', { ascending: false }),
       supabase
         .from('shows')
-        .select('id, slug, created_at')
+        .select('id, slug, created_at, parent_show_id')
         .order('name'),
       (supabase as any)
         .from('states')
@@ -44,6 +45,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const countries = (countriesResult.data || []) as any[];
 
     const { data: allSeasons } = await (supabase as any).rpc('get_all_show_seasons_for_sitemap');
+
+    // Only submit shows with enough chefs to be worth indexing — the thin ones are noindexed
+    // by the show page, and submitting a noindexed URL just wastes crawl budget.
+    // A show page also lists its child shows' chefs, so those count toward the parent.
+    const { data: chefShowRows } = await supabase.from('chef_shows').select('show_id, chef_id');
+
+    const chefIdsByShow = new Map<string, Set<string>>();
+    ((chefShowRows || []) as Array<{ show_id: string; chef_id: string }>).forEach((row) => {
+      if (!chefIdsByShow.has(row.show_id)) chefIdsByShow.set(row.show_id, new Set());
+      chefIdsByShow.get(row.show_id)!.add(row.chef_id);
+    });
+
+    const showRows = shows as Array<{ id: string; slug: string; parent_show_id: string | null }>;
+
+    const showChefCount = (show: { id: string }) => {
+      const chefIds = new Set(chefIdsByShow.get(show.id) ?? []);
+      showRows
+        .filter((child) => child.parent_show_id === show.id)
+        .forEach((child) => chefIdsByShow.get(child.id)?.forEach((id) => chefIds.add(id)));
+      return chefIds.size;
+    };
+
+    const indexableShows = showRows.filter((show) => isShowWorthIndexing(showChefCount(show)));
+    const indexableShowSlugs = new Set(indexableShows.map((show) => show.slug));
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {
@@ -119,19 +144,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
 
-    const showRoutes: MetadataRoute.Sitemap = shows.map((show) => ({
+    const showRoutes: MetadataRoute.Sitemap = indexableShows.map((show) => ({
       url: `${BASE_URL}/shows/${show.slug}`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     }));
 
-    const seasonRoutes: MetadataRoute.Sitemap = (allSeasons || []).map((season: any) => ({
-      url: `${BASE_URL}/shows/${season.show_slug}/${season.season}`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.7,
-    }));
+    const seasonRoutes: MetadataRoute.Sitemap = (allSeasons || [])
+      .filter((season: any) => indexableShowSlugs.has(season.show_slug))
+      .map((season: any) => ({
+        url: `${BASE_URL}/shows/${season.show_slug}/${season.season}`,
+        lastModified: new Date(),
+        changeFrequency: 'monthly' as const,
+        priority: 0.7,
+      }));
 
     return [...staticRoutes, ...chefRoutes, ...restaurantRoutes, ...stateRoutes, ...countryRoutes, ...cityRoutes, ...showRoutes, ...seasonRoutes];
   } catch (error) {

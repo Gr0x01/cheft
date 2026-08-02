@@ -9,6 +9,7 @@ import { WinnersSpotlight } from '@/components/show/WinnersSpotlight';
 import { ShowRestaurantMap } from '@/components/show/ShowRestaurantMap';
 import { Footer } from '@/components/ui/Footer';
 import { ItemListSchema, BreadcrumbSchema } from '@/components/seo/SchemaOrg';
+import { isShowWorthIndexing } from '@/lib/showIndexing';
 
 export const revalidate = 604800;
 
@@ -29,6 +30,11 @@ export async function generateMetadata({ params }: ShowPageProps): Promise<Metad
       alternates: {
         canonical: `/shows/${slug}`,
       },
+      // Keep near-empty shows out of the index but still crawlable, so they pass link equity
+      // on to the chef pages they list. See lib/showIndexing.
+      ...(isShowWorthIndexing(chefCount)
+        ? {}
+        : { robots: { index: false, follow: true } }),
       openGraph: {
         title: `${show.name} | TV Chef Restaurants`,
         description: `${chefCount} chefs • ${restaurantCount} restaurants`,
