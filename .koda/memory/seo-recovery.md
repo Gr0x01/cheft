@@ -323,7 +323,8 @@ is 325KB gzipped in 0.3s, homepage HTML 100KB gzipped. The cost is all client-si
   bundle and pins hydrate on phones that never see them. That plus the JSON parse plus
   whole-page hydration is the TBT.
 
-**Fixed 2026-08-02** (RB approved), not yet deployed — re-measure PageSpeed after deploy:
+**Fixed 2026-08-02** (RB approved), deployed and verified in production HTML the same day —
+re-run PageSpeed to confirm the score moved:
 1. Winners row is now server-rendered: `db.getWinnerRestaurants()` pulls a top-60-by-reviews
    pool of open winner restaurants (michelin first), `page.tsx` shuffles within tiers and
    passes 12 down as a prop. Behavior change: the row reshuffles once per ISR hour, not per
@@ -337,8 +338,11 @@ is 325KB gzipped in 0.3s, homepage HTML 100KB gzipped. The cost is all client-si
    webkit; the old e2e pass was timing luck). Fixed by a mount effect that adopts any
    pre-hydration DOM value from either search input. e2e 55/55 green after.
 
-The local `npm run build` fails prerendering `/_global-error` (`useContext` of null) — verified
-pre-existing with a stash, and Vercel builds fine, so it's a local-env quirk, not shipping code.
+The local `npm run build` fails prerendering `/_global-error` (`useContext` of null) even on
+commits that build and deploy fine on Vercel — confirmed by building the deployed `10709c9`
+locally. Purely a local-env quirk (the `force-dynamic` workaround in `global-error.tsx` doesn't
+take effect locally); do not treat a local build failure as a deploy blocker, and do not
+"fix" it by touching `global-error.tsx` — see the next/script section above for the history.
 
 ## Still open, in priority order
 

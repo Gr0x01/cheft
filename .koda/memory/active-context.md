@@ -19,14 +19,13 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 
 ## Next step
 
-- **First batch is deployed and production-verified.** A **second batch is committed but not
-  pushed**: the homepage perf work, the city backfill, the ≥3 location threshold and the
-  `is_primary` fixes. Push, production-check, then re-run PageSpeed.
-- **Migrations 053–055 are already applied to production Supabase** — the data is live ahead of
-  the code. Until the code deploys, the site is serving the old ≥1 location threshold against
-  the new 414-row `cities` table, so thin city pages are briefly indexable. Deploy soon.
-- **RB to do, in Search Console, only after that:** resubmit the sitemap and start validation
-  for the Not found (404) issue.
+- **Everything is deployed.** The second batch (homepage perf, city backfill, ≥3 location
+  threshold, `is_primary` fixes) was pushed 11:19 CDT Aug 2 and verified live at 15:45: the
+  winners row is server-rendered in production HTML on the new deployment. Note the bare
+  homepage URL can serve up-to-an-hour-stale CDN copies (ISR revalidate 3600) — cache-bust
+  with a query param before concluding a deploy didn't land.
+- **RB to do, in Search Console:** resubmit the sitemap and start validation for the
+  Not found (404) issue.
 
 ## Post-deploy checks
 
