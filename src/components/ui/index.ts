@@ -3,3 +3,4 @@ export { Card, CardHeader, CardContent, CardFooter, type CardProps, type CardHea
 export { SearchBar, type SearchBarProps } from './SearchBar';
 export { Section, SectionHeader, SectionTitle, SectionDescription, type SectionProps, type SectionHeaderProps, type SectionTitleProps, type SectionDescriptionProps } from './Section';
 export { Badge, type BadgeProps } from './Badge';
+export { FilterBarSkeleton } from './FilterBarSkeleton';

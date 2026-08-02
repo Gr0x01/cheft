@@ -6,6 +6,7 @@ import { ChevronDown, Check, Search } from 'lucide-react';
 import { ChefCard } from '@/components/chef/ChefCard';
 import { ChefFilters } from '@/components/chef/ChefFilters';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { FilterBarSkeleton } from '@/components/ui/FilterBarSkeleton';
 import type { ChefData } from '@/lib/hooks/useChefFilters';
 
 const TOP_CHEF_SEASON_NAMES: Record<string, string> = {
@@ -88,10 +89,11 @@ function SeasonPill({ season, showSlug }: { season: Season; showSlug: string }) 
 }
 
 function SeasonLinks({ seasons, showSlug }: { seasons: Season[]; showSlug: string }) {
-  if (seasons.length === 0) return null;
   const [expanded, setExpanded] = useState(false);
   const sortedSeasons = useMemo(() => sortSeasons(seasons), [seasons]);
-  
+
+  if (seasons.length === 0) return null;
+
   const visibleSeasons = expanded ? sortedSeasons : sortedSeasons.slice(0, MAX_VISIBLE_SEASONS);
   const hiddenCount = sortedSeasons.length - MAX_VISIBLE_SEASONS;
   const showExpandButton = sortedSeasons.length > MAX_VISIBLE_SEASONS;
@@ -356,7 +358,7 @@ function ParentShowBanner({ parentInfo }: { parentInfo: { slug: string; name: st
   );
 }
 
-function ShowPageClientInner({ chefs, showSlug, seasons = [], childShows = [], cities = [], parentInfo }: ShowPageClientProps) {
+export function ShowPageClient({ chefs, showSlug, seasons = [], childShows = [], cities = [], parentInfo }: ShowPageClientProps) {
   const [filteredChefs, setFilteredChefs] = useState<ChefData[]>(chefs);
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
@@ -405,14 +407,17 @@ function ShowPageClientInner({ chefs, showSlug, seasons = [], childShows = [], c
     <>
       {parentInfo && <ParentShowBanner parentInfo={parentInfo} />}
       
-      <ChefFilters
-        chefs={chefs}
-        totalChefs={displayedChefs.length}
-        onFilteredChefsChange={handleFilteredChefsChange}
-        hideShowDropdown
-        extraContent={filterDropdowns}
-        belowFilterContent={seasonLinks}
-      />
+      {/* Suspense must wrap the filter bar only — see RestaurantsPageClient. */}
+      <Suspense fallback={<FilterBarSkeleton />}>
+        <ChefFilters
+          chefs={chefs}
+          totalChefs={displayedChefs.length}
+          onFilteredChefsChange={handleFilteredChefsChange}
+          hideShowDropdown
+          extraContent={filterDropdowns}
+          belowFilterContent={seasonLinks}
+        />
+      </Suspense>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {displayedChefs.length === 0 ? (
@@ -431,25 +436,3 @@ function ShowPageClientInner({ chefs, showSlug, seasons = [], childShows = [], c
   );
 }
 
-export function ShowPageClient({ chefs, showSlug, seasons, childShows, cities, parentInfo }: ShowPageClientProps) {
-  return (
-    <Suspense fallback={
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="animate-pulse grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-48 bg-slate-200 rounded" />
-          ))}
-        </div>
-      </div>
-    }>
-      <ShowPageClientInner 
-        chefs={chefs} 
-        showSlug={showSlug} 
-        seasons={seasons} 
-        childShows={childShows}
-        cities={cities}
-        parentInfo={parentInfo}
-      />
-    </Suspense>
-  );
-}

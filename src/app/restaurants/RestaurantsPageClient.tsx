@@ -4,6 +4,7 @@ import { useState, useCallback, Suspense } from 'react';
 import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
 import { RestaurantFilters } from '@/components/restaurant/RestaurantFilters';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { FilterBarSkeleton } from '@/components/ui/FilterBarSkeleton';
 import type { RestaurantData } from '@/lib/hooks/useRestaurantFilters';
 
 interface City {
@@ -25,7 +26,7 @@ interface RestaurantsPageClientProps {
   totalRestaurants: number;
 }
 
-function RestaurantsPageClientInner({ initialRestaurants, cities, states, totalRestaurants }: RestaurantsPageClientProps) {
+export function RestaurantsPageClient({ initialRestaurants, cities, states, totalRestaurants }: RestaurantsPageClientProps) {
   const [filteredRestaurants, setFilteredRestaurants] = useState<RestaurantData[]>(initialRestaurants);
 
   const handleFilteredRestaurantsChange = useCallback((restaurants: RestaurantData[]) => {
@@ -34,13 +35,18 @@ function RestaurantsPageClientInner({ initialRestaurants, cities, states, totalR
 
   return (
     <>
-      <RestaurantFilters
-        cities={cities}
-        states={states}
-        restaurants={initialRestaurants}
-        totalRestaurants={totalRestaurants}
-        onFilteredRestaurantsChange={handleFilteredRestaurantsChange}
-      />
+      {/* Suspense must wrap the filter bar only. RestaurantFilters reads useSearchParams,
+          which client-renders everything inside the boundary — with the grid in here too,
+          the restaurant links never reach the prerendered HTML. */}
+      <Suspense fallback={<FilterBarSkeleton />}>
+        <RestaurantFilters
+          cities={cities}
+          states={states}
+          restaurants={initialRestaurants}
+          totalRestaurants={totalRestaurants}
+          onFilteredRestaurantsChange={handleFilteredRestaurantsChange}
+        />
+      </Suspense>
 
       <main className="max-w-7xl mx-auto px-4 py-12">
         {filteredRestaurants.length === 0 ? (
@@ -72,21 +78,5 @@ function RestaurantsPageClientInner({ initialRestaurants, cities, states, totalR
         )}
       </main>
     </>
-  );
-}
-
-export function RestaurantsPageClient(props: RestaurantsPageClientProps) {
-  return (
-    <Suspense fallback={
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="animate-pulse grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-64 bg-slate-200 rounded" />
-          ))}
-        </div>
-      </div>
-    }>
-      <RestaurantsPageClientInner {...props} />
-    </Suspense>
   );
 }

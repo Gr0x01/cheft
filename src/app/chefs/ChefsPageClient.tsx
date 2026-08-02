@@ -4,6 +4,7 @@ import { useState, useCallback, Suspense } from 'react';
 import { ChefCard } from '@/components/chef/ChefCard';
 import { ChefFilters } from '@/components/chef/ChefFilters';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { FilterBarSkeleton } from '@/components/ui/FilterBarSkeleton';
 import type { ChefData } from '@/lib/hooks/useChefFilters';
 
 interface Show {
@@ -20,7 +21,7 @@ interface ChefsPageClientProps {
   totalChefs: number;
 }
 
-function ChefsPageClientInner({ initialChefs, shows, totalChefs }: ChefsPageClientProps) {
+export function ChefsPageClient({ initialChefs, shows, totalChefs }: ChefsPageClientProps) {
   const [filteredChefs, setFilteredChefs] = useState<ChefData[]>(initialChefs);
 
   const handleFilteredChefsChange = useCallback((chefs: ChefData[]) => {
@@ -29,12 +30,15 @@ function ChefsPageClientInner({ initialChefs, shows, totalChefs }: ChefsPageClie
 
   return (
     <>
-      <ChefFilters
-        shows={shows}
-        chefs={initialChefs}
-        totalChefs={totalChefs}
-        onFilteredChefsChange={handleFilteredChefsChange}
-      />
+      {/* Suspense must wrap the filter bar only — see RestaurantsPageClient. */}
+      <Suspense fallback={<FilterBarSkeleton />}>
+        <ChefFilters
+          shows={shows}
+          chefs={initialChefs}
+          totalChefs={totalChefs}
+          onFilteredChefsChange={handleFilteredChefsChange}
+        />
+      </Suspense>
 
       <main className="max-w-7xl mx-auto px-4 py-12">
         {filteredChefs.length === 0 ? (
@@ -51,21 +55,5 @@ function ChefsPageClientInner({ initialChefs, shows, totalChefs }: ChefsPageClie
         )}
       </main>
     </>
-  );
-}
-
-export function ChefsPageClient(props: ChefsPageClientProps) {
-  return (
-    <Suspense fallback={
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="animate-pulse grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-48 bg-slate-200 rounded" />
-          ))}
-        </div>
-      </div>
-    }>
-      <ChefsPageClientInner {...props} />
-    </Suspense>
   );
 }

@@ -4,13 +4,14 @@ import { useState, useCallback, Suspense } from 'react';
 import { RestaurantCard } from '@/components/restaurant/RestaurantCard';
 import { RestaurantFilters } from '@/components/restaurant/RestaurantFilters';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { FilterBarSkeleton } from '@/components/ui/FilterBarSkeleton';
 import type { RestaurantData } from '@/lib/hooks/useRestaurantFilters';
 
 interface CityPageClientProps {
   restaurants: RestaurantData[];
 }
 
-function CityPageClientInner({ restaurants }: CityPageClientProps) {
+export function CityPageClient({ restaurants }: CityPageClientProps) {
   const [filteredRestaurants, setFilteredRestaurants] = useState<RestaurantData[]>(restaurants);
 
   const handleFilteredRestaurantsChange = useCallback((filtered: RestaurantData[]) => {
@@ -19,12 +20,15 @@ function CityPageClientInner({ restaurants }: CityPageClientProps) {
 
   return (
     <>
-      <RestaurantFilters
-        restaurants={restaurants}
-        totalRestaurants={restaurants.length}
-        onFilteredRestaurantsChange={handleFilteredRestaurantsChange}
-        hideLocationDropdown
-      />
+      {/* Suspense must wrap the filter bar only — see RestaurantsPageClient. */}
+      <Suspense fallback={<FilterBarSkeleton />}>
+        <RestaurantFilters
+          restaurants={restaurants}
+          totalRestaurants={restaurants.length}
+          onFilteredRestaurantsChange={handleFilteredRestaurantsChange}
+          hideLocationDropdown
+        />
+      </Suspense>
 
       <section className="max-w-7xl mx-auto px-4 py-12">
         {filteredRestaurants.length === 0 ? (
@@ -55,21 +59,5 @@ function CityPageClientInner({ restaurants }: CityPageClientProps) {
         )}
       </section>
     </>
-  );
-}
-
-export function CityPageClient(props: CityPageClientProps) {
-  return (
-    <Suspense fallback={
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="animate-pulse grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-64 bg-slate-200 rounded" />
-          ))}
-        </div>
-      </div>
-    }>
-      <CityPageClientInner {...props} />
-    </Suspense>
   );
 }
