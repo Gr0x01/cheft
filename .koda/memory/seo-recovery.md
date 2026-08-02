@@ -10,11 +10,22 @@ Maintainer: RB
 Diagnosis and fix work started 2026-08-02, prompted by traffic being lower than expected
 after months live.
 
-**Deploy state as of 2026-08-02:** the complete recovery batch is live. Production checks
-confirmed 1,293 unique restaurant links in `/restaurants` HTML, 2,123 sitemap URLs, homepage
-restaurant links, the generated OG image and metadata, and representative restaurant, chef,
-city, and show legacy redirects. Migrations 047 and 048 were applied directly to production
-Supabase and are idempotent.
+**Deploy state as of 2026-08-02: everything below is live and production-verified.** RB pushed
+the final batch; checks on the deployed site confirmed:
+
+- Sitemap **2,204 URLs** (456 chefs, 1,293 restaurants, 135 cities, 46 states, 22 countries,
+  245 show/season/winners). Chefs 464 → 456 = 6 merged accent duplicates + 2 thin profiles.
+- `/api/restaurants` **2.5MB in 1.4s**, down from 45.9MB in 5.3s.
+- All 7 chef redirects 308 to live 200s; a 15-item random sample of the 305 legacy redirects
+  all 308'd to a 200 destination.
+- Empty geography `noindex, follow` (Alaska, Wyoming, Austria, Vietnam) while California,
+  New York, US and Canada stay `index, follow`. Thin chefs Saqib Keval and Norma Listman are
+  `noindex` and absent from the sitemap.
+- City scoping holds: Portland OR 27 / Portland ME 3, and across a 25-city sample the count in
+  the page title matched the rendered restaurant links exactly, 25/25.
+- `/restaurants` serves 1,299 and `/chefs` 458 unique crawlable links. All key routes 200.
+
+Migrations 047 and 048 were applied directly to production Supabase and are idempotent.
 
 ## The measurement
 
@@ -254,16 +265,29 @@ Not fixed — deciding which show is primary is a data call, and [[show-enrichme
 the `is_public` lesson above both warn against acting on a stale flag without checking traffic
 first. Needs RB's decision: backfill `is_primary`, or change the code to stop depending on it.
 
+## Six malformed city slugs
+
+Found during the 2026-08-02 production check. Four are live and in the sitemap:
+`amman-`, `angers-`, `bangkok-` (trailing hyphen, because the city has no state) and
+`montr-al-qc` (accent damage — Montréal, the same breakage just fixed on chef slugs).
+Two more are noindexed at 0 restaurants: `cheltenham-` and `val-ncia-`, both of which also
+carry **`country = 'US'` wrongly** (they're UK and Spain); migration 051 missed them because
+it inferred country from restaurants and these have none.
+
+Not fixed. Renaming live indexed URLs is exactly the churn that produced the 1,417 404s, and
+these four pages cover only 7 restaurants between them, so the redirect cost likely outweighs
+the gain. RB's call — the argument for doing it is consistency with the chef slug fix.
+
 ## Still open, in priority order
 
-1. **Deploy and production-check this final cleanup**, including the six chef redirects, empty
-   geography/chef robots metadata, city scoping and the 2,204-URL sitemap.
-2. **Then resubmit the sitemap** and start Search Console validation for the Not found (404)
-   issue. Plausible was confirmed working by RB on 2026-08-02.
-3. **Monitor `/restaurants` Core Web Vitals.** It now renders all cards server-side; paginate
+1. **Resubmit the sitemap** and start Search Console validation for the Not found (404)
+   issue. Both are RB-only actions in the Search Console UI. Plausible was confirmed working
+   by RB on 2026-08-02.
+2. **Monitor `/restaurants` Core Web Vitals.** It now renders all cards server-side; paginate
    or cap the first page if the added weight causes a regression. Re-measure after the 45MB
    payload fix before doing any of that work — it may already be resolved.
-4. **Decide what to do about `chef_shows.is_primary`** (above).
+3. **Decide what to do about `chef_shows.is_primary`** (above).
+4. **Decide whether to rename the four malformed city slugs** (above).
 5. `cuisine_tags` is populated on **1 of 1,293** restaurants, but the cards render it and the
    homepage search filters on it. Enrichment gap, not a code bug.
 

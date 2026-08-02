@@ -19,11 +19,10 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 
 ## Next step
 
-- **Nothing is deployed yet.** Eight commits sit unpushed on `main`, back to `4edea8b`: three
-  earlier SEO commits, the cleanup batch, two e2e fix commits, and the homepage payload fix.
-  Push to deploy, then production-check the
-  cleanup in [[seo-recovery]], resubmit the sitemap and validate the repaired 404s in Search
-  Console. All four data migrations are already live in production.
+- **Deployed and production-verified 2026-08-02** — sitemap, redirects, robots metadata and
+  city scoping all confirmed live; detail in [[seo-recovery]].
+- **RB to do, in Search Console:** resubmit the sitemap and start validation for the
+  Not found (404) issue. Both need his login; they're the last step of the recovery.
 
 ## Post-deploy checks
 
