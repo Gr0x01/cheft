@@ -12,18 +12,16 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 
 ## Current focus
 - **SEO recovery.** Search Console: only **693 of 4,318 known pages are indexed** (16%), and
-  that's the ceiling on traffic. Diagnosis and six code/data fixes are done; full detail,
+  that's the ceiling on traffic. Diagnosis and the current recovery fixes are done; full detail,
   measurements and remaining backlog live in [[seo-recovery]] — read it before touching SEO.
 - UI polish, mobile responsiveness, and a clean `npm run test:e2e` pass before launch.
 
 ## Next step
 
-- Production deploy verified 2026-08-02: `/restaurants` serves 1,293 crawlable restaurant
-  links and the sitemap contains 2,123 URLs. Confirm Plausible still records, then resubmit
-  the sitemap in Search Console.
-- `/suggest`, crawlable Locations header nav, and sitemap-gap fixes are committed and locally
-  verified but not deployed. Deploy them, then improve homepage crawlable links. See
-  [[seo-recovery]].
+- Deploy commits `4bf4c56`, `dd1b828`, and `746f8da`: `/suggest`, crawlable Locations nav,
+  and sitemap coverage (2,123 → 2,211 URLs). All are locally verified; none is deployed.
+- After deployment, confirm Plausible records, resubmit the sitemap in Search Console, then
+  improve homepage crawlable links. See [[seo-recovery]].
 
 ## After that
 - Remaining SEO backlog: homepage rendering,
