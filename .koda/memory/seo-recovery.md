@@ -1,6 +1,6 @@
 ---
 name: seo-recovery
-description: why only 16% of pages are indexed, the crawlability and thin-content fixes applied, the next/script and is_public traps, and what's still open
+description: why only 16% of pages are indexed, the crawlability and thin-content fixes applied, the next/script, is_public and is_primary traps, the 45MB homepage payload fix, and what's still open
 Last-Updated: 2026-08-02
 Maintainer: RB
 ---
@@ -219,6 +219,41 @@ context and providers, since global-error replaces the root layout.
 - Chef and restaurant detail pages now revalidate weekly, matching the directory pages, so
   entities beyond the static-generation caps no longer cache indefinitely.
 
+## The homepage was shipping a 45MB payload
+
+Found 2026-08-02 while chasing an e2e failure. `db.getRestaurants()` selected `*` across
+restaurants → chefs → chef_shows → shows, so every restaurant row carried its chef's
+`mini_bio` and `career_narrative`, duplicated once per restaurant that chef owns.
+
+- Response: **45.9MB → 2.5MB**. Request: **~4.7s → ~0.55s**.
+- The old query hit Postgres **statement timeouts (57014)** under concurrent load, which
+  surfaced as the homepage silently failing to render its restaurant list.
+- Fixed by listing columns explicitly. `getRestaurants()` has exactly one consumer chain —
+  `/api/restaurants` → `HomePage` — so the column list is scoped to what `HomePage` and
+  `RestaurantCardCompact` actually read. **Keep it in sync with those two.**
+- Sibling methods `getRestaurantsByCity` and `getPopularRestaurants` still use `*` with the
+  same nested expansion. They're bounded (one city / 12 rows) so they weren't urgent, but the
+  same fix applies if either grows.
+
+Very likely the same weight behind the `/restaurants` Core Web Vitals concern below.
+
+## `chef_shows.is_primary` is false on every row — same trap as `is_public`
+
+Verified against production: **all 1,298 `chef_shows` rows have `is_primary = false`**, none
+true, while 194 are winner rows. Consequences, all pre-existing and all still live:
+
+- `getChefAchievements` computes `isShowWinner` as `is_primary && result === 'winner'`, so the
+  **winner badge never renders** on a restaurant card. 131 chefs have won something.
+- `transformRestaurants` derives `primary_show` as `chef_shows.find(is_primary) ?? chef_shows[0]`,
+  so it falls back to an **arbitrarily ordered** row. **229 of 445 chefs (51.5%) appear on more
+  than one show**, so for half the roster "primary show" is whichever row came back first.
+- The homepage show filter compares `chef.primary_show.name` to the selected show, so filtering
+  by e.g. Top Chef silently misses chefs whose arbitrary first row is a different show.
+
+Not fixed — deciding which show is primary is a data call, and [[show-enrichment-status]] plus
+the `is_public` lesson above both warn against acting on a stale flag without checking traffic
+first. Needs RB's decision: backfill `is_primary`, or change the code to stop depending on it.
+
 ## Still open, in priority order
 
 1. **Deploy and production-check this final cleanup**, including the six chef redirects, empty
@@ -226,6 +261,10 @@ context and providers, since global-error replaces the root layout.
 2. **Then resubmit the sitemap** and start Search Console validation for the Not found (404)
    issue. Plausible was confirmed working by RB on 2026-08-02.
 3. **Monitor `/restaurants` Core Web Vitals.** It now renders all cards server-side; paginate
-   or cap the first page if the added weight causes a regression.
+   or cap the first page if the added weight causes a regression. Re-measure after the 45MB
+   payload fix before doing any of that work — it may already be resolved.
+4. **Decide what to do about `chef_shows.is_primary`** (above).
+5. `cuisine_tags` is populated on **1 of 1,293** restaurants, but the cards render it and the
+   homepage search filters on it. Enrichment gap, not a code bug.
 
 Full original audit findings, including what's already good, live in this note's history.

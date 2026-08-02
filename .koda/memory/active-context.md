@@ -14,17 +14,22 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 - **SEO recovery.** Search Console: only **693 of 4,318 known pages are indexed** (16%), and
   that's the ceiling on traffic. Diagnosis and the current recovery fixes are done; full detail,
   measurements and remaining backlog live in [[seo-recovery]] — read it before touching SEO.
-- UI polish, mobile responsiveness, and a clean `npm run test:e2e` pass before launch.
+- UI polish and mobile responsiveness before launch. `npm run test:e2e` is **green (55/55)** as
+  of 2026-08-02 — the failures were stale test expectations, not product bugs.
 
 ## Next step
 
-- Deploy and production-check the final cleanup in [[seo-recovery]], then resubmit the sitemap
-  and validate the repaired 404s in Search Console; all four data migrations are already live.
+- **Nothing is deployed yet.** Eight commits sit unpushed on `main`, back to `4edea8b`: three
+  earlier SEO commits, the cleanup batch, two e2e fix commits, and the homepage payload fix.
+  Push to deploy, then production-check the
+  cleanup in [[seo-recovery]], resubmit the sitemap and validate the repaired 404s in Search
+  Console. All four data migrations are already live in production.
 
 ## Post-deploy checks
 
-- Watch `/restaurants` Core Web Vitals after making all restaurant links server-rendered;
-  paginate or cap the first page if its added weight causes a regression.
+- Watch `/restaurants` Core Web Vitals after making all restaurant links server-rendered.
+  Re-measure before doing pagination work — the homepage payload fix (45.9MB → 2.5MB, see
+  [[seo-recovery]]) may have already resolved it.
 
 ## After SEO
 
@@ -32,6 +37,10 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
   [[show-enrichment-status]].
 
 ## Open questions
+- **`chef_shows.is_primary` is false on all 1,298 rows**, so the winner badge never renders and
+  "primary show" is an arbitrary pick for the 51.5% of chefs on more than one show — which the
+  homepage show filter then filters on. Backfill the flag, or drop the code's dependence on it?
+  Detail and counts in [[seo-recovery]].
 - **Chef photo coverage is 14%** (63/464) after the Aug 2 2026 Wikimedia backfill. Wikipedia is tapped out — the other 401 have no article. Decide before launch whether initials/Instagram fallback is good enough, or budget for licensed headshots. See [[enrichment-reference]].
 
 ## Orientation
