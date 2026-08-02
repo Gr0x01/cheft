@@ -2,10 +2,24 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { LatLngTuple, DivIcon } from 'leaflet';
+import { LatLngTuple, DivIcon, point } from 'leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import type { MapPin } from '@/lib/types';
 import Link from 'next/link';
 import 'leaflet/dist/leaflet.css';
+
+// Rendering all ~1,270 pins individually put roughly 5,000 nodes in the DOM and a
+// Leaflet marker object behind each one, which was the bulk of the desktop main-thread
+// cost. Clustering keeps that to what's actually on screen.
+const CLUSTER_ICON = (cluster: { getChildCount: () => number }) => {
+  const count = cluster.getChildCount();
+  const size = count < 10 ? 32 : count < 100 ? 40 : 48;
+  return new DivIcon({
+    html: `<div class="cluster-bubble"><span>${count}</span></div>`,
+    className: 'cluster-marker',
+    iconSize: point(size, size, true),
+  });
+};
 
 interface RestaurantMapPinsProps {
   pins: MapPin[];
@@ -119,6 +133,14 @@ export default function RestaurantMapPins({
     return [centerLat, centerLng];
   }, [validPins]);
 
+  // Picking a restaurant in the sidebar only highlighted its pin, which clustering would
+  // hide inside a bubble. Fly to it instead — zoom 12 is past disableClusteringAtZoom, so
+  // the pin is always rendered individually by the time the map settles.
+  const sidebarSelectedPin = useMemo(
+    () => (selectedPinId ? validPins.find(p => p.id === selectedPinId) ?? null : null),
+    [selectedPinId, validPins]
+  );
+
   const defaultZoom = 4;
 
   const handlePinSelect = (pin: MapPin) => {
@@ -149,16 +171,26 @@ export default function RestaurantMapPins({
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
         
-        <MapController selectedPin={selectedPin} />
+        <MapController selectedPin={selectedPin ?? sidebarSelectedPin} />
         
-        {validPins.map((pin) => (
-          <PinMarker 
-            key={pin.id}
-            pin={pin}
-            isSelected={selectedPinId === pin.id || selectedPin?.id === pin.id}
-            onSelect={handlePinSelect}
-          />
-        ))}
+        <MarkerClusterGroup
+          chunkedLoading
+          maxClusterRadius={60}
+          showCoverageOnHover={false}
+          // MapController flies to zoom 12 on selection, so stop clustering just below
+          // that — otherwise a pin picked from the sidebar could stay inside a cluster.
+          disableClusteringAtZoom={11}
+          iconCreateFunction={CLUSTER_ICON}
+        >
+          {validPins.map((pin) => (
+            <PinMarker
+              key={pin.id}
+              pin={pin}
+              isSelected={selectedPinId === pin.id || selectedPin?.id === pin.id}
+              onSelect={handlePinSelect}
+            />
+          ))}
+        </MarkerClusterGroup>
       </MapContainer>
     </div>
   );

@@ -675,6 +675,37 @@ body {
   box-shadow: 0 4px 12px rgba(100, 116, 139, 0.4), 0 0 0 2px #94a3b8;
 }
 
+/* Marker clusters. Deliberately matches .marker-dot's ring-and-shadow treatment so a
+   cluster reads as "several of those pins", not a different kind of thing. */
+.cluster-marker {
+  background: none !important;
+  border: none !important;
+}
+
+.cluster-bubble {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-primary);
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(211, 94, 15, 0.35), 0 0 0 1px rgba(211, 94, 15, 0.1);
+  color: #fff;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  line-height: 1;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.cluster-marker:hover .cluster-bubble {
+  background: var(--accent-secondary);
+  transform: scale(1.08);
+}
+
 .marker-label {
   position: absolute;
   top: -10px;
