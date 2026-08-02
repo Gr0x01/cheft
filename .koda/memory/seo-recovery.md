@@ -126,8 +126,16 @@ unpublishes nothing, and carries its own rollback slug list). Results:
 - `generateStaticParams` prerenders 75 shows instead of 27.
 - Sitemap unchanged at 2,123 — it keys on chef count, not this flag, by design.
 
-New shows from future ingests will still default to `false`. Either re-run this migration
-periodically or change the column default; not yet decided.
+**Drift closed 2026-08-02** by `048_stop_show_visibility_drift.sql`, in two halves:
+
+1. `is_public` now DEFAULTs to **true**, so a new show is visible unless an admin hides it —
+   "nobody got round to it" can no longer mean invisible.
+2. `get_shows_with_counts` raised its bar from `chef_count > 0` to `>= 3`, so flipping the
+   default can't let thin new shows pollute `/shows`. **This duplicates
+   `MIN_INDEXABLE_SHOW_CHEFS` from `src/lib/showIndexing.ts` in SQL — move both together.**
+
+No-op against current data (all 51 index shows already had ≥3 chefs). The admin toggle at
+`/admin/shows` is untouched: the RPC still requires `is_public = true`, so Hide still hides.
 
 ## Shipped: chef count, not is_public, decides indexing
 
@@ -172,18 +180,18 @@ context and providers, since global-error replaces the root layout.
 
 ## Still open, in priority order
 
-1. **Decide what stops `is_public` going stale again** — new ingests still default to false,
-   so substantial shows will silently drop out of `/shows` and prerendering over time. Either
-   re-run migration 047 after each ingest, flip the column default, or set the flag during
-   ingestion. The backlog itself is cleared.
-2. **Orphaned shows** — `/shows` index links only 10 of ~187. Add `/cities`, `/states`,
-   `/countries` to the header nav too (currently footer-only).
-3. **`/suggest` 404s** — linked from 89 state/country hub pages; no such route exists.
+1. **Nothing is deployed yet.** Six commits of SEO work are sitting on `main`, unpushed and
+   unverified on Vercel. That gates measuring any of it.
+2. **`/suggest` 404s** — linked from 89 state and country hub pages; no such route exists.
+3. **Header nav** — `/cities`, `/states` and `/countries` are footer-only, though the state
+   hubs are the site's strongest crawl path. (The `/shows` index orphaning is fixed: 10 → 51.)
 4. **Sitemap gaps** — `/cities` missing from static routes; the `restaurant_count >= 3`
    filter excludes ~122 real city pages; show/season `lastModified` is build time, not
    content time, which trains Google to distrust every `lastmod` in the file.
 5. **Homepage wastes its equity** — client-side Leaflet map, only ~4 restaurant links in HTML.
 6. No OG image anywhere; no `revalidate` on the two detail routes, so entities beyond the
    `generateStaticParams` caps (500 restaurants / 200 chefs) cache indefinitely.
+7. **1,417 404s** still unidentified — needs the URL list exported from the Search Console
+   Pages report.
 
 Full original audit findings, including what's already good, live in this note's history.
