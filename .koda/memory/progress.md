@@ -31,17 +31,23 @@ Status: Phase 3 Complete
 | 11 | Admin Shows Page | Dec 8 | ✅ Harvest trigger for show data |
 | 12 | Top Chef Charlotte (S23) | Mar 14 | ✅ 15 chefs + 15 restaurants enriched |
 | 13 | Restaurant Photo Self-Hosting | Jun 12 | ✅ ~1,190 repaired, 0 expired URLs; photos now in Supabase storage |
+| 14 | SEO Recovery | Aug 2 | ✅ Crawlability, thin-content thresholds, 313 redirects, 478 orphaned restaurants given city pages — see [[seo-recovery]] |
+| 15 | Homepage Performance | Aug 2 | ✅ 45.9MB API payload → 2.5MB; Lighthouse desktop 68 → 96, mobile 39 → ~74-80 |
 
 ## Current Status (counted from the database 2026-08-02)
 
-**Production Site**: Live on Vercel with 700+ SEO-optimized pages
-- 464 chefs (86% bios, 5% photos)
-- 1,293 restaurants (100% Google Places data, 96% photos)
-- 162 city landing pages
-- 51 state pages
-- 36 country pages
-- 27 public shows (192 total in the database)
+**Production Site**: Live on Vercel
+- 458 chefs (13% photos — 6 accent-duplicate profiles merged Aug 2)
+- 1,293 public restaurants (100% Google Places data, 96% photos)
+- 414 city rows, **101 indexable** (≥3 restaurants)
+- 51 state rows, **40 indexable**
+- 36 country rows, **17 indexable**
+- 75 public shows (192 total in the database)
+- Sitemap: **2,159 URLs**
 - Full admin panel with entity editors, enrichment tools, show management
+
+The gap between rows and indexable pages is deliberate: locations below three restaurants are
+`noindex, follow` so they stay crawlable without adding thin pages. See [[seo-recovery]].
 
 Earlier revisions of this file claimed 238 chefs at 88% photo coverage. The roster
 has since roughly doubled through show enrichment runs, and photo coverage did not

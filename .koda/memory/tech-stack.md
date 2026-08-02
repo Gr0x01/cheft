@@ -23,7 +23,11 @@ Modern web stack optimized for rapid development and minimal operational overhea
 - **Framework**: Next.js 16 with React 19
 - **State Management**: React Context + useState/useReducer (simple state, no external store needed initially)
 - **Styling**: Tailwind CSS
-- **Maps**: Leaflet.js with OpenStreetMap (free alternative to Google Maps)
+- **Maps**: Leaflet.js with OpenStreetMap (free alternative to Google Maps), pins clustered
+  via `react-leaflet-cluster`
+- **Fonts**: Crimson Pro (display), Space Grotesk (UI), JetBrains Mono (numerals/labels),
+  self-hosted by `next/font/google` in `layout.tsx`. **Never load fonts with a CSS `@import`**
+  — that's what they used to do, and it serialised three round trips ahead of first paint
 - **UI Components**: Headless UI + custom components
 - **Build Tool**: Built into Next.js
 

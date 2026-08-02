@@ -18,8 +18,8 @@ Status: Pre-Launch - Final Polish
 ```bash
 # Development
 npm run dev          # Start development server (localhost:3003)
-npm run build        # Build for production
-npm run lint         # Run ESLint
+npm run build        # Build for production — fails locally on /_global-error, see below
+npm run lint         # Run ESLint (~237 pre-existing `any` warnings; judge by the delta)
 npm run type-check   # Run TypeScript checks
 
 # Testing
@@ -35,6 +35,13 @@ npx tsx scripts/enrich-google-places.ts   # Backfill Google Place IDs
 npx tsx scripts/add-show.ts --show "Show Name" --network "Network" --contestants "Name:season:result,..."
 npx tsx scripts/add-show.ts --config path/to/show-config.json
 ```
+
+**Local gate before shipping**: `npx tsc --noEmit` + `npm run test:e2e`. Don't use
+`npm run build` as the gate — it fails locally on `/_global-error` for environment reasons
+while Vercel builds the same code fine ([[seo-recovery]] has the detail).
+
+**If a CSS edit doesn't appear**, restart the dev server. Turbopack serves stale `globals.css`
+through both file touches and query-string cache-busting.
 
 ## Adding a New TV Show
 Use `scripts/add-show.ts` to add a new show with contestants. It handles everything:
@@ -59,8 +66,9 @@ Use `scripts/add-show.ts` to add a new show with contestants. It handles everyth
 **Local LLM**: Auto-detects `LM_STUDIO_URL` env var and uses local LLM if available.
 
 ## Active Focus
+- Search Console: resubmit the sitemap, validate the 404 fixes (see [[active-context]])
 - UI polish and cleanup
-- E2E testing before launch
+- E2E testing before launch — `npm run test:e2e` is green at 55/55
 - Mobile responsiveness verification
 
 ## Quick Links
@@ -87,10 +95,14 @@ Counted directly from the Cheft Supabase project (`clktrvyieegouggrpfaj`) on 202
 Re-count rather than trusting this block if it's more than a few months old.
 
 - **Restaurants**: 1,293 (all public) — 100% Google Places, 96% have photos
-- **Chefs**: 464 — 86% have bios, **5% have photos** (only 22 rows carry `photo_url`)
-- **Shows**: 192 total, 27 public
-- **Coverage**: 162 cities, 51 states, 36 countries
+- **Chefs**: 458 — 86% have bios, **13% have photos** (61 rows carry `photo_url`)
+- **Shows**: 192 total, 75 public
+- **Coverage**: 414 city rows / 101 indexable, 51 states / 40, 36 countries / 17
 - **Michelin**: 4,846 reference restaurants from Wikipedia
+
+Locations need **≥3 restaurants** to be indexed (`MIN_INDEXABLE_LOCATION_RESTAURANTS` in
+`src/lib/locationIndexing.ts`), which is why row counts and indexable counts differ. The
+sitemap keys off the same constant — change both together. See [[seo-recovery]].
 
 To re-count: `select count(*) from chefs;` etc., or use `/admin/data`.
 

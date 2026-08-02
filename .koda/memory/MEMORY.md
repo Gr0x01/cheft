@@ -14,7 +14,8 @@ Supabase Postgres, LLM enrichment pipeline. Open only what you need.
 - [System design](system-design.md) — how ingestion flows through to the public SEO pages
 - [RLS security](rls-security.md) — Supabase Row Level Security; which tables are locked down
 - [Analytics setup](analytics-setup.md) — PostHog and Plausible wiring, custom events
-- [SEO recovery](seo-recovery.md) — only 16% of pages indexed: the crawlability + thin-content fixes, the `next/script`, `is_public` and `is_primary` traps, the 45MB homepage payload fix, and the remaining backlog
+- [SEO recovery](seo-recovery.md) — only 16% of pages indexed: crawlability, thin-content thresholds, the 37%-of-restaurants-had-no-city-page fix, the `next/script`/`is_public`/`is_primary` traps, and the homepage performance work
+- [Progress log](progress.md) — shipped milestones and current database counts
 - [LLM models](llm-models.md) — authoritative OpenAI model names + pricing; never change without asking RB
 - `archive/` — superseded plans and long-form project history; not current, read only when digging into why something was built
 

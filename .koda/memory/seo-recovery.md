@@ -1,6 +1,6 @@
 ---
 name: seo-recovery
-description: why only 16% of pages are indexed, the crawlability and thin-content fixes applied, the next/script, is_public and is_primary traps, the 45MB homepage payload fix, and what's still open
+description: why only 16% of pages are indexed; the crawlability, thin-content and missing-city-page fixes; the next/script, is_public and is_primary traps; the 45MB payload and homepage performance work; and what's still open
 Last-Updated: 2026-08-02
 Maintainer: RB
 ---
@@ -187,17 +187,20 @@ earning meaningful traffic has ≥5 chefs, so a cut at 3 keeps margin.
   `chef-hunter`, `top-chef-charlotte` are noindexed and absent; Chopped, Beat Bobby Flay and
   Tournament of Champions still indexable and present.
 
-## Known blocker: `_global-error` won't prerender
+## Local-only: `npm run build` fails on `_global-error` — not a deploy blocker
 
-`npm run build` fails on `/_global-error` with the same useContext error. Ruled out by
-bisection: next/script, PostHogProvider, GoogleAnalytics, custom vs default global-error,
-client vs server component, `force-dynamic`, clean cache, Next 16.0.7→16.2.12,
+`npm run build` fails locally on `/_global-error` with a `useContext` of null. **This is a
+local environment quirk and does not affect Vercel** — confirmed 2026-08-02, when six
+consecutive deploys built and shipped fine with the same code. Compile succeeds and ~1,250
+pages prerender before it hits; if you see it, keep going.
+
+Ruled out by bisection: next/script, PostHogProvider, GoogleAnalytics, custom vs default
+global-error, client vs server component, `force-dynamic`, clean cache, Next 16.0.7→16.2.12,
 React 19.2.1→19.2.8. All version bumps were reverted; deps are back at their original pins.
 
-This matches [vercel/next.js#94667](https://github.com/vercel/next.js/discussions/94667) —
-reported as unfixable from application code. Local Node is **24.6.0**; Vercel builds on
-Node 20/22 and has shipped 126 commits over 8 months on Next 16, so this is very likely
-local-only. Confirm on a Vercel preview before treating it as a deploy blocker.
+Matches [vercel/next.js#94667](https://github.com/vercel/next.js/discussions/94667) — reported
+as unfixable from application code. Local Node is **24.6.0**; Vercel builds on Node 20/22.
+Use `npx tsc --noEmit` plus `npm run test:e2e` as the local gate instead of a full build.
 
 `src/app/global-error.tsx` was added along the way (the app had none) — deliberately free of
 context and providers, since global-error replaces the root layout.
@@ -309,7 +312,10 @@ The six malformed city slugs found in the same pass (`amman-`, `angers-`, `bangk
 `montr-al-qc`, `cheltenham-`, `val-ncia-`) were fixed by migration 053 above, with permanent
 redirects in `legacyRedirects.json`.
 
-## Homepage Lighthouse: mobile 39 → 80, desktop 68 → 71 → (remeasure)
+## Homepage Lighthouse: mobile 39 → ~74-80, desktop 68 → 96
+
+Four measurements over 2026-08-02, in order below. **Desktop finished at 96; mobile lands
+74–80 depending on the run.** Work was stopped deliberately — see "Fourth measurement".
 
 **Second measurement 2026-08-02, after the fixes below shipped: mobile 80, desktop 71**, SEO
 100 on both. Field data (CrUX, 28 days) is green throughout — mobile LCP 1.3s, desktop 1.1s,
@@ -360,6 +366,36 @@ Next self-hosts them at build time, inlines the `@font-face` rules and preloads.
 **zero requests to fonts.g\***, all three same-origin, and render-blocking is now only the app's
 own CSS. **Don't reintroduce a font `@import`** — use `next/font`.
 
+### Fourth measurement: mobile 74 — and where this stopped
+
+After the font fix: **FCP 3.2s → 2.0s** (the fix working), TBT 10ms, CLS 0. But **LCP went
+4.8s → 5.9s** and the score read 74. Work was stopped here deliberately rather than continuing
+to change things.
+
+Why stopped:
+
+- **The mobile lab score is noisy** — 80, 76, 74 across three runs while the underlying FCP
+  clearly improved. Optimising against a number with ±6 swing invites chasing ghosts.
+- **The LCP regression is unexplained.** The LCP element is a *text* paragraph in the
+  featured-chef panel, not an image, and there's a ~3.9s gap between FCP and LCP that would
+  need a throttled Lighthouse trace to attribute. Google's PSI API quota was exhausted, so
+  that trace couldn't be pulled. **Do not assume the font change caused it** — it may be the
+  same run-to-run variance. Re-measure a few times before acting.
+- **Field data is green regardless**: real-user LCP 1.3s mobile / 1.1s desktop, CLS 0. That is
+  what feeds rankings; the lab score is a diagnostic.
+
+Dead ends already checked, so nobody repeats them:
+
+- The featured-chef hero image is **15KB at every width** — it's requested at `w=3840`, which
+  looks alarming but costs nothing because the Wikimedia source is only 297×387. It already
+  has `priority`.
+- Total images on the homepage are **83KB**. Lighthouse's "Improve image delivery — 274 KiB"
+  is spread across ~29 lazy-loaded card images below the fold, not the LCP path.
+- Leaflet CSS reaching mobile is **12 of 363 rules**, well under a kilobyte. Not worth removing.
+
+The real remaining lever is the app shell: ~101 KiB unused JS and 23 KiB legacy JS, i.e.
+splitting `HomePage.tsx`'s client bundle. Scope it as its own project.
+
 ### Original diagnosis (mobile 39 / desktop 68)
 
 RB's PageSpeed run against production, after the payload fix deployed. The failing metrics are
@@ -400,19 +436,25 @@ take effect locally); do not treat a local build failure as a deploy blocker, an
 
 ## Still open, in priority order
 
-1. **Re-run PageSpeed on the homepage** — everything through marker clustering is deployed and
-   verified live, but the last score (mobile 80 / desktop 71) predates clustering.
-2. **Then resubmit the sitemap** and start Search Console validation for the Not found (404)
-   issue. Both are RB-only actions in the Search Console UI. Plausible was confirmed working
-   by RB on 2026-08-02.
+Nothing is waiting to deploy — all code and migrations below are live and verified.
+
+1. **Resubmit the sitemap** and start Search Console validation for the Not found (404) issue.
+   Both are RB-only actions in the Search Console UI. This is the last step of the recovery.
+   Plausible was confirmed working by RB on 2026-08-02.
+2. **Then watch Search Console for 4–8 weeks.** The measures that matter: indexed count off the
+   693 baseline, and the Not found (404) bucket shrinking from 1,417 as the 313 redirects and
+   the repaired city URLs are recrawled.
 3. **Monitor `/restaurants` Core Web Vitals.** It renders all cards server-side; paginate or
    cap the first page if the added weight causes a regression.
-4. `cuisine_tags` is populated on **1 of 1,293** restaurants, but the cards render it and the
+4. **Mobile Lighthouse, only if it's worth it** — splitting `HomePage.tsx`'s client bundle
+   (~101 KiB unused JS). Read "Fourth measurement" first, including the dead ends already
+   ruled out.
+5. `cuisine_tags` is populated on **1 of 1,293** restaurants, but the cards render it and the
    homepage search filters on it. Enrichment gap, not a code bug.
-5. 14 restaurants still have no city page because their location is a placeholder
+6. 14 restaurants still have no city page because their location is a placeholder
    (`unknown`, `Various`, `Multiple locations`, `Hawaii` and `New Jersey` as city names,
    `Boston (Logan Airport)`). Needs data entry, not code.
-6. `cities.country` mixes ISO codes with full names — Amman is `Jordan`, not `JO`. Harmless
+7. `cities.country` mixes ISO codes with full names — Amman is `Jordan`, not `JO`. Harmless
    today; would matter if country pages are ever keyed on the code.
 
 Full original audit findings, including what's already good, live in this note's history.
