@@ -67,7 +67,8 @@ export function createMediaEnricher(
   async function enrichChefImage(
     chefId: string,
     chefName: string,
-    validationKeywords?: string[]
+    validationKeywords?: string[],
+    dryRun = false
   ): Promise<ChefImageEnrichmentResult> {
     stats.chefsProcessed++;
 
@@ -79,6 +80,11 @@ export function createMediaEnricher(
       if (wikipediaResult) {
         photoUrl = wikipediaResult.url;
         photoSource = 'wikipedia';
+      }
+
+      if (photoUrl && photoSource && dryRun) {
+        stats.chefsWithPhotos++;
+        return { chefId, chefName, photoUrl, photoSource, success: true };
       }
 
       if (photoUrl && photoSource) {
@@ -292,10 +298,11 @@ export function createMediaEnricher(
   }
 
   async function enrichAllChefsWithoutPhotos(
-    options: { limit?: number; delayMs?: number } = {}
+    options: { limit?: number; delayMs?: number; dryRun?: boolean; onResult?: (r: ChefImageEnrichmentResult) => void } = {}
   ): Promise<ChefImageEnrichmentResult[]> {
     const limit = options.limit ?? 50;
     const delayMs = options.delayMs ?? 500;
+    const dryRun = options.dryRun ?? false;
 
     type ChefWithContext = {
       id: string;
@@ -337,8 +344,9 @@ export function createMediaEnricher(
         if (r.name) keywords.push(r.name);
       }
 
-      const result = await enrichChefImage(chef.id, chef.name, keywords);
+      const result = await enrichChefImage(chef.id, chef.name, keywords, dryRun);
       results.push(result);
+      options.onResult?.(result);
 
       if (delayMs > 0) {
         await new Promise(resolve => setTimeout(resolve, delayMs));

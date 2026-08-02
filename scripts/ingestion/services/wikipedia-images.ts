@@ -17,7 +17,9 @@ export interface WikipediaImageConfig {
 }
 
 export function createWikipediaImageService(config: WikipediaImageConfig = {}) {
-  const userAgent = config.userAgent || 'TVChefMap/1.0 (https://github.com/tv-chef-map; contact@example.com)';
+  // Wikimedia's UA policy requires a real, identifying contact — a placeholder
+  // address risks the whole project being rate-limited or blocked.
+  const userAgent = config.userAgent || 'Cheft/1.0 (https://github.com/Gr0x01/chef)';
 
   async function fetchApi(baseUrl: string, params: Record<string, string>): Promise<unknown> {
     const url = new URL(baseUrl);
@@ -94,6 +96,16 @@ export function createWikipediaImageService(config: WikipediaImageConfig = {}) {
 
       if (!isChefRelatedPage(page.categories, page.extract, chefName, validationKeywords)) {
         console.log(`[wikipedia-images] Skipping "${chefName}": page exists but not chef-related`);
+        return null;
+      }
+
+      if (!isLikelyPersonPhoto(page.original.source, page.original.width, page.original.height)) {
+        console.log(`[wikipedia-images] Skipping "${chefName}": lead image is not a portrait`);
+        return null;
+      }
+
+      if (!imageDepictsPerson(page.original.source, chefName)) {
+        console.log(`[wikipedia-images] Skipping "${chefName}": lead image does not depict them`);
         return null;
       }
 
@@ -262,6 +274,9 @@ function isLikelyPersonPhoto(title: string, width: number, height: number): bool
   const badIndicators = [
     'logo', 'icon', 'banner', 'map', 'diagram', 'chart',
     'screenshot', 'flag', 'coat of arms', 'seal', 'emblem',
+    // Artwork and venue shots that sit on otherwise-valid chef pages
+    'painting', 'oil_on_canvas', 'portrait_of', 'sculpture', 'statue',
+    'book_cover', 'album_cover', 'poster', 'exterior', 'storefront',
   ];
   
   if (badIndicators.some(indicator => lowerTitle.includes(indicator))) {
@@ -304,25 +319,50 @@ function isChefRelatedPage(
 
   // Check for chef/culinary-related keywords
   const chefKeywords = [
-    'chef', 'restaurateur', 'culinary', 'restaurant', 'cook', 
+    'chef', 'restaurateur', 'culinary', 'restaurant', 'cook',
     'top chef', 'iron chef', 'food network', 'cooking', 'cuisine',
-    'contestant', 'competition', 'winner', 'james beard'
+    'contestant', 'competition', 'winner', 'james beard',
+    // Food trades that rarely self-describe as "chef" on Wikipedia
+    'butcher', 'baker', 'bakery', 'pastry', 'patisserie', 'sommelier',
+    'gastronomy', 'michelin star',
   ];
   
   if (chefKeywords.some(keyword => combinedText.includes(keyword))) {
     return true;
   }
 
-  // For pages without clear chef keywords, check if the person's name appears prominently
-  // This catches Wikipedia pages that might not explicitly say "chef" in the intro
-  const nameWords = chefName.toLowerCase().split(' ');
-  if (nameWords.length >= 2 && lowerExtract.length > 100) {
-    // If we have a substantial extract and the person's name is there, accept it
-    // (Wikipedia pages for TV personalities often don't lead with "chef")
-    return true;
-  }
-
+  // No culinary signal and no keyword match: reject. This previously fell through
+  // to "any two-word name with a >100 char extract is fine", which accepted the
+  // wrong same-name public figure (an actor, a radio host, a country singer) for
+  // any chef lacking a Wikipedia page. A missing photo is cheap; someone else's
+  // face on a chef's page is not.
   return false;
+}
+
+/** Strip diacritics and casing so "Albert Adrià" matches "Albert_Adri%C3%A0.jpg". */
+function normalizeForMatch(value: string): string {
+  return value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+/**
+ * A chef-related page can still lead with something that isn't the chef —
+ * their restaurant's storefront, a group awards shot, or a museum portrait of a
+ * same-named painter. Require the filename to carry part of their name.
+ */
+function imageDepictsPerson(imageUrl: string, chefName: string): boolean {
+  const fileName = normalizeForMatch(
+    decodeURIComponent(imageUrl.split('/').pop() || '')
+  );
+
+  // Artwork rather than photography — chef portraits are contemporary, so an
+  // early-20th-century date is a reliable tell for a painting or engraving.
+  if (/\b(1[0-8]\d{2}|19[0-5]\d)\b/.test(fileName)) return false;
+
+  const nameTokens = normalizeForMatch(chefName)
+    .split(/\s+/)
+    .filter(token => token.length > 2);
+
+  return nameTokens.some(token => fileName.includes(token));
 }
 
 export type WikipediaImageService = ReturnType<typeof createWikipediaImageService>;

@@ -17,7 +17,8 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 - Two show configs are enriched-ready but unrun (Top Chef Canada, Just Desserts) — see [[show-enrichment-status]].
 
 ## Open questions
-- **Chef photo coverage is 5%** — only 22 of 464 chefs have a `photo_url` (21 Wikipedia, 1 manual). Restaurant photos are fine at 96%. This is the biggest content gap before launching a visual directory about chefs; no backfill script exists for chef photos yet.
+- **Chef photo coverage is 14%** (63/464) after the Aug 2 2026 Wikimedia backfill. Wikipedia is tapped out — the other 401 have no article. Decide before launch whether initials/Instagram fallback is good enough, or budget for licensed headshots. See [[enrichment-reference]].
+- **Duplicate chef rows are live** — José Andrés and Albert Adrià each matched twice during the backfill, i.e. they exist twice in `chefs`. `duplicate_candidates` holds 123 rows; `npm run merge-duplicate-chefs` exists but hasn't been run recently.
 - **Restaurant counts grew past what the SEO pages assume** — 1,293 restaurants vs. the "700+ pages" figure in [[progress]]. Worth re-checking sitemap/page counts before launch.
 
 ## Orientation

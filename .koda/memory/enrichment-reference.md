@@ -243,6 +243,40 @@ and `enrich-google-places.ts` both do this. Stored URLs then look like
   `/places/...` URLs. Those return 200 and are not broken — self-hosting them is
   optional cleanup, not a bug.
 
+## Chef Photos — Wikipedia/Wikimedia ONLY
+
+Chef portraits were wiped in Dec 2025 because scraped Google Images carried
+copyright liability. Wikimedia (CC-BY-SA / public domain, commercial use with
+attribution) is the **only** approved source. Chef detail pages render
+`Photo: Wikimedia Commons (CC BY-SA)` whenever `photo_source = 'wikipedia'`.
+Anything else is a manual admin upload (`photo_source = 'manual'`). Full history:
+`archive/photo-legal-compliance.md`.
+
+- **Backfill script**: `scripts/backfill-chef-photos.ts` (`--dry-run`, `--limit N`).
+  It drives `mediaEnricher.enrichAllChefsWithoutPhotos()`; the orchestrator
+  deliberately skips chef photos, so this runner is the only thing that fills them.
+- **Coverage ceiling is low and that's expected**: ~9% of photo-less chefs match.
+  Most of the 464-chef roster are reality-TV contestants with no Wikipedia article.
+  Missing photos fall back to an Instagram link, then initials — by design.
+- **Always `--dry-run` first and read the match list.** Wikipedia name collisions
+  are the main hazard: an actor, a radio host and a 1926 painting all matched
+  before the guards in `wikipedia-images.ts` were tightened. Three guards now
+  apply, all of which must pass:
+  1. `isChefRelatedPage` — needs a culinary keyword or a show/restaurant keyword
+     match. It used to fall through to "any two-word name with a >100 char
+     extract", which accepted essentially any person's page. Do not reinstate.
+  2. `isLikelyPersonPhoto` — rejects logos, maps, artwork, storefronts.
+  3. `imageDepictsPerson` — the filename must contain part of the chef's name, and
+     must not carry a pre-1960 date. Catches chef pages whose lead image is the
+     restaurant building or a group awards shot.
+
+  These reject some legitimate chefs (e.g. Grant Achatz, whose Wikipedia lead
+  image is named `JOH_0416.jpg`). That trade is deliberate — a missing photo is
+  cheap, the wrong person's face on a chef page is not. Add those by hand.
+- **Photos are hotlinked to Wikimedia**, not self-hosted like restaurant photos.
+  Wikimedia URLs are stable so they don't rot the way Google's do. Fetching many
+  in a tight loop will earn a 429 — throttle any bulk verification.
+
 ## Environment Variables
 
 ```bash
