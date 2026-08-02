@@ -16,31 +16,17 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
   measurements and remaining backlog live in [[seo-recovery]] — read it before touching SEO.
 - UI polish, mobile responsiveness, and a clean `npm run test:e2e` pass before launch.
 
-## Next step — verify the deploy before doing anything else
+## Next step
 
-Work through 2026-08-02 is **committed and on `origin/main`**, but production is **still
-serving the old build** (live `/restaurants` has 0 crawlable links; live sitemap still lists
-192 shows instead of 66). So the deploy either hasn't triggered, is mid-flight, or failed.
-
-1. **RB: check the Vercel dashboard.** Never run the Vercel CLI on this project. A failed
-   build is a live possibility — `npm run build` fails locally on `/_global-error`, a Next 16
-   bug with no app-level workaround (vercel/next.js#94667). It's *probably* local-only
-   (Node 24.6.0 here; Vercel is on 20/22 and has built fine for eight months), but that is an
-   assumption, not a verified fact.
-2. Once deployed, confirm: `/restaurants` serves ~1,293 crawlable links, thin show pages
-   return `noindex`, sitemap drops to ~2,123 URLs, and **Plausible still records** (its
-   script tags were hand-rolled — see [[analytics-setup]]).
-3. Then resubmit the sitemap in Search Console and watch whether "crawled – currently not
-   indexed" (1,616) starts falling.
-
-**Heads-up: the database is ahead of the deployed code.** Migrations 047 and 048 were applied
-straight to production Supabase, so 75 shows are public and the `/shows` index RPC already
-requires ≥3 chefs, while the old code is still being served. The mismatch is benign — the DB
-changes only improve the old behaviour — but expect `/shows` to jump from 10 to 51 links on
-its own once ISR expires, independent of any deploy.
+- Production deploy verified 2026-08-02: `/restaurants` serves 1,293 crawlable restaurant
+  links and the sitemap contains 2,123 URLs. Confirm Plausible still records, then resubmit
+  the sitemap in Search Console.
+- `/suggest` replacement page is built and locally verified but not committed/deployed; ship
+  it, then add `/cities`, `/states`, and `/countries` to the header navigation. See
+  [[seo-recovery]].
 
 ## After that
-- Remaining SEO backlog: `/suggest` 404s, header nav, sitemap gaps, homepage rendering,
+- Remaining SEO backlog: header nav, sitemap gaps, homepage rendering,
   OG image, `revalidate` on detail routes — itemised and prioritised in [[seo-recovery]].
 - Two show configs are enriched-ready but unrun (Top Chef Canada, Just Desserts) — see
   [[show-enrichment-status]].

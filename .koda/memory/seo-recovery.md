@@ -10,11 +10,9 @@ Maintainer: RB
 Diagnosis and fix work started 2026-08-02, prompted by traffic being lower than expected
 after months live.
 
-**Deploy state as of 2026-08-02:** all code is committed and on `origin/main`, but production
-still serves the old build. Migrations 047 and 048 were applied **directly to production
-Supabase** (via the Supabase MCP), so the database is ahead of the deployed code — a benign
-mismatch, but read [[active-context]] before assuming what's live. Both migrations are
-idempotent, so re-running them through any other pipeline is safe.
+**Deploy state as of 2026-08-02:** the recovery build is live. A production fetch confirmed
+1,293 unique restaurant links in `/restaurants` HTML and 2,123 URLs in the sitemap. Migrations
+047 and 048 were applied directly to production Supabase and are idempotent.
 
 ## The measurement
 
@@ -189,12 +187,10 @@ context and providers, since global-error replaces the root layout.
 
 ## Still open, in priority order
 
-1. **Verify the deploy.** The code is on `origin/main` but production still serves the old
-   build — live `/restaurants` has 0 crawlable links and the live sitemap still lists 192
-   shows. RB must check the Vercel dashboard (never run the Vercel CLI on this project); a
-   failed build is plausible given the `_global-error` bug above. Nothing here can be
-   measured until this is resolved.
-2. **`/suggest` 404s** — linked from 89 state and country hub pages; no such route exists.
+1. **Confirm Plausible still records and resubmit the sitemap** in Search Console now that
+   the crawlability recovery build is live.
+2. **Ship `/suggest`.** A static, noindexed utility page now replaces the 404 and opens a
+   pre-filled suggestion email to `info@cheft.app`; locally verified, not yet deployed.
 3. **Header nav** — `/cities`, `/states` and `/countries` are footer-only, though the state
    hubs are the site's strongest crawl path. (The `/shows` index orphaning is fixed: 10 → 51.)
 4. **Sitemap gaps** — `/cities` missing from static routes; the `restaurant_count >= 3`
