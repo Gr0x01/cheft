@@ -29,9 +29,11 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 
 ## Post-deploy checks
 
-- Re-run PageSpeed on the homepage; mobile 39 / desktop 68 predates every client-side fix.
-- Spot-check the new city pages, the eight city redirects, and that thin cities are
-  `noindex, follow` while 3+ ones are indexed.
+- **Re-run PageSpeed** — mobile went 39 → 80 and desktop 68 → 71, then marker clustering
+  shipped after that measurement and cut homepage DOM from 6,518 to ~1,620 nodes. Desktop
+  should be the one that moves. Field data (CrUX) is already green on both.
+- Sitemap, redirects, thin/substantial location metadata and the new city pages were all
+  spot-checked live on 2026-08-02 — see [[seo-recovery]] for the figures.
 - Watch `/restaurants` Core Web Vitals. Re-measure before doing pagination work — the payload
   fix (45.9MB → 2.5MB) may have already resolved it.
 

@@ -136,19 +136,30 @@ curl -X GET "$BASE_URL/api/cron/process-approved-queue" \
 ## Dependencies
 ```json
 {
-  "next": "14+",
-  "react": "18+", 
-  "typescript": "5+",
-  "tailwindcss": "3+",
-  "leaflet": "^1.9.0",
-  "react-leaflet": "^4.2.0", 
-  "@headlessui/react": "^1.7.0",
-  "@supabase/supabase-js": "^2.38.0",
-  "openai": "^4.20.0",
-  "posthog-js": "^1.302.0",
-  "zod": "^3.22.0"
+  "next": "16.0.7",
+  "react": "19.2.1",
+  "typescript": "^5",
+  "tailwindcss": "^4",
+  "leaflet": "^1.9.4",
+  "react-leaflet": "^5.0.0",
+  "react-leaflet-cluster": "^4.1.3",
+  "@headlessui/react": "^2.2.9",
+  "@supabase/supabase-js": "^2.86.0",
+  "openai": "^6.9.1",
+  "posthog-js": "^1.302.2",
+  "zod": "^3.23.0"
 }
 ```
+
+Read from `package.json` on 2026-08-02; the block above had drifted several majors behind
+(it claimed Next 14 / React 18 / react-leaflet 4).
+
+`react-leaflet-cluster` clusters the ~1,270 homepage map pins — added 2026-08-02 with RB's
+approval. It is the only cluster wrapper matching react-leaflet ^5 / React ^19; see
+[[seo-recovery]] for why clustering was needed.
+
+**Don't run `npm audit fix --force`.** It bumps Next to 16.2.12 to clear inherited
+sharp/libvips advisories, and that upgrade was tried and reverted during the SEO work.
 
 ## Environment Configuration
 ```bash

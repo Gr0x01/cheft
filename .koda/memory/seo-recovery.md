@@ -10,22 +10,25 @@ Maintainer: RB
 Diagnosis and fix work started 2026-08-02, prompted by traffic being lower than expected
 after months live.
 
-**Deploy state as of 2026-08-02: everything below is live and production-verified.** RB pushed
-the final batch; checks on the deployed site confirmed:
+**Deploy state as of 2026-08-02: everything below is live and production-verified**, across two
+batches. Final production checks:
 
-- Sitemap **2,204 URLs** (456 chefs, 1,293 restaurants, 135 cities, 46 states, 22 countries,
+- Sitemap **2,159 URLs** (456 chefs, 1,293 restaurants, 101 cities, 40 states, 17 countries,
   245 show/season/winners). Chefs 464 → 456 = 6 merged accent duplicates + 2 thin profiles.
+  Cities/states/countries dropped because they now need ≥3 restaurants, not ≥1.
 - `/api/restaurants` **2.5MB in 1.4s**, down from 45.9MB in 5.3s.
-- All 7 chef redirects 308 to live 200s; a 15-item random sample of the 305 legacy redirects
-  all 308'd to a 200 destination.
-- Empty geography `noindex, follow` (Alaska, Wyoming, Austria, Vietnam) while California,
-  New York, US and Canada stay `index, follow`. Thin chefs Saqib Keval and Norma Listman are
-  `noindex` and absent from the sitemap.
-- City scoping holds: Portland OR 27 / Portland ME 3, and across a 25-city sample the count in
-  the page title matched the rendered restaurant links exactly, 25/25.
+- All 7 chef redirects and all 8 new city redirects 308 to live 200s; a 15-item random sample
+  of the 305 legacy redirects all 308'd to a 200 destination.
+- Thin locations `noindex, follow` and out of the sitemap; substantial ones `index, follow`.
+  Thin chefs Saqib Keval and Norma Listman likewise `noindex`.
+- New city pages live with correct counts: Scottsdale 15, Fort Worth 14, San Francisco 24,
+  Washington DC 35, Valencia 6, Montréal 6.
+- Homepage: mobile issues **zero** data API calls on load, winners row server-rendered with 12
+  cards, map clustered (46 bubbles), DOM 6,518 → ~1,620.
 - `/restaurants` serves 1,299 and `/chefs` 458 unique crawlable links. All key routes 200.
 
-Migrations 047 and 048 were applied directly to production Supabase and are idempotent.
+Migrations 047, 048 and **053–055** were applied directly to production Supabase. 047/048 are
+idempotent; 053–055 are one-way data migrations (see each for what it changes).
 
 ## The measurement
 
@@ -306,7 +309,40 @@ The six malformed city slugs found in the same pass (`amman-`, `angers-`, `bangk
 `montr-al-qc`, `cheltenham-`, `val-ncia-`) were fixed by migration 053 above, with permanent
 redirects in `legacyRedirects.json`.
 
-## Homepage Lighthouse: mobile 39 / desktop 68 (2026-08-02, post-deploy)
+## Homepage Lighthouse: mobile 39 → 80, desktop 68 → 71 → (remeasure)
+
+**Second measurement 2026-08-02, after the fixes below shipped: mobile 80, desktop 71**, SEO
+100 on both. Field data (CrUX, 28 days) is green throughout — mobile LCP 1.3s, desktop 1.1s,
+CLS 0, FCP 1.2s/0.9s — so the lab score, not real-user experience, is what's lagging.
+
+Desktop stayed flat because the remaining cost was the **map**, which mobile never mounts.
+Measured on production: the network is fine (`/api/restaurants` 223KB gzipped in 194ms,
+map-pins 93KB in 127ms); the problem was **1,268 pins each rendered as a React component whose
+DivIcon was three nested divs**, roughly 5,000 of the page's 6,518 DOM nodes plus a Leaflet
+marker object and listeners per pin.
+
+**Fixed with marker clustering** (RB approved the dependency), deployed and verified live:
+`react-leaflet-cluster@4.1.3` — chosen over the vanilla plugin because it wraps the existing
+`<Marker>` children, leaving the popup JSX (which uses `next/link`) untouched. It's the only
+wrapper matching this stack's peers: react-leaflet ^5, React ^19, @react-leaflet/core ^3.
+**Homepage DOM: 6,518 → ~1,620 nodes.** Cluster bubbles reuse the marker palette
+(`.cluster-bubble` in globals.css); clustering is disabled past zoom 11.
+
+Two things found while doing it:
+- Every pin carried a `useState` + `useEffect` guarding against SSR, but the map is only ever
+  imported with `ssr: false` — 1,268 hooks that could never fire. Removed.
+- Picking a restaurant in the sidebar **only ever highlighted its pin, never moved the map** —
+  `MapController` watched the map's internal `selectedPin`, not the `selectedPinId` prop.
+  Harmless while all pins were drawn; with clustering the pin can sit inside a bubble, so the
+  selection would do nothing visible. It now flies to the pin.
+- The homepage cities stat counted **every** `cities` row. The backfill took that 162 → 414,
+  22 of which have no public restaurants; `getStats` now counts only browsable ones (392).
+
+**If the local dev server serves stale CSS after editing `globals.css`, restart it** — touching
+the file and cache-busting the URL both failed; only a restart picked up new rules. Cost real
+time chasing a "CSS not applying" bug that was purely Turbopack caching.
+
+### Original diagnosis (mobile 39 / desktop 68)
 
 RB's PageSpeed run against production, after the payload fix deployed. The failing metrics are
 mobile LCP **8.4s**, mobile TBT **1,560ms**, desktop TBT **940ms**. FCP/Speed Index/CLS are
@@ -346,21 +382,19 @@ take effect locally); do not treat a local build failure as a deploy blocker, an
 
 ## Still open, in priority order
 
-1. **Deploy the second batch**, then production-check it: the new city pages, the ≥3 location
-   threshold, the eight city redirects, winner badges, and the homepage perf work.
-2. **Re-run PageSpeed on the homepage** once that is live — the mobile 39 / desktop 68 above
-   was measured before any of the client-side fixes.
-3. **Then resubmit the sitemap** and start Search Console validation for the Not found (404)
+1. **Re-run PageSpeed on the homepage** — everything through marker clustering is deployed and
+   verified live, but the last score (mobile 80 / desktop 71) predates clustering.
+2. **Then resubmit the sitemap** and start Search Console validation for the Not found (404)
    issue. Both are RB-only actions in the Search Console UI. Plausible was confirmed working
    by RB on 2026-08-02.
-4. **Monitor `/restaurants` Core Web Vitals.** It renders all cards server-side; paginate or
+3. **Monitor `/restaurants` Core Web Vitals.** It renders all cards server-side; paginate or
    cap the first page if the added weight causes a regression.
-5. `cuisine_tags` is populated on **1 of 1,293** restaurants, but the cards render it and the
+4. `cuisine_tags` is populated on **1 of 1,293** restaurants, but the cards render it and the
    homepage search filters on it. Enrichment gap, not a code bug.
-6. 14 restaurants still have no city page because their location is a placeholder
+5. 14 restaurants still have no city page because their location is a placeholder
    (`unknown`, `Various`, `Multiple locations`, `Hawaii` and `New Jersey` as city names,
    `Boston (Logan Airport)`). Needs data entry, not code.
-7. `cities.country` mixes ISO codes with full names — Amman is `Jordan`, not `JO`. Harmless
+6. `cities.country` mixes ISO codes with full names — Amman is `Jordan`, not `JO`. Harmless
    today; would matter if country pages are ever keyed on the code.
 
 Full original audit findings, including what's already good, live in this note's history.
