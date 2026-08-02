@@ -154,27 +154,46 @@ export const db = {
     return data as Show[];
   },
 
-  // Get all restaurants with chef info
+  // Powers the homepage list and search. Columns are listed explicitly rather than
+  // selected with `*`: this returns every public restaurant, so a wildcard dragged
+  // each chef's mini_bio and career_narrative along for every one of their
+  // restaurants and pushed the query into Postgres statement timeouts (57014).
+  // Keep this in sync with what HomePage and RestaurantCardCompact actually read.
   async getRestaurants() {
     const client = getSupabaseClient();
     const { data, error } = await client
       .from('restaurants')
       .select(`
-        *,
+        id,
+        name,
+        slug,
+        city,
+        state,
+        status,
+        price_tier,
+        cuisine_tags,
+        photo_urls,
+        google_rating,
         chef:chefs(
-          *,
+          id,
+          name,
+          slug,
+          james_beard_status,
           chef_shows(
-            *,
-            show:shows(*)
+            is_primary,
+            result,
+            season,
+            season_name,
+            show:shows(id, name, slug)
           )
         )
       `)
       .eq('is_public', true)
       .order('name')
       .limit(5000);
-    
+
     if (error) throw error;
-    return transformRestaurants(data);
+    return transformRestaurants(data as unknown as RawRestaurant[]);
   },
 
   // A small, stable set for crawlable homepage links. Keep the full directory client-loaded.

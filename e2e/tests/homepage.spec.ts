@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { nonCriticalConsolePatterns } from '../fixtures/test-data';
 
 test.describe('Homepage', () => {
   test.beforeEach(async ({ page }) => {
@@ -58,21 +59,8 @@ test.describe('Homepage', () => {
     
     await context.close();
     
-    const nonCriticalPatterns = [
-      'favicon.ico',
-      'chrome-extension',
-      'baseline-browser-mapping',
-      'Download the React DevTools',
-      'hydration',
-      'Hydration',
-      'ResizeObserver',
-      'net::ERR_',
-      'Failed to load resource',
-      '404',
-    ];
-    
-    const criticalErrors = consoleErrors.filter(error => 
-      !nonCriticalPatterns.some(pattern => error.includes(pattern))
+    const criticalErrors = consoleErrors.filter(error =>
+      !nonCriticalConsolePatterns.some(pattern => error.includes(pattern))
     );
     
     if (criticalErrors.length > 0) {

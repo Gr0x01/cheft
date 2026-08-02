@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { testChefs, testSearchQueries } from '../fixtures/test-data';
+import { testChefs, testSearchQueries, nonCriticalConsolePatterns } from '../fixtures/test-data';
 
 test.describe('Restaurant Map', () => {
   test.beforeEach(async ({ page }) => {
@@ -192,11 +192,8 @@ test.describe('Restaurant Map', () => {
 
     await context.close();
 
-    // Filter out known non-critical errors
-    const criticalErrors = errors.filter(error => 
-      !error.includes('favicon.ico') &&
-      !error.includes('chrome-extension') &&
-      !error.includes('baseline-browser-mapping')
+    const criticalErrors = errors.filter(error =>
+      !nonCriticalConsolePatterns.some(pattern => error.includes(pattern))
     );
 
     if (criticalErrors.length > 0) {

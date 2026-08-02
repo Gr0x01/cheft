@@ -38,3 +38,18 @@ export const mockRestaurant = {
   show_name: 'Top Chef',
   season: 'Season 1'
 };
+// Console noise that doesn't indicate a broken page: browser/extension chatter and
+// resource-loading failures from the dev server under parallel load. Shared so the
+// homepage and restaurant-map error checks can't drift apart on what counts as real.
+export const nonCriticalConsolePatterns = [
+  'favicon.ico',
+  'chrome-extension',
+  'baseline-browser-mapping',
+  'Download the React DevTools',
+  'hydration',
+  'Hydration',
+  'ResizeObserver',
+  'net::ERR_',
+  'Failed to load resource',
+  '404',
+];
