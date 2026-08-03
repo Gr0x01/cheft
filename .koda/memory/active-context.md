@@ -21,8 +21,9 @@ Vercel, Supabase Postgres behind it. Phase: pre-launch polish. See [[project-bri
 
 ## Next step
 
-- **Uncommitted and undeployed as of 2026-08-03**: a sitemap/robots audit plus the build fix
-  (see below). Needs a commit and a deploy; the sitemap only regenerates on deploy.
+- **Everything below is shipped** — commit `fad717b`, deployed and verified in production
+  2026-08-03. Note the sitemap only regenerates on deploy, so data added to Supabase between
+  deploys will not appear in it until the next one.
 - **Next SEO action:** wait for Google to recrawl, then review index coverage and Performance
   query/page exports after the first two weeks; do not resume technical SEO in the meantime.
 - Search Console validation status for the Not found (404) issue is not yet recorded.
