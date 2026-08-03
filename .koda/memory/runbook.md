@@ -18,7 +18,7 @@ Status: Pre-Launch - Final Polish
 ```bash
 # Development
 npm run dev          # Start development server (localhost:3003)
-npm run build        # Build for production — fails locally on /_global-error, see below
+npm run build        # Build for production
 npm run lint         # Run ESLint (~237 pre-existing `any` warnings; judge by the delta)
 npm run type-check   # Run TypeScript checks
 
@@ -36,9 +36,10 @@ npx tsx scripts/add-show.ts --show "Show Name" --network "Network" --contestants
 npx tsx scripts/add-show.ts --config path/to/show-config.json
 ```
 
-**Local gate before shipping**: `npx tsc --noEmit` + `npm run test:e2e`. Don't use
-`npm run build` as the gate — it fails locally on `/_global-error` for environment reasons
-while Vercel builds the same code fine ([[seo-recovery]] has the detail).
+**Local gate before shipping**: `npm run build` + `npm run test:e2e`. The build works again as
+of 2026-08-03 — the long-standing `/_global-error` failure was `NODE_ENV=development` in
+`.env.local`, not a Next bug ([[seo-recovery]] has the detail). Never set `NODE_ENV` in an env
+file; if that warning reappears at the top of the build log, that's the cause.
 
 **If a CSS edit doesn't appear**, restart the dev server. Turbopack serves stale `globals.css`
 through both file touches and query-string cache-busting.

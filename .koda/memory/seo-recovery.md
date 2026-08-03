@@ -13,6 +13,9 @@ after months live.
 **Deploy state as of 2026-08-02: everything below is live and production-verified**, across two
 batches. Final production checks:
 
+- RB resubmitted the updated sitemap in Google Search Console on 2026-08-02. Do not list
+  sitemap submission as an outstanding task; the site is now waiting for Google's recrawl.
+
 - Sitemap **2,159 URLs** (456 chefs, 1,293 restaurants, 101 cities, 40 states, 17 countries,
   245 show/season/winners). Chefs 464 → 456 = 6 merged accent duplicates + 2 thin profiles.
   Cities/states/countries dropped because they now need ≥3 restaurants, not ≥1.
@@ -187,23 +190,34 @@ earning meaningful traffic has ≥5 chefs, so a cut at 3 keeps margin.
   `chef-hunter`, `top-chef-charlotte` are noindexed and absent; Chopped, Beat Bobby Flay and
   Tournament of Champions still indexable and present.
 
-## Local-only: `npm run build` fails on `_global-error` — not a deploy blocker
+## SOLVED 2026-08-03: `npm run build` failing on `_global-error` was `NODE_ENV`
 
-`npm run build` fails locally on `/_global-error` with a `useContext` of null. **This is a
-local environment quirk and does not affect Vercel** — confirmed 2026-08-02, when six
-consecutive deploys built and shipped fine with the same code. Compile succeeds and ~1,250
-pages prerender before it hits; if you see it, keep going.
+**Root cause: `.env.local` line 17 set `NODE_ENV=development`.** `next build` loads
+`.env.local`, so the production build ran with a development `NODE_ENV`, React resolved in
+mixed mode, and prerendering `/_global-error` died on `useContext` of null. Deleting that one
+line fixes it: build now exits 0, all 1,291 pages prerender, and the flood of
+`unique "key" prop` warnings (the same dev/prod mismatch) drops to zero.
 
-Ruled out by bisection: next/script, PostHogProvider, GoogleAnalytics, custom vs default
-global-error, client vs server component, `force-dynamic`, clean cache, Next 16.0.7→16.2.12,
-React 19.2.1→19.2.8. All version bumps were reverted; deps are back at their original pins.
+The tell is in the first five lines of the build log, above all the noise:
+`⚠ You are using a non-standard "NODE_ENV" value in your environment`. **Read the top of the
+build log before chasing the error at the bottom.** The earlier investigation bisected
+next/script, PostHogProvider, GoogleAnalytics, custom vs default global-error, `force-dynamic`,
+Next 16.0.7→16.2.12 and React 19.2.1→19.2.8 without finding it, and wrongly concluded it was
+[vercel/next.js#94667](https://github.com/vercel/next.js/discussions/94667) and unfixable —
+it was never that bug.
 
-Matches [vercel/next.js#94667](https://github.com/vercel/next.js/discussions/94667) — reported
-as unfixable from application code. Local Node is **24.6.0**; Vercel builds on Node 20/22.
-Use `npx tsc --noEmit` plus `npm run test:e2e` as the local gate instead of a full build.
+Never set `NODE_ENV` in an env file; Next sets it per command. Removed from `.env.local` and
+`.env.example`, both now carrying a comment saying why. `npm run build` is a real local gate
+again.
 
-`src/app/global-error.tsx` was added along the way (the app had none) — deliberately free of
-context and providers, since global-error replaces the root layout.
+Two comments still credit the phantom Next 16 bug for why `GoogleAnalytics.tsx` and
+`PlausibleAnalytics.tsx` avoid `next/script` (see the section above). Those components work
+fine as plain `<script>` tags and were left alone — but the *reason* recorded there is wrong,
+so `next/script` is not actually known to be unsafe in this app.
+
+`src/app/global-error.tsx` stays deliberately free of context and providers, since global-error
+replaces the root layout. Its `force-dynamic` export was removed — it was inert and only ever
+a workaround for the misdiagnosis.
 
 ## Also fixed
 
@@ -428,11 +442,8 @@ re-run PageSpeed to confirm the score moved:
    webkit; the old e2e pass was timing luck). Fixed by a mount effect that adopts any
    pre-hydration DOM value from either search input. e2e 55/55 green after.
 
-The local `npm run build` fails prerendering `/_global-error` (`useContext` of null) even on
-commits that build and deploy fine on Vercel — confirmed by building the deployed `10709c9`
-locally. Purely a local-env quirk (the `force-dynamic` workaround in `global-error.tsx` doesn't
-take effect locally); do not treat a local build failure as a deploy blocker, and do not
-"fix" it by touching `global-error.tsx` — see the next/script section above for the history.
+(The local `/_global-error` build failure referenced here was solved on 2026-08-03 — it was
+`NODE_ENV=development` in `.env.local`, not a Next bug. See the section above.)
 
 ## Still open, in priority order
 

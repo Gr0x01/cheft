@@ -2,12 +2,8 @@
 
 /**
  * global-error replaces the root layout, so no provider or context from it exists here —
- * this page must stay free of both. Next 16 crashes prerendering this route with
- * "Cannot read properties of null (reading 'useContext')" (vercel/next.js#94667), hence
- * force-dynamic: there is nothing to gain from prerendering an error page anyway.
+ * this page must stay free of both.
  */
-export const dynamic = 'force-dynamic';
-
 export default function GlobalError() {
   return (
     <html lang="en">
