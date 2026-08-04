@@ -1,7 +1,7 @@
 ---
 name: seo-recovery
 description: why only 16% of pages are indexed; the crawlability, thin-content and missing-city-page fixes; the next/script, is_public and is_primary traps; the 45MB payload and homepage performance work; and what's still open
-Last-Updated: 2026-08-02
+Last-Updated: 2026-08-03
 Maintainer: RB
 ---
 
@@ -444,6 +444,21 @@ re-run PageSpeed to confirm the score moved:
 
 (The local `/_global-error` build failure referenced here was solved on 2026-08-03 — it was
 `NODE_ENV=development` in `.env.local`, not a Next bug. See the section above.)
+
+## Sitemap/robots audit — 2026-08-03 (shipped, commit fad717b)
+
+Audited for reindexing readiness; the sitemap itself was sound (2,159 URLs, no dupes, no
+404s or noindexed URLs, matches the DB exactly). Three gaps fixed:
+- `/about` and `/privacy` were indexable but absent — added, now 2,161 URLs.
+- `/admin/*` was `index, follow`; new `src/app/admin/layout.tsx` noindexes it (the login page
+  is a client component and can't export metadata itself). `robots.ts` also disallows
+  `/admin/`, `/api/admin/`, `/api/cron/` — repeated in every allow-group, since robots.txt is
+  most-specific-group-wins and a rule in `*` never reaches Googlebot.
+- `public/robots.txt` was dead (the `robots.ts` route handler wins) and disagreed with what
+  was live — deleted, its rules folded into `robots.ts`. Its SEO-scraper blocks (Ahrefs,
+  Semrush, DataForSeo, MJ12, DotBot, Scrapy, PetalBot) are now genuinely enforced for the
+  first time. `OAI-SearchBot` was deliberately left unblocked — it is ChatGPT's *search*
+  crawler, not its training crawler, so blocking it would cost referral traffic.
 
 ## Still open, in priority order
 
